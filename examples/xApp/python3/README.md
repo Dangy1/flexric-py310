@@ -12,13 +12,13 @@ In this folder you can run the Python xApp examples, the service-model suite run
 The recommended runtime location is:
 
 ```bash
-/home/dang/flexric/build/examples/xApp/python3
+build/examples/xApp/python3
 ```
 
 The canonical shell scripts now live in:
 
 ```bash
-/home/dang/flexric/build/examples/xApp/python3/scripts
+build/examples/xApp/python3/scripts
 ```
 
 The old top-level `.sh` files are still there as compatibility wrappers, so both layouts work.
@@ -43,7 +43,7 @@ conda activate flexric-py310
 or run with the interpreter directly:
 
 ```bash
-/home/dang/anaconda3/envs/flexric-py310/bin/python
+${CONDA_PREFIX}/bin/python
 ```
 
 ## Rebuild The Python xApp SDK
@@ -51,7 +51,7 @@ or run with the interpreter directly:
 From the project root:
 
 ```bash
-cmake -S . -B build -DPython3_EXECUTABLE=/home/dang/anaconda3/envs/flexric-py310/bin/python
+cmake -S . -B build -DPython3_EXECUTABLE="${CONDA_PREFIX}/bin/python"
 cmake --build build --target xapp_sdk -j4
 ```
 
@@ -68,7 +68,7 @@ This refreshes:
 From `build/examples/xApp/python3`:
 
 ```bash
-/home/dang/anaconda3/envs/flexric-py310/bin/python -m pip install -r requirements-mcp.txt
+python -m pip install -r requirements-mcp.txt
 ```
 
 The portal and MCP helpers use packages from `requirements-mcp.txt`, including:
@@ -85,14 +85,14 @@ The portal and MCP helpers use packages from `requirements-mcp.txt`, including:
 From the build example:
 
 ```bash
-cd /home/dang/flexric/build/examples/xApp/python3
-/home/dang/anaconda3/envs/flexric-py310/bin/python flexric_agent_portal.py
+cd build/examples/xApp/python3
+python flexric_agent_portal.py
 ```
 
 Bring up the full local stack directly from an existing build:
 
 ```bash
-cd /home/dang/flexric/build/examples/xApp/python3/scripts
+cd build/examples/xApp/python3/scripts
 ./run_agent_portal_stack.sh
 ```
 
@@ -120,7 +120,7 @@ Stop the stack cleanly from the same directory:
 Or configure/build first and then start it:
 
 ```bash
-cd /home/dang/flexric/build/examples/xApp/python3/scripts
+cd build/examples/xApp/python3/scripts
 ./build_agent_portal_stack.sh
 ```
 
@@ -343,15 +343,15 @@ The portal can launch the local suite runners directly from the build example:
 Examples without the UI:
 
 ```bash
-/home/dang/anaconda3/envs/flexric-py310/bin/python xapp_kpm_rc_suite.py --profile kpm --period-ms 1000 --duration-s 30 --kpm-metrics rru
+python xapp_kpm_rc_suite.py --profile kpm --period-ms 1000 --duration-s 30 --kpm-metrics rru
 ```
 
 ```bash
-/home/dang/anaconda3/envs/flexric-py310/bin/python xapp_slice_suite.py --profile monitor --duration-s 30 --verbose
+python xapp_slice_suite.py --profile monitor --duration-s 30 --verbose
 ```
 
 ```bash
-/home/dang/anaconda3/envs/flexric-py310/bin/python xapp_tc_suite.py --profile all --duration-s 30 --monitor-rlc
+python xapp_tc_suite.py --profile all --duration-s 30 --monitor-rlc
 ```
 
 ## Useful REST Endpoints
