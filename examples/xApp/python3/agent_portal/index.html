@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlexRIC Agent Portal</title>
+  <link rel="stylesheet" href="/portal/assets/styles.css">
+</head>
+<body class="portal-shell">
+  <header class="hero hero-single">
+    <div>
+      <p class="eyebrow">FlexRIC Agent Portal</p>
+      <h1>One workspace for the RIC SDK agent chain</h1>
+      <p class="lede">
+        Run the FlexRIC agent chain from one workspace with live status, workflow runs, handoffs, and provider-backed reasoning.
+      </p>
+    </div>
+    <div class="hero-panel hero-actions">
+      <h2>Portal Controls</h2>
+      <div class="hero-list">
+        <button id="refresh-button" type="button">Refresh</button>
+        <button id="test-all-button" type="button">Test All Agents</button>
+        <button id="reset-runtime-button" type="button">Emergency Reset</button>
+      </div>
+      <div id="portal-banner" class="message-item">Ready.</div>
+    </div>
+  </header>
+
+  <nav class="top-menu">
+    <div id="top-menu-tabs" class="top-menu-tabs"></div>
+  </nav>
+
+  <main class="layout single-page-layout">
+    <section id="dashboard-view" class="view-panel">
+      <section class="section">
+        <div class="section-head">
+          <h2>Stack Health</h2>
+          <p>Live status for the portal, RPC, MCP, KPM bus, and current workflow state.</p>
+        </div>
+        <div id="stack-grid" class="stack-grid"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>Workflow Chains</h2>
+          <p>Start coordinated agent chains from one operational dashboard.</p>
+        </div>
+        <div class="workflow-controls workflow-controls-extended">
+          <label>
+            Workflow Mode
+            <select id="workflow-mode">
+              <option value="advisory" selected>Advisory</option>
+              <option value="enforced">Enforced</option>
+            </select>
+          </label>
+          <label>
+            Runtime Window (s)
+            <input id="workflow-duration" type="number" min="15" max="1800" step="5" value="60">
+            <span class="field-help">The backend will auto-expand short windows so long-running actions can shut down cleanly.</span>
+          </label>
+          <label class="workflow-goal-field">
+            Goal
+            <textarea id="workflow-goal" rows="3">Optimize the near-RT RIC using live telemetry and control loops.</textarea>
+          </label>
+        </div>
+        <div id="workflow-grid" class="workflow-grid"></div>
+      </section>
+
+      <section class="section split">
+        <div>
+          <div class="section-head">
+            <h2>Workflow Events</h2>
+            <p>Latest events from the most recent workflow run.</p>
+          </div>
+          <div id="workflow-event-feed" class="message-feed"></div>
+        </div>
+        <div>
+          <div class="section-head">
+            <h2>Recent Runs</h2>
+            <p>Latest local runs across the agent set.</p>
+          </div>
+          <div id="run-feed" class="message-feed"></div>
+        </div>
+      </section>
+    </section>
+
+    <section id="platform-view" class="view-panel hidden">
+      <section class="section">
+        <div id="platform-header" class="agent-header"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>Runtime</h2>
+          <p>Orchestration runtime, MCP control, A2A gateway, tools, and tracing in one place.</p>
+        </div>
+        <div id="platform-overview-grid" class="stack-grid platform-grid"></div>
+      </section>
+
+      <section class="section split split-wide">
+        <div>
+          <div class="section-head">
+            <h2>Resource Leases</h2>
+            <p>Active shared and exclusive resources reserved by workflow runs.</p>
+          </div>
+          <div id="platform-lease-feed" class="message-feed"></div>
+        </div>
+        <div>
+          <div class="section-head">
+            <h2>Queue</h2>
+            <p>Queued workflows waiting for resource admission.</p>
+          </div>
+          <div id="platform-queue-feed" class="message-feed"></div>
+        </div>
+      </section>
+
+      <section class="section split split-wide">
+        <div>
+          <div class="section-head">
+            <h2>RIC Orchestrator</h2>
+            <p>The coordinator for goals, workflows, A2A, and agent handoffs.</p>
+          </div>
+          <div id="platform-orchestrator-panel" class="message-feed"></div>
+        </div>
+        <div>
+          <div class="section-head">
+            <h2>Workflow Topology</h2>
+            <p>Templates and agent chains managed by the orchestrator.</p>
+          </div>
+          <div id="platform-workflows-panel" class="message-feed"></div>
+        </div>
+      </section>
+
+      <section class="section split split-wide">
+        <div>
+          <div class="section-head">
+            <h2>Providers</h2>
+            <p>Configured inference backends for orchestration and agent tasks.</p>
+          </div>
+          <div id="platform-provider-grid" class="provider-grid"></div>
+        </div>
+        <div>
+          <div class="section-head">
+            <h2>Workflow Runs</h2>
+            <p>Recent LangGraph runs you can reopen and inspect.</p>
+          </div>
+          <div id="platform-workflow-run-list" class="message-feed workflow-run-list"></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>Run Detail</h2>
+          <p>Step outputs, approval state, launched actions, and full event history.</p>
+        </div>
+        <div id="platform-workflow-detail-panel" class="workflow-detail-panel"></div>
+      </section>
+
+      <section class="section split split-wide">
+        <div>
+          <div class="section-head">
+            <h2>Saved Workflows</h2>
+            <p>Named workflow bookmarks with purpose and quick-open links.</p>
+          </div>
+          <div id="platform-saved-workflow-list" class="message-feed workflow-run-list"></div>
+        </div>
+        <div>
+          <div class="section-head">
+            <h2>Coordination Activity</h2>
+            <p>Recent messages and handoffs across the agent chain.</p>
+          </div>
+          <div id="platform-message-feed" class="message-feed"></div>
+        </div>
+      </section>
+
+      <section class="section split split-wide">
+        <div>
+          <div class="section-head">
+            <h2>Reasoning</h2>
+            <p>Provider-backed reasoning outputs from portal agents.</p>
+          </div>
+          <div id="platform-task-feed" class="message-feed"></div>
+        </div>
+        <div>
+          <div class="section-head">
+            <h2>Agent Topology</h2>
+            <p>The orchestrator and domain agents available in this runtime.</p>
+          </div>
+          <div id="platform-agent-grid" class="agent-grid"></div>
+        </div>
+      </section>
+
+      <section class="section split split-wide">
+        <div>
+          <div class="section-head">
+            <h2>LangChain Tools</h2>
+            <p>Tool inventory from the portal toolbox.</p>
+          </div>
+          <div id="platform-langchain-tools" class="message-feed"></div>
+        </div>
+        <div>
+          <div class="section-head">
+            <h2>A2A Gateway</h2>
+            <p>Discovery cards, RPC methods, and agent-facing endpoints.</p>
+          </div>
+          <div id="platform-a2a-panel" class="message-feed"></div>
+        </div>
+      </section>
+
+      <section class="section split split-wide">
+        <div>
+          <div class="section-head">
+            <h2>Routes & Trace</h2>
+            <p>Portal routes and LangSmith configuration.</p>
+          </div>
+          <div id="platform-routes-panel" class="message-feed"></div>
+        </div>
+        <div>
+          <div class="section-head">
+            <h2>Action Runs</h2>
+            <p>Local actions launched from workflows or agent workspaces.</p>
+          </div>
+          <div id="platform-run-feed" class="message-feed"></div>
+        </div>
+      </section>
+    </section>
+
+    <section id="scheduler-view" class="view-panel hidden">
+      <section class="section">
+        <div class="section-head">
+          <h2>Scheduler</h2>
+          <p>Track leases, queueing, audit actions, and targeted workflow controls from one page.</p>
+        </div>
+        <div id="scheduler-summary-grid" class="stack-grid platform-grid"></div>
+      </section>
+
+      <section class="section split split-wide">
+        <div>
+          <div class="section-head">
+            <h2>Resource Leases</h2>
+            <p>Shared and exclusive resources currently reserved by active workflows.</p>
+          </div>
+          <div id="scheduler-lease-feed" class="message-feed"></div>
+        </div>
+        <div>
+          <div class="section-head">
+            <h2>Queue</h2>
+            <p>Queued workflows waiting for scheduler admission.</p>
+          </div>
+          <div id="scheduler-queue-feed" class="message-feed"></div>
+        </div>
+      </section>
+
+      <section class="section split split-wide">
+        <div>
+          <div class="section-head">
+            <h2>Workflow Runs</h2>
+            <p>Open the latest workflow runs and inspect how queueing or lease state affects them.</p>
+          </div>
+          <div id="scheduler-workflow-run-list" class="message-feed workflow-run-list"></div>
+        </div>
+        <div>
+          <div class="section-head">
+            <h2>Scheduler APIs</h2>
+            <p>Runtime endpoints for queue, lease, reconcile, and audit inspection.</p>
+          </div>
+          <div id="scheduler-endpoint-feed" class="message-feed"></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>Run Detail</h2>
+          <p>Selected workflow detail with queue state, resources, and operator controls.</p>
+        </div>
+        <div id="scheduler-workflow-detail-panel" class="workflow-detail-panel"></div>
+      </section>
+
+      <section class="section split split-wide">
+        <div>
+          <div class="section-head">
+            <h2>Operator Actions</h2>
+            <p>Recent targeted controls such as approve, cancel, drain, reconcile, and emergency reset.</p>
+          </div>
+          <div id="scheduler-operator-feed" class="message-feed"></div>
+        </div>
+        <div>
+          <div class="section-head">
+            <h2>Implementation Log</h2>
+            <p>Recorded changes for the scheduler and concurrency layer.</p>
+          </div>
+          <div id="scheduler-change-feed" class="message-feed"></div>
+        </div>
+      </section>
+    </section>
+
+    <section id="comparison-view" class="view-panel hidden">
+      <section class="section">
+        <div class="section-head">
+          <h2>Compare</h2>
+          <p>Compare before and after optimization using KPM snapshots and workflow outcomes.</p>
+        </div>
+        <div class="comparison-actions">
+          <button id="comparison-refresh" type="button">Refresh Comparison</button>
+          <button id="capture-baseline" type="button">Capture Without Optimization</button>
+          <button id="capture-optimized" type="button">Capture With Optimization</button>
+          <button id="clear-comparison" type="button">Clear Snapshots</button>
+        </div>
+      </section>
+
+      <section class="section split split-wide">
+        <div>
+          <div class="section-head">
+            <h2>Run Compare</h2>
+            <p>Latest baseline run versus the latest optimized run.</p>
+          </div>
+          <div id="comparison-workflow-panel" class="figure-grid"></div>
+        </div>
+        <div>
+          <div class="section-head">
+            <h2>Live KPM Source</h2>
+            <p>Current telemetry source used for the captured snapshots.</p>
+          </div>
+          <div id="comparison-live-panel" class="figure-grid"></div>
+        </div>
+      </section>
+
+      <section class="section split split-wide">
+        <div>
+          <div class="section-head">
+            <h2>Baseline</h2>
+            <p>Capture a snapshot before control actions are applied.</p>
+          </div>
+          <div id="comparison-baseline-panel" class="figure-grid"></div>
+        </div>
+        <div>
+          <div class="section-head">
+            <h2>Optimized</h2>
+            <p>Capture a second snapshot after the workflow runs.</p>
+          </div>
+          <div id="comparison-optimized-panel" class="figure-grid"></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>Metric Delta</h2>
+          <p>Latest value and average change between the two snapshots.</p>
+        </div>
+        <div id="comparison-metric-panel" class="figure-grid"></div>
+      </section>
+    </section>
+
+    <section id="agent-view" class="view-panel hidden">
+      <section class="section">
+        <div id="agent-header" class="agent-header"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>Agent Card</h2>
+          <p>Role, skills, measurements, peers, and current activity.</p>
+        </div>
+        <div id="agent-card" class="agent-card-detail"></div>
+      </section>
+
+      <section class="section split split-wide">
+        <div>
+          <div class="section-head">
+            <h2>Actions</h2>
+            <p>Launch the local FlexRIC suites that are wired for this agent.</p>
+          </div>
+          <div id="action-list" class="action-list"></div>
+        </div>
+        <div>
+          <div class="section-head">
+            <h2>AI Task</h2>
+            <p>Send a prompt through Ollama or OpenAI for this agent.</p>
+          </div>
+          <form id="task-form" class="handoff-form">
+            <label>
+              Provider
+              <select id="task-provider"></select>
+            </label>
+            <label>
+              Prompt
+              <textarea id="task-prompt" rows="6">Review the current agent state, explain the most important signal, and recommend the next FlexRIC action.</textarea>
+            </label>
+            <button type="submit">Run AI Task</button>
+          </form>
+          <div id="task-result" class="handoff-result"></div>
+        </div>
+      </section>
+
+      <section class="section split split-wide">
+        <div>
+          <div class="section-head">
+            <h2>Handoff</h2>
+            <p>Send work to a peer agent in the same chain.</p>
+          </div>
+          <form id="handoff-form" class="handoff-form">
+            <label>
+              Target Agent
+              <select id="target-agent"></select>
+            </label>
+            <label>
+              Message
+              <textarea id="handoff-message" rows="5">Review the latest telemetry and prepare the next control recommendation.</textarea>
+            </label>
+            <button type="submit">Send</button>
+          </form>
+          <div id="handoff-result" class="handoff-result"></div>
+        </div>
+        <div>
+          <div class="section-head">
+            <h2>Timeline</h2>
+            <p>Live activity for the current agent.</p>
+          </div>
+          <div id="timeline-list" class="timeline-list"></div>
+        </div>
+      </section>
+
+      <section id="agent-figure-section" class="section hidden">
+        <div class="section-head">
+          <h2>KPM Figures</h2>
+          <p>Live figures from the shared KPM subscription bus.</p>
+        </div>
+        <div id="agent-figure-panel" class="figure-grid"></div>
+      </section>
+
+      <section class="section split split-wide">
+        <div>
+          <div class="section-head">
+            <h2>Latest Run</h2>
+            <p>Auto-refreshing log tail for this agent.</p>
+          </div>
+          <div id="run-panel" class="run-panel"></div>
+        </div>
+        <div>
+          <div class="section-head">
+            <h2>Latest Task</h2>
+            <p>Most recent provider-backed response.</p>
+          </div>
+          <div id="task-panel" class="run-panel"></div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script type="module" src="/portal/assets/app.js"></script>
+</body>
+</html>

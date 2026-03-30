@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlexRIC Agent Detail</title>
+  <link rel="stylesheet" href="/portal/assets/styles.css">
+</head>
+<body class="portal-shell">
+  <header class="agent-hero">
+    <a class="back-link" href="/">Back to portal</a>
+    <div id="agent-header"></div>
+  </header>
+
+  <main class="layout agent-layout">
+    <section class="section">
+      <div class="section-head">
+        <h2>Agent Card</h2>
+        <p>Service-model role, measurements, use cases, and A2A-style discovery data.</p>
+      </div>
+      <div id="agent-card" class="agent-card-detail"></div>
+    </section>
+
+    <section class="section split">
+      <div>
+        <div class="section-head">
+          <h2>Actions</h2>
+          <p>Launch available FlexRIC workflows from the agent page.</p>
+        </div>
+        <div id="action-list" class="action-list"></div>
+      </div>
+      <div>
+        <div class="section-head">
+          <h2>Send Handoff</h2>
+          <p>Test agent-to-agent communication and workflow routing.</p>
+        </div>
+        <form id="handoff-form" class="handoff-form">
+          <label>
+            Target Agent
+            <select id="target-agent"></select>
+          </label>
+          <label>
+            Message
+            <textarea id="handoff-message" rows="5">Review the latest telemetry and prepare the next control recommendation.</textarea>
+          </label>
+          <button type="submit">Send Handoff</button>
+        </form>
+        <div id="handoff-result" class="handoff-result"></div>
+      </div>
+    </section>
+
+    <section class="section split">
+      <div>
+        <div class="section-head">
+          <h2>Recent Timeline</h2>
+          <p>What this agent has been doing recently.</p>
+        </div>
+        <div id="timeline-list" class="timeline-list"></div>
+      </div>
+      <div>
+        <div class="section-head">
+          <h2>Latest Run</h2>
+          <p>Most recent local suite run and log tail.</p>
+        </div>
+        <div id="run-panel" class="run-panel"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/portal/assets/agent.js"></script>
+</body>
+</html>

@@ -1,0 +1,2994 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import importlib.util
+import json
+import os
+import re
+import sqlite3
+import subprocess
+import sys
+import threading
+import time
+import uuid
+from dataclasses import asdict, dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+import requests
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    def load_dotenv() -> bool:
+        return False
+
+try:
+    from backend.a2a_adapter import A2AAdapter, A2AHandlers
+    from backend.graph.runtime import graph_backend_name, graph_runtime_status, langsmith_status, run_graph_workflow
+    from backend.graph.tools import PortalToolbox, build_langchain_tools
+except Exception:
+    A2AAdapter = None
+    A2AHandlers = None
+    PortalToolbox = None
+
+    def graph_backend_name() -> str:
+        return "legacy"
+
+    def graph_runtime_status() -> Dict[str, Any]:
+        return {
+            "backend": "legacy",
+            "langgraph_installed": False,
+            "node_names": [],
+            "supports_tracing": False,
+            "tracing": {
+                "installed": False,
+                "enabled": False,
+                "api_key_present": False,
+                "project": "flexric-agent-portal",
+                "endpoint": "https://api.smith.langchain.com",
+                "detail": "LangGraph runtime helpers were not imported.",
+            },
+        }
+
+    def langsmith_status() -> Dict[str, Any]:
+        return graph_runtime_status()["tracing"]
+
+    def build_langchain_tools(toolbox: Any) -> List[Any]:
+        return []
+
+    run_graph_workflow = None
+
+load_dotenv()
+
+THIS_DIR = Path(__file__).resolve().parent
+PORTAL_DIR = THIS_DIR / "agent_portal"
+RUN_LOG_DIR = Path(os.getenv("FLEXRIC_AGENT_PORTAL_LOG_DIR", "/tmp/flexric_agent_portal"))
+RUN_LOG_DIR.mkdir(parents=True, exist_ok=True)
+PORTAL_DB_PATH = Path(os.getenv("FLEXRIC_AGENT_PORTAL_DB_PATH", str(THIS_DIR / "agent_portal.db")))
+PORTAL_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+DEFAULT_WORKFLOW_DURATION_S = max(15, int(os.getenv("FLEXRIC_WORKFLOW_DURATION_S", "45")))
+WORKFLOW_DURATION_GRACE_S = max(10, int(os.getenv("FLEXRIC_WORKFLOW_GRACE_S", "25")))
+
+
+def _portal_asset_version() -> str:
+    assets = [
+        PORTAL_DIR / "index.html",
+        PORTAL_DIR / "app.js",
+        PORTAL_DIR / "styles.css",
+    ]
+    latest = 0
+    for asset in assets:
+        if asset.exists():
+            latest = max(latest, int(asset.stat().st_mtime))
+    return str(latest or int(time.time()))
+
+
+def _portal_html() -> str:
+    html = (PORTAL_DIR / "index.html").read_text(encoding="utf-8")
+    version = _portal_asset_version()
+    return (
+        html.replace('/portal/assets/styles.css', f'/portal/assets/styles.css?v={version}')
+        .replace('/portal/assets/app.js', f'/portal/assets/app.js?v={version}')
+    )
+
+
+@dataclass
+class AgentAction:
+    id: str
+    label: str
+    description: str
+    kind: str
+    command: List[str] = field(default_factory=list)
+
+
+@dataclass
+class AgentCard:
+    id: str
+    name: str
+    role: str
+    service_model: str
+    description: str
+    page_path: str
+    a2a_card_path: str
+    status: str
+    activity: str
+    skills: List[str]
+    measurements: List[str]
+    use_cases: List[str]
+    peers: List[str]
+    providers: List[str]
+    actions: List[AgentAction]
+    notes: List[str]
+    timeline: List[str] = field(default_factory=list)
+
+
+@dataclass
+class RunState:
+    id: str
+    agent_id: str
+    action_id: str
+    label: str
+    cmd: List[str]
+    cwd: str
+    log_path: str
+    started_at: float
+    status: str = "starting"
+    pid: Optional[int] = None
+    returncode: Optional[int] = None
+    ended_at: Optional[float] = None
+    detail: str = ""
+    termination_reason: str = ""
+    proc: Optional[subprocess.Popen] = field(default=None, repr=False)
+
+    def to_public(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "agent_id": self.agent_id,
+            "action_id": self.action_id,
+            "label": self.label,
+            "cmd": self.cmd,
+            "cwd": self.cwd,
+            "log_path": self.log_path,
+            "started_at": self.started_at,
+            "status": self.status,
+            "pid": self.pid,
+            "returncode": self.returncode,
+            "ended_at": self.ended_at,
+            "detail": self.detail,
+            "termination_reason": self.termination_reason,
+        }
+
+
+@dataclass
+class TaskState:
+    id: str
+    agent_id: str
+    provider_id: str
+    prompt: str
+    status: str
+    started_at: float
+    response: str = ""
+    error: str = ""
+    ended_at: Optional[float] = None
+
+    def to_public(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "agent_id": self.agent_id,
+            "provider_id": self.provider_id,
+            "prompt": self.prompt,
+            "status": self.status,
+            "started_at": self.started_at,
+            "response": self.response,
+            "error": self.error,
+            "ended_at": self.ended_at,
+        }
+
+
+class MessageRequest(BaseModel):
+    target_id: str
+    content: str
+    kind: str = "handoff"
+
+
+class WorkflowRequest(BaseModel):
+    goal: str = "Optimize the near-RT RIC using live telemetry and control loops."
+    mode: str = "advisory"
+    duration_s: Optional[int] = None
+
+
+class WorkflowApprovalRequest(BaseModel):
+    reason: str = "Manually approved from the portal UI. Execute the selected actions now."
+
+
+class SavedWorkflowRequest(BaseModel):
+    name: str
+    purpose: str = ""
+
+
+class AgentTaskRequest(BaseModel):
+    prompt: str
+    provider: str = "auto"
+
+
+class TestAllRequest(BaseModel):
+    include_actions: bool = True
+    include_messages: bool = True
+
+
+class RuntimeResetRequest(BaseModel):
+    clear_saved_workflows: bool = False
+
+
+def _package_available(name: str) -> bool:
+    return importlib.util.find_spec(name) is not None
+
+
+def _normalize_runtime_host(host: str) -> str:
+    value = (host or "").strip()
+    return "127.0.0.1" if value in {"", "0.0.0.0", "::"} else value
+
+
+def _normalize_workflow_duration_s(value: Any) -> int:
+    try:
+        duration = int(value)
+    except (TypeError, ValueError):
+        duration = DEFAULT_WORKFLOW_DURATION_S
+    return max(15, min(duration, 1800))
+
+
+def _command_flag_value(command: List[str], flag: str) -> Optional[str]:
+    try:
+        idx = command.index(flag)
+    except ValueError:
+        return None
+    next_idx = idx + 1
+    if next_idx >= len(command):
+        return None
+    return str(command[next_idx])
+
+
+def _action_expected_duration_s(action: AgentAction) -> int:
+    value = _command_flag_value(action.command, "--duration-s")
+    try:
+        return max(1, int(value)) if value is not None else 30
+    except (TypeError, ValueError):
+        return 30
+
+
+def _workflow_recommended_duration_s(workflow_id: str) -> int:
+    mapping = WORKFLOW_ACTIONS.get(workflow_id, {})
+    durations: List[int] = []
+    for agent_id, action_id in mapping.items():
+        agent = AGENTS.get(agent_id)
+        if agent is None:
+            continue
+        action = next((item for item in agent.actions if item.id == action_id), None)
+        if action is None:
+            continue
+        durations.append(_action_expected_duration_s(action))
+    if not durations:
+        return DEFAULT_WORKFLOW_DURATION_S
+    return max(DEFAULT_WORKFLOW_DURATION_S, max(durations) + WORKFLOW_DURATION_GRACE_S)
+
+
+def _apply_workflow_duration_policy(workflow_id: str, requested_duration_s: Any) -> Tuple[int, Optional[str]]:
+    requested = _normalize_workflow_duration_s(requested_duration_s)
+    recommended = _workflow_recommended_duration_s(workflow_id)
+    if requested >= recommended:
+        return requested, None
+    return recommended, f"Workflow window auto-expanded from {requested}s to {recommended}s so the mapped actions can finish cleanly."
+
+
+def _summarize_run_failure(run: RunState) -> str:
+    if run.termination_reason:
+        if "execution window" in run.termination_reason:
+            return f"Stopped by the workflow timeout: {run.termination_reason}"
+        return run.termination_reason
+    tail = [line.strip() for line in _tail_lines(run.log_path, 12) if str(line).strip()]
+    for line in reversed(tail):
+        if "Another TC Python xApp is already running" in line:
+            return line
+        if "No E2 nodes connected" in line:
+            return line
+        if line.startswith("Traceback"):
+            continue
+        return line
+    if run.returncode == -15:
+        return "Stopped before the action could finish cleanly."
+    return f"Process exited with rc={run.returncode}."
+
+
+def _display_runtime_host(bind_host: str, public_host: str) -> str:
+    explicit = (public_host or "").strip()
+    if explicit:
+        return explicit
+    value = (bind_host or "").strip()
+    return "127.0.0.1" if value in {"", "0.0.0.0", "::"} else value
+
+
+def _mcp_service_status_locked() -> Dict[str, Any]:
+    for service in _service_health():
+        if service.get("id") == "mcp":
+            return service
+    return {"id": "mcp", "label": "MCP Metrics", "ok": False, "status": "down", "detail": "MCP service state is unavailable."}
+
+
+_KPM_LINE_RE = re.compile(
+    r"ue_type=(?P<ue_type>\S+)\s+amf_ue_ngap_id=(?P<ue_id>\S+)\s+meas=(?P<meas>\S+)\s+value=(?P<value>\S+)"
+)
+
+
+def _collect_mcp_pids_locked() -> List[int]:
+    script = str(THIS_DIR / "mcp_flexric_metrics_http.py")
+    pids = set()
+    managed = MANAGED_SERVICE_PROCS.get("mcp")
+    if managed is not None and managed.poll() is None and managed.pid:
+        pids.add(int(managed.pid))
+    try:
+        output = subprocess.check_output(["ps", "-eo", "pid=,args="], text=True)
+    except Exception:
+        output = ""
+    for line in output.splitlines():
+        if script in line:
+            pid_text = line.strip().split(None, 1)[0]
+            if pid_text.isdigit():
+                pids.add(int(pid_text))
+    return sorted(pid for pid in pids if pid != os.getpid())
+
+
+def _stop_mcp_service_locked() -> Dict[str, Any]:
+    pids = _collect_mcp_pids_locked()
+    for pid in pids:
+        try:
+            os.kill(pid, 15)
+        except OSError:
+            pass
+    deadline = time.time() + 8.0
+    while time.time() < deadline:
+        still_running = []
+        for pid in pids:
+            try:
+                os.kill(pid, 0)
+                still_running.append(pid)
+            except OSError:
+                continue
+        if not still_running:
+            break
+        time.sleep(0.25)
+    for pid in pids:
+        try:
+            os.kill(pid, 0)
+            os.kill(pid, 9)
+        except OSError:
+            continue
+    managed = MANAGED_SERVICE_PROCS.pop("mcp", None)
+    if managed is not None:
+        try:
+            managed.wait(timeout=1)
+        except Exception:
+            pass
+    return _mcp_service_status_locked()
+
+
+def _start_mcp_service_locked() -> Dict[str, Any]:
+    current = _mcp_service_status_locked()
+    if current.get("ok"):
+        return current
+    script = THIS_DIR / "mcp_flexric_metrics_http.py"
+    if not script.exists():
+        raise HTTPException(status_code=500, detail=f"Missing MCP script: {script}")
+    log_path = RUN_LOG_DIR / "mcp_flexric_metrics_http.managed.log"
+    logf = open(log_path, "ab", buffering=0)
+    proc = subprocess.Popen(
+        [sys.executable, str(script)],
+        cwd=str(THIS_DIR),
+        stdout=logf,
+        stderr=subprocess.STDOUT,
+        start_new_session=True,
+        env=os.environ.copy(),
+    )
+    MANAGED_SERVICE_PROCS["mcp"] = proc
+    deadline = time.time() + 20.0
+    latest = current
+    while time.time() < deadline:
+        if proc.poll() is not None:
+            break
+        latest = _mcp_service_status_locked()
+        if latest.get("ok"):
+            return latest
+        time.sleep(0.5)
+    return _mcp_service_status_locked()
+
+
+def _platform_payload_locked() -> Dict[str, Any]:
+    toolbox = _portal_toolbox_locked()
+    langgraph = graph_runtime_status()
+    langsmith = langgraph.get("tracing", langsmith_status())
+    tools: List[Dict[str, Any]] = []
+    langchain_error = ""
+    if toolbox is not None:
+        try:
+            tools = [
+                {
+                    "name": getattr(tool, "name", type(tool).__name__),
+                    "description": getattr(tool, "description", ""),
+                }
+                for tool in build_langchain_tools(toolbox)
+            ]
+        except Exception as exc:
+            langchain_error = str(exc)
+
+    services = _service_health()
+    mcp_service = next((service for service in services if service.get("id") == "mcp"), {"id": "mcp", "label": "MCP Metrics", "ok": False, "status": "down", "detail": "MCP status unavailable."})
+
+    a2a_methods = list(getattr(A2AAdapter, "orchestrator_methods", [
+        "agents.list",
+        "agent.get_card",
+        "message.send",
+        "workflow.run",
+        "workflow.status",
+        "workflow.events",
+        "agent.task.run",
+        "portal.test_all",
+        "portal.reset_runtime",
+    ]))
+
+    if langchain_error:
+        langchain_detail = f"LangChain tool export failed: {langchain_error}"
+    elif tools:
+        langchain_detail = f"Portal toolbox currently exposes {len(tools)} LangChain tool(s)."
+    else:
+        langchain_detail = "LangChain is available, but no toolbox tools are registered yet."
+
+    return {
+        "label": "LangGraph",
+        "description": "LangGraph is the orchestration runtime, while MCP is the telemetry and tool-access plane. They can work together, and LangGraph can keep running even if MCP is temporarily stopped.",
+        "routes": {
+            "page": "/platform",
+            "rpc": "/api/a2a/rpc",
+            "overview": "/api/platform",
+            "workflow_list": "/api/workflows",
+            "orchestrator_card": "/.well-known/agent-card.json",
+        },
+        "langgraph": {
+            "installed": bool(langgraph.get("langgraph_installed")),
+            "backend": langgraph.get("backend", graph_backend_name()),
+            "node_names": list(langgraph.get("node_names", [])),
+            "workflow_templates": [
+                {
+                    "id": workflow_id,
+                    "label": template["label"],
+                    "step_count": len(template["steps"]),
+                    "steps": list(template["steps"]),
+                }
+                for workflow_id, template in WORKFLOW_TEMPLATES.items()
+            ],
+            "detail": "LangGraph is the internal workflow runtime used by the portal when installed. It falls back to the linear runner otherwise.",
+        },
+        "langchain": {
+            "installed": _package_available("langchain"),
+            "tool_count": len(tools),
+            "tools": tools,
+            "detail": langchain_detail,
+        },
+        "a2a": {
+            "installed": A2AAdapter is not None,
+            "protocol": "A2A-aligned JSON-RPC",
+            "rpc_path": "/api/a2a/rpc",
+            "agent_card_path": "/.well-known/agent-card.json",
+            "methods": a2a_methods,
+            "cards": [
+                {
+                    "agent_id": agent.id,
+                    "name": agent.name,
+                    "path": agent.a2a_card_path,
+                }
+                for agent in AGENTS.values()
+            ],
+            "detail": "The orchestrator exposes discovery cards plus workflow/task handoff methods over JSON-RPC.",
+        },
+        "langsmith": langsmith,
+        "runtime_safety": _runtime_safety_locked(),
+        "mcp_control": {
+            "service": mcp_service,
+            "actions": {
+                "start": "/api/runtime/mcp/start",
+                "stop": "/api/runtime/mcp/stop",
+            },
+            "langgraph_mode": "LangGraph orchestrates workflow state and can still run in recommend-only mode even if MCP is stopped.",
+            "mcp_mode": "The Overview page and the normal portal flow use MCP automatically when the service is up, so you do not need to pre-enable it before starting the stack.",
+        },
+    }
+
+
+def _provider_statuses() -> List[Dict[str, Any]]:
+    ollama_url = os.getenv("OLLAMA_BASE_URL", "").strip() or os.getenv("OLLAMA_URL", "").strip() or "http://127.0.0.1:11434"
+    ollama_model = os.getenv("OLLAMA_MODEL", "").strip()
+    openai_base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+    openai_model = os.getenv("OPENAI_MODEL", "").strip()
+
+    return [
+        {
+            "id": "ollama",
+            "label": "Ollama",
+            "enabled": bool(ollama_model),
+            "endpoint": ollama_url,
+            "model": ollama_model or "not-configured",
+            "notes": "Best for private on-box automation loops and local model routing.",
+            "supports_tasks": bool(ollama_model),
+        },
+        {
+            "id": "openai",
+            "label": "OpenAI API",
+            "enabled": bool(os.getenv("OPENAI_API_KEY")) and bool(openai_model),
+            "endpoint": openai_base_url,
+            "model": openai_model or "not-configured",
+            "notes": "Best for richer planning or cross-domain automation once API credentials are configured.",
+            "supports_tasks": bool(os.getenv("OPENAI_API_KEY")) and bool(openai_model),
+        },
+    ]
+
+
+def _timeline(text: str) -> str:
+    return f"{time.strftime('%H:%M:%S')} {text}"
+
+
+def _action(id_: str, label: str, description: str, *cmd: str) -> AgentAction:
+    return AgentAction(id=id_, label=label, description=description, kind="suite", command=list(cmd))
+
+
+def _build_agents() -> Dict[str, AgentCard]:
+    py = sys.executable
+
+    agents = [
+        AgentCard(
+            id="orchestrator",
+            name="RIC Orchestrator",
+            role="Chain planner and agent router",
+            service_model="Cross-SM",
+            description="Coordinates domain agents, builds multi-agent chains, and exposes A2A-style discovery and handoff.",
+            page_path="/agents/orchestrator",
+            a2a_card_path="/.well-known/agents/orchestrator.json",
+            status="ready",
+            activity="Waiting for a network automation goal.",
+            skills=["plan.chain", "route.handoff", "summarize.state", "track.workflow"],
+            measurements=["Workflow latency", "handoff count", "run success rate"],
+            use_cases=["Cross-agent automation", "incident triage", "closed-loop coordination"],
+            peers=["kpm", "mac", "slice", "tc", "rc", "rlc", "pdcp", "gtp"],
+            providers=["ollama", "openai"],
+            actions=[],
+            notes=[
+                "A2A-ready card and JSON-RPC handoff endpoints are exposed by this portal.",
+                "Use this agent as the entry point for chained workflows.",
+            ],
+        ),
+        AgentCard(
+            id="kpm",
+            name="KPM Agent",
+            role="Measurement and KPI analyst",
+            service_model="KPM",
+            description="Consumes shared KPM telemetry from the single-owner KPM bus and surfaces radio/resource measurements for downstream agents.",
+            page_path="/agents/kpm",
+            a2a_card_path="/.well-known/agents/kpm.json",
+            status="ready",
+            activity="Idle; ready to read shared RRU or UE-oriented KPM records from the KPM bus.",
+            skills=["kpm.observe", "kpm.filter", "kpm.explain", "kpm.report"],
+            measurements=["RRU.PrbTotDl", "RRU.PrbTotUl", "DRB.* UE metrics"],
+            use_cases=["Congestion detection", "capacity reporting", "SLA evidence"],
+            peers=["orchestrator", "mac", "slice", "rc"],
+            providers=["ollama", "openai"],
+            actions=[
+                _action(
+                    "observe-rru",
+                    "Observe RRU KPIs",
+                    "Read shared RRU-oriented KPM records from the KPM bus for a short window.",
+                    py,
+                    "-u",
+                    str(THIS_DIR / "xapp_kpm_bus_reader.py"),
+                    "--mode",
+                    "rru",
+                    "--duration-s",
+                    "30",
+                ),
+                _action(
+                    "observe-ue",
+                    "Observe UE KPIs",
+                    "Read shared UE/DRB-oriented KPM records from the KPM bus for a short window.",
+                    py,
+                    "-u",
+                    str(THIS_DIR / "xapp_kpm_bus_reader.py"),
+                    "--mode",
+                    "ue",
+                    "--duration-s",
+                    "30",
+                ),
+            ],
+            notes=["Backed by the shared kpm_bus_service.py collector and xapp_kpm_bus_reader.py readers."],
+        ),
+        AgentCard(
+            id="mac",
+            name="MAC Agent",
+            role="Scheduler and PRB analyst",
+            service_model="MAC",
+            description="Interprets MAC-level scheduling pressure and links PRB utilization to slice or TC actions.",
+            page_path="/agents/mac",
+            a2a_card_path="/.well-known/agents/mac.json",
+            status="ready",
+            activity="Idle; waiting for MAC telemetry handoff.",
+            skills=["mac.observe", "mac.correlate", "mac.recommend"],
+            measurements=["DL/UL PRB usage", "scheduler pressure", "UE contention"],
+            use_cases=["Scheduler tuning", "congestion triage", "slice fairness review"],
+            peers=["orchestrator", "kpm", "slice", "tc"],
+            providers=["ollama", "openai"],
+            actions=[],
+            notes=["Uses shared monitor flows today; a dedicated MAC suite can be plugged in later."],
+        ),
+        AgentCard(
+            id="slice",
+            name="Slice Agent",
+            role="Slice policy and assurance controller",
+            service_model="SLICE",
+            description="Applies and validates slice policies, then reports UE-to-slice associations and reserved capacity.",
+            page_path="/agents/slice",
+            a2a_card_path="/.well-known/agents/slice.json",
+            status="ready",
+            activity="Idle; ready to monitor or apply a slice profile.",
+            skills=["slice.monitor", "slice.apply", "slice.verify", "slice.associate-ue"],
+            measurements=["Slice counts", "reserved PRBs", "UE associations", "slice scheduler"],
+            use_cases=["Slice rollout", "capacity partitioning", "policy validation"],
+            peers=["orchestrator", "kpm", "mac", "rc"],
+            providers=["ollama", "openai"],
+            actions=[
+                _action(
+                    "monitor",
+                    "Monitor Slice State",
+                    "Run the slice suite in monitor mode.",
+                    py,
+                    "-u",
+                    str(THIS_DIR / "xapp_slice_suite.py"),
+                    "--profile",
+                    "monitor",
+                    "--duration-s",
+                    "30",
+                    "--verbose",
+                ),
+                _action(
+                    "apply-static",
+                    "Apply Static Slice",
+                    "Apply the STATIC profile and monitor it.",
+                    py,
+                    "-u",
+                    str(THIS_DIR / "xapp_slice_suite.py"),
+                    "--profile",
+                    "static",
+                    "--duration-s",
+                    "30",
+                    "--verbose",
+                ),
+            ],
+            notes=["Backed by xapp_slice_suite.py profiles monitor/static/nvs-rate/nvs-cap/edf/all."],
+        ),
+        AgentCard(
+            id="tc",
+            name="TC Agent",
+            role="Traffic control enforcer",
+            service_model="TC",
+            description="Applies shaping, CoDel, ECN, partitioning, and queue strategies using the TC service model.",
+            page_path="/agents/tc",
+            a2a_card_path="/.well-known/agents/tc.json",
+            status="ready",
+            activity="Idle; waiting for policy or transport optimization tasks.",
+            skills=["tc.shape", "tc.codel", "tc.ecn", "tc.partition", "tc.validate"],
+            measurements=["Queue policy state", "RLC side effects", "traffic class actions"],
+            use_cases=["QoS enforcement", "bufferbloat mitigation", "traffic segregation"],
+            peers=["orchestrator", "mac", "rlc", "gtp"],
+            providers=["ollama", "openai"],
+            actions=[
+                _action(
+                    "apply-codel",
+                    "Apply CoDel",
+                    "Run the TC suite with the CoDel profile.",
+                    py,
+                    "-u",
+                    str(THIS_DIR / "xapp_tc_suite.py"),
+                    "--profile",
+                    "codel",
+                    "--duration-s",
+                    "30",
+                ),
+                _action(
+                    "apply-all",
+                    "Run Full TC Flow",
+                    "Run the TC suite with the full profile and RLC monitor.",
+                    py,
+                    "-u",
+                    str(THIS_DIR / "xapp_tc_suite.py"),
+                    "--profile",
+                    "all",
+                    "--duration-s",
+                    "30",
+                    "--monitor-rlc",
+                ),
+            ],
+            notes=["Backed by xapp_tc_suite.py profiles segregate/partition/shaper/codel/ecn/osi_codel/all."],
+        ),
+        AgentCard(
+            id="rc",
+            name="RC Agent",
+            role="RAN control reasoning agent",
+            service_model="RC",
+            description="Tracks control opportunities, validates actions, and acts as the policy gate for automation loops.",
+            page_path="/agents/rc",
+            a2a_card_path="/.well-known/agents/rc.json",
+            status="ready",
+            activity="Idle; RC auto-builder is still scaffolded in Python.",
+            skills=["rc.review", "rc.gate", "rc.validate"],
+            measurements=["Procedure IDs", "control outcomes", "policy checkpoints"],
+            use_cases=["Control approval", "policy simulation", "closed-loop validation"],
+            peers=["orchestrator", "kpm", "slice", "tc"],
+            providers=["ollama", "openai"],
+            actions=[
+                _action(
+                    "rc-scaffold",
+                    "Run RC Scaffold",
+                    "Run the KPM/RC suite in RC scaffold mode.",
+                    py,
+                    "-u",
+                    str(THIS_DIR / "xapp_kpm_rc_suite.py"),
+                    "--profile",
+                    "rc",
+                    "--duration-s",
+                    "30",
+                ),
+            ],
+            notes=["RC is exposed as a workflow/scaffold today; Python auto-subscription builder is still a next step."],
+        ),
+        AgentCard(
+            id="rlc",
+            name="RLC Agent",
+            role="Bearer health analyst",
+            service_model="RLC",
+            description="Correlates queue and bearer behavior with TC and slice actions.",
+            page_path="/agents/rlc",
+            a2a_card_path="/.well-known/agents/rlc.json",
+            status="ready",
+            activity="Idle; waiting for TC or MAC handoff.",
+            skills=["rlc.observe", "rlc.compare", "rlc.validate"],
+            measurements=["Radio bearer stats", "latency shifts", "queue depth clues"],
+            use_cases=["QoS troubleshooting", "post-control validation"],
+            peers=["orchestrator", "tc", "mac", "pdcp"],
+            providers=["ollama", "openai"],
+            actions=[],
+            notes=["Often paired with the TC agent for feedback verification."],
+        ),
+        AgentCard(
+            id="pdcp",
+            name="PDCP Agent",
+            role="Session continuity analyst",
+            service_model="PDCP",
+            description="Tracks PDCP-level behavior to explain downstream transport or user-plane issues.",
+            page_path="/agents/pdcp",
+            a2a_card_path="/.well-known/agents/pdcp.json",
+            status="ready",
+            activity="Idle; waiting for transport or UE quality review.",
+            skills=["pdcp.observe", "pdcp.trace", "pdcp.compare"],
+            measurements=["PDCP bearer stats", "delivery patterns", "control side effects"],
+            use_cases=["Session diagnostics", "handover-effect review"],
+            peers=["orchestrator", "rlc", "gtp"],
+            providers=["ollama", "openai"],
+            actions=[],
+            notes=["Works best as a secondary explanation agent after MAC/RLC anomalies."],
+        ),
+        AgentCard(
+            id="gtp",
+            name="GTP Agent",
+            role="Transport tunnel analyst",
+            service_model="GTP",
+            description="Monitors user-plane tunnel behavior and supports end-to-end performance diagnosis.",
+            page_path="/agents/gtp",
+            a2a_card_path="/.well-known/agents/gtp.json",
+            status="ready",
+            activity="Idle; waiting for transport diagnostics tasks.",
+            skills=["gtp.observe", "gtp.trace", "gtp.explain"],
+            measurements=["NG-U tunnel stats", "transport throughput", "packet path behavior"],
+            use_cases=["Backhaul diagnosis", "end-to-end throughput review"],
+            peers=["orchestrator", "tc", "pdcp"],
+            providers=["ollama", "openai"],
+            actions=[],
+            notes=["Pairs with TC and PDCP for transport-aware automation loops."],
+        ),
+    ]
+    return {agent.id: agent for agent in agents}
+
+
+AGENTS = _build_agents()
+RUNS: Dict[str, RunState] = {}
+TASKS: List[TaskState] = []
+MESSAGES: List[Dict[str, Any]] = []
+WORKFLOW_RUNS: List[Dict[str, Any]] = []
+MANAGED_SERVICE_PROCS: Dict[str, subprocess.Popen] = {}
+STATE_LOCK = threading.RLock()
+
+
+def _db_connect() -> sqlite3.Connection:
+    conn = sqlite3.connect(str(PORTAL_DB_PATH))
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def _init_portal_db() -> None:
+    with _db_connect() as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS workflow_runs (
+                run_id TEXT PRIMARY KEY,
+                workflow_id TEXT,
+                label TEXT,
+                goal TEXT,
+                mode TEXT,
+                status TEXT,
+                started_at REAL,
+                updated_at REAL,
+                payload TEXT NOT NULL
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS saved_workflows (
+                id TEXT PRIMARY KEY,
+                run_id TEXT NOT NULL UNIQUE,
+                workflow_id TEXT,
+                label TEXT,
+                name TEXT NOT NULL,
+                purpose TEXT,
+                route TEXT NOT NULL,
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL
+            )
+            """
+        )
+        conn.commit()
+
+
+def _persist_workflow_run_locked(run: Dict[str, Any]) -> None:
+    payload = json.dumps(run, default=str)
+    updated_at = float(run.get("updated_at") or run.get("completed_at") or run.get("started_at") or time.time())
+    run["updated_at"] = updated_at
+    with _db_connect() as conn:
+        conn.execute(
+            """
+            INSERT INTO workflow_runs (run_id, workflow_id, label, goal, mode, status, started_at, updated_at, payload)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(run_id) DO UPDATE SET
+                workflow_id = excluded.workflow_id,
+                label = excluded.label,
+                goal = excluded.goal,
+                mode = excluded.mode,
+                status = excluded.status,
+                started_at = excluded.started_at,
+                updated_at = excluded.updated_at,
+                payload = excluded.payload
+            """,
+            (
+                run.get("id"),
+                run.get("workflow_id"),
+                run.get("label"),
+                run.get("goal"),
+                run.get("mode"),
+                run.get("status"),
+                float(run.get("started_at") or time.time()),
+                updated_at,
+                payload,
+            ),
+        )
+        conn.commit()
+
+
+def _load_persisted_workflow_runs() -> List[Dict[str, Any]]:
+    with _db_connect() as conn:
+        rows = conn.execute("SELECT payload FROM workflow_runs ORDER BY started_at ASC").fetchall()
+    runs: List[Dict[str, Any]] = []
+    for row in rows:
+        try:
+            run = json.loads(row["payload"])
+        except Exception:
+            continue
+        if str(run.get("status") or "") in {"running", "starting", "active"}:
+            run["status"] = "completed"
+            run.setdefault("errors", []).append("Loaded from persisted storage after restart; live child run state is unavailable.")
+            run["completed_at"] = run.get("updated_at") or time.time()
+        if not run.get("graph_steps"):
+            run["graph_steps"] = _build_graph_steps_payload(run) if "selected_actions" in run else []
+        runs.append(run)
+    return runs
+
+
+def _saved_workflows_locked() -> List[Dict[str, Any]]:
+    with _db_connect() as conn:
+        rows = conn.execute(
+            "SELECT id, run_id, workflow_id, label, name, purpose, route, created_at, updated_at FROM saved_workflows ORDER BY updated_at DESC, created_at DESC"
+        ).fetchall()
+    items: List[Dict[str, Any]] = []
+    for row in rows:
+        payload = {key: row[key] for key in row.keys()}
+        try:
+            run = _workflow_run_by_id(str(row["run_id"]))
+        except HTTPException:
+            run = None
+        payload["run_status"] = run.get("status") if run else "missing"
+        payload["run_mode"] = run.get("mode") if run else None
+        payload["run_goal"] = run.get("goal") if run else None
+        items.append(payload)
+    return items
+
+
+def _clear_persisted_workflow_runs_locked() -> None:
+    with _db_connect() as conn:
+        conn.execute("DELETE FROM workflow_runs")
+        conn.commit()
+
+
+def _clear_saved_workflows_locked() -> None:
+    with _db_connect() as conn:
+        conn.execute("DELETE FROM saved_workflows")
+        conn.commit()
+
+
+def _save_workflow_record_locked(run: Dict[str, Any], name: str, purpose: str) -> Dict[str, Any]:
+    clean_name = name.strip()
+    if not clean_name:
+        raise HTTPException(status_code=400, detail="Saved workflow name is required.")
+    _persist_workflow_run_locked(run)
+    now = time.time()
+    with _db_connect() as conn:
+        existing = conn.execute("SELECT id, created_at FROM saved_workflows WHERE run_id = ?", (run["id"],)).fetchone()
+        record_id = existing["id"] if existing is not None else uuid.uuid4().hex
+        created_at = float(existing["created_at"]) if existing is not None else now
+        conn.execute(
+            """
+            INSERT INTO saved_workflows (id, run_id, workflow_id, label, name, purpose, route, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(run_id) DO UPDATE SET
+                name = excluded.name,
+                purpose = excluded.purpose,
+                workflow_id = excluded.workflow_id,
+                label = excluded.label,
+                route = excluded.route,
+                updated_at = excluded.updated_at
+            """,
+            (
+                record_id,
+                run["id"],
+                run.get("workflow_id"),
+                run.get("label"),
+                clean_name,
+                purpose.strip(),
+                f"/workflows/{run['id']}",
+                created_at,
+                now,
+            ),
+        )
+        conn.commit()
+    return next(item for item in _saved_workflows_locked() if item["run_id"] == run["id"])
+
+
+WORKFLOW_TEMPLATES = {
+    "observe-diagnose-optimize": {
+        "label": "Observe, Diagnose, Optimize",
+        "steps": ["orchestrator", "kpm", "mac", "slice", "tc", "rc"],
+        "description": "Collect KPIs, correlate MAC/slice pressure, enforce policy, then validate with RC.",
+    },
+    "slice-assurance": {
+        "label": "Slice Assurance Loop",
+        "steps": ["orchestrator", "slice", "kpm", "rc"],
+        "description": "Apply or monitor slice policy, measure impact, then review control readiness.",
+    },
+    "transport-qos": {
+        "label": "Transport QoS Chain",
+        "steps": ["orchestrator", "tc", "rlc", "pdcp", "gtp"],
+        "description": "Use TC actions and downstream bearer/tunnel observers for transport-aware feedback.",
+    },
+}
+
+WORKFLOW_ACTIONS = {
+    "observe-diagnose-optimize": {
+        "kpm": "observe-rru",
+        "slice": "monitor",
+        "tc": "apply-codel",
+        "rc": "rc-scaffold",
+    },
+    "slice-assurance": {
+        "slice": "monitor",
+        "kpm": "observe-rru",
+        "rc": "rc-scaffold",
+    },
+    "transport-qos": {
+        "tc": "apply-codel",
+    },
+}
+
+
+
+GRAPH_STAGE_LABELS = {
+    "observe": "Observe",
+    "diagnose": "Diagnose",
+    "approve": "Approve",
+    "act": "Act",
+    "verify": "Verify",
+    "summarize": "Summarize",
+}
+
+GRAPH_STAGE_AGENTS = {
+    "observe": "orchestrator",
+    "diagnose": "orchestrator",
+    "approve": "rc",
+    "act": "orchestrator",
+    "verify": "orchestrator",
+    "summarize": "orchestrator",
+}
+
+
+def _graph_stage_events(events: List[Dict[str, Any]], stage: str) -> List[Dict[str, Any]]:
+    return [event for event in events if event.get("stage") == stage]
+
+
+def _make_stage_output(label: str, content: Any, **metadata: Any) -> Dict[str, Any]:
+    item = {"label": label, "content": str(content)}
+    for key, value in metadata.items():
+        if value is not None:
+            item[key] = value
+    return item
+
+
+def _build_graph_steps_payload(run: Dict[str, Any]) -> List[Dict[str, Any]]:
+    events = list(run.get("events", []))
+    observations = list(run.get("observations", []))
+    hypotheses = list(run.get("hypotheses", []))
+    recommendations = list(run.get("recommendations", []))
+    verification_notes = list(run.get("verification_notes", []))
+    errors = list(run.get("errors", []))
+    selected_actions = list(run.get("selected_actions", []))
+    run_results = list(run.get("run_results", []))
+    result_by_key = {}
+    for result in run_results:
+        key = (result.get("agent_id"), result.get("action_id"))
+        if key[0] and key[1]:
+            result_by_key[key] = result
+
+    observe_events = _graph_stage_events(events, "observe")
+    observe_outputs = [_make_stage_output("Observation", item) for item in observations]
+
+    diagnose_events = _graph_stage_events(events, "diagnose")
+    diagnose_outputs = [_make_stage_output("Hypothesis", item) for item in hypotheses]
+    diagnose_outputs.extend(_make_stage_output("Recommendation", item) for item in recommendations)
+
+    approve_events = _graph_stage_events(events, "approve")
+    approval_reason = str(run.get("approval_reason") or "No approval note.")
+    approval_required = bool(run.get("approval_required"))
+    approved_value = run.get("approved")
+    approved = approved_value is True
+    if approval_required:
+        approval_decision = "Approved" if approved else "Not approved"
+    else:
+        approval_decision = "Not applicable"
+    approve_outputs: List[Dict[str, Any]] = []
+    if approval_required or approval_reason or approve_events or approved_value is not None:
+        approve_outputs = [
+            _make_stage_output("Decision", approval_decision),
+            _make_stage_output("Reason", approval_reason),
+        ]
+
+    act_events = _graph_stage_events(events, "act")
+    act_outputs: List[Dict[str, Any]] = []
+    active_results = 0
+    failed_results = 0
+    for item in selected_actions:
+        agent_id = str(item.get("agent_id") or "unknown")
+        action_id = str(item.get("action_id") or "unknown")
+        result = result_by_key.get((agent_id, action_id))
+        if result is not None:
+            status = str(result.get("status") or "unknown")
+            if status in {"starting", "running"}:
+                active_results += 1
+            elif status not in {"exited", "completed", "success"}:
+                failed_results += 1
+            act_outputs.append(
+                _make_stage_output(
+                    "Launch",
+                    f"{agent_id}:{action_id} -> {status}",
+                    agent_id=agent_id,
+                    action_id=action_id,
+                    run_id=result.get("id"),
+                    status=status,
+                    returncode=result.get("returncode"),
+                )
+            )
+        else:
+            act_outputs.append(
+                _make_stage_output(
+                    "Planned action",
+                    f"{agent_id}:{action_id}",
+                    agent_id=agent_id,
+                    action_id=action_id,
+                )
+            )
+
+    verify_events = _graph_stage_events(events, "verify")
+    verify_outputs = [_make_stage_output("Verification", item) for item in verification_notes]
+
+    summarize_events = _graph_stage_events(events, "summarize")
+    summarize_outputs: List[Dict[str, Any]] = []
+    if run.get("summary"):
+        summarize_outputs.append(_make_stage_output("Summary", run.get("summary")))
+    summarize_outputs.extend(_make_stage_output("Error", item) for item in errors)
+
+    if selected_actions and approved:
+        if active_results:
+            act_status = "running"
+            act_summary = f"{active_results} launched action(s) still running."
+        elif failed_results:
+            act_status = "completed"
+            act_summary = f"{failed_results} launched action(s) finished with issues."
+        elif run_results:
+            act_status = "completed"
+            act_summary = f"{len(run_results)} action(s) launched successfully."
+        else:
+            act_status = "completed" if errors else "pending"
+            act_summary = "Action execution was approved but nothing was launched."
+    elif selected_actions and approval_required:
+        act_status = "completed"
+        act_summary = "Execution stopped at the RC approval stage."
+    elif selected_actions:
+        act_status = "completed"
+        act_summary = "Execution was skipped because this workflow ran in advisory mode."
+    else:
+        act_status = "completed"
+        act_summary = "No concrete action is mapped for this workflow."
+
+    if active_results:
+        verify_status = "running"
+    elif failed_results or errors:
+        verify_status = "completed"
+    elif verify_outputs or verify_events:
+        verify_status = "completed"
+    else:
+        verify_status = "pending"
+
+    summarize_status = str(run.get("status") or "pending")
+    if summarize_status not in {"running", "completed", "pending"}:
+        summarize_status = "completed"
+
+    stages = [
+        {
+            "id": "observe",
+            "label": GRAPH_STAGE_LABELS["observe"],
+            "agent_id": GRAPH_STAGE_AGENTS["observe"],
+            "status": "completed" if observe_outputs or observe_events else "pending",
+            "summary": f"Collected {len(observe_outputs)} observations from service health and agent snapshots.",
+            "outputs": observe_outputs,
+            "events": observe_events,
+        },
+        {
+            "id": "diagnose",
+            "label": GRAPH_STAGE_LABELS["diagnose"],
+            "agent_id": GRAPH_STAGE_AGENTS["diagnose"],
+            "status": "completed" if diagnose_outputs or diagnose_events else "pending",
+            "summary": f"Generated {len(hypotheses)} hypotheses and {len(recommendations)} recommendations.",
+            "outputs": diagnose_outputs,
+            "events": diagnose_events,
+        },
+        {
+            "id": "approve",
+            "label": GRAPH_STAGE_LABELS["approve"],
+            "agent_id": GRAPH_STAGE_AGENTS["approve"],
+            "status": "completed" if approve_outputs or approve_events else "pending",
+            "summary": approval_reason,
+            "outputs": approve_outputs,
+            "events": approve_events,
+            "metadata": {
+                "approval_required": approval_required,
+                "approved": approved_value,
+                "mode": run.get("mode", "advisory"),
+            },
+        },
+        {
+            "id": "act",
+            "label": GRAPH_STAGE_LABELS["act"],
+            "agent_id": GRAPH_STAGE_AGENTS["act"],
+            "status": act_status,
+            "summary": act_summary,
+            "outputs": act_outputs,
+            "events": act_events,
+            "metadata": {
+                "selected_action_count": len(selected_actions),
+                "launched_action_count": len(run_results),
+            },
+        },
+        {
+            "id": "verify",
+            "label": GRAPH_STAGE_LABELS["verify"],
+            "agent_id": GRAPH_STAGE_AGENTS["verify"],
+            "status": verify_status,
+            "summary": f"Prepared {len(verify_outputs)} verification note(s).",
+            "outputs": verify_outputs,
+            "events": verify_events,
+        },
+        {
+            "id": "summarize",
+            "label": GRAPH_STAGE_LABELS["summarize"],
+            "agent_id": GRAPH_STAGE_AGENTS["summarize"],
+            "status": summarize_status,
+            "summary": str(run.get("summary") or "No summary recorded yet."),
+            "outputs": summarize_outputs,
+            "events": summarize_events,
+        },
+    ]
+    return stages
+
+
+def _synchronize_graph_workflow_locked(workflow: Dict[str, Any]) -> None:
+    run_results = workflow.get("run_results")
+    if not isinstance(run_results, list):
+        return
+
+    selected_actions = list(workflow.get("selected_actions", []))
+    result_by_key = {
+        (result.get("agent_id"), result.get("action_id")): result
+        for result in run_results
+        if result.get("agent_id") and result.get("action_id")
+    }
+
+    for step in workflow.get("steps", []):
+        agent_id = step.get("agent_id")
+        action_id = step.get("action_id")
+        if not action_id:
+            mapped = next(
+                (
+                    item.get("action_id")
+                    for item in selected_actions
+                    if item.get("agent_id") == agent_id and item.get("action_id")
+                ),
+                None,
+            )
+            if mapped:
+                step["action_id"] = mapped
+                step.setdefault("action_label", mapped)
+                action_id = mapped
+        if not agent_id or not action_id:
+            continue
+        result = result_by_key.get((agent_id, action_id))
+        if result is None:
+            if workflow.get("approved") is True and step.get("status") == "completed":
+                step["status"] = "pending"
+            continue
+
+        status = str(result.get("status") or "unknown")
+        step["run_id"] = result.get("id") or result.get("run_id")
+        step["run_status"] = status
+        step["returncode"] = result.get("returncode")
+        step["message"] = f"{agent_id}:{action_id} -> {status}"
+        if status in {"starting", "running"}:
+            step["status"] = "running"
+        elif status in {"exited", "completed", "success"}:
+            step["status"] = "completed"
+            step["ended_at"] = result.get("ended_at") or time.time()
+            step.pop("error", None)
+        else:
+            step["status"] = "failed"
+            step["ended_at"] = result.get("ended_at") or time.time()
+            step["detail"] = result.get("detail")
+            step["error"] = str(result.get("detail") or f"Action {step.get('action_label', action_id)} failed.")
+
+    active_results = 0
+    failed_results = 0
+    verification_notes = []
+    for result in run_results:
+        agent_id = str(result.get("agent_id") or "unknown")
+        status = str(result.get("status") or "unknown")
+        detail = str(result.get("detail") or "").strip()
+        verification_notes.append(f"{agent_id} launch status: {status}" + (f". {detail}" if detail else ""))
+        if status in {"starting", "running"}:
+            active_results += 1
+        elif status not in {"exited", "completed", "success"}:
+            failed_results += 1
+
+    if verification_notes:
+        workflow["verification_notes"] = verification_notes
+
+    errors = list(workflow.get("errors", []))
+    if run_results:
+        workflow["status"] = "running" if active_results else "completed"
+    else:
+        workflow["status"] = "completed"
+
+    workflow["active_run_count"] = active_results
+    workflow["action_run_count"] = len(run_results)
+    workflow["completed_step_count"] = sum(1 for step in workflow.get("steps", []) if step.get("status") == "completed")
+    workflow["updated_at"] = time.time()
+    if workflow["status"] == "running":
+        workflow["completed_at"] = None
+    else:
+        workflow["completed_at"] = workflow.get("completed_at") or workflow["updated_at"]
+
+    recommendations = list(workflow.get("recommendations", []))
+    approval = workflow.get("approval_reason", "No approval note.")
+    verification_count = len(list(workflow.get("verification_notes", [])))
+    summary = (
+        f"Mode={workflow.get('mode', 'advisory')}. Approval: {approval} "
+        f"Recommendations={len(recommendations)}. "
+        f"Actions launched={len(run_results)}. "
+        f"Verification notes={verification_count}."
+    )
+    if errors:
+        summary += f" Errors={len(errors)}."
+    workflow["summary"] = summary
+    workflow["graph_steps"] = _build_graph_steps_payload(workflow)
+
+
+
+def _refresh_graph_workflow_locked(workflow: Dict[str, Any]) -> None:
+    _expire_workflow_locked(workflow)
+    run_results = workflow.get("run_results")
+    if not isinstance(run_results, list):
+        return
+
+    events = workflow.setdefault("events", [])
+    workflow_errors = [str(item) for item in workflow.get("errors", [])]
+    loaded_without_state = any("Loaded from persisted storage" in item for item in workflow_errors)
+    for result in run_results:
+        previous_status = str(result.get("status") or "")
+        run_id = result.get("id") or result.get("run_id")
+        child = RUNS.get(run_id) if run_id else None
+        if child is None:
+            if previous_status in {"starting", "running"} and (loaded_without_state or workflow.get("timed_out")):
+                result["status"] = "timed_out" if workflow.get("timed_out") else "failed"
+                result["returncode"] = result.get("returncode", -15)
+                result["ended_at"] = result.get("ended_at") or time.time()
+                result["detail"] = result.get("detail") or (workflow.get("errors") or ["Action state was unavailable after restart."])[-1]
+            continue
+        latest = child.to_public()
+        result.update(latest)
+        result.setdefault("agent_id", child.agent_id)
+        result.setdefault("action_id", child.action_id)
+        result.setdefault("label", child.label)
+        if child.status != previous_status and child.status in {"exited", "failed", "timed_out"}:
+            event_kind = "action-completed" if child.status == "exited" else ("action-timed-out" if child.status == "timed_out" else "action-failed")
+            detail = child.detail or f"Action {child.action_id} for {child.agent_id} finished with status {child.status}."
+            events.append(
+                {
+                    "timestamp": time.time(),
+                    "stage": "act",
+                    "kind": event_kind,
+                    "agent_id": child.agent_id,
+                    "content": detail,
+                    "metadata": {
+                        "action_id": child.action_id,
+                        "run_id": child.id,
+                        "returncode": child.returncode,
+                        "status": child.status,
+                    },
+                }
+            )
+
+    _synchronize_graph_workflow_locked(workflow)
+    _persist_workflow_run_locked(workflow)
+
+
+
+def _approve_graph_workflow_locked(workflow: Dict[str, Any], reason: str) -> Dict[str, Any]:
+    selected_actions = list(workflow.get("selected_actions", []))
+    if not selected_actions:
+        raise HTTPException(status_code=400, detail="This workflow does not have any mapped actions to approve.")
+
+    if isinstance(workflow.get("run_results"), list) and workflow["run_results"]:
+        _refresh_graph_workflow_locked(workflow)
+        return workflow
+
+    toolbox = _portal_toolbox_locked()
+    events = workflow.setdefault("events", [])
+    errors = list(workflow.get("errors", []))
+    run_results = list(workflow.get("run_results", []))
+    approval_reason = reason.strip() or "Manually approved from the portal UI. Execute the selected actions now."
+    workflow["approval_required"] = True
+    workflow["approved"] = True
+    workflow["approval_reason"] = approval_reason
+    workflow["status"] = "running"
+    workflow["completed_at"] = None
+    approved_duration, duration_note = _apply_workflow_duration_policy(str(workflow.get("workflow_id") or ""), workflow.get("duration_s"))
+    workflow["duration_s"] = approved_duration
+    workflow["execution_started_at"] = time.time()
+    workflow["execution_deadline_at"] = workflow["execution_started_at"] + workflow["duration_s"]
+    if duration_note:
+        workflow.setdefault("errors", []).append(duration_note)
+
+    approval_event = toolbox.event(
+        "approve",
+        "manual-approval",
+        approval_reason,
+        agent_id="rc",
+        metadata={
+            "approved": True,
+            "approval_required": True,
+            "manual": True,
+            "mode": workflow.get("mode", "advisory"),
+            "action_count": len(selected_actions),
+        },
+    ) if toolbox is not None else {
+        "timestamp": time.time(),
+        "stage": "approve",
+        "kind": "manual-approval",
+        "agent_id": "rc",
+        "content": approval_reason,
+        "metadata": {
+            "approved": True,
+            "approval_required": True,
+            "manual": True,
+            "mode": workflow.get("mode", "advisory"),
+            "action_count": len(selected_actions),
+        },
+    }
+    events.append(approval_event)
+
+    for item in selected_actions:
+        agent_id = str(item.get("agent_id") or "unknown")
+        action_id = str(item.get("action_id") or "unknown")
+        label = str(item.get("label") or action_id)
+        _record_message(
+            "orchestrator",
+            agent_id,
+            f"Manual approval granted for workflow '{workflow.get('label', workflow.get('workflow_id', 'workflow'))}'. Execute {label} now.",
+            "graph-handoff",
+        )
+        try:
+            launched = _run_action_public_locked(agent_id, action_id)
+            launched.setdefault("agent_id", agent_id)
+            launched.setdefault("action_id", action_id)
+            launched.setdefault("label", label)
+            run_results.append(dict(launched))
+            events.append(
+                (toolbox.event(
+                    "act",
+                    "action-launched",
+                    f"Launched {label} for {agent_id} after manual approval.",
+                    agent_id=agent_id,
+                    metadata={"action_id": action_id, "run": dict(launched), "manual": True},
+                ) if toolbox is not None else {
+                    "timestamp": time.time(),
+                    "stage": "act",
+                    "kind": "action-launched",
+                    "agent_id": agent_id,
+                    "content": f"Launched {label} for {agent_id} after manual approval.",
+                    "metadata": {"action_id": action_id, "run": dict(launched), "manual": True},
+                })
+            )
+        except Exception as exc:
+            errors.append(str(exc))
+            events.append(
+                (toolbox.event(
+                    "act",
+                    "action-error",
+                    f"Failed to launch {label} for {agent_id}: {exc}",
+                    agent_id=agent_id,
+                    metadata={"action_id": action_id, "manual": True},
+                ) if toolbox is not None else {
+                    "timestamp": time.time(),
+                    "stage": "act",
+                    "kind": "action-error",
+                    "agent_id": agent_id,
+                    "content": f"Failed to launch {label} for {agent_id}: {exc}",
+                    "metadata": {"action_id": action_id, "manual": True},
+                })
+            )
+
+    if run_results:
+        events.append(
+            (toolbox.event(
+                "verify",
+                "verification",
+                f"Prepared {len(run_results)} launch-status verification note(s) after manual approval.",
+            ) if toolbox is not None else {
+                "timestamp": time.time(),
+                "stage": "verify",
+                "kind": "verification",
+                "agent_id": "orchestrator",
+                "content": f"Prepared {len(run_results)} launch-status verification note(s) after manual approval.",
+                "metadata": {},
+            })
+        )
+
+    workflow["errors"] = errors
+    workflow["run_results"] = run_results
+    workflow["events"] = events
+    _synchronize_graph_workflow_locked(workflow)
+    _persist_workflow_run_locked(workflow)
+    return workflow
+
+
+def _service_targets() -> List[Dict[str, str]]:
+    portal_bind_host = os.getenv("FLEXRIC_AGENT_PORTAL_HOST", "127.0.0.1")
+    portal_host = _normalize_runtime_host(portal_bind_host)
+    portal_public_host = _display_runtime_host(portal_bind_host, os.getenv("FLEXRIC_AGENT_PORTAL_PUBLIC_HOST", ""))
+    portal_port = os.getenv("FLEXRIC_AGENT_PORTAL_PORT", "8088")
+    rpc_bind_host = os.getenv("XAPP_RPC_HOST", "127.0.0.1")
+    rpc_host = _normalize_runtime_host(rpc_bind_host)
+    rpc_public_host = _display_runtime_host(rpc_bind_host, os.getenv("XAPP_RPC_PUBLIC_HOST", ""))
+    rpc_port = os.getenv("XAPP_RPC_PORT", "8090")
+    mcp_bind_host = os.getenv("MCP_HOST", "127.0.0.1")
+    mcp_host = _normalize_runtime_host(mcp_bind_host)
+    mcp_public_host = _display_runtime_host(mcp_bind_host, os.getenv("MCP_PUBLIC_HOST", ""))
+    mcp_port = os.getenv("MCP_PORT", "8000")
+    kpm_bus_bind_host = os.getenv("KPM_BUS_HOST", "127.0.0.1")
+    kpm_bus_host = _normalize_runtime_host(kpm_bus_bind_host)
+    kpm_bus_public_host = _display_runtime_host(kpm_bus_bind_host, os.getenv("KPM_BUS_PUBLIC_HOST", ""))
+    kpm_bus_port = os.getenv("KPM_BUS_PORT", "8091")
+
+    return [
+        {
+            "id": "portal",
+            "label": "Agent Portal",
+            "url": f"http://{portal_host}:{portal_port}/api/overview",
+            "public_url": f"http://{portal_public_host}:{portal_port}/",
+        },
+        {
+            "id": "rpc",
+            "label": "xApp RPC",
+            "url": f"http://{rpc_host}:{rpc_port}/health",
+            "public_url": f"http://{rpc_public_host}:{rpc_port}/health",
+        },
+        {
+            "id": "mcp",
+            "label": "MCP Metrics",
+            "url": f"http://{mcp_host}:{mcp_port}/healthz",
+            "public_url": f"http://{mcp_public_host}:{mcp_port}/healthz",
+        },
+        {
+            "id": "kpm_bus",
+            "label": "KPM Bus",
+            "url": f"http://{kpm_bus_host}:{kpm_bus_port}/healthz",
+            "public_url": f"http://{kpm_bus_public_host}:{kpm_bus_port}/healthz",
+        },
+    ]
+
+
+def _kpm_bus_base_url() -> str:
+    kpm_bus_bind_host = os.getenv("KPM_BUS_HOST", "127.0.0.1")
+    kpm_bus_host = _normalize_runtime_host(kpm_bus_bind_host)
+    kpm_bus_port = os.getenv("KPM_BUS_PORT", "8091")
+    return f"http://{kpm_bus_host}:{kpm_bus_port}"
+
+
+def _parse_kpm_line(raw: str, seq: Optional[int] = None, ts: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    match = _KPM_LINE_RE.search(str(raw or "").strip())
+    if not match:
+        return None
+    value_text = match.group("value")
+    try:
+        value = float(value_text)
+    except ValueError:
+        return None
+    return {
+        "seq": int(seq or 0),
+        "ts": ts,
+        "ue_type": match.group("ue_type"),
+        "ue_id": match.group("ue_id"),
+        "measurement": match.group("meas"),
+        "value": value,
+        "raw": raw,
+    }
+
+
+def _kpm_recent_records(limit: int = 180) -> Dict[str, Any]:
+    try:
+        response = requests.get(
+            f"{_kpm_bus_base_url()}/kpm/recent",
+            params={"mode": "all", "limit": max(20, min(limit, 400))},
+            timeout=1.5,
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except Exception as exc:
+        return {
+            "ok": False,
+            "status": "down",
+            "detail": f"KPM bus unavailable: {exc}",
+            "records": [],
+            "record_count": 0,
+            "indication_count": 0,
+            "last_ts": None,
+        }
+
+    parsed: List[Dict[str, Any]] = []
+    for record in payload.get("records", []):
+        point = _parse_kpm_line(record.get("raw"), seq=record.get("seq"), ts=record.get("ts"))
+        if point is not None:
+            parsed.append(point)
+    payload["parsed_records"] = parsed
+    payload["ok"] = bool(payload.get("ok", True))
+    return payload
+
+
+def _kpm_figure(metric_names: List[str], title: str, unit: str, description: str, records: List[Dict[str, Any]], colors: Dict[str, str]) -> Dict[str, Any]:
+    series = []
+    latest_values: List[Dict[str, Any]] = []
+    for metric_name in metric_names:
+        metric_records = [record for record in records if record["measurement"] == metric_name]
+        points = [
+            {
+                "x": index + 1,
+                "y": record["value"],
+                "seq": record["seq"],
+                "ts": record["ts"],
+                "label": metric_name,
+            }
+            for index, record in enumerate(metric_records[-40:])
+        ]
+        if metric_records:
+            latest = metric_records[-1]
+            latest_values.append(
+                {
+                    "measurement": metric_name,
+                    "value": latest["value"],
+                    "seq": latest["seq"],
+                    "ts": latest["ts"],
+                }
+            )
+        series.append(
+            {
+                "id": metric_name,
+                "label": metric_name.split(".")[-1],
+                "measurement": metric_name,
+                "color": colors.get(metric_name, "#0f6d78"),
+                "points": points,
+            }
+        )
+    sample_count = sum(len(item["points"]) for item in series)
+    return {
+        "title": title,
+        "unit": unit,
+        "description": description,
+        "sample_count": sample_count,
+        "series": series,
+        "latest_values": latest_values,
+    }
+
+
+def _kpm_agent_figures_payload() -> Dict[str, Any]:
+    payload = _kpm_recent_records()
+    records = payload.get("parsed_records", [])
+    figures = [
+        _kpm_figure(
+            ["RRU.PrbTotDl", "RRU.PrbTotUl"],
+            "RRU PRB Levels",
+            "PRB",
+            "Latest downlink and uplink PRB totals from the shared KPM subscription.",
+            records,
+            {"RRU.PrbTotDl": "#0f6d78", "RRU.PrbTotUl": "#cc6b49"},
+        ),
+        _kpm_figure(
+            ["DRB.UEThpDl", "DRB.UEThpUl", "DRB.RlcSduDelayDl"],
+            "UE Throughput And Delay",
+            "Throughput / Delay",
+            "Downlink and uplink throughput with RLC delay from the same telemetry stream.",
+            records,
+            {
+                "DRB.UEThpDl": "#114b5f",
+                "DRB.UEThpUl": "#2f7d32",
+                "DRB.RlcSduDelayDl": "#b85c38",
+            },
+        ),
+    ]
+    recent_measurements = [
+        {
+            "measurement": record["measurement"],
+            "value": record["value"],
+            "ue_id": record["ue_id"],
+            "ts": record["ts"],
+            "seq": record["seq"],
+        }
+        for record in records[-8:]
+    ]
+    return {
+        "ok": bool(payload.get("ok")) and any(figure["sample_count"] > 0 for figure in figures),
+        "status": "ready" if bool(payload.get("ok")) and records else str(payload.get("status", "warning")),
+        "detail": payload.get("detail", "KPM figure data is unavailable."),
+        "source": {
+            "service": "kpm_bus",
+            "url": f"{_kpm_bus_base_url()}/kpm/recent",
+            "indication_count": int(payload.get("indication_count", 0)),
+            "record_count": len(records),
+            "last_ts": payload.get("last_ts"),
+        },
+        "figures": figures,
+        "recent_measurements": recent_measurements,
+    }
+
+
+def _service_health() -> List[Dict[str, Any]]:
+    timeout_s = float(os.getenv("FLEXRIC_AGENT_PORTAL_HEALTH_TIMEOUT", "1.5"))
+    statuses: List[Dict[str, Any]] = []
+
+    for target in _service_targets():
+        started_at = time.time()
+        status = {
+            "id": target["id"],
+            "label": target["label"],
+            "url": target["url"],
+            "public_url": target.get("public_url", target["url"]),
+            "ok": False,
+            "status": "down",
+            "latency_ms": None,
+            "detail": "",
+        }
+        if target["id"] == "portal":
+            status["ok"] = True
+            status["status"] = "ready"
+            status["latency_ms"] = 0
+            status["detail"] = "Local portal process is serving this request."
+            statuses.append(status)
+            continue
+        try:
+            response = requests.get(target["url"], timeout=timeout_s)
+            latency_ms = int((time.time() - started_at) * 1000)
+            status["latency_ms"] = latency_ms
+            payload = None
+            try:
+                payload = response.json()
+            except Exception:
+                payload = None
+
+            if payload is not None and isinstance(payload, dict):
+                if payload.get("ok") is True:
+                    status["ok"] = True
+                    status["status"] = "ready"
+                    status["detail"] = payload.get("detail", f"HTTP {response.status_code}")
+                else:
+                    reported = str(payload.get("status", "")).lower()
+                    if reported in {"ok", "success", "ready"}:
+                        status["ok"] = True
+                        status["status"] = "ready"
+                    elif reported == "warning":
+                        status["ok"] = False
+                        status["status"] = "warning"
+                    else:
+                        status["ok"] = response.ok
+                        status["status"] = "ready" if response.ok else "warning"
+                    status["detail"] = str(
+                        payload.get("detail")
+                        or payload.get("message")
+                        or f"HTTP {response.status_code}"
+                    )
+            else:
+                status["ok"] = response.ok
+                status["status"] = "ready" if response.ok else "warning"
+                if response.ok:
+                    status["detail"] = f"HTTP {response.status_code}"
+                else:
+                    status["detail"] = f"HTTP {response.status_code}: {response.text[:200].strip()}"
+        except Exception as exc:
+            status["detail"] = str(exc)
+        statuses.append(status)
+
+    return statuses
+
+
+def _runtime_safety_locked() -> Dict[str, Any]:
+    services = _service_health()
+    essential_ids = {"portal", "rpc", "kpm_bus"}
+    essential = [service for service in services if service.get("id") in essential_ids]
+    optional = [service for service in services if service.get("id") not in essential_ids]
+    active_actions = [run.to_public() for run in RUNS.values() if run.status in {"starting", "running"}]
+    active_workflows = [
+        {
+            "id": workflow.get("id"),
+            "label": workflow.get("label"),
+            "status": workflow.get("status"),
+            "mode": workflow.get("mode"),
+        }
+        for workflow in WORKFLOW_RUNS
+        if str(workflow.get("status") or "") in {"starting", "running"}
+    ]
+    blockers: List[str] = []
+    warnings: List[str] = []
+    not_ready_essential = [service for service in essential if not service.get("ok")]
+    if not_ready_essential:
+        blockers.append(
+            "Core services are not fully ready: "
+            + ", ".join(service.get("label", service.get("id", "service")) for service in not_ready_essential)
+            + "."
+        )
+    if active_actions:
+        blockers.append(
+            "Active local action runs are still in progress: "
+            + ", ".join(f"{item['agent_id']}:{item['action_id']}" for item in active_actions[:6])
+            + ("." if len(active_actions) <= 6 else ", ...")
+        )
+    if active_workflows:
+        blockers.append(
+            "Workflow runs are still active: "
+            + ", ".join(f"{item['label']} ({str(item['id'])[:8]})" for item in active_workflows[:4])
+            + ("." if len(active_workflows) <= 4 else ", ...")
+        )
+    mcp_service = next((service for service in optional if service.get("id") == "mcp"), None)
+    if mcp_service is not None and not mcp_service.get("ok"):
+        warnings.append("MCP is down. Advisory workflows can still run, but telemetry/tool coverage is reduced.")
+    if not blockers:
+        warnings.append("Runtime is clean for the next test run.")
+
+    return {
+        "status": "ready" if not blockers else "attention",
+        "safe_for_enforced": not blockers,
+        "clear_to_test": not active_actions and not active_workflows,
+        "blockers": blockers,
+        "warnings": warnings,
+        "active_action_count": len(active_actions),
+        "active_workflow_count": len(active_workflows),
+        "active_actions": active_actions[:10],
+        "active_workflows": active_workflows[:10],
+        "essential_service_count": len(essential),
+        "essential_ready_count": sum(1 for service in essential if service.get("ok")),
+        "recommended_windows": {workflow_id: _workflow_recommended_duration_s(workflow_id) for workflow_id in WORKFLOW_TEMPLATES.keys()},
+        "reset_endpoint": "/api/runtime/reset",
+    }
+
+
+def _reset_runtime_locked(clear_saved_workflows: bool = False) -> Dict[str, Any]:
+    stopped_runs = 0
+    for run in list(RUNS.values()):
+        if run.status in {"starting", "running"}:
+            _terminate_run_locked(run, "Portal runtime reset requested.")
+            stopped_runs += 1
+    RUNS.clear()
+    TASKS.clear()
+    MESSAGES.clear()
+    WORKFLOW_RUNS.clear()
+    AGENTS.clear()
+    AGENTS.update(_build_agents())
+    _clear_persisted_workflow_runs_locked()
+    if clear_saved_workflows:
+        _clear_saved_workflows_locked()
+    return {
+        "status": "success",
+        "detail": "Runtime state was reset to a clean baseline.",
+        "stopped_run_count": stopped_runs,
+        "cleared": {
+            "runs": True,
+            "tasks": True,
+            "messages": True,
+            "workflow_runs": True,
+            "saved_workflows": bool(clear_saved_workflows),
+        },
+        "safety": _runtime_safety_locked(),
+    }
+
+
+def _multi_agent_summary() -> Dict[str, Any]:
+    runs = sorted(WORKFLOW_RUNS, key=lambda item: item["started_at"], reverse=True)
+    latest_workflow = runs[0] if runs else None
+    recent_messages = list(reversed(MESSAGES[-10:]))
+    active_runs = [run for run in RUNS.values() if run.status in {"starting", "running"}]
+    agents_with_actions = [agent.id for agent in AGENTS.values() if agent.actions]
+    agents_with_runs = sorted({run.agent_id for run in RUNS.values()})
+    services = _service_health()
+    ready_services = sum(1 for service in services if service["ok"])
+
+    return {
+        "status": "ready" if ready_services == len(services) else "warning",
+        "service_count": len(services),
+        "ready_service_count": ready_services,
+        "workflow_run_count": len(WORKFLOW_RUNS),
+        "message_count": len(MESSAGES),
+        "task_count": len(TASKS),
+        "active_run_count": len(active_runs),
+        "agents_with_actions": agents_with_actions,
+        "agents_with_runs": agents_with_runs,
+        "graph_backend": (latest_workflow or {}).get("graph_backend", graph_backend_name()),
+        "latest_workflow": latest_workflow,
+        "latest_workflow_events": list((latest_workflow or {}).get("events", [])[-12:]),
+        "recent_messages": recent_messages,
+        "services": services,
+    }
+
+
+def _terminate_run_locked(run: RunState, reason: str) -> None:
+    if run.proc is not None and run.status in {"starting", "running"}:
+        try:
+            os.killpg(run.proc.pid, 15)
+        except Exception:
+            try:
+                run.proc.terminate()
+            except Exception:
+                pass
+        try:
+            run.proc.wait(timeout=5)
+        except Exception:
+            try:
+                os.killpg(run.proc.pid, 9)
+            except Exception:
+                try:
+                    run.proc.kill()
+                except Exception:
+                    pass
+            try:
+                run.proc.wait(timeout=2)
+            except Exception:
+                pass
+    if run.returncode is None:
+        try:
+            run.returncode = run.proc.returncode if run.proc is not None else -15
+        except Exception:
+            run.returncode = -15
+    run.ended_at = time.time()
+    run.termination_reason = reason
+    run.status = "timed_out" if "execution window" in reason else "failed"
+    run.detail = _summarize_run_failure(run)
+    agent = AGENTS.get(run.agent_id)
+    if agent is not None:
+        agent.status = "warning"
+        agent.activity = f"Action '{run.label}' stopped: {reason}"
+        agent.timeline.insert(0, _timeline(f"Stopped action {run.action_id}: {reason}"))
+
+
+def _workflow_execution_started_at(workflow: Dict[str, Any]) -> float:
+    return float(workflow.get("execution_started_at") or workflow.get("started_at") or time.time())
+
+
+def _expire_workflow_locked(workflow: Dict[str, Any]) -> None:
+    if str(workflow.get("status") or "") not in {"running", "starting"}:
+        return
+    duration_s = _normalize_workflow_duration_s(workflow.get("duration_s"))
+    workflow["duration_s"] = duration_s
+    execution_started_at = _workflow_execution_started_at(workflow)
+    workflow.setdefault("execution_started_at", execution_started_at)
+    deadline = float(workflow.get("execution_deadline_at") or (execution_started_at + duration_s))
+    workflow["execution_deadline_at"] = deadline
+    if time.time() <= deadline:
+        return
+
+    reason = f"Workflow exceeded its {duration_s}s execution window."
+    now = time.time()
+    timed_out_any = False
+    for step in workflow.get("steps", []):
+        if step.get("status") != "running":
+            continue
+        run_id = step.get("run_id")
+        child = RUNS.get(run_id) if run_id else None
+        if child is not None and child.status not in {"starting", "running"}:
+            step["run_status"] = child.status
+            step["returncode"] = child.returncode
+            step["detail"] = child.detail
+            step["ended_at"] = child.ended_at or now
+            if child.status == "exited":
+                step["status"] = "completed"
+                step.pop("error", None)
+            else:
+                step["status"] = "failed"
+                step["error"] = child.detail or reason
+            continue
+        if child is not None:
+            _terminate_run_locked(child, reason)
+            step["run_status"] = child.status
+            step["returncode"] = child.returncode
+            step["detail"] = child.detail or reason
+        else:
+            step["run_status"] = "timed_out"
+            step["returncode"] = -15
+            step["detail"] = reason
+        step["status"] = "failed"
+        step["error"] = step.get("detail") or reason
+        step["ended_at"] = now
+        timed_out_any = True
+
+    if not timed_out_any:
+        return
+
+    errors = workflow.setdefault("errors", [])
+    if reason not in errors:
+        errors.append(reason)
+    workflow["timed_out"] = True
+    workflow["status"] = "completed"
+    workflow["completed_at"] = now
+    workflow["updated_at"] = now
+
+
+def _poll_runs_locked() -> None:
+    for run in RUNS.values():
+        if run.proc is None or run.status not in {"starting", "running"}:
+            continue
+        rc = run.proc.poll()
+        if rc is None:
+            run.status = "running"
+            continue
+        run.returncode = rc
+        run.ended_at = time.time()
+        run.status = "exited" if rc == 0 else (run.status if run.status == "timed_out" else "failed")
+        run.detail = "Completed successfully." if rc == 0 else _summarize_run_failure(run)
+        agent = AGENTS.get(run.agent_id)
+        if agent:
+            agent.status = "ready" if rc == 0 else "warning"
+            agent.activity = f"Last action '{run.label}' finished with status={run.status}."
+            timeline_note = f"Completed action {run.action_id} rc={rc}" if rc == 0 else f"Action {run.action_id} ended: {run.detail}"
+            agent.timeline.insert(0, _timeline(timeline_note))
+
+
+def _default_workflow_action(agent: AgentCard, workflow_id: str) -> Optional[AgentAction]:
+    preferred = WORKFLOW_ACTIONS.get(workflow_id, {}).get(agent.id)
+    if preferred:
+        for action in agent.actions:
+            if action.id == preferred:
+                return action
+    return agent.actions[0] if agent.actions else None
+
+
+def _begin_workflow_step_locked(run: Dict[str, Any], idx: int) -> bool:
+    step = run["steps"][idx]
+    if step["status"] != "pending":
+        return step["status"] in {"running", "failed"}
+
+    agent_id = step["agent_id"]
+    agent = AGENTS[agent_id]
+
+    if idx == 0:
+        message = f"Goal received: {run['goal']}"
+    else:
+        prev = run["steps"][idx - 1]["agent_id"]
+        message = f"Handoff from {prev} to {agent_id} for workflow '{run['label']}'"
+        _record_message(prev, agent_id, message, "workflow-handoff")
+
+    step["message"] = message
+    step["started_at"] = time.time()
+    agent.status = "active"
+    agent.activity = message
+    agent.timeline.insert(0, _timeline(message))
+
+    action = _default_workflow_action(agent, run["workflow_id"])
+    if action is None:
+        step["status"] = "completed"
+        step["ended_at"] = time.time()
+        agent.status = "ready"
+        if idx == len(run["steps"]) - 1:
+            agent.activity = "Workflow chain reached final validation stage."
+        return False
+
+    try:
+        launched = _run_action_locked(agent, action)
+        step["status"] = "running"
+        step["action_id"] = action.id
+        step["action_label"] = action.label
+        step["run_id"] = launched.id
+        step["run_status"] = launched.status
+        return True
+    except Exception as exc:
+        step["status"] = "failed"
+        step["detail"] = str(exc)
+        step["error"] = str(exc)
+        step["ended_at"] = time.time()
+        agent.status = "warning"
+        agent.activity = f"Workflow action launch failed: {action.label}"
+        agent.timeline.insert(0, _timeline(f"Workflow action {action.id} failed to launch: {exc}"))
+        run["status"] = "completed"
+        run["completed_at"] = step["ended_at"]
+        return True
+
+
+def _advance_workflow_locked(run: Dict[str, Any]) -> None:
+    if run.get("status") == "completed":
+        return
+
+    while True:
+        running = next((step for step in run["steps"] if step["status"] == "running"), None)
+        if running is not None:
+            run["status"] = "running"
+            return
+
+        pending_idx = next((idx for idx, step in enumerate(run["steps"]) if step["status"] == "pending"), None)
+        if pending_idx is None:
+            run["status"] = "completed"
+            run["completed_at"] = run.get("completed_at") or time.time()
+            return
+
+        should_wait = _begin_workflow_step_locked(run, pending_idx)
+        if should_wait:
+            return
+
+
+def _poll_workflows_locked() -> None:
+    for workflow in WORKFLOW_RUNS:
+        _expire_workflow_locked(workflow)
+        for step in workflow["steps"]:
+            if step["status"] != "running":
+                continue
+            run_id = step.get("run_id")
+            child = RUNS.get(run_id) if run_id else None
+            if child is None:
+                continue
+            step["run_status"] = child.status
+            step["returncode"] = child.returncode
+            step["detail"] = child.detail
+            if child.ended_at is not None:
+                step["ended_at"] = child.ended_at
+            if child.status == "exited":
+                step["status"] = "completed"
+            elif child.status in {"failed", "timed_out"}:
+                step["status"] = "failed"
+                step["error"] = child.detail or f"Action {step.get('action_label', step.get('action_id', run_id))} failed."
+                workflow["status"] = "completed"
+                workflow["completed_at"] = child.ended_at or time.time()
+
+        if not any(step.get("status") == "failed" for step in workflow["steps"]):
+            _advance_workflow_locked(workflow)
+
+        workflow["completed_step_count"] = sum(1 for step in workflow["steps"] if step["status"] == "completed")
+        workflow["active_run_count"] = sum(1 for step in workflow["steps"] if step["status"] == "running")
+        workflow["action_run_count"] = sum(1 for step in workflow["steps"] if step.get("run_id"))
+        if workflow.get("status") == "completed":
+            workflow["completed_at"] = workflow.get("completed_at") or time.time()
+        if isinstance(workflow.get("run_results"), list):
+            _refresh_graph_workflow_locked(workflow)
+
+
+def _tail_lines(path: str, lines: int = 20) -> List[str]:
+    p = Path(path)
+    if not p.exists():
+        return []
+    data = p.read_text(errors="replace").splitlines()
+    return data[-max(1, lines):]
+
+
+def _agent_tasks(agent_id: str, limit: int = 10) -> List[TaskState]:
+    tasks = [task for task in TASKS if task.agent_id == agent_id]
+    return sorted(tasks, key=lambda item: item.started_at, reverse=True)[:limit]
+
+
+def _agent_payload(agent: AgentCard) -> Dict[str, Any]:
+    payload = asdict(agent)
+    payload["actions"] = [asdict(action) for action in agent.actions]
+    payload["latest_run"] = None
+    payload["latest_task"] = None
+    runs = [run for run in RUNS.values() if run.agent_id == agent.id]
+    if runs:
+        latest = sorted(runs, key=lambda item: item.started_at, reverse=True)[0]
+        payload["latest_run"] = latest.to_public()
+        payload["latest_run"]["tail"] = _tail_lines(latest.log_path)
+    tasks = _agent_tasks(agent.id, limit=5)
+    payload["tasks"] = [task.to_public() for task in tasks]
+    if tasks:
+        payload["latest_task"] = tasks[0].to_public()
+    return payload
+
+
+def _overview_payload() -> Dict[str, Any]:
+    with STATE_LOCK:
+        _poll_runs_locked()
+        _poll_workflows_locked()
+        return {
+            "title": "FlexRIC Agent Portal",
+            "providers": _provider_statuses(),
+            "agents": [_agent_payload(agent) for agent in AGENTS.values()],
+            "workflow_templates": WORKFLOW_TEMPLATES,
+            "messages": list(reversed(MESSAGES[-30:])),
+            "runs": [run.to_public() for run in sorted(RUNS.values(), key=lambda item: item.started_at, reverse=True)[:20]],
+            "tasks": [task.to_public() for task in sorted(TASKS, key=lambda item: item.started_at, reverse=True)[:20]],
+            "multi_agent": _multi_agent_summary(),
+            "runtime_safety": _runtime_safety_locked(),
+            "platform": _platform_payload_locked(),
+            "saved_workflows": _saved_workflows_locked(),
+        }
+
+
+def _record_message(source_id: str, target_id: str, content: str, kind: str) -> Dict[str, Any]:
+    source = AGENTS[source_id]
+    target = AGENTS[target_id]
+    msg = {
+        "id": uuid.uuid4().hex,
+        "timestamp": time.time(),
+        "source_id": source_id,
+        "target_id": target_id,
+        "kind": kind,
+        "content": content,
+    }
+    MESSAGES.append(msg)
+    source.activity = f"Sent {kind} message to {target.name}."
+    target.activity = f"Received {kind} message from {source.name}."
+    source.timeline.insert(0, _timeline(f"Sent {kind} to {target_id}: {content}"))
+    target.timeline.insert(0, _timeline(f"Received {kind} from {source_id}: {content}"))
+    return msg
+
+
+def _agent_context(agent: AgentCard) -> str:
+    task = _agent_tasks(agent.id, limit=1)
+    latest_task = task[0].response if task else "None"
+    latest_messages = [
+        msg for msg in reversed(MESSAGES)
+        if msg["source_id"] == agent.id or msg["target_id"] == agent.id
+    ][:4]
+    lines = [
+        f"Agent: {agent.name}",
+        f"Role: {agent.role}",
+        f"Service model: {agent.service_model}",
+        f"Activity: {agent.activity}",
+        f"Skills: {', '.join(agent.skills)}",
+        f"Measurements: {', '.join(agent.measurements)}",
+        f"Use cases: {', '.join(agent.use_cases)}",
+        f"Peers: {', '.join(agent.peers)}",
+        f"Recent timeline: {' | '.join(agent.timeline[:4]) or 'None'}",
+        f"Recent task output: {latest_task[:1000]}",
+    ]
+    if latest_messages:
+        lines.append(
+            "Recent messages: "
+            + " | ".join(
+                f"{msg['source_id']}->{msg['target_id']}:{msg['content']}"
+                for msg in latest_messages
+            )
+        )
+    return "\n".join(lines)
+
+
+def _enabled_provider(provider_hint: str) -> Dict[str, Any]:
+    providers = _provider_statuses()
+    if provider_hint != "auto":
+        for provider in providers:
+            if provider["id"] == provider_hint:
+                if not provider["enabled"]:
+                    raise HTTPException(status_code=400, detail=f"Provider {provider_hint} is not configured")
+                return provider
+        raise HTTPException(status_code=404, detail=f"Unknown provider {provider_hint}")
+
+    for provider in providers:
+        if provider["enabled"]:
+            return provider
+    raise HTTPException(status_code=400, detail="No LLM provider is configured. Set Ollama or OpenAI env vars first.")
+
+
+def _invoke_provider(provider: Dict[str, Any], agent: AgentCard, prompt: str) -> str:
+    system = (
+        "You are a FlexRIC service-model agent. Reply concisely with a practical network-automation answer, "
+        "including observations, risks, and the next best action."
+    )
+    context = _agent_context(agent)
+    full_prompt = f"{context}\n\nUser task:\n{prompt}"
+    timeout_s = int(os.getenv("FLEXRIC_AGENT_PROVIDER_TIMEOUT", "90"))
+
+    if provider["id"] == "ollama":
+        response = requests.post(
+            f"{provider['endpoint'].rstrip('/')}/api/generate",
+            json={
+                "model": provider["model"],
+                "system": system,
+                "prompt": full_prompt,
+                "stream": False,
+            },
+            timeout=timeout_s,
+        )
+        response.raise_for_status()
+        data = response.json()
+        text = data.get("response", "").strip()
+        if not text:
+            raise RuntimeError("Ollama returned an empty response")
+        return text
+
+    if provider["id"] == "openai":
+        api_key = os.getenv("OPENAI_API_KEY", "").strip()
+        response = requests.post(
+            f"{provider['endpoint'].rstrip('/')}/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": provider["model"],
+                "messages": [
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": full_prompt},
+                ],
+            },
+            timeout=timeout_s,
+        )
+        response.raise_for_status()
+        data = response.json()
+        text = data["choices"][0]["message"]["content"].strip()
+        if not text:
+            raise RuntimeError("OpenAI-compatible endpoint returned an empty response")
+        return text
+
+    raise RuntimeError(f"Unsupported provider: {provider['id']}")
+
+
+def _run_task_locked(agent: AgentCard, provider_hint: str, prompt: str) -> TaskState:
+    provider = _enabled_provider(provider_hint)
+    task = TaskState(
+        id=uuid.uuid4().hex,
+        agent_id=agent.id,
+        provider_id=provider["id"],
+        prompt=prompt,
+        status="running",
+        started_at=time.time(),
+    )
+    TASKS.append(task)
+    agent.status = "active"
+    agent.activity = f"Thinking with {provider['label']}."
+    agent.timeline.insert(0, _timeline(f"Started LLM task via {provider['id']}"))
+
+    try:
+        task.response = _invoke_provider(provider, agent, prompt)
+        task.status = "completed"
+        agent.status = "ready"
+        agent.activity = f"Completed LLM task via {provider['label']}."
+        agent.timeline.insert(0, _timeline(f"Completed LLM task via {provider['id']}"))
+    except Exception as exc:
+        task.status = "failed"
+        task.error = str(exc)
+        agent.status = "warning"
+        agent.activity = f"LLM task failed via {provider['label']}."
+        agent.timeline.insert(0, _timeline(f"LLM task failed via {provider['id']}: {exc}"))
+    finally:
+        task.ended_at = time.time()
+    return task
+
+
+def _run_action_locked(agent: AgentCard, action: AgentAction) -> RunState:
+    if not action.command:
+        raise HTTPException(status_code=400, detail=f"Action {action.id} does not launch a local suite")
+
+    active = next((item for item in RUNS.values() if item.agent_id == agent.id and item.status in {"starting", "running"}), None)
+    if active is not None:
+        raise RuntimeError(
+            f"Agent {agent.id} already has an active action ({active.action_id}, run {active.id[:8]}). Wait for it to finish before launching another one."
+        )
+
+    run_id = uuid.uuid4().hex
+    log_path = RUN_LOG_DIR / f"{agent.id}-{action.id}-{run_id}.log"
+    logf = open(log_path, "ab", buffering=0)
+    proc = subprocess.Popen(
+        action.command,
+        cwd=str(THIS_DIR),
+        stdout=logf,
+        stderr=subprocess.STDOUT,
+        start_new_session=True,
+    )
+    run = RunState(
+        id=run_id,
+        agent_id=agent.id,
+        action_id=action.id,
+        label=action.label,
+        cmd=action.command,
+        cwd=str(THIS_DIR),
+        log_path=str(log_path),
+        started_at=time.time(),
+        status="running",
+        pid=proc.pid,
+        proc=proc,
+    )
+    RUNS[run.id] = run
+    agent.status = "running"
+    agent.activity = f"Running action '{action.label}'."
+    agent.timeline.insert(0, _timeline(f"Started action {action.id} pid={proc.pid}"))
+    return run
+
+
+
+def _run_action_public_locked(agent_id: str, action_id: str) -> Dict[str, Any]:
+    agent = AGENTS.get(agent_id)
+    if agent is None:
+        raise HTTPException(status_code=404, detail=f"Unknown agent {agent_id}")
+    for action in agent.actions:
+        if action.id == action_id:
+            return _run_action_locked(agent, action).to_public()
+    raise HTTPException(status_code=404, detail=f"Unknown action {action_id} for {agent_id}")
+
+
+def _run_task_public_locked(agent_id: str, prompt: str, provider: str = "auto") -> Dict[str, Any]:
+    agent = AGENTS.get(agent_id)
+    if agent is None:
+        raise HTTPException(status_code=404, detail=f"Unknown agent {agent_id}")
+    return _run_task_locked(agent, provider, prompt).to_public()
+
+
+def _workflow_run_by_id(run_id: str) -> Dict[str, Any]:
+    for run in WORKFLOW_RUNS:
+        if run["id"] == run_id:
+            return run
+    raise HTTPException(status_code=404, detail="Unknown workflow run")
+
+
+def _workflow_events_by_id(run_id: str) -> List[Dict[str, Any]]:
+    run = _workflow_run_by_id(run_id)
+    return list(run.get("events", []))
+
+
+def _portal_toolbox_locked() -> Optional[PortalToolbox]:
+    if PortalToolbox is None:
+        return None
+    return PortalToolbox(
+        get_agent=lambda agent_id: _agent_payload(AGENTS[agent_id]),
+        list_agents=lambda: [_agent_payload(agent) for agent in AGENTS.values()],
+        service_health=_service_health,
+        record_message=_record_message,
+        launch_action=_run_action_public_locked,
+        run_task=_run_task_public_locked,
+        metadata={"backend": graph_backend_name()},
+    )
+
+
+def _workflow_run_from_graph_state(
+    workflow_id: str,
+    template: Dict[str, Any],
+    goal: str,
+    mode: str,
+    duration_s: int,
+    graph_state: Dict[str, Any],
+) -> Dict[str, Any]:
+    results_by_agent: Dict[str, Dict[str, Any]] = {}
+    run_results = [dict(item) for item in graph_state.get("run_results", [])]
+    for item in run_results:
+        agent_id = item.get("agent_id")
+        if agent_id:
+            results_by_agent[agent_id] = {
+                "action_id": item.get("action_id"),
+                "label": item.get("label"),
+                "run": item,
+            }
+
+    events = list(graph_state.get("events", []))
+    steps: List[Dict[str, Any]] = []
+    for agent_id in template["steps"]:
+        step = {
+            "agent_id": agent_id,
+            "status": "completed",
+            "message": f"Graph visited {agent_id}.",
+        }
+        agent_events = [event for event in events if event.get("agent_id") == agent_id]
+        if agent_events:
+            step["message"] = str(agent_events[-1].get("content") or step["message"])
+            step["events"] = agent_events
+        result = results_by_agent.get(agent_id)
+        if result is not None:
+            run = result["run"]
+            status = str(run.get("status", "unknown"))
+            step.update(
+                {
+                    "action_id": result.get("action_id"),
+                    "action_label": result.get("label"),
+                    "run_id": run.get("id"),
+                    "run_status": status,
+                    "output": f"{agent_id}:{result.get('action_id')} -> {status}",
+                }
+            )
+            if status in {"starting", "running"}:
+                step["status"] = "running"
+            elif status in {"exited", "completed", "success"}:
+                step["status"] = "completed"
+            else:
+                step["status"] = "failed"
+        steps.append(step)
+
+    if any(step["status"] == "running" for step in steps):
+        status = "running"
+    else:
+        status = "completed"
+
+    run = {
+        "id": uuid.uuid4().hex,
+        "workflow_id": workflow_id,
+        "label": template["label"],
+        "goal": goal,
+        "mode": mode,
+        "duration_s": _normalize_workflow_duration_s(duration_s),
+        "execution_started_at": None,
+        "execution_deadline_at": None,
+        "graph_backend": graph_state.get("graph_backend", graph_backend_name()),
+        "started_at": time.time(),
+        "updated_at": time.time(),
+        "status": status,
+        "completed_at": time.time() if status == "completed" else None,
+        "completed_step_count": sum(1 for step in steps if step["status"] == "completed"),
+        "active_run_count": sum(1 for step in steps if step["status"] == "running"),
+        "action_run_count": sum(1 for step in steps if step.get("run_id")),
+        "steps": steps,
+        "events": events,
+        "summary": graph_state.get("summary", ""),
+        "observations": list(graph_state.get("observations", [])),
+        "hypotheses": list(graph_state.get("hypotheses", [])),
+        "recommendations": list(graph_state.get("recommendations", [])),
+        "selected_actions": list(graph_state.get("selected_actions", [])),
+        "approval_required": bool(graph_state.get("approval_required")),
+        "approval_reason": graph_state.get("approval_reason", ""),
+        "approved": graph_state.get("approved"),
+        "run_results": run_results,
+        "verification_notes": list(graph_state.get("verification_notes", [])),
+        "errors": list(graph_state.get("errors", [])),
+    }
+    run["graph_steps"] = _build_graph_steps_payload(run)
+    return run
+
+
+def _a2a_adapter() -> Optional[A2AAdapter]:
+    if A2AAdapter is None or A2AHandlers is None:
+        return None
+    return A2AAdapter(
+        A2AHandlers(
+            list_agents=lambda: [_agent_payload(agent) for agent in AGENTS.values()],
+            get_agent_card=lambda agent_id: _agent_payload(AGENTS[agent_id]),
+            send_message=lambda source_id, target_id, content, kind: _record_message(source_id, target_id, content, kind),
+            run_workflow=lambda workflow_id, goal, mode: api_workflow_run(workflow_id, WorkflowRequest(goal=goal, mode=mode)),
+            get_workflow=lambda run_id: _workflow_run_by_id(run_id),
+            get_workflow_events=lambda run_id: _workflow_events_by_id(run_id),
+            run_task=lambda agent_id, prompt, provider: {"status": "success", "task": _run_task_public_locked(agent_id, prompt, provider)},
+            test_all=lambda include_actions, include_messages: api_test_all(
+                TestAllRequest(include_actions=include_actions, include_messages=include_messages)
+            ),
+            backend_name=graph_backend_name,
+        )
+    )
+
+
+def _test_all_agents_locked(include_actions: bool, include_messages: bool) -> Dict[str, Any]:
+    _poll_runs_locked()
+    summary = {
+        "id": uuid.uuid4().hex,
+        "started_at": time.time(),
+        "messages": [],
+        "runs": [],
+        "simulated": [],
+    }
+
+    order = ["orchestrator", "kpm", "mac", "slice", "tc", "rc", "rlc", "pdcp", "gtp"]
+    if include_messages:
+        for source_id, target_id in zip(order, order[1:]):
+            msg = _record_message(
+                source_id,
+                target_id,
+                f"Portal test chain from {source_id} to {target_id}. Review current state and prepare next step.",
+                "test-handoff",
+            )
+            summary["messages"].append(msg)
+
+    for agent_id in order:
+        agent = AGENTS[agent_id]
+        if include_actions and agent.actions:
+            action = agent.actions[0]
+            try:
+                run = _run_action_locked(agent, action)
+                summary["runs"].append(run.to_public())
+            except Exception as exc:
+                agent.status = "warning"
+                agent.timeline.insert(0, _timeline(f"Test-all launch failed for {action.id}: {exc}"))
+                summary["simulated"].append({"agent_id": agent_id, "error": str(exc)})
+        else:
+            agent.status = "ready"
+            agent.activity = "Test-all validated this agent card and workflow hooks."
+            agent.timeline.insert(0, _timeline("Validated via test-all dry run"))
+            summary["simulated"].append({"agent_id": agent_id, "status": "validated"})
+
+    return summary
+
+
+_init_portal_db()
+WORKFLOW_RUNS.extend(_load_persisted_workflow_runs())
+
+
+app = FastAPI(
+    title="FlexRIC Agent Portal",
+    description="Agent-centric orchestration layer for FlexRIC service models, workflows, and A2A-style handoffs.",
+)
+app.mount("/portal/assets", StaticFiles(directory=str(PORTAL_DIR)), name="portal-assets")
+
+
+@app.get("/", response_class=HTMLResponse)
+def home() -> str:
+    return _portal_html()
+
+
+@app.get("/agents/{agent_id}", response_class=HTMLResponse)
+def agent_page(agent_id: str) -> str:
+    if agent_id not in AGENTS:
+        raise HTTPException(status_code=404, detail="Unknown agent")
+    return _portal_html()
+
+
+@app.get("/platform", response_class=HTMLResponse)
+def platform_page() -> str:
+    return _portal_html()
+
+
+@app.get("/comparison", response_class=HTMLResponse)
+def comparison_page() -> str:
+    return _portal_html()
+
+
+@app.get("/workflows/{run_id}", response_class=HTMLResponse)
+def workflow_page(run_id: str) -> str:
+    with STATE_LOCK:
+        _poll_runs_locked()
+        _poll_workflows_locked()
+        _workflow_run_by_id(run_id)
+    return _portal_html()
+
+
+@app.get("/api/overview")
+def api_overview() -> Dict[str, Any]:
+    return _overview_payload()
+
+
+@app.get("/api/providers")
+def api_providers() -> List[Dict[str, Any]]:
+    return _provider_statuses()
+
+
+@app.get("/api/stack")
+def api_stack() -> Dict[str, Any]:
+    with STATE_LOCK:
+        _poll_runs_locked()
+        _poll_workflows_locked()
+        return _multi_agent_summary()
+
+
+@app.get("/api/platform")
+def api_platform() -> Dict[str, Any]:
+    with STATE_LOCK:
+        _poll_runs_locked()
+        _poll_workflows_locked()
+        return _platform_payload_locked()
+
+
+@app.post("/api/runtime/reset")
+def api_runtime_reset(request: RuntimeResetRequest) -> Dict[str, Any]:
+    with STATE_LOCK:
+        _poll_runs_locked()
+        _poll_workflows_locked()
+        return _reset_runtime_locked(clear_saved_workflows=request.clear_saved_workflows)
+
+
+@app.post("/api/runtime/mcp/start")
+def api_runtime_mcp_start() -> Dict[str, Any]:
+    with STATE_LOCK:
+        service = _start_mcp_service_locked()
+        return {"status": "success" if service.get("ok") else "warning", "service": service}
+
+
+@app.post("/api/runtime/mcp/stop")
+def api_runtime_mcp_stop() -> Dict[str, Any]:
+    with STATE_LOCK:
+        service = _stop_mcp_service_locked()
+        return {"status": "success", "service": service}
+
+
+@app.get("/api/agents")
+def api_agents() -> List[Dict[str, Any]]:
+    with STATE_LOCK:
+        _poll_runs_locked()
+        _poll_workflows_locked()
+        return [_agent_payload(agent) for agent in AGENTS.values()]
+
+
+@app.get("/api/agents/{agent_id}")
+def api_agent(agent_id: str) -> Dict[str, Any]:
+    with STATE_LOCK:
+        _poll_runs_locked()
+        _poll_workflows_locked()
+        agent = AGENTS.get(agent_id)
+        if agent is None:
+            raise HTTPException(status_code=404, detail="Unknown agent")
+        return _agent_payload(agent)
+
+
+@app.get("/api/agents/{agent_id}/figures")
+def api_agent_figures(agent_id: str) -> Dict[str, Any]:
+    if agent_id != "kpm":
+        raise HTTPException(status_code=404, detail="No figure service is wired for this agent yet.")
+    with STATE_LOCK:
+        _poll_runs_locked()
+        agent = AGENTS.get(agent_id)
+        if agent is None:
+            raise HTTPException(status_code=404, detail="Unknown agent")
+    return _kpm_agent_figures_payload()
+
+
+@app.post("/api/agents/{agent_id}/actions/{action_id}/run")
+def api_run_action(agent_id: str, action_id: str) -> Dict[str, Any]:
+    with STATE_LOCK:
+        _poll_runs_locked()
+        agent = AGENTS.get(agent_id)
+        if agent is None:
+            raise HTTPException(status_code=404, detail="Unknown agent")
+        for action in agent.actions:
+            if action.id == action_id:
+                try:
+                    run = _run_action_locked(agent, action)
+                except RuntimeError as exc:
+                    raise HTTPException(status_code=409, detail=str(exc)) from exc
+                return {"status": "success", "run": run.to_public()}
+        raise HTTPException(status_code=404, detail="Unknown action")
+
+
+@app.post("/api/agents/{agent_id}/tasks/run")
+def api_run_task(agent_id: str, request: AgentTaskRequest) -> Dict[str, Any]:
+    with STATE_LOCK:
+        _poll_runs_locked()
+        agent = AGENTS.get(agent_id)
+        if agent is None:
+            raise HTTPException(status_code=404, detail="Unknown agent")
+        task = _run_task_locked(agent, request.provider, request.prompt)
+        return {"status": "success" if task.status == "completed" else "failed", "task": task.to_public()}
+
+
+@app.get("/api/runs")
+def api_runs() -> List[Dict[str, Any]]:
+    with STATE_LOCK:
+        _poll_runs_locked()
+        _poll_workflows_locked()
+        runs = [run.to_public() for run in sorted(RUNS.values(), key=lambda item: item.started_at, reverse=True)]
+        for run in runs[:]:
+            run["tail"] = _tail_lines(run["log_path"])
+        return runs
+
+
+@app.get("/api/runs/{run_id}")
+def api_run(run_id: str) -> Dict[str, Any]:
+    with STATE_LOCK:
+        _poll_runs_locked()
+        _poll_workflows_locked()
+        run = RUNS.get(run_id)
+        if run is None:
+            raise HTTPException(status_code=404, detail="Unknown run")
+        payload = run.to_public()
+        payload["tail"] = _tail_lines(run.log_path)
+        return payload
+
+
+@app.get("/api/tasks")
+def api_tasks() -> List[Dict[str, Any]]:
+    with STATE_LOCK:
+        return [task.to_public() for task in sorted(TASKS, key=lambda item: item.started_at, reverse=True)]
+
+
+@app.post("/api/agents/{agent_id}/message")
+def api_agent_message(agent_id: str, request: MessageRequest) -> Dict[str, Any]:
+    with STATE_LOCK:
+        _poll_runs_locked()
+        if agent_id not in AGENTS or request.target_id not in AGENTS:
+            raise HTTPException(status_code=404, detail="Unknown agent in handoff")
+        message = _record_message(agent_id, request.target_id, request.content, request.kind)
+        return {"status": "success", "message": message}
+
+
+@app.post("/api/test-all")
+def api_test_all(request: TestAllRequest) -> Dict[str, Any]:
+    with STATE_LOCK:
+        result = _test_all_agents_locked(request.include_actions, request.include_messages)
+        return {"status": "success", "result": result}
+
+
+@app.post("/api/workflows/{workflow_id}/run")
+def api_workflow_run(workflow_id: str, request: WorkflowRequest) -> Dict[str, Any]:
+    template = WORKFLOW_TEMPLATES.get(workflow_id)
+    if template is None:
+        raise HTTPException(status_code=404, detail="Unknown workflow")
+
+    with STATE_LOCK:
+        _poll_runs_locked()
+        _poll_workflows_locked()
+        toolbox = _portal_toolbox_locked()
+        mode = request.mode.strip().lower() or "advisory"
+        safety = _runtime_safety_locked()
+        if mode == "enforced" and not safety.get("safe_for_enforced", False):
+            raise HTTPException(status_code=409, detail="Cannot start enforced workflow: " + " ".join(safety.get("blockers", [])))
+        duration_s, duration_note = _apply_workflow_duration_policy(workflow_id, request.duration_s)
+        if run_graph_workflow is not None and toolbox is not None:
+            graph_state = run_graph_workflow(
+                workflow_id=workflow_id,
+                workflow_label=template["label"],
+                goal=request.goal,
+                mode=mode,
+                agent_sequence=list(template["steps"]),
+                toolbox=toolbox,
+            )
+            run = _workflow_run_from_graph_state(workflow_id, template, request.goal, mode, duration_s, graph_state)
+            if duration_note:
+                run.setdefault("errors", []).append(duration_note)
+                run["summary"] = f"{run.get('summary', '')} Window={duration_s}s.".strip()
+            WORKFLOW_RUNS.append(run)
+            _persist_workflow_run_locked(run)
+            return {"status": "success", "run": run}
+
+        run = {
+            "id": uuid.uuid4().hex,
+            "workflow_id": workflow_id,
+            "label": template["label"],
+            "goal": request.goal,
+            "mode": mode,
+            "duration_s": duration_s,
+            "execution_started_at": time.time(),
+            "execution_deadline_at": time.time() + duration_s,
+            "graph_backend": graph_backend_name(),
+            "started_at": time.time(),
+            "status": "running",
+            "completed_at": None,
+            "completed_step_count": 0,
+            "active_run_count": 0,
+            "action_run_count": 0,
+            "steps": [{"agent_id": agent_id, "status": "pending"} for agent_id in template["steps"]],
+        }
+        if duration_note:
+            run.setdefault("errors", []).append(duration_note)
+        _advance_workflow_locked(run)
+        _poll_workflows_locked()
+        WORKFLOW_RUNS.append(run)
+        _persist_workflow_run_locked(run)
+        return {"status": "success", "run": run}
+
+
+@app.get("/api/workflows")
+def api_workflows() -> Dict[str, Any]:
+    with STATE_LOCK:
+        _poll_runs_locked()
+        _poll_workflows_locked()
+        runs = list(reversed(WORKFLOW_RUNS[-20:]))
+    return {
+        "templates": WORKFLOW_TEMPLATES,
+        "runs": runs,
+    }
+
+
+@app.get("/api/workflows/{run_id}")
+def api_workflow_status(run_id: str) -> Dict[str, Any]:
+    with STATE_LOCK:
+        _poll_runs_locked()
+        _poll_workflows_locked()
+        return _workflow_run_by_id(run_id)
+
+
+@app.get("/api/saved-workflows")
+def api_saved_workflows() -> List[Dict[str, Any]]:
+    with STATE_LOCK:
+        _poll_runs_locked()
+        _poll_workflows_locked()
+        return _saved_workflows_locked()
+
+
+@app.post("/api/workflows/{run_id}/save")
+def api_workflow_save(run_id: str, request: SavedWorkflowRequest) -> Dict[str, Any]:
+    with STATE_LOCK:
+        _poll_runs_locked()
+        _poll_workflows_locked()
+        run = _workflow_run_by_id(run_id)
+        saved = _save_workflow_record_locked(run, request.name, request.purpose)
+        return {"status": "success", "saved_workflow": saved}
+
+
+@app.post("/api/workflows/{run_id}/approve")
+def api_workflow_approve(run_id: str, request: Optional[WorkflowApprovalRequest] = None) -> Dict[str, Any]:
+    with STATE_LOCK:
+        _poll_runs_locked()
+        _poll_workflows_locked()
+        workflow = _workflow_run_by_id(run_id)
+        approved = _approve_graph_workflow_locked(
+            workflow,
+            request.reason if request is not None else "Manually approved from the portal UI. Execute the selected actions now.",
+        )
+        return {"status": "success", "run": approved}
+
+
+@app.get("/api/workflows/{run_id}/events")
+def api_workflow_events(run_id: str) -> Dict[str, Any]:
+    with STATE_LOCK:
+        _poll_runs_locked()
+        _poll_workflows_locked()
+        return {"run_id": run_id, "events": _workflow_events_by_id(run_id)}
+
+
+@app.get("/.well-known/agent-card.json")
+def a2a_orchestrator_card() -> Dict[str, Any]:
+    adapter = _a2a_adapter()
+    if adapter is not None:
+        return adapter.orchestrator_card(_agent_payload(AGENTS["orchestrator"]))
+    return {
+        "protocol": "A2A-aligned JSON-RPC",
+        "agent": _agent_payload(AGENTS["orchestrator"]),
+        "methods": [
+            "agents.list",
+            "agent.get_card",
+            "message.send",
+            "workflow.run",
+            "workflow.status",
+            "workflow.events",
+            "agent.task.run",
+            "portal.test_all",
+        ],
+    }
+
+
+@app.get("/.well-known/agents/{agent_id}.json")
+def a2a_agent_card(agent_id: str) -> Dict[str, Any]:
+    with STATE_LOCK:
+        _poll_runs_locked()
+        agent = AGENTS.get(agent_id)
+        if agent is None:
+            raise HTTPException(status_code=404, detail="Unknown agent")
+        adapter = _a2a_adapter()
+        if adapter is not None:
+            return adapter.agent_card(_agent_payload(agent))
+        return {
+            "protocol": "A2A-aligned JSON-RPC",
+            "agent": _agent_payload(agent),
+            "methods": ["message.send", "agent.get_card", "agent.task.run"],
+        }
+
+
+@app.post("/api/a2a/rpc")
+def api_a2a_rpc(payload: Dict[str, Any]) -> Dict[str, Any]:
+    adapter = _a2a_adapter()
+    if adapter is not None:
+        with STATE_LOCK:
+            _poll_runs_locked()
+            _poll_workflows_locked()
+            return adapter.dispatch(payload)
+
+    method = payload.get("method")
+    params = payload.get("params", {})
+    req_id = payload.get("id")
+
+    try:
+        if method == "agents.list":
+            result = [_agent_payload(agent) for agent in AGENTS.values()]
+        elif method == "agent.get_card":
+            agent_id = params["agent_id"]
+            result = _agent_payload(AGENTS[agent_id])
+        elif method == "message.send":
+            source_id = params["source_id"]
+            target_id = params["target_id"]
+            content = params["content"]
+            kind = params.get("kind", "handoff")
+            with STATE_LOCK:
+                result = _record_message(source_id, target_id, content, kind)
+        elif method == "workflow.run":
+            workflow_id = params["workflow_id"]
+            goal = params.get("goal", "Run a multi-agent FlexRIC workflow")
+            mode = params.get("mode", "advisory")
+            result = api_workflow_run(workflow_id, WorkflowRequest(goal=goal, mode=mode))
+        elif method == "workflow.status":
+            result = api_workflow_status(params["run_id"])
+        elif method == "workflow.events":
+            result = api_workflow_events(params["run_id"])
+        elif method == "agent.task.run":
+            agent_id = params["agent_id"]
+            prompt = params["prompt"]
+            provider = params.get("provider", "auto")
+            result = api_run_task(agent_id, AgentTaskRequest(prompt=prompt, provider=provider))
+        elif method == "portal.test_all":
+            result = api_test_all(
+                TestAllRequest(
+                    include_actions=params.get("include_actions", True),
+                    include_messages=params.get("include_messages", True),
+                )
+            )
+        elif method == "portal.reset_runtime":
+            result = api_runtime_reset(RuntimeResetRequest(clear_saved_workflows=params.get("clear_saved_workflows", False)))
+        else:
+            raise KeyError(f"Unknown method: {method}")
+        return {"jsonrpc": "2.0", "id": req_id, "result": result}
+    except Exception as exc:
+        return {
+            "jsonrpc": "2.0",
+            "id": req_id,
+            "error": {"code": -32000, "message": str(exc)},
+        }
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(
+        "flexric_agent_portal:app",
+        host=os.getenv("FLEXRIC_AGENT_PORTAL_HOST", "127.0.0.1"),
+        port=int(os.getenv("FLEXRIC_AGENT_PORTAL_PORT", "8088")),
+        reload=False,
+        access_log=False,
+    )
