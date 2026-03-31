@@ -376,6 +376,64 @@ h3 {
   color: var(--text);
 }
 
+.workflow-compact-bullets {
+  display: grid;
+  gap: 10px;
+  padding-left: 0;
+  list-style: none;
+}
+
+.workflow-grouped-list,
+.workflow-collapsible {
+  display: grid;
+  gap: 10px;
+}
+
+.workflow-group-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(255, 248, 238, 0.7);
+}
+
+.workflow-count-badge {
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(17, 75, 95, 0.12);
+  color: var(--accent-strong);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.workflow-collapsible {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px dashed var(--line);
+}
+
+.workflow-collapsible summary {
+  cursor: pointer;
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
+.workflow-collapsible summary:hover {
+  color: var(--accent-warm);
+}
+
+.workflow-compact-chip-row {
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+}
+
+.compact-chip {
+  text-align: center;
+}
+
 .workflow-event-history {
   max-height: 420px;
   overflow: auto;

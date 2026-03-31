@@ -130,6 +130,77 @@ def _make_stage_output(label: str, content: Any, **metadata: Any) -> Dict[str, A
     return item
 
 
+def _run_result_sort_key(result: Dict[str, Any]) -> tuple[int, int, float]:
+    status = str(result.get("status") or "")
+    priority = {
+        "launching": 0,
+        "starting": 0,
+        "running": 0,
+        "exited": 1,
+        "completed": 1,
+        "success": 1,
+        "blocked_by_conflict": 2,
+        "failed": 2,
+        "timed_out": 2,
+        "cancelled": 2,
+        "queued": 3,
+    }
+    run_id = str(result.get("id") or result.get("run_id") or "")
+    blocked_placeholder = 1 if run_id.startswith("blocked:") else 0
+    ts = -float(result.get("ended_at") or result.get("started_at") or 0.0)
+    return (priority.get(status, 4), blocked_placeholder, ts)
+
+
+def _dedupe_workflow_run_results(run_results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    best_by_key: Dict[Tuple[str, str], Dict[str, Any]] = {}
+    ordered_keys: List[Tuple[str, str]] = []
+    extras: List[Dict[str, Any]] = []
+    for item in run_results:
+        result = dict(item)
+        agent_id = str(result.get("agent_id") or "")
+        action_id = str(result.get("action_id") or "")
+        if not agent_id or not action_id:
+            extras.append(result)
+            continue
+        key = (agent_id, action_id)
+        current = best_by_key.get(key)
+        if current is None:
+            best_by_key[key] = result
+            ordered_keys.append(key)
+            continue
+        if _run_result_sort_key(result) < _run_result_sort_key(current):
+            best_by_key[key] = result
+    return [best_by_key[key] for key in ordered_keys] + extras
+
+
+def _dedupe_text_items(items: List[Any]) -> List[str]:
+    deduped: List[str] = []
+    seen = set()
+    for item in items:
+        text = str(item)
+        if text in seen:
+            continue
+        seen.add(text)
+        deduped.append(text)
+    return deduped
+
+
+def _group_text_items(items: List[Any]) -> List[Dict[str, Any]]:
+    groups: List[Dict[str, Any]] = []
+    index_by_text: Dict[str, int] = {}
+    for item in items:
+        text = str(item).strip()
+        if not text:
+            continue
+        index = index_by_text.get(text)
+        if index is None:
+            index_by_text[text] = len(groups)
+            groups.append({"text": text, "count": 1})
+        else:
+            groups[index]["count"] += 1
+    return groups
+
+
 def _build_graph_steps_payload(run: Dict[str, Any]) -> List[Dict[str, Any]]:
     events = list(run.get("events", []))
     observations = list(run.get("observations", []))
@@ -331,6 +402,11 @@ def _synchronize_graph_workflow_locked(workflow: Dict[str, Any]) -> None:
     run_results = workflow.get("run_results")
     if not isinstance(run_results, list):
         return
+    workflow["run_results"] = _dedupe_workflow_run_results(run_results)
+    run_results = workflow["run_results"]
+    workflow["errors"] = _dedupe_text_items(list(workflow.get("errors", [])))
+    workflow["error_groups"] = _group_text_items(list(workflow.get("errors", [])))
+    workflow["recommendation_groups"] = _group_text_items(list(workflow.get("recommendations", [])))
 
     selected_actions = list(workflow.get("selected_actions", []))
     result_by_key = {
@@ -402,22 +478,28 @@ def _synchronize_graph_workflow_locked(workflow: Dict[str, Any]) -> None:
         verification_notes.append(f"{agent_id} launch status: {status}" + (f". {detail}" if detail else ""))
         if status in {"starting", "running", "launching"}:
             active_results += 1
-        elif status in {"queued", "blocked_by_conflict"}:
+        elif status == "queued":
             queued_results += 1
-            if status == "blocked_by_conflict":
-                failed_results += 1
+        elif status == "blocked_by_conflict":
+            failed_results += 1
         elif status not in {"exited", "completed", "success"}:
             failed_results += 1
 
     if verification_notes:
         workflow["verification_notes"] = verification_notes
+    workflow["verification_note_groups"] = _group_text_items(list(workflow.get("verification_notes", [])))
 
     current_status = str(workflow.get("status") or "")
+    scheduler_waiting = _workflow_has_scheduler_queue_state(workflow)
     if active_results:
         workflow["status"] = "running"
-    elif current_status in {"queued", "waiting_for_approval", "cancelled", "expired"}:
+    elif current_status == "cancelled":
         workflow["status"] = current_status
-    elif queued_results and not active_results:
+    elif current_status == "waiting_for_approval" and workflow.get("approved") is not True:
+        workflow["status"] = current_status
+    elif current_status == "expired" and scheduler_waiting:
+        workflow["status"] = current_status
+    elif queued_results and scheduler_waiting:
         workflow["status"] = "queued"
     elif run_results:
         workflow["status"] = "completed_with_issues" if failed_results else "completed"
@@ -1493,6 +1575,10 @@ def _workflow_has_active_leases(run: Dict[str, Any]) -> bool:
     return str(lease_state.get("state") or "") == "active" and bool(lease_state.get("leases"))
 
 
+def _workflow_has_scheduler_queue_state(run: Dict[str, Any]) -> bool:
+    return bool(run.get("queue_entries")) or bool(run.get("wait_started_at")) or bool(run.get("blocked_reason"))
+
+
 def _scheduler_active_leases_locked() -> List[Dict[str, Any]]:
     leases: List[Dict[str, Any]] = []
     for workflow in WORKFLOW_RUNS:
@@ -1666,7 +1752,7 @@ def _launch_scheduled_actions_locked(workflow: Dict[str, Any], *, manual: bool =
         agent_id = str(item.get("agent_id") or "unknown")
         action_id = str(item.get("action_id") or "unknown")
         label = str(item.get("label") or action_id)
-        existing_real = next((existing for existing in run_results if str(existing.get("agent_id")) == agent_id and str(existing.get("action_id")) == action_id and (existing.get("id") or existing.get("run_id")) and str(existing.get("status") or "") in {"launching", "starting", "running", "completed", "exited", "success"}), None)
+        existing_real = next((existing for existing in run_results if str(existing.get("agent_id")) == agent_id and str(existing.get("action_id")) == action_id and (existing.get("id") or existing.get("run_id")) and str(existing.get("status") or "") in {"launching", "starting", "running", "completed", "exited", "success", "blocked_by_conflict", "failed", "timed_out", "cancelled"}), None)
         if existing_real is not None:
             continue
         run_results = [existing for existing in run_results if not (str(existing.get("agent_id")) == agent_id and str(existing.get("action_id")) == action_id and str(existing.get("status") or "") in {"queued", "blocked_by_conflict"} and not (existing.get("id") or existing.get("run_id")))]
@@ -1745,6 +1831,8 @@ def _promote_queued_workflows_locked() -> None:
     for workflow in _scheduler_queued_runs_locked():
         if str(workflow.get("status") or "") != "queued":
             continue
+        if not _workflow_has_scheduler_queue_state(workflow):
+            continue
         if _scheduler_blockers_locked(workflow):
             workflow["queue_position"] = _workflow_queue_position_locked(workflow)
             continue
@@ -1755,6 +1843,8 @@ def _expire_queued_workflows_locked() -> None:
     now = time.time()
     for workflow in WORKFLOW_RUNS:
         if str(workflow.get("status") or "") != "queued":
+            continue
+        if not _workflow_has_scheduler_queue_state(workflow):
             continue
         wait_started_at = float(workflow.get("wait_started_at") or workflow.get("started_at") or now)
         queue_timeout_s = int(workflow.get("queue_timeout_s") or WORKFLOW_QUEUE_TIMEOUT_S)

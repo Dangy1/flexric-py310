@@ -907,13 +907,12 @@ function renderRuntimeScopePanel(scope, kind = "workflow") {
         ${kind === "workflow" ? `<div class="chip"><strong>Queue entries</strong><br>${escapeHtml(String(scope.queue_entry_count || 0))}</div><div class="chip"><strong>Leases</strong><br>${escapeHtml(String(scope.lease_count || 0))}</div>` : `<div class="chip"><strong>Tasks</strong><br>${escapeHtml(String(scope.task_count || 0))}</div>${scope.latest_task_status ? `<div class="chip"><strong>Latest task</strong><br>${escapeHtml(scope.latest_task_status)}</div>` : ""}`}
       </div>
       ${items.length ? `<div class="workflow-detail-meta">Portal-managed state: ${escapeHtml(items.join("; "))}</div>` : ""}
-      ${childRuns.length ? `<div class="workflow-output-list">${childRuns.slice(0, 5).map((run) => `
-        <div class="message-item workflow-output-item">
-          <strong>${escapeHtml(run.agent_id || kind)} · ${escapeHtml(run.label || run.action_id || run.id || "run")}</strong>
-          <div>${escapeHtml(run.detail || "No extra detail recorded.")}</div>
-          <div class="muted workflow-detail-meta">status ${escapeHtml(run.status || "unknown")}${run.id ? ` · run ${escapeHtml(shortId(run.id))}` : ""}${run.returncode != null ? ` · rc ${escapeHtml(run.returncode)}` : ""}</div>
-        </div>
-      `).join("")}</div>` : `<div class="workflow-detail-meta">No local child runs are recorded right now.</div>`}
+      ${renderActionRunList(childRuns, {
+        emptyMessage: "No local child runs are recorded right now.",
+        initial: 3,
+        detailsLabel: "local child runs",
+        showCommand: false,
+      })}
       <div class="workflow-detail-meta">${escapeHtml(scope.restart_scope || "Restarting services affects nearRT-RIC, emulator, portal, RPC, MCP, and KPM bus.")}</div>
       <div class="workflow-detail-meta">Service restart scope: ${escapeHtml((scope.service_restart_components || []).join(", "))}</div>
     </div>
@@ -944,11 +943,153 @@ function renderWorkflowOutputs(outputs) {
   }).join("")}</div>`;
 }
 
-function renderEventHistory(events, emptyMessage) {
+function normalizeTextGroups(items, providedGroups) {
+  if (Array.isArray(providedGroups) && providedGroups.length > 0) {
+    return providedGroups
+      .map((group) => ({
+        text: String(group.text || "").trim(),
+        count: Math.max(1, Number(group.count) || 1),
+      }))
+      .filter((group) => group.text);
+  }
+  const groups = [];
+  const indexByText = new Map();
+  (Array.isArray(items) ? items : []).forEach((item) => {
+    const text = String(item || "").trim();
+    if (!text) {
+      return;
+    }
+    const existing = indexByText.get(text);
+    if (existing == null) {
+      indexByText.set(text, groups.length);
+      groups.push({text, count: 1});
+    } else {
+      groups[existing].count += 1;
+    }
+  });
+  return groups;
+}
+
+function compactCommand(cmd) {
+  const parts = Array.isArray(cmd) ? cmd.filter(Boolean).map((item) => String(item)) : [];
+  if (parts.length === 0) {
+    return "No command recorded.";
+  }
+  if (parts.length <= 6) {
+    return parts.join(" ");
+  }
+  return `${parts.slice(0, 4).join(" ")} ... ${parts[parts.length - 1]}`;
+}
+
+function summarizeRunStatuses(runResults) {
+  const counts = new Map();
+  (Array.isArray(runResults) ? runResults : []).forEach((result) => {
+    const status = String((result && result.status) || "unknown");
+    counts.set(status, (counts.get(status) || 0) + 1);
+  });
+  const preferredOrder = ["running", "launching", "starting", "queued", "blocked_by_conflict", "exited", "completed", "success", "failed", "timed_out", "cancelled", "unknown"];
+  const statuses = Array.from(counts.entries()).map(([status, count]) => ({status, count}));
+  statuses.sort((left, right) => {
+    const leftIndex = preferredOrder.indexOf(left.status);
+    const rightIndex = preferredOrder.indexOf(right.status);
+    return (leftIndex === -1 ? preferredOrder.length : leftIndex) - (rightIndex === -1 ? preferredOrder.length : rightIndex);
+  });
+  return statuses;
+}
+
+function renderGroupedTextList(items, providedGroups, emptyMessage, options = {}) {
+  const groups = normalizeTextGroups(items, providedGroups);
+  if (groups.length === 0) {
+    return `<p class="muted">${escapeHtml(emptyMessage)}</p>`;
+  }
+  const initial = Math.max(1, Number(options.initial) || 4);
+  const label = options.label || "items";
+  const totalCount = groups.reduce((sum, group) => sum + group.count, 0);
+  const visible = groups.slice(0, initial);
+  const hidden = groups.slice(initial);
+  const renderList = (list) => `
+    <ul class="workflow-bullet-list workflow-compact-bullets">
+      ${list.map((group) => `
+        <li class="workflow-group-row">
+          <span>${escapeHtml(group.text)}</span>
+          ${group.count > 1 ? `<span class="workflow-count-badge">x${escapeHtml(group.count)}</span>` : ""}
+        </li>
+      `).join("")}
+    </ul>
+  `;
+  return `
+    <div class="workflow-grouped-list">
+      <div class="workflow-detail-meta">${escapeHtml(String(groups.length))} unique ${escapeHtml(label)} · ${escapeHtml(String(totalCount))} total</div>
+      ${renderList(visible)}
+      ${hidden.length ? `
+        <details class="workflow-collapsible">
+          <summary>Show ${escapeHtml(String(hidden.length))} more ${escapeHtml(label)}</summary>
+          ${renderList(hidden)}
+        </details>
+      ` : ""}
+    </div>
+  `;
+}
+
+function renderActionStatusSummary(runResults) {
+  const statuses = summarizeRunStatuses(runResults);
+  if (statuses.length === 0) {
+    return "";
+  }
+  return `
+    <div class="chip-row workflow-compact-chip-row">
+      ${statuses.map((item) => `
+        <div class="chip compact-chip">
+          <strong>${escapeHtml(String(item.count))}</strong><br>${escapeHtml(item.status)}
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function renderActionRunCards(runResults, options = {}) {
+  const items = Array.isArray(runResults) ? runResults : [];
+  const initial = Math.max(1, Number(options.initial) || 6);
+  const showCommand = options.showCommand !== false;
+  const visible = items.slice(0, initial);
+  const hidden = items.slice(initial);
+  const renderCards = (list) => `
+    <div class="workflow-output-list">
+      ${list.map((runResult) => `
+        <div class="message-item workflow-output-item">
+          <strong>${escapeHtml(runResult.agent_id || "agent")} · ${escapeHtml(runResult.label || runResult.action_id || "action")}</strong>
+          ${showCommand ? `<div>${escapeHtml(compactCommand(runResult.cmd || []))}</div>` : ""}
+          <div class="muted workflow-detail-meta">action ${escapeHtml(runResult.action_id || "n/a")}${runResult.id ? ` · run ${escapeHtml(shortId(runResult.id))}` : runResult.run_id ? ` · run ${escapeHtml(shortId(runResult.run_id))}` : ""} · status ${escapeHtml(runResult.status || "unknown")}${runResult.returncode != null ? ` · rc ${escapeHtml(runResult.returncode)}` : ""}</div>
+          ${runResult.detail ? `<div class="muted workflow-detail-meta">${escapeHtml(runResult.detail)}</div>` : ""}
+        </div>
+      `).join("")}
+    </div>
+  `;
+  return `
+    ${renderActionStatusSummary(items)}
+    ${items.length === 0 ? `<p class="muted">${escapeHtml(options.emptyMessage || "No action runs were launched.")}</p>` : renderCards(visible)}
+    ${hidden.length ? `
+      <details class="workflow-collapsible">
+        <summary>Show ${escapeHtml(String(hidden.length))} more ${escapeHtml(options.detailsLabel || "action runs")}</summary>
+        ${renderCards(hidden)}
+      </details>
+    ` : ""}
+  `;
+}
+
+function renderActionRunList(runResults, options = {}) {
+  return renderActionRunCards(runResults, options);
+}
+
+function renderEventHistory(events, emptyMessage, options = {}) {
   if (!events || events.length === 0) {
     return `<div class="message-item">${emptyMessage}</div>`;
   }
-  return `<div class="message-feed workflow-event-history">${events.slice().reverse().map((event) => {
+  const ordered = events.slice().reverse();
+  const initial = options.collapsible ? Math.max(1, Number(options.initial) || 12) : ordered.length;
+  const visible = ordered.slice(0, initial);
+  const hidden = ordered.slice(initial);
+  const renderItems = (list) => `<div class="message-feed workflow-event-history">${list.map((event) => {
     const metadata = event.metadata && Object.keys(event.metadata).length > 0
       ? escapeHtml(JSON.stringify(event.metadata))
       : "";
@@ -961,6 +1102,16 @@ function renderEventHistory(events, emptyMessage) {
       </div>
     `;
   }).join("")}</div>`;
+  return `
+    ${options.collapsible ? `<div class="workflow-detail-meta">Showing latest ${escapeHtml(String(visible.length))} of ${escapeHtml(String(ordered.length))} events.</div>` : ""}
+    ${renderItems(visible)}
+    ${hidden.length ? `
+      <details class="workflow-collapsible">
+        <summary>Show ${escapeHtml(String(hidden.length))} older events</summary>
+        ${renderItems(hidden)}
+      </details>
+    ` : ""}
+  `;
 }
 
 function renderWorkflowRunList(runs, rootId = "workflow-run-list") {
@@ -1060,8 +1211,11 @@ function renderWorkflowDetail(run, rootId = "workflow-detail-panel") {
   const launchedActions = Array.isArray(run.run_results) ? run.run_results : [];
   const selectedActions = Array.isArray(run.selected_actions) ? run.selected_actions : [];
   const recommendations = Array.isArray(run.recommendations) ? run.recommendations : [];
+  const recommendationGroups = Array.isArray(run.recommendation_groups) ? run.recommendation_groups : [];
   const verificationNotes = Array.isArray(run.verification_notes) ? run.verification_notes : [];
+  const verificationNoteGroups = Array.isArray(run.verification_note_groups) ? run.verification_note_groups : [];
   const errors = Array.isArray(run.errors) ? run.errors : [];
+  const errorGroups = Array.isArray(run.error_groups) ? run.error_groups : [];
   const latestEvents = Array.isArray(run.events) ? run.events : [];
   const runtimeScope = run.runtime_scope || null;
   const approvalUi = workflowApprovalUi(run);
@@ -1167,28 +1321,21 @@ function renderWorkflowDetail(run, rootId = "workflow-detail-panel") {
       <div class="split workflow-detail-top">
         <div class="message-item workflow-detail-block">
           <strong>Recommendations</strong>
-          ${recommendations.length === 0 ? `<p class="muted">No recommendations recorded.</p>` : `<ul class="workflow-bullet-list">${recommendations.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`}
+          ${renderGroupedTextList(recommendations, recommendationGroups, "No recommendations recorded.", {initial: 3, label: "recommendations"})}
         </div>
         <div class="message-item workflow-detail-block">
           <strong>Verification Notes</strong>
-          ${verificationNotes.length === 0 ? `<p class="muted">No verification notes recorded.</p>` : `<ul class="workflow-bullet-list">${verificationNotes.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`}
+          ${renderGroupedTextList(verificationNotes, verificationNoteGroups, "No verification notes recorded.", {initial: 4, label: "notes"})}
         </div>
       </div>
 
       <div class="message-item workflow-detail-block">
         <strong>Launched Actions</strong>
-        ${launchedActions.length === 0 ? `<p class="muted">No action runs were launched in this workflow.</p>` : `
-          <div class="workflow-output-list">
-            ${launchedActions.map((runResult) => `
-              <div class="message-item workflow-output-item">
-                <strong>${escapeHtml(runResult.agent_id || "agent")} · ${escapeHtml(runResult.label || runResult.action_id || "action")}</strong>
-                <div>${escapeHtml((runResult.cmd || []).join(" ") || "No command recorded.")}</div>
-                <div class="muted workflow-detail-meta">action ${escapeHtml(runResult.action_id || "n/a")} · run ${escapeHtml(shortId(runResult.id))} · status ${escapeHtml(runResult.status || "unknown")}${runResult.returncode != null ? ` · rc ${escapeHtml(runResult.returncode)}` : ""}</div>
-                ${runResult.detail ? `<div class="muted workflow-detail-meta">${escapeHtml(runResult.detail)}</div>` : ""}
-              </div>
-            `).join("")}
-          </div>
-        `}
+        ${renderActionRunList(launchedActions, {
+          emptyMessage: "No action runs were launched in this workflow.",
+          initial: 6,
+          detailsLabel: "action runs",
+        })}
         ${selectedActions.length > 0 ? `<div class="workflow-detail-meta">Selected actions: ${escapeHtml(selectedActions.map((item) => `${item.agent_id}:${item.action_id}`).join(", "))}</div>` : ""}
       </div>
 
@@ -1211,7 +1358,7 @@ function renderWorkflowDetail(run, rootId = "workflow-detail-panel") {
               ${renderWorkflowOutputs(step.outputs || [])}
               <div class="workflow-stage-events-block">
                 <strong>Stage events</strong>
-                ${renderEventHistory(step.events || [], "No stage events recorded.")}
+                ${renderEventHistory(step.events || [], "No stage events recorded.", {collapsible: true, initial: 6})}
               </div>
             </article>
           `).join("")}
@@ -1220,7 +1367,7 @@ function renderWorkflowDetail(run, rootId = "workflow-detail-panel") {
 
       <div class="message-item workflow-detail-block ${errors.length > 0 ? "workflow-errors" : ""}">
         <strong>Errors</strong>
-        ${errors.length === 0 ? `<p class="muted">No workflow errors recorded.</p>` : `<ul class="workflow-bullet-list">${errors.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`}
+        ${renderGroupedTextList(errors, errorGroups, "No workflow errors recorded.", {initial: 4, label: "errors"})}
       </div>
 
       <div>
@@ -1228,7 +1375,7 @@ function renderWorkflowDetail(run, rootId = "workflow-detail-panel") {
           <h3>Full Event History</h3>
           <p>Complete event stream for the selected workflow run.</p>
         </div>
-        ${renderEventHistory(latestEvents, "No event history recorded yet.")}
+        ${renderEventHistory(latestEvents, "No event history recorded yet.", {collapsible: true, initial: 12})}
       </div>
     </div>
   `;
