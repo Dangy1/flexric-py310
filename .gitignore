@@ -1,7 +1,12 @@
 *.out 
+*.pyc
 *.py
 *.swp
 *.json
+.env
+__pycache__/
+*.db
+log.txt
 build/
 tags
 archives/

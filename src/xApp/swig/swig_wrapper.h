@@ -14,7 +14,10 @@
 #include "../../sm/rlc_sm/ie/rlc_data_ie.h"
 #include "../../sm/pdcp_sm/ie/pdcp_data_ie.h"
 #include "../../sm/slice_sm/ie/slice_data_ie.h"
+#include "../../sm/tc_sm/ie/tc_data_ie.h"
 #include "../../sm/gtp_sm/ie/gtp_data_ie.h"
+#include "../../sm/rc_sm/ie/rc_data_ie.h"
+#include "../../sm/kpm_sm/kpm_data_ie_wrapper.h"
 
 //////////////////////////////////////
 // General    
@@ -24,6 +27,9 @@ struct E2Node {
   global_e2_node_id_t id;
   std::vector<ran_function_t> ran_func;
 };
+
+std::vector<int> get_ran_func_ids(E2Node const& node);
+std::string get_e2_node_id_summary(E2Node const& node);
 
 void init(void); 
 
@@ -55,6 +61,8 @@ struct mac_cb {
 int report_mac_sm(global_e2_node_id_t* id, Interval inter, mac_cb* handler);
 
 void rm_report_mac_sm(int);
+
+void control_mac_sm(global_e2_node_id_t* id, mac_ctrl_msg_t* ctrl);
 
 //////////////////////////////////////
 // RLC SM   
@@ -144,6 +152,33 @@ void rm_report_slice_sm(int);
 void control_slice_sm(global_e2_node_id_t* id, slice_ctrl_msg_t* ctrl);
 
 //////////////////////////////////////
+// TC SM
+/////////////////////////////////////
+
+struct tc_cb {
+    virtual void handle(tc_ind_data_t* a) = 0;
+    virtual ~tc_cb() {}
+};
+
+int report_tc_sm(global_e2_node_id_t* id, Interval inter, tc_cb* handler);
+
+void rm_report_tc_sm(int);
+
+void control_tc_sm(global_e2_node_id_t* id, tc_ctrl_msg_t* ctrl);
+
+tc_ctrl_msg_t tc_gen_mod_bdp_pcr(uint32_t drb_sz, int64_t tstamp);
+
+tc_ctrl_msg_t tc_gen_add_codel_queue(uint32_t interval_ms, uint32_t target_ms);
+
+tc_ctrl_msg_t tc_gen_add_ecn_queue(uint32_t interval_ms, uint32_t target_ms);
+
+tc_ctrl_msg_t tc_gen_add_fifo_queue(void);
+
+tc_ctrl_msg_t tc_gen_add_osi_cls(int32_t src_port, int32_t dst_port, int32_t protocol, int32_t src_addr, int32_t dst_addr, uint32_t dst_queue);
+
+tc_ctrl_msg_t tc_gen_mod_shaper(uint32_t shaper_id, uint32_t time_window_ms, uint32_t max_rate_kbps, uint32_t active);
+
+//////////////////////////////////////
 // GTP SM   
 /////////////////////////////////////
 
@@ -161,5 +196,52 @@ int report_gtp_sm(global_e2_node_id_t* id, Interval inter, gtp_cb* handler);
 
 void rm_report_gtp_sm(int);
 
-#endif
+//////////////////////////////////////
+// KPM SM
+/////////////////////////////////////
 
+struct kpm_cb {
+    virtual void handle(kpm_ind_data_t* a) = 0;
+    virtual ~kpm_cb() {}
+};
+
+struct swig_kpm_ind_msg_t {
+  std::vector<std::string> records;
+  int64_t tstamp;
+};
+
+struct kpm_moni_cb {
+  virtual void handle(swig_kpm_ind_msg_t* a) = 0;
+  virtual ~kpm_moni_cb() {}
+};
+
+int report_kpm_sm(global_e2_node_id_t* id, kpm_sub_data_t* sub, kpm_cb* handler);
+
+void rm_report_kpm_sm(int);
+
+// Build a KPM subscription from the node-advertised KPM RAN function definition.
+// Returns -1 when KPM is unsupported for the node or no compatible report style is found.
+int report_kpm_sm_auto(global_e2_node_id_t* id, uint64_t period_ms, kpm_cb* handler);
+
+// Same auto-subscription as report_kpm_sm_auto(), but with built-in C-side monitoring logs.
+int report_kpm_sm_auto_moni(global_e2_node_id_t* id, uint64_t period_ms);
+
+// Auto-subscription with parsed KPM records delivered to Python callback.
+int report_kpm_sm_auto_py(global_e2_node_id_t* id, uint64_t period_ms, kpm_moni_cb* handler);
+
+//////////////////////////////////////
+// RC SM
+/////////////////////////////////////
+
+struct rc_cb {
+    virtual void handle(rc_ind_data_t* a) = 0;
+    virtual ~rc_cb() {}
+};
+
+int report_rc_sm(global_e2_node_id_t* id, rc_sub_data_t* sub, rc_cb* handler);
+
+void rm_report_rc_sm(int);
+
+void control_rc_sm(global_e2_node_id_t* id, rc_ctrl_req_data_t* ctrl);
+
+#endif

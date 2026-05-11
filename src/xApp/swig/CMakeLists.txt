@@ -8,20 +8,35 @@ CMAKE_POLICY(SET CMP0078 NEW)
 CMAKE_POLICY(SET CMP0086 NEW) 
 
 FIND_PACKAGE(SWIG 4.1 REQUIRED)
-FIND_PACKAGE(Python3 REQUIRED)
-#find_package (Python3 COMPONENTS Interpreter Development)
+set(Python3_FIND_VIRTUALENV FIRST)
+unset(Python3_INCLUDE_DIR CACHE)
+unset(Python3_LIBRARY CACHE)
+unset(Python3_LIBRARY_DEBUG CACHE)
+unset(Python3_SABI_LIBRARY CACHE)
+FIND_PACKAGE(Python3 3.10 REQUIRED COMPONENTS Interpreter Development.Module)
 
 INCLUDE(${SWIG_USE_FILE})
 
-FIND_PACKAGE(PythonLibs)
-INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
-
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+INCLUDE_DIRECTORIES(${Python3_INCLUDE_DIRS})
+
+message(STATUS "Using Python3 executable for xApp SDK: ${Python3_EXECUTABLE}")
+message(STATUS "Using Python3 version for xApp SDK: ${Python3_VERSION}")
 
 #SET(CMAKE_SWIG_FLAGS "")
 #SET(CMAKE BUILD TYPE Debug)
 
 SET_PROPERTY(SOURCE swig_wrapper.i PROPERTY CPLUSPLUS ON)
+
+if(KPM_VERSION STREQUAL "KPM_V2_01")
+  set(KPM_IE_SRC ../../sm/kpm_sm/kpm_sm_v02.01/ie/kpm_data_ie.c)
+elseif(KPM_VERSION STREQUAL "KPM_V2_03")
+  set(KPM_IE_SRC ../../sm/kpm_sm/kpm_sm_v02.03/ie/kpm_data_ie.c)
+elseif(KPM_VERSION STREQUAL "KPM_V3_00")
+  set(KPM_IE_SRC ../../sm/kpm_sm/kpm_sm_v03.00/ie/kpm_data_ie.c)
+else()
+  message(FATAL_ERROR "Unknown KPM version for SWIG build")
+endif()
 
 
 
@@ -61,26 +76,44 @@ SWIG_ADD_LIBRARY(xapp_sdk LANGUAGE ${XAPP_LANG} SOURCES
                                                  $<TARGET_OBJECTS:e2ap_plmn_obj>
                                                  $<TARGET_OBJECTS:e2ap_global_node_id_obj>
                                                  $<TARGET_OBJECTS:3gpp_derived_ie_obj>
-                                                 #../../sm/kpm_sm_v03.00/ie/kpm_data_ie.c
+                                                 $<TARGET_OBJECTS:sm_common_ie_obj>
+                                                 $<TARGET_OBJECTS:e2sm_rc_ir_obj>
+                                                 $<TARGET_OBJECTS:kpm_ric_info_common_obj>
+                                                 $<TARGET_OBJECTS:kpm_ric_info_obj>
+                                                 ${KPM_IE_SRC}
                                                  ../../sm/mac_sm/ie/mac_data_ie.c 
                                                  ../../sm/rlc_sm/ie/rlc_data_ie.c
                                                  ../../sm/pdcp_sm/ie/pdcp_data_ie.c
                                                  ../../sm/slice_sm/ie/slice_data_ie.c
                                                  ../../sm/tc_sm/ie/tc_data_ie.c
                                                  ../../sm/gtp_sm/ie/gtp_data_ie.c
+                                                 ../../sm/rc_sm/ie/rc_data_ie.c
                                                  ../../util/byte_array.c
                                                  ../../util/alg_ds/alg/eq_float.c
                                                  )
 
 
-set_property(TARGET xapp_sdk PROPERTY SWIG_COMPILE_DEFINITIONS ${E2AP_VERSION})
+set_property(TARGET xapp_sdk PROPERTY SWIG_COMPILE_DEFINITIONS
+  ${E2AP_VERSION}
+  ${KPM_VERSION}
+  FLEXRIC_PYTHON_VERSION_MAJOR=${Python3_VERSION_MAJOR}
+  FLEXRIC_PYTHON_VERSION_MINOR=${Python3_VERSION_MINOR}
+)
 
 #PYTHON compilation
 if(XAPP_TARGET_LANGUAGE STREQUAL "PYTHON_LANG")
   ADD_COMPILE_DEFINITIONS(XAPP_LANG_PYTHON)
-  SWIG_LINK_LIBRARIES(xapp_sdk ${PYTHON_LIBRARIES})
+  SWIG_LINK_LIBRARIES(xapp_sdk Python3::Module)
 
    add_custom_command(TARGET xapp_sdk POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_BINARY_DIR}/_xapp_sdk.so" "${CMAKE_BINARY_DIR}/examples/xApp/python3/_xapp_sdk.so" )
+
+   add_custom_command(TARGET xapp_sdk POST_BUILD COMMAND
+     ${CMAKE_COMMAND}
+     -DINPUT_FILE=${CMAKE_CURRENT_BINARY_DIR}/xapp_sdk.py
+     -DPYTHON_VERSION_MAJOR=${Python3_VERSION_MAJOR}
+     -DPYTHON_VERSION_MINOR=${Python3_VERSION_MINOR}
+     -P ${CMAKE_CURRENT_SOURCE_DIR}/fix_xapp_sdk_python.cmake
+   )
 
    add_custom_command(TARGET xapp_sdk POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_BINARY_DIR}/xapp_sdk.py" "${CMAKE_BINARY_DIR}/examples/xApp/python3/xapp_sdk.py" )
 
@@ -92,7 +125,79 @@ if(XAPP_TARGET_LANGUAGE STREQUAL "PYTHON_LANG")
      "${CMAKE_SOURCE_DIR}/examples/xApp/python3/xapp_slice_moni_ctrl.py" "${CMAKE_BINARY_DIR}/examples/xApp/python3/xapp_slice_moni_ctrl.py" )
 
    add_custom_command(TARGET xapp_sdk POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_SOURCE_DIR}/examples/xApp/python3/watch_slice_stats" "${CMAKE_BINARY_DIR}/examples/xApp/python3/watch_slice_stats" )
+     "${CMAKE_SOURCE_DIR}/examples/xApp/python3/watch_slice_stats" "${CMAKE_BINARY_DIR}/examples/xApp/python3/watch_slice_stats" )
+
+   set(XAPP_PY_DEMOS
+     README.md
+     flexric_client.py
+     flexric_agent_portal.py
+     mcp_flexric_metrics_http.py
+     mcp_flexric_suites.py
+     xapp_hw.py
+     xapp_mac_ctrl.py
+     xapp_tc_common.py
+     xapp_tc_all.py
+     xapp_tc_codel.py
+     xapp_tc_ecn.py
+     xapp_tc_osi_codel.py
+     xapp_tc_partition.py
+     xapp_tc_segregate.py
+     xapp_tc_shaper.py
+     xapp_kpm_moni.py
+     kpm_bus_service.py
+     xapp_kpm_bus_reader.py
+     xapp_rc_moni.py
+     xapp_rpc_server.py
+     xapp_kpm_rc.py
+     xapp_keysight_kpm_rc.py
+     xapp_rl_qlearn_slice.py
+   )
+
+   foreach(py_demo ${XAPP_PY_DEMOS})
+     add_custom_command(TARGET xapp_sdk POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
+       "${CMAKE_SOURCE_DIR}/examples/xApp/python3/${py_demo}"
+       "${CMAKE_BINARY_DIR}/examples/xApp/python3/${py_demo}" )
+   endforeach()
+
+   add_custom_command(TARGET xapp_sdk POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
+     "${CMAKE_SOURCE_DIR}/examples/xApp/python3/environment.yml"
+     "${CMAKE_BINARY_DIR}/examples/xApp/python3/environment.yml" )
+
+   add_custom_command(TARGET xapp_sdk POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
+     "${CMAKE_SOURCE_DIR}/examples/xApp/python3/requirements-mcp.txt"
+     "${CMAKE_BINARY_DIR}/examples/xApp/python3/requirements-mcp.txt" )
+
+   add_custom_command(TARGET xapp_sdk POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
+     "${CMAKE_SOURCE_DIR}/examples/xApp/python3/agent_portal"
+     "${CMAKE_BINARY_DIR}/examples/xApp/python3/agent_portal" )
+
+   add_custom_command(TARGET xapp_sdk POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
+     "${CMAKE_SOURCE_DIR}/examples/xApp/python3/backend"
+     "${CMAKE_BINARY_DIR}/examples/xApp/python3/backend" )
+
+   add_custom_command(TARGET xapp_sdk POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
+     "${CMAKE_SOURCE_DIR}/examples/xApp/python3/scripts"
+     "${CMAKE_BINARY_DIR}/examples/xApp/python3/scripts" )
+
+   add_custom_command(TARGET xapp_sdk POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
+     "${CMAKE_SOURCE_DIR}/examples/xApp/python3/build_agent_portal_stack.sh"
+     "${CMAKE_BINARY_DIR}/examples/xApp/python3/build_agent_portal_stack.sh" )
+
+   add_custom_command(TARGET xapp_sdk POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
+     "${CMAKE_SOURCE_DIR}/examples/xApp/python3/run_agent_portal_stack.sh"
+     "${CMAKE_BINARY_DIR}/examples/xApp/python3/run_agent_portal_stack.sh" )
+
+   add_custom_command(TARGET xapp_sdk POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
+     "${CMAKE_SOURCE_DIR}/examples/xApp/python3/stop_agent_portal_stack.sh"
+     "${CMAKE_BINARY_DIR}/examples/xApp/python3/stop_agent_portal_stack.sh" )
+
+   add_custom_command(TARGET xapp_sdk POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
+     "${CMAKE_SOURCE_DIR}/examples/xApp/python3/run_agent_portal_lan.sh"
+     "${CMAKE_BINARY_DIR}/examples/xApp/python3/run_agent_portal_lan.sh" )
+
+   add_custom_command(TARGET xapp_sdk POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
+     "${CMAKE_SOURCE_DIR}/examples/xApp/python3/run_rl_demo_base.sh"
+     "${CMAKE_BINARY_DIR}/examples/xApp/python3/run_rl_demo_base.sh" )
 
   #add_custom_command(TARGET xapp_sdk POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
   #  "${CMAKE_SOURCE_DIR}/examples/xApp/python3/xapp_gtp_moni.py" "${CMAKE_BINARY_DIR}/examples/xApp/python3/xapp_gtp_moni.py" )
@@ -127,8 +232,7 @@ ADD_DEPENDENCIES(xapp_sdk e42_xapp_shared)
 SWIG_LINK_LIBRARIES(xapp_sdk
                     e42_xapp_shared
                     -ldl
-                    -lsctp
+                    ${SCTP_LIBRARY}
                     -lpthread)
 
-target_compile_definitions(xapp_sdk PUBLIC ${E2AP_ENCODING} ${E2AP_VERSION})
-
+target_compile_definitions(xapp_sdk PUBLIC ${E2AP_ENCODING} ${E2AP_VERSION} ${KPM_VERSION})

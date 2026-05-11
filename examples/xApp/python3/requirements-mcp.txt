@@ -1,0 +1,11 @@
+fastapi
+mcp
+pydantic
+python-dotenv
+requests
+uvicorn
+a2a-sdk[http-server]
+langchain
+langgraph
+langsmith
+redis

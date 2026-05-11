@@ -4,6 +4,19 @@ project(Flexric VERSION 0.0.1 LANGUAGES C)
 
 set(CMAKE_C_STANDARD 11)
 
+find_path(SCTP_INCLUDE_DIR NAMES netinet/sctp.h)
+find_library(SCTP_LIBRARY NAMES sctp)
+
+if(NOT SCTP_INCLUDE_DIR OR NOT SCTP_LIBRARY)
+  message(FATAL_ERROR
+    "FlexRIC requires the SCTP development files (header netinet/sctp.h and lib sctp).\n"
+    "Install libsctp-dev on Debian/Ubuntu or lksctp-tools-devel on RHEL/Rocky, then rerun CMake."
+  )
+endif()
+
+message(STATUS "Using SCTP include dir: ${SCTP_INCLUDE_DIR}")
+message(STATUS "Using SCTP library: ${SCTP_LIBRARY}")
+
 ###
 ### Reduce compile time
 ###
@@ -386,4 +399,3 @@ add_custom_command(
         COMMAND xargs rm -vf < install_manifest.txt || echo Nothing in
         install_manifest.txt to be uninstalled!
 )
-

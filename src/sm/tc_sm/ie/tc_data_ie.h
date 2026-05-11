@@ -22,6 +22,10 @@
 #ifndef TC_DATA_INFORMATION_ELEMENTS_H
 #define TC_DATA_INFORMATION_ELEMENTS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * 9 Information Elements (IE) , RIC Event Trigger Definition, RIC Action Definition, RIC Indication Header, RIC Indication Message, RIC Call Process ID, RIC Control Header, RIC Control Message, RIC Control Outcome and RAN Function Definition defined by ORAN-WG3.E2SM-v01.00.00 at Section 5
  */
@@ -871,5 +875,9 @@ typedef struct{
 typedef struct{
   tc_func_def_t func_def;
 } tc_ric_service_update_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -26,6 +26,35 @@ Below is the list of features available in this version divided per component an
 
 [[_TOC_]]
 
+## Current Architecture
+
+The current repository is organized around a small C core and a larger set of examples, bindings, and tests built on top of it.
+
+### Core runtime
+
+- `src/agent/`: E2 node agent runtime, message handling, endpoint setup, and agent-side plugin hooks
+- `src/ric/`: nearRT-RIC runtime, E2 node registration, RIC-side handlers, and iApp integrations
+- `src/xApp/`: xApp-side transport/runtime code, async event handling, SQLite-backed persistence, and the SWIG bridge used for Python bindings
+- `src/sm/`: service model implementations, with agent-side and RIC-side logic for KPM, RC, MAC, RLC, PDCP, SLICE, TC, and GTP
+- `src/lib/`: shared protocol and codec layers for E2AP, 3GPP-derived information elements, message handling, and common SM helpers
+- `src/util/`: common utilities and data structures used across the stack
+
+### Build and integration layers
+
+- `examples/emulator/agent/`: emulated E2 nodes used for local development and testing
+- `examples/ric/`: the `nearRT-RIC` executable built from `src/ric/`
+- `examples/xApp/c/`: C xApp examples for monitoring and control flows
+- `examples/xApp/python3/`: Python xApps plus the current agent-portal stack, including the FastAPI UI, LangGraph-oriented backend scaffolding, and shared KPM bus workflow
+- `test/`: unit, encode/decode, and end-to-end integration coverage for the agent, RIC, xApp, and service models
+
+### Runtime flow
+
+At a high level, the E2 agent side publishes measurements and accepts controls through service models in `src/sm/`. The nearRT-RIC in `src/ric/` terminates E2AP, manages connected nodes, and forwards subscriptions, indications, and control traffic to xApps. The xApp runtime in `src/xApp/` exposes C APIs, persists indication data through the configured xApp database backend, and generates the Python SDK through SWIG for the Python examples and portal.
+
+The top-level `CMakeLists.txt` is the main composition point for this architecture. It selects the E2AP version, KPM version, encoding mode, xApp database backend, sanitizer/profile options, and whether Python multi-language support is enabled.
+
+For the current Python portal and orchestration layout, see `examples/xApp/python3/README.md`.
+
 ## 1. Installation
 
 ### 1.1 Install prerequisites
@@ -60,9 +89,16 @@ Below is the list of features available in this version divided per component an
 
 ### 1.2 Download the required dependencies. 
 
-Below an example of how to install it in ubuntu
+Below an example of how to install it in Ubuntu
 ```bash
-sudo apt install libsctp-dev python3.8 cmake-curses-gui libpcre2-dev python3-dev
+sudo apt install libsctp1 libsctp-dev python3 python3-dev cmake-curses-gui libpcre2-dev
+```
+
+FlexRIC's Python xApps require Python 3.10 or newer, and the SWIG module must be built with the same interpreter you will use at runtime. If you build inside a virtualenv or conda environment, configure CMake with that interpreter explicitly:
+
+```bash
+cmake -B build -DPython3_EXECUTABLE="$(which python3)" ..
+cmake --build build -j8
 ```
 
 ### 1.3 Clone the FlexRIC project, build and install it. 
@@ -257,6 +293,10 @@ FlexRIC's E2 Agent (and OAI RAN that is embedded on it) has also been successful
 Follow OSC nearRT-RIC installation guide. The xApp can be found at https://github.com/mirazabal/kpm_rc-xapp. Please, note that we do not give support for the OSC nearRT-RIC.  
 
 Recorded presentation at Phoenix, October 2023 (4th minute): https://zoom.us/rec/play/N5mnAQUcEVRf8HN6qLYa4k7kjNq3bK4hQiYqHGv9KUoLfcR6GHiE-GvnmAudT6xccmZSbkxxYHRwTaxk.Zi7d8Sl1kQ6Sk1SH?canPlayFromShare=true&from=share_recording_detail&continueMode=true&componentName=rec-play&originRequestUrl=https%3A%2F%2Fzoom.us%2Frec%2Fshare%2FwiYXulPlAqIIDY_vLPQSGqYIj-e5Ef_UCxveMjrDNGgXLLvEcDF4v1cmVBe8imb4.WPi-DA_dfPDBQ0FH
+
+## Contributing
+
+`CONTRIBUTING.md` describes the current contribution workflow, including where to make changes for agent/RIC/xApp work, how to extend a service model, and which build and test commands to run before sending a patch.
 
 ## 5. Support/further resources
 

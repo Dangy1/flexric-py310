@@ -7,6 +7,47 @@
 #include <string.h>
 #include <stdio.h>
 
+void free_tc_event_trigger(tc_event_trigger_t* src)
+{
+  if (src == NULL)
+    return;
+}
+
+tc_event_trigger_t cp_tc_event_trigger(tc_event_trigger_t* src)
+{
+  assert(src != NULL);
+  tc_event_trigger_t dst = {.ms = src->ms};
+  return dst;
+}
+
+bool eq_tc_event_trigger(tc_event_trigger_t* m0, tc_event_trigger_t* m1)
+{
+  assert(m0 != NULL);
+  assert(m1 != NULL);
+  return m0->ms == m1->ms;
+}
+
+void free_tc_action_def(tc_action_def_t* src)
+{
+  if (src == NULL)
+    return;
+}
+
+tc_action_def_t cp_tc_action_def(tc_action_def_t* src)
+{
+  assert(src != NULL);
+  tc_action_def_t dst = {.dummy = src->dummy};
+  return dst;
+}
+
+/* Kept with the header's current signature for ABI compatibility. */
+bool eq_tc_action_def(tc_event_trigger_t* m0, tc_event_trigger_t* m1)
+{
+  assert(m0 != NULL);
+  assert(m1 != NULL);
+  return m0->ms == m1->ms;
+}
+
 static
 void free_tc_sch(tc_sch_t const* sch )
 {
@@ -83,6 +124,11 @@ void free_tc_ind_msg(tc_ind_msg_t* msg)
   free(msg->plc);
   free(msg->shp);
   free(msg->q);
+}
+
+void tc_free_ind_msg(tc_ind_msg_t* msg)
+{
+  free_tc_ind_msg(msg);
 }
 
 
@@ -876,18 +922,23 @@ tc_ind_msg_t cp_tc_ind_msg(tc_ind_msg_t const* src)
 
 void free_tc_call_proc_id( tc_call_proc_id_t* src)
 {
-  if(src == NULL) 
+  if(src == NULL)
     return;
-
-  assert(0!=0 && "Not implemented");
 }
 
 
 tc_call_proc_id_t cp_tc_call_proc_id( tc_call_proc_id_t const* src)
 {
   assert(src != NULL);
+  tc_call_proc_id_t dst = {.dummy = src->dummy};
+  return dst;
+}
 
-  assert(0!=0 && "Not implememnted");
+bool eq_tc_call_proc_id(tc_call_proc_id_t* m0, tc_call_proc_id_t* m1)
+{
+  assert(m0 != NULL);
+  assert(m1 != NULL);
+  return m0->dummy == m1->dummy;
 }
 
 
@@ -1713,4 +1764,3 @@ bool eq_tc_func_def(tc_func_def_t const* m0, tc_func_def_t const* m1)
   int rc = memcmp(m0, m1, m0->len);
   return rc == 0;
 }
-

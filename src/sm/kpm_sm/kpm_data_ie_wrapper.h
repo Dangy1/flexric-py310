@@ -23,6 +23,10 @@
 #ifndef KPM_DATA_IE_WRAPPER_H
 #define KPM_DATA_IE_WRAPPER_H 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef KPM_V2_01
 #include "kpm_sm_v02.01/ie/kpm_data_ie.h"
 #elif defined(KPM_V2_03)
@@ -31,6 +35,10 @@
 #include "kpm_sm_v03.00/ie/kpm_data_ie.h"
 #else
 _Static_assert(0!=0, "Unknown KPM version");
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif
