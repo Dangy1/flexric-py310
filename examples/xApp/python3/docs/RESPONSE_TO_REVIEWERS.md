@@ -216,4 +216,21 @@ manuscript. Proposed wording/changes:
 
 ## Status of the numbers
 
-<!-- STATUS -->
+State on 2026-10-28; this section is removed before submission.
+
+| Evidence | Batch | State |
+|---|---|---|
+| Table II, Figs. 4–5 (composition, reliability, latency) | `evaluation/runs/20261028T004100Z_A_prelim_qwen36_nothink_merged` (1500 records) | **preliminary**: planner qwen3.6:27b with reasoning off; gpt-oss does not load on the LLM host (plan O1). Final batch re-runs the same command with gpt-oss |
+| Table III, Fig. 6 (registry scale, retrieval top-8 vs all) | Batch B (`intents_v2.json`, rApp Directory on) | running (preliminary, same planner); numbers enter through `make_paper_figures.py --batch-b` |
+| Fig. 7, §IV-C (twin vs live) | `evaluation/runs/20261027T171217Z_T6_twin_vs_live{,_loadcal}` | final (independent of the planner model) |
+
+Open decisions for the authors (plan §3c): O1 gpt-oss on the LLM host; O2 second model endpoint;
+O3 GPU line for the hardware sentence; O4 OAI instead of ns-3 for the live side; O5 reasoning mode;
+O6 whether observe-first reorderings of a template count as accepted (AppWeaver scores low on known
+intents because it composes rather than copies templates); O7 the conflict claim — with one rule for all
+methods the shared lease refuses seeded conflicts for every method, and AppWeaver's distinct
+contribution is recovery (80 % vs 0 % in the preliminary batch). The text above already uses the O7
+framing.
+
+All §IV numbers are `\awres{…}` macros from `evaluation/paper_results/results_macros.tex`; a number not
+yet computed renders as **??**.

@@ -1,81 +1,199 @@
 % ===================================================================
-% Evaluation section draft for the AppWeaver paper (IEEEtran).
-% Grounded in: runs/20260508T130259_final (gpt-oss, 700 records) and
-% runs/20260702T102407_787374Z (Claude Fable 5 pilot, planner cache off).
-% Companion artifacts: results_table.tex, fig_workflow_accuracy.pdf,
-% fig_quality_metrics.pdf, fig_latency.pdf, fig_model_comparison.pdf.
+% Section IV (revised) for the AppWeaver paper (IEEEtran), WCM-26-00422 major revision.
+% Every number is a macro from results_macros.tex (make_paper_figures.py), computed from
+%   Batch A : \awres{A}{batch}{id}   (evaluation/runs/<id>/records.jsonl + manifest.json)
+%   Batch B : \awres{B8}{batch}{id}, \awres{Ball}{batch}{id}   (rApp Directory, top-8 / all cards)
+%   T6      : \awres{T}{batch}{id} (twin load unknown), \awres{TL}{batch}{id} (load-calibrated)
+% A number that is not yet computed renders as ??.
+% No number from the first submission (May-2026 batch) is used.
+%
+% STATUS 2026-10-28: Batch A and B run with qwen3.6:27b (reasoning off) because gpt-oss does not
+% load on the LLM host (REVISION_PLAN O1). The text is written for the final gpt-oss batch; the
+% qualitative statements marked [CHECK] must be re-read once those numbers replace these.
+% Needs in the preamble: \input{results_macros}, booktabs, makecell, colortbl (results_table.tex).
 % ===================================================================
 
-\subsection{Prototype and Setup}
-We prototype AppWeaver on an OpenAirInterface (OAI) RAN connected to a
-FlexRIC Near-RT RIC over E2, with monitoring and control exercised through
-E2SM-KPM, E2SM-RC, and the slice, traffic-control (TC), MAC, RLC, PDCP, and
-GTP service models. Each RIC application is wrapped by a domain agent that
-publishes a machine-readable Agent Card at a standard discovery endpoint
-(\texttt{/.well-known/agents/}) describing its skills, measurements, control
-scope, resource requirements, and tool endpoints; MCP servers expose the
-applications' monitoring and control functions as typed, callable tools. The
-orchestration core is a LangGraph state machine that drives each intent
-through an observe--diagnose--approve--act--verify--summarize loop, with the
-agents coordinated over an A2A JSON-RPC bus. A scheduler mediates all control
-actions through shared and exclusive resource leases (e.g., KPM subscriptions
-are shared, while slice, TC, and RC control are exclusive), queueing
-conflicting workflows instead of rejecting them, and an RC guardrail agent
-gates enforced actions on platform health with optional human-in-the-loop
-approval. All state, leases, and audit events persist in SQLite so workflows
-and operator decisions remain traceable across restarts.
+\section{Evaluation}
+\label{sec:evaluation}
 
-The planner LLM is pluggable. Our main batch uses \texttt{gpt-oss}, an open
-model served locally via Ollama; a second configuration routes planning
-through Claude (Fable~5) in headless mode. In both cases the LLM operates
-strictly at the workflow-orchestration level: it selects and orders
-applications but never touches E2 or A1 directly, and every generated plan
-passes a policy-catalog validation layer that repairs or rejects references
-to unknown applications or actions before execution.
+\subsection{Setup and Methodology}
+\label{sec:eval-setup}
 
-\subsection{Performance Evaluation}
-We evaluate workflow composition over a catalog of 50 operator intents (11
-mapping to known workflow templates and 39 open-world intents with no
-predefined template), spanning latency assurance, slice management,
-transport QoS, and deliberately seeded cross-application conflicts. AppWeaver
-(agent-card discovery and composition) is compared against six baselines:
-deterministic rule routing (\emph{Manual rule}), launching a single
-application (\emph{Single xApp}), unconstrained LLM planning
-(\emph{LLM-only}), and three LangGraph variants with catalog repair
-(human-approved \emph{LG-Override}, autonomous \emph{LG-Enforced}, and
-\emph{LG-LLM} with LLM-driven recovery). Each intent runs twice per method,
-yielding 700 records. Table~\ref{tab:appweaver-results} and
-Figs.~\ref{fig:accuracy}--\ref{fig:latency} summarize the results.
+\textbf{Platform.} AppWeaver runs on a FlexRIC near-RT RIC with the FlexRIC emulated E2 node. Four RIC applications are real FlexRIC xApps exercised over E2: KPM monitoring (E2SM-KPM),
+slice control (SLICE), transport control (TC) and an RC validation xApp (E2SM-RC); MAC, RLC, PDCP and
+GTP monitors complete the paper registry of \awres{A}{batch}{cards} Agent Cards
+(\awres{A}{batch}{executable} executable). The emulated E2 node returns synthetic KPM values, so this
+part of the evaluation measures composition and execution, not network effect; the network effect is
+measured separately on ns-3 (Sec.~\ref{sec:eval-twin}). For the registry-scale experiment the rApp
+Directory adds 46 emulated rApp cards (16 families, three fictional vendors, deprecated releases and
+distractor cards) served by one process that reads live KPM from the KPM bus.
 
-Three findings stand out. First, agent-card discovery is the only approach
-that generalizes: AppWeaver composes the correct workflow for 50\% of
-open-world intents while retaining 100\% accuracy on known intents, whereas
-every catalog-bound method collapses to 12.8\% open-world accuracy and
-LLM-only planning reaches just 17.9\%. Since open-world intents dominate
-realistic service requests, this lifts overall composition accuracy to 61\%
-versus 30--32\% for the strongest baselines. Second, the governance layers do
-not tax reliability: AppWeaver sustains 100\% tool-call success and policy
-validity with zero hallucinated application references, and detects 96\% of
-seeded cross-application conflicts (100\% for the catalog-repaired LangGraph
-variants); its LLM-driven recovery resolved every failure it attempted
-in-run. Third, adaptivity has a latency cost that remains compatible with
-orchestration timescales: mean intent-to-execution latency is 3.2\,s for
-AppWeaver, versus 47--315\,ms for catalog-bound LangGraph variants and
-1\,ms for rule-based routing, i.e., well within the seconds-to-minutes
-orchestration loop that AppWeaver targets while native E2/A1 loops continue
-at their own timescales.
+\textbf{Planner.} The planner model, sampling settings (temperature 0.2, seed 7), reasoning mode,
+prompt hashes and LLM-host hardware are recorded in every batch manifest. This draft uses
+\texttt{\awres{A}{batch}{model}} as the planner. Planner and observation caches are off
+(\awres{A}{langgraph_agentcard}{planner_cached_records} cached planner calls).
 
-To assess sensitivity to the planner LLM, we replayed a pilot subset of the
-catalog with Claude (Fable~5) as the planning model under stricter
-conditions (planner caching disabled, so every request pays the full
-reasoning cost). On the covered intent--method cells both models compose
-identical, correct workflows with full tool-call success
-(Fig.~\ref{fig:models}); end-to-end latency rises to 11--16\,s, reflecting
-uncached remote-scale reasoning versus the locally served open model. This
-suggests the Agent-Card abstraction, rather than a particular LLM, carries
-the composition capability, though a full-catalog comparison across models
-remains future work. Two further caveats apply: live before/after KPM
-deltas were unavailable in this batch (the telemetry bus was offline), so we
-report orchestration-level metrics rather than network-effect KPIs; and the
-harness-level recovery rate includes external replay, so we cite only
-in-run (internal) recovery for the recovery claim above.
+\textbf{Benchmark.} Batch~A uses 50 operator intents: \awres{A}{langgraph_agentcard}{known_intents}
+match one of the portal's three workflow templates (\emph{known}) and
+\awres{A}{langgraph_agentcard}{open_world_intents} have no template (\emph{open-world}); 6 carry a
+seeded conflict (another workflow holds the application the intent needs). Batch~B extends the set to
+80 intents and adds \awres{B8}{langgraph_agentcard}{unseen_capability_intents} \emph{unseen-capability}
+intents that need an rApp capability absent from every template and fallback rule. Each intent carries
+its labelled chain and, where a written rule allows it, accepted alternatives; labels and rules are
+released with the code.
+
+\textbf{Methods.} \emph{Rule router} (keyword rules to the three templates); \emph{Single app} (the
+best-matching application only); \emph{LLM (no catalog)} (the planner without the registry; names
+that match no card are counted as hallucinated references); \emph{LLM (catalog)} (the planner given
+the full catalog and the templates); \emph{AppWeaver (no repair)} (Agent-Card discovery and
+composition with compatibility checks, without the repair/recovery step); and \emph{AppWeaver}.
+Every (intent, method) pair is run \awres{A}{batch}{repeats} times.
+
+\textbf{Metrics.} \emph{Accuracy}: the generated chain equals an accepted chain in order;
+\emph{set accuracy} ignores order. A \emph{tool call} counts only if the RAN or rApp
+\emph{acknowledged} it (E2 CONTROL-ACK, KPM indication, rApp reply) within 12\,s, not if the process
+merely started. For seeded conflicts we report the share \emph{refused} before control was issued
+and the share \emph{recovered} (the method reached a clean execution on its own), and the
+false-positive rate on unseeded intents. \emph{Latency} is intent-to-launched-plan wall clock.
+Rates carry 95\% confidence intervals (intent-clustered bootstrap; Wilson for conflicts).
+
+\subsection{Composition and Reliability}
+\label{sec:eval-composition}
+
+\input{results_table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig_accuracy}
+\caption{Workflow accuracy on known and open-world intents (Batch A), 95\% CI.}
+\label{fig:accuracy}
+\end{figure}
+
+Table~\ref{tab:appweaver-results} and Fig.~\ref{fig:accuracy} summarize Batch~A
+(\awres{A}{batch}{records} records).
+
+\textbf{Open-world composition.} AppWeaver composes the accepted chain for
+\awres{A}{langgraph_agentcard}{open_world_accuracy}\% of open-world intents
+(CI \awres{A}{langgraph_agentcard}{open_world_accuracy_lo}--\awres{A}{langgraph_agentcard}{open_world_accuracy_hi}\%),
+against \awres{A}{llm_only}{open_world_accuracy}\% for the catalog-aware LLM,
+\awres{A}{manual_rule}{open_world_accuracy}\% for the rule router and
+\awres{A}{llm_blind}{open_world_accuracy}\% for the LLM without catalog. Overall accuracy is
+\awres{A}{langgraph_agentcard}{accuracy}\% for AppWeaver and \awres{A}{llm_only}{accuracy}\% for the
+best baseline. [CHECK]
+
+\textbf{Known intents.} On the \awres{A}{langgraph_agentcard}{known_intents} template intents the rule
+router is exact by construction (\awres{A}{manual_rule}{known_accuracy}\%) and the catalog-aware LLM,
+which sees the templates, reaches \awres{A}{llm_only}{known_accuracy}\%. AppWeaver reaches only
+\awres{A}{langgraph_agentcard}{known_accuracy}\%: it does not copy templates but composes from the
+cards, observing first (e.g., KPM$\rightarrow$SLICE$\rightarrow$RC where the template applies the slice
+policy before measuring) and dropping steps it finds no need for. Its set accuracy over all intents,
+\awres{A}{langgraph_agentcard}{set_accuracy}\%, shows how much of the gap is ordering. A deployment
+that must reproduce operator templates exactly should route known intents to them; AppWeaver's value
+is the intents no template covers. [CHECK; labelling question O6]
+
+\textbf{Grounding.} Without the catalog, the LLM invents applications:
+\awres{A}{llm_blind}{hallucinated_refs} references to non-existent applications in
+\awres{A}{llm_blind}{records_with_hallucination} records. Every catalog-grounded method, and AppWeaver
+in particular, produced none (\awres{A}{langgraph_agentcard}{hallucinated_refs}); all AppWeaver chains
+passed the four compose-time compatibility checks
+(\awres{A}{langgraph_agentcard}{compat_ok_rate}\%).
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig_reliability}
+\caption{Acknowledged tool calls, and seeded conflicts refused before control and recovered (Batch A), 95\% CI.}
+\label{fig:reliability}
+\end{figure}
+
+\textbf{Reliability.} \awres{A}{langgraph_agentcard}{ack_rate}\% of AppWeaver's
+\awres{A}{langgraph_agentcard}{tool_calls} tool calls were acknowledged by the RAN or rApp
+(Fig.~\ref{fig:reliability}); the remainder are mostly a TC action (\texttt{apply-all}) the emulated
+E2 node never confirms, plus isolated acknowledgement timeouts. Seeded conflicts are refused before control by the
+platform's per-application lease, which every method shares: whether a method hits the refusal depends
+only on whether its chain reaches the busy application
+(\awres{A}{manual_rule}{conflict_recall}\% for the rule router,
+\awres{A}{langgraph_agentcard}{conflict_recall}\% for AppWeaver). The difference is what happens next:
+AppWeaver recovers \awres{A}{langgraph_agentcard}{seeded_recovered}\% of the seeded conflicts (re-plans
+around the lease and reaches a clean execution), every baseline \awres{A}{llm_only}{seeded_recovered}\%,
+and AppWeaver without the repair step \awres{A}{agentcard_no_repair}{seeded_recovered}\%. No method
+flagged an unseeded intent. Repair does not change accuracy
+(\awres{A}{agentcard_no_repair}{accuracy}\% without, \awres{A}{langgraph_agentcard}{accuracy}\% with);
+its contribution is recovery. [CHECK]
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig_latency}
+\caption{Intent-to-plan latency per record (box: IQR; whiskers: 5--95th percentile), log scale; dashed line: 1\,s Non-RT RIC control loop.}
+\label{fig:latency}
+\end{figure}
+
+\textbf{Latency.} AppWeaver plans in \awres{A}{langgraph_agentcard}{latency_median_s}\,s median
+(p95 \awres{A}{langgraph_agentcard}{latency_p95_s}\,s, max \awres{A}{langgraph_agentcard}{latency_max_s}\,s),
+against \awres{A}{llm_only}{latency_median_s}\,s for a single LLM call (Fig.~\ref{fig:latency}).
+Composition therefore belongs in the Non-RT RIC, whose control loop is $\geq$1\,s; the composed
+xApps then run their own near-RT loops at 10\,ms--1\,s. The latency depends on the planner model and
+host, which the manifest records. [CHECK with gpt-oss]
+
+\subsection{Registry Scale}
+\label{sec:eval-registry}
+
+% Numbers appear when Batch B (rApp Directory, intents_v2.json) is added with --batch-b.
+\IfFileExists{results_table_registry.tex}{\input{results_table_registry}}{}
+
+\IfFileExists{figures/fig_registry_splits.pdf}{%
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig_registry_splits}
+\caption{Accuracy per intent split with \awres{B8}{batch}{cards} Agent Cards: top-8 retrieved cards vs.\ all cards in the prompt, 95\% CI.}
+\label{fig:registry}
+\end{figure}}{}
+
+With the rApp Directory the registry holds \awres{B8}{batch}{cards} cards, too many for a compact
+prompt. AppWeaver retrieves the top-8 cards per intent (BM25 over card text, one card per family,
+deprecated releases excluded); all needed cards were retrieved for
+\awres{B8}{langgraph_agentcard}{retrieval_hit_rate}\% of records. On unseen-capability intents, which
+no template or fallback rule covers, AppWeaver reaches
+\awres{B8}{langgraph_agentcard}{unseen_capability_accuracy}\% with top-8 retrieval and
+\awres{Ball}{langgraph_agentcard}{unseen_capability_accuracy}\% with all cards in the prompt; the
+catalog-aware LLM reaches \awres{B8}{llm_only}{unseen_capability_accuracy}\% (Fig.~\ref{fig:registry}).
+Hallucinated references stay at \awres{B8}{langgraph_agentcard}{hallucinated_refs} for AppWeaver
+against \awres{B8}{llm_blind}{hallucinated_refs} for the LLM without catalog. [WRITE after Batch B]
+
+\subsection{Twin Fidelity}
+\label{sec:eval-twin}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.8\textwidth]{figures/fig_twin_validation}
+\caption{Twin-predicted vs.\ measured relative KPI change of the deployed policy, one point per seed
+pair. Top: twin with \awres{T}{batch}{twin_ues} UEs, live with \awres{T}{batch}{live_ues}; bottom:
+load-calibrated twin (\awres{TL}{batch}{twin_ues} UEs). Dashed: perfect prediction.}
+\label{fig:twin}
+\end{figure*}
+
+\textbf{Protocol.} The twin is an ns-3/5G-LENA network (ns-O-RAN: one LTE anchor,
+\awres{T}{batch}{n_gnb} gNBs at 3.5\,GHz) behind its own FlexRIC instance; the live network is a
+second instance with an independent seed (user drop, mobility, fading) and, in the first experiment,
+25\% more users than the twin knows of. For each of three RC-actuated workflows composed by AppWeaver
+-- energy saving (cell switch-off), traffic steering and QoE-driven steering (handover) -- the rApps
+decide a cell-level policy on the twin's KPM, and the same policy is deployed on live. Each KPI change
+is measured against a no-op run of the same instance, over \awres{T}{batch}{pairs} seed pairs.
+Repeating a seed changes PRB use by at most 0.3\% and energy and throughput by at most 0.01\%,
+so twin--live differences are not simulator noise. Transport and slice workflows cannot be checked
+this way: ns-O-RAN exposes no TC or slicing control.
+
+\textbf{Results.} With the twin's load matched to live, the twin predicts the energy effect of switching
+cells off within \awres{TL}{energy_saving}{energy_j_per_s_mean_abs_rel_error_pp} percentage points
+(\awres{TL}{energy_saving}{energy_j_per_s_mean_predicted_rel_pct}\% predicted,
+\awres{TL}{energy_saving}{energy_j_per_s_mean_actual_rel_pct}\% measured) with the correct sign in
+\awres{TL}{energy_saving}{energy_j_per_s_sign_agreement}\% of pairs, and the direction of the PRB change
+in \awres{TL}{energy_saving}{prb_used_dl_sign_agreement}--\awres{TL}{traffic_steering}{prb_used_dl_sign_agreement}\%
+of pairs. When the twin underestimates the load, the PRB direction is right in only
+\awres{T}{energy_saving}{prb_used_dl_sign_agreement}\% of energy-saving pairs: an under-loaded twin has
+spare capacity that live does not. Throughput changes are not predicted reliably (sign agreement
+\awres{TL}{energy_saving}{dl_throughput_mbps_sign_agreement}--\awres{TL}{traffic_steering}{dl_throughput_mbps_sign_agreement}\%):
+they depend on which users move, and the twin does not know where the live users are -- it switched
+off cells that were empty in the twin but served users in live. A twin that matches the live network's
+configuration and load is therefore a sound guard for cell-level policies (it rejects, e.g., sleeping a
+loaded cell) and predicts their energy effect; predicting per-user QoS would require ingesting live UE
+state from O1/E2, which we leave to future work.
