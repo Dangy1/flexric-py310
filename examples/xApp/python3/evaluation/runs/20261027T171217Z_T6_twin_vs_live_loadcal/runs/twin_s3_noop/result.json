@@ -1,0 +1,36 @@
+{
+  "chain": [
+    "KPM"
+  ],
+  "first_report_sim_s": 8.0,
+  "indications_per_gnb": {
+    "2": 0,
+    "3": 0,
+    "4": 0,
+    "5": 0
+  },
+  "kpi": {
+    "dl_buffer_kbytes": NaN,
+    "dl_throughput_mbps": NaN,
+    "energy_j_per_s": 0.0,
+    "prb_used_dl": NaN
+  },
+  "kpi_window_indications": [
+    20,
+    -1
+  ],
+  "kpi_window_sim_s": [
+    10.0,
+    7.9
+  ],
+  "n_ues": 10,
+  "ns3_returncode": -6,
+  "ok": false,
+  "rc_acks": [],
+  "role": "twin",
+  "seed": 3,
+  "sim_time_s": 8.0,
+  "t_act_s": 1.5,
+  "wall_s": 37.9,
+  "workflow": "noop"
+}

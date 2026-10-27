@@ -31,7 +31,7 @@ Comment labels follow the decision letter (R*n*.*m* = Reviewer *n*, comment *m*)
 | Agent Cards | Schema v2 (app type, RIC, interfaces, data models, control scope, timescale, requires, conflicts_with, version, endpoints) and four explicit compose-time checks (dependency, interface, control scope, timescale), logged per record | §III-B, Table I, `backend/orchestration/compat.py` |
 | Registry | rApp Directory of 46 emulated rApp cards (16 families, 3 fictional vendors, 13 deprecated releases, 30 distractor cards) on top of the 9 FlexRIC cards → 55 cards, 50 executable; BM25 retrieval of the top-*k* cards | §IV-B, Table III, `rapps/` |
 | Benchmark | `intents_v2.json`: 80 intents in three splits (11 known-template, 39 open-world, 30 unseen-capability) | §IV-B, Fig. 6 |
-| Digital twin | Twin = ns-3/5G-LENA instance A behind FlexRIC; live = instance B (different seed, traffic perturbation); predicted vs measured KPI deltas for three workflows | §IV-C, Fig. 7, `evaluation/TWIN_VALIDATION.md` |
+| Digital twin | Twin = ns-3/5G-LENA instance A behind FlexRIC; live = instance B (different seed, +25 % UEs or matched load); predicted vs measured KPI deltas for energy saving, traffic steering and QoE steering (TC/slice not actuatable in ns-O-RAN) | §IV-C, Fig. 7, `evaluation/TWIN_VALIDATION.md` |
 | Release | Code, benchmark, cards and per-record results public; one command per batch | footnote §IV, `README.md` |
 
 ---
@@ -59,13 +59,28 @@ is now a table row set ("discovery from machine-readable cards", "explicit compa
 **R1.2 — How faithful is the digital twin; predicted vs actual KPIs.**
 
 *Change.* The first submission's "twin" was not implemented as a network model; we say so and replace
-it. The twin is now a second ns-3/5G-LENA instance attached to FlexRIC through the same E2 interface
-as the live network. For energy saving, transport QoS and slice assurance we run the composed workflow
-on the twin, record predicted KPI deltas (PRB utilisation, DL throughput, RLC delay, energy where ns-3
-reports it), deploy on the live instance and report MAPE and sign agreement per KPI.
+it. The twin is now an ns-3/5G-LENA instance (ns-O-RAN) behind its own FlexRIC nearRT-RIC; the "live"
+network is a second instance with a different seed (UE drop, mobility, fading) and, in the main batch,
+25 % more UEs. AppWeaver composes the workflow, the rApps decide a policy on the twin's KPM, and the
+same policy is deployed on live. We report predicted (twin) vs measured (live) deltas against a
+same-seed no-op for DL PRB use, DL throughput, RLC queue and gNB energy: mean relative change, absolute
+error, MAPE and sign agreement over 8 seed pairs, for energy saving (cell switch-off), traffic steering
+and QoE-driven steering (handover). Transport-QoS and slice workflows cannot be validated this way:
+ns-O-RAN exposes only KPM and RC (handover, cell on/off), not TC or slicing control; we state this.
+Simulator noise was measured by re-running every no-op with the same seed (≤0.3 % on PRB, ≤0.01 % on
+energy and throughput).
+
+*Result (in the paper's words).* With the twin's load matched to live, the energy effect of switching
+cells off is predicted to within 4.1 percentage points (−11.9 % predicted vs −13.9 % measured) with the
+correct sign in 8/8 pairs; the direction of the PRB change is right in 62–75 % of pairs; throughput and
+queue changes are not predicted reliably (sign agreement ≤62 %), because they depend on which users
+move, which the twin does not know. With an under-loaded twin, PRB predictions had the wrong sign in
+most energy-saving pairs (25 % agreement). We therefore narrow the claim: the twin guards against the
+wrong policy class (e.g. sleeping a loaded cell) and predicts cell-level energy, not per-user QoS.
 The MOS values of the old Fig. 2 are removed.
 
-*Where.* §III-C, §IV-C, Fig. 7, `evaluation/TWIN_VALIDATION.md`. <!-- TWIN -->
+*Where.* §III-C, §IV-C, Fig. 7, `evaluation/TWIN_VALIDATION.md`,
+`evaluation/runs/20261027T171217Z_T6_twin_vs_live{,_loadcal}/`.
 
 **R1.3 — Which applications are real xApps and which are emulated.**
 

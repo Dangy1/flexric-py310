@@ -1,0 +1,7 @@
+HO 8 2
+HO 10 2
+HO 6 2
+HO 4 2
+HO 3 2
+OFF 5
+OFF 4

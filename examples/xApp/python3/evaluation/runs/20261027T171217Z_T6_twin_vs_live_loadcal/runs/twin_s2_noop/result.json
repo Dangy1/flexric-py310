@@ -1,0 +1,37 @@
+{
+  "act_sim_time_s": 1.5,
+  "chain": [
+    "KPM"
+  ],
+  "first_report_sim_s": 1.1,
+  "indications_per_gnb": {
+    "2": 69,
+    "3": 69,
+    "4": 69,
+    "5": 69
+  },
+  "kpi": {
+    "dl_buffer_kbytes": 1.3672083333333334,
+    "dl_throughput_mbps": 18.911625,
+    "energy_j_per_s": 7237.722916666666,
+    "prb_used_dl": 184.83333333333334
+  },
+  "kpi_window_indications": [
+    20,
+    68
+  ],
+  "kpi_window_sim_s": [
+    3.1,
+    7.9
+  ],
+  "n_ues": 10,
+  "ns3_returncode": 0,
+  "ok": true,
+  "rc_acks": [],
+  "role": "twin",
+  "seed": 2,
+  "sim_time_s": 8.0,
+  "t_act_s": 1.5,
+  "wall_s": 313.5,
+  "workflow": "noop"
+}

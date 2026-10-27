@@ -1,0 +1,100 @@
+{
+  "act_sim_time_s": 1.5,
+  "chain": [
+    "KPM",
+    "RAPP.ENERGY_SAVING",
+    "RC"
+  ],
+  "commands": [
+    "HO 8 2",
+    "OFF 5",
+    "HO 10 2",
+    "HO 6 2",
+    "HO 4 2",
+    "HO 3 2",
+    "OFF 4"
+  ],
+  "first_report_sim_s": 1.1,
+  "indications_per_gnb": {
+    "2": 69,
+    "3": 69,
+    "4": 15,
+    "5": 15
+  },
+  "kpi": {
+    "dl_buffer_kbytes": 4054.1316875,
+    "dl_throughput_mbps": 14.218895833333335,
+    "energy_j_per_s": 4094.693749999999,
+    "prb_used_dl": 111.25
+  },
+  "kpi_window_indications": [
+    20,
+    68
+  ],
+  "kpi_window_sim_s": [
+    3.1,
+    7.9
+  ],
+  "n_ues": 10,
+  "ns3_returncode": 0,
+  "ok": true,
+  "policy": {
+    "shed": [],
+    "sleep_cells": [
+      5,
+      4,
+      3
+    ],
+    "trace": {
+      "kpm_snapshot": {
+        "2": {
+          "DRB.UEThpDl": 2.0246333333333335,
+          "RRU.PrbTotDl": 1.0
+        },
+        "3": {
+          "DRB.UEThpDl": 2.411,
+          "RRU.PrbTotDl": 0.0
+        },
+        "4": {
+          "DRB.UEThpDl": 2.25,
+          "RRU.PrbTotDl": 0.0
+        },
+        "5": {
+          "DRB.UEThpDl": 0.0,
+          "RRU.PrbTotDl": 0.0
+        }
+      },
+      "steps": [
+        {
+          "decision": {
+            "cells_to_sleep": [
+              "5",
+              "4",
+              "3"
+            ],
+            "estimated_energy_saving_pct": 36.0,
+            "threshold_prb": 0.15
+          },
+          "rapp": "energy_saving"
+        }
+      ]
+    },
+    "workflow": "energy_saving"
+  },
+  "policy_from": "twin",
+  "rc_acks": [
+    "1793124728174118 HO 8 2 sent",
+    "1793124728174799 HO 10 2 sent",
+    "1793124728175465 HO 6 2 sent",
+    "1793124728176152 HO 4 2 sent",
+    "1793124728176816 HO 3 2 sent",
+    "1793124737383944 OFF 5 sent",
+    "1793124737384103 OFF 4 sent"
+  ],
+  "role": "live",
+  "seed": 107,
+  "sim_time_s": 8.0,
+  "t_act_s": 1.5,
+  "wall_s": 273.9,
+  "workflow": "energy_saving"
+}

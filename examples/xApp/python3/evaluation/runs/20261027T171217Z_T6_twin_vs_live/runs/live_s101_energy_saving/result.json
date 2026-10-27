@@ -1,0 +1,90 @@
+{
+  "act_sim_time_s": 1.5,
+  "chain": [
+    "KPM",
+    "RAPP.ENERGY_SAVING",
+    "RC"
+  ],
+  "commands": [
+    "HO 10 2",
+    "HO 3 2",
+    "HO 1 2",
+    "OFF 3"
+  ],
+  "first_report_sim_s": 1.1,
+  "indications_per_gnb": {
+    "2": 69,
+    "3": 15,
+    "4": 69,
+    "5": 69
+  },
+  "kpi": {
+    "dl_buffer_kbytes": 2563.8480625,
+    "dl_throughput_mbps": 16.769333333333332,
+    "energy_j_per_s": 4717.452083333333,
+    "prb_used_dl": 109.83333333333333
+  },
+  "kpi_window_indications": [
+    20,
+    68
+  ],
+  "kpi_window_sim_s": [
+    3.1,
+    7.9
+  ],
+  "n_ues": 10,
+  "ns3_returncode": 0,
+  "ok": true,
+  "policy": {
+    "shed": [],
+    "sleep_cells": [
+      3
+    ],
+    "trace": {
+      "kpm_snapshot": {
+        "2": {
+          "DRB.UEThpDl": 2.17128,
+          "RRU.PrbTotDl": 1.0
+        },
+        "3": {
+          "DRB.UEThpDl": 2.4798,
+          "RRU.PrbTotDl": 0.0
+        },
+        "4": {
+          "DRB.UEThpDl": 2.0702,
+          "RRU.PrbTotDl": 0.21
+        },
+        "5": {
+          "DRB.UEThpDl": 1.8516,
+          "RRU.PrbTotDl": 0.21
+        }
+      },
+      "steps": [
+        {
+          "decision": {
+            "cells_to_sleep": [
+              "3"
+            ],
+            "estimated_energy_saving_pct": 12.0,
+            "threshold_prb": 0.15
+          },
+          "rapp": "energy_saving"
+        }
+      ]
+    },
+    "workflow": "energy_saving"
+  },
+  "policy_from": "twin",
+  "rc_acks": [
+    "1793121625834417 HO 10 2 sent",
+    "1793121625835223 HO 3 2 sent",
+    "1793121625836039 HO 1 2 sent",
+    "1793121637246351 OFF 3 sent"
+  ],
+  "role": "live",
+  "seed": 101,
+  "sim_time_s": 8.0,
+  "t_act_s": 1.5,
+  "wall_s": 282.0,
+  "workflow": "energy_saving"
+}

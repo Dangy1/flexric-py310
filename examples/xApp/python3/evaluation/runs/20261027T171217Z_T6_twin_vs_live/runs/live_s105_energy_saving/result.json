@@ -1,0 +1,102 @@
+{
+  "act_sim_time_s": 1.5,
+  "chain": [
+    "KPM",
+    "RAPP.ENERGY_SAVING",
+    "RC"
+  ],
+  "commands": [
+    "HO 2 2",
+    "OFF 4",
+    "HO 5 3",
+    "HO 4 5",
+    "HO 7 3",
+    "HO 8 3",
+    "HO 9 5",
+    "HO 6 3",
+    "OFF 2"
+  ],
+  "first_report_sim_s": 1.1,
+  "indications_per_gnb": {
+    "2": 69,
+    "3": 69,
+    "4": 15,
+    "5": 69
+  },
+  "kpi": {
+    "dl_buffer_kbytes": 1347.1990208333332,
+    "dl_throughput_mbps": 14.647916666666665,
+    "energy_j_per_s": 6081.279166666665,
+    "prb_used_dl": 222.02083333333334
+  },
+  "kpi_window_indications": [
+    20,
+    68
+  ],
+  "kpi_window_sim_s": [
+    3.1,
+    7.9
+  ],
+  "n_ues": 10,
+  "ns3_returncode": 0,
+  "ok": true,
+  "policy": {
+    "shed": [],
+    "sleep_cells": [
+      4,
+      2
+    ],
+    "trace": {
+      "kpm_snapshot": {
+        "2": {
+          "DRB.UEThpDl": 2.3452,
+          "RRU.PrbTotDl": 0.0
+        },
+        "3": {
+          "DRB.UEThpDl": 1.7912000000000001,
+          "RRU.PrbTotDl": 1.0
+        },
+        "4": {
+          "DRB.UEThpDl": 0.0,
+          "RRU.PrbTotDl": 0.0
+        },
+        "5": {
+          "DRB.UEThpDl": 1.7829000000000002,
+          "RRU.PrbTotDl": 0.5
+        }
+      },
+      "steps": [
+        {
+          "decision": {
+            "cells_to_sleep": [
+              "4",
+              "2"
+            ],
+            "estimated_energy_saving_pct": 24.0,
+            "threshold_prb": 0.15
+          },
+          "rapp": "energy_saving"
+        }
+      ]
+    },
+    "workflow": "energy_saving"
+  },
+  "policy_from": "twin",
+  "rc_acks": [
+    "1793123574999120 HO 2 2 sent",
+    "1793123574999871 HO 5 3 sent",
+    "1793123575000599 HO 4 5 sent",
+    "1793123575001457 HO 7 3 sent",
+    "1793123575002216 HO 8 3 sent",
+    "1793123575002978 HO 9 5 sent",
+    "1793123575003721 HO 6 3 sent",
+    "1793123588413894 OFF 4 sent",
+    "1793123588414072 OFF 2 sent"
+  ],
+  "role": "live",
+  "seed": 105,
+  "sim_time_s": 8.0,
+  "t_act_s": 1.5,
+  "wall_s": 333.5,
+  "workflow": "energy_saving"
+}

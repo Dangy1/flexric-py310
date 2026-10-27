@@ -1,0 +1,57 @@
+{
+  "created_at": "2026-10-27T21:55:45+0200",
+  "scenario": "scenario-zero-with_parallel_loging",
+  "ns3_bin": "/home/dang/ns-oran-flexric/mmwave-LENA-oran/build/scratch/ns3.42-scenario-zero-with_parallel_loging-optimized",
+  "flexric": "/home/dang/flexric-taap",
+  "n_gnb": 4,
+  "twin_ues": 10,
+  "live_ues": 10,
+  "sim_time_s": 8.0,
+  "t_act_s": 1.5,
+  "settle_s": 0.5,
+  "indication_period_s": 0.1,
+  "workflows": {
+    "noop": [
+      "KPM"
+    ],
+    "energy_saving": [
+      "KPM",
+      "RAPP.ENERGY_SAVING",
+      "RC"
+    ],
+    "traffic_steering": [
+      "KPM",
+      "RAPP.TRAFFIC_STEERING",
+      "RC"
+    ],
+    "qoe_steering": [
+      "KPM",
+      "RAPP.QOE_PREDICTION",
+      "RAPP.TRAFFIC_STEERING",
+      "RC"
+    ]
+  },
+  "jobs": 72,
+  "kpis": [
+    "prb_used_dl",
+    "dl_throughput_mbps",
+    "dl_buffer_kbytes",
+    "energy_j_per_s"
+  ],
+  "protocol": "policy decided on the twin at t_act, deployed unchanged on live; deltas vs same-instance noop",
+  "pairs": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "excluded_pairs": {
+    "3": "ns-3 aborts deterministically (malloc(): invalid size, ~37 s wall) for RngRun=3 with N_Ues=10 in all four workflows, also when run alone; pair 9 added as replacement before analysing results"
+  },
+  "note": "Load-calibrated twin: twin_ues=10 (= live). Live no-op runs s101-s108 copied from 20261027T171217Z_T6_twin_vs_live (identical inputs); every twin run and every live workflow run executed in this batch."
+}

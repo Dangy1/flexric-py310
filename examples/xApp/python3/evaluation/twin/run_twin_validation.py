@@ -526,7 +526,7 @@ def main() -> int:
     units: List[List[Tuple[str, int, int, str]]] = []
     if args.only:
         role, seed, wf = args.only.split(":")
-        units.append([(role, int(seed), TWIN_UES if role == "twin" else LIVE_UES, wf)])
+        units.append([(role, int(seed), args.twin_ues if role == "twin" else LIVE_UES, wf)])
     else:
         for pair in range(1, args.pairs + 1):
             for wf in args.workflows:
