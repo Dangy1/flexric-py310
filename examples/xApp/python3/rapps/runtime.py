@@ -30,6 +30,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -53,25 +54,43 @@ def load_catalog() -> Dict[str, Dict[str, Any]]:
 # KPM access
 # ---------------------------------------------------------------------------
 
+_KPM_LINE_RE = re.compile(r"ue_type=(?P<ue_type>\S+)\s+amf_ue_ngap_id=(?P<ue_id>\S+)\s+meas=(?P<meas>\S+)\s+value=(?P<value>\S+)")
+# The emulator reports raw PRB counts per period rather than a utilisation
+# fraction; normalise against the busiest sample in the window so the
+# decision thresholds below stay in [0, 1].
+_PRB_METRICS = {"RRU.PrbTotDl", "RRU.PrbTotUl"}
+
+
 def fetch_recent_kpm(limit: int = 200, timeout_s: float = 3.0) -> Dict[str, Any]:
-    """Return {'available': bool, 'cells': {cell_id: {metric: latest}}, 'detail': str}."""
+    """Return {'available': bool, 'cells': {cell_id: {metric: latest}}, 'detail': str}.
+
+    Reads the shared KPM bus (`GET /kpm/recent`), whose records carry the
+    collector's raw text lines (`ue_type=… amf_ue_ngap_id=… meas=… value=…`).
+    Cells are keyed by the reporting node/UE id.
+    """
     try:
-        response = requests.get(f"{KPM_BUS_URL}/records", params={"limit": limit}, timeout=timeout_s)
+        response = requests.get(f"{KPM_BUS_URL}/kpm/recent", params={"mode": "all", "limit": max(20, min(limit, 400))}, timeout=timeout_s)
         response.raise_for_status()
         payload = response.json()
     except Exception as exc:
         return {"available": False, "cells": {}, "detail": f"KPM bus unavailable: {exc}"}
     cells: Dict[str, Dict[str, float]] = {}
-    records = payload.get("records") if isinstance(payload, dict) else payload
-    for record in list(records or []):
-        cell = str(record.get("cell") or record.get("e2_node") or record.get("ue_id") or "cell-0")
-        metrics = record.get("metrics") or record.get("meas") or {}
-        if isinstance(metrics, dict):
-            for name, value in metrics.items():
-                try:
-                    cells.setdefault(cell, {})[str(name)] = float(value)
-                except (TypeError, ValueError):
-                    continue
+    maxima: Dict[str, float] = {}
+    for record in list(payload.get("records") or []):
+        match = _KPM_LINE_RE.search(str(record.get("raw") or ""))
+        if not match:
+            continue
+        try:
+            value = float(match.group("value"))
+        except ValueError:
+            continue
+        name = match.group("meas")
+        cells.setdefault(match.group("ue_id"), {})[name] = value
+        maxima[name] = max(maxima.get(name, 0.0), value)
+    for metrics in cells.values():
+        for name in list(metrics):
+            if name in _PRB_METRICS and maxima.get(name, 0.0) > 1.0:
+                metrics[name] = round(metrics[name] / maxima[name], 3)
     return {"available": bool(cells), "cells": cells, "detail": "" if cells else "No parsable KPM records in window."}
 
 

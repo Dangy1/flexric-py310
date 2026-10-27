@@ -75,7 +75,7 @@ METHOD_LABELS = {
 # acknowledgement). Until then it is merely a successful *launch*.
 TOOL_ACK_MARKERS = {
     "kpm": ["RRU.", "DRB.", "\"meas\"", "indication"],
-    "slice": ["Slice monitor subscribed", "Applied STATIC", "Applied NVS", "Applied EDF", "Monitor-only mode"],
+    "slice": ["Slice monitor subscribed", "Applied STATIC", "Applied NVS", "Applied EDF", "Monitor-only mode", "SLICE ind tstamp="],
     "tc": ["Applied TC profile"],
     "rc": ["KPM/RC suite running", "RC profile selected", "RC indication received"],
 }

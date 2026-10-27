@@ -10,9 +10,15 @@ paper says). This file is the working roadmap; tick items off and record decisio
 - Conda env `flexric-py310` (`~/anaconda3/envs/flexric-py310/bin/python`). Planner LLM: Ollama at
   `http://130.233.158.22:11434`, model `gpt-oss:latest` (the paper's model). Any OpenAI-compatible
   endpoint works via `OPENAI_BASE_URL/OPENAI_MODEL/OPENAI_API_KEY`.
-- **Open item:** the owner mentioned a "spark1 gpt" model from the CloudAF6G project. No endpoint or
-  credentials for it exist on this machine. Get the base URL + key, add it as a provider, and run the
-  benchmark on both gpt-oss and spark1 so the paper has a two-model comparison.
+- **LLM hosts (owner's words, 2026-10-27):** *spark2* = the Ollama host `130.233.158.22` (tlt022.hut.fi,
+  Ollama 0.40); *spark1* = a **vLLM** server (OpenAI-compatible). spark1's address/port and model id are
+  not on this machine and the names do not resolve here — ask the owner, then use the portal's existing
+  OpenAI provider: `OPENAI_BASE_URL=http://<spark1>:<port>/v1 OPENAI_MODEL=<served model> OPENAI_API_KEY=<any>`.
+- **gpt-oss is currently broken on spark2:** Ollama 0.40 fails to load `gpt-oss:latest`
+  (`key not found in model: gpt-oss.expert_feed_forward_length`, HTTP 500). Other models load
+  (`qwen3.6:27b` answers in ~20 s, `gemma3:1b` in 2 s). Fix on the server: `ollama pull gpt-oss:20b`
+  (re-pull a build compatible with 0.40) — owner's decision, it is their machine. Until then run
+  pilots with `OLLAMA_MODEL=qwen3.6:27b`; the paper's main batch must use the model named in the paper.
 - Never reuse the May-2026 numbers (see assessment §3). Every number in the revised paper comes from a
   batch produced by the fixed harness, with `manifest.json` recording model, settings and hardware.
 - Keep rerunnable: one command per batch, results committed under `evaluation/runs/<id>/`
@@ -137,6 +143,44 @@ comments (p3 l54, p5 l64, capitalisation, "Agent Card", Fig 5a labels, Fig 3 den
 - T4 (simulator build) is independent and long → its own session/worktree from the start.
 - T5 needs T1–T4; T6 needs T4 + T5; T7 last.
 - Owner decisions needed: spark1 endpoint; whether OAI rfsim live run is in scope; GPU host specs.
+
+## 3b. Status at handoff (2026-10-27, planning session → execution session)
+
+Done and committed on `appweaver-revision` (pushed to `dangy1`):
+- T0: repo publishable; `evaluation/`, `rapps/`, `docs/` tracked; CMake copies them to the build tree; README reproduction section.
+- T1: all items except the paper table/figure scripts. `run_harness.py` has no label leak, methods
+  `llm_blind` / `agentcard_no_repair`, acknowledged tool calls (`--tool-ack-timeout-s`), conflict
+  precision/recall, latency distribution + CIs, planner/model/sampling/hardware/registry in the manifest,
+  defaults = 5 repeats, caches off. `METRICS.md`, `CONFLICTS.md` written. Smoke-tested + 3-intent pilot only.
+- T2: Agent-Card v2 fields on the 4 xApps; `backend/orchestration/compat.py` (dependency, interface,
+  control-scope incl. capability conflicts, timescale) wired into the agent-card planner; report per record.
+- T3: `rapps/build_catalog.py` → 46 cards (16 families, vendor variants + deprecated distractors);
+  `rapps/runtime.py` (CLI + optional MCP); `backend/agents/rapps.py` loader (`FLEXRIC_RAPP_DIRECTORY=1`,
+  registry = 55 cards / 50 executable); `backend/orchestration/discovery.py` BM25 + family de-dup
+  (`--retrieval-k`); `evaluation/build_intents_v2.py` → `intents_v2.json` (11 known / 39 open-world /
+  30 unseen-capability). Measured top-k recall (BM25, dedupe on): k=8 → 39/50 and 67/80; k=12 → 44/50, 73/80.
+- T4: running in its own session (`ns-oran-sim`, Opus 5.5) — builds `~/flexric-taap` + `~/ns-oran-flexric`;
+  its nearRT-RIC is already up (port 36423). Deliverables land in `~/ns-oran-flexric/APPWEAVER_SETUP.md`.
+
+Running on this host at handoff:
+- Portal stack from `~/flexric/build/examples/xApp/python3/scripts/run_agent_portal_stack.sh`
+  (nearRT-RIC 36421, emu_agent_gnb, portal 8088, RPC 8090, MCP 8000, KPM bus 8091; logs `/tmp/flexric_portal_stack`),
+  started with `OLLAMA_BASE_URL=http://130.233.158.22:11434 OLLAMA_MODEL=gpt-oss:latest
+  FLEXRIC_LLM_TEMPERATURE=0.2 FLEXRIC_LLM_SEED=7 FLEXRIC_RAPP_DIRECTORY=1`.
+- Pilot batch directory: `build/examples/xApp/python3/evaluation/runs/*_pilot/` (3 intents ×
+  manual_rule / llm_blind / langgraph_agentcard × 1 repeat). Check `acknowledged`, `retrieval`,
+  `compat_report`, `planner_model`, `hallucinated_reference_count` in `records.jsonl`.
+
+First tasks for the execution session:
+1. Verify the ack path in the pilot records; tune `TOOL_ACK_MARKERS` if an xApp never acks.
+2. Port `evaluation/paper_results/make_paper_figures.py` / `plot_final.py` to the new summary fields
+   (`methods[*].latency`, `conflict_recall`, `by_split`, `retrieval_hit_rate`, `tool_call_acknowledged_rate`).
+3. The build-tree `evaluation/runs/` still holds the 550 MB May batches (archived at
+   `~/appweaver_eval_archive_2026-10-27.tar.gz`). New batches are written there; copy finished batches
+   (without `records/`) into the source tree and commit.
+4. T5 batch A (`intents_50.json`, 6 paper methods, 5 repeats, gpt-oss), batch B (`intents_v2.json`,
+   `--retrieval-k 8` and `0`, with/without `FLEXRIC_RAPP_DIRECTORY`), then T6 once `ns-oran-sim` reports, then T7.
+   Owner inputs still missing: spark1 endpoint/credentials, `LLM_SERVER_HARDWARE` line, OAI rfsim live-run decision.
 
 ## 4. Done criteria
 A fresh clone + the README's three commands reproduce every number and figure in the revised paper
