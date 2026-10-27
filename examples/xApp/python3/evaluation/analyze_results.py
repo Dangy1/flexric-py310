@@ -168,7 +168,13 @@ def build_summary(records: List[Dict[str, Any]]) -> Dict[str, Any]:
         for split in sorted({str(item.get("intent_split") or ("open_world" if item.get("intent_open_world") else "known")) for item in available_items}):
             split_items = [item for item in available_items if str(item.get("intent_split") or ("open_world" if item.get("intent_open_world") else "known")) == split]
             matched = sum(1 for item in split_items if item.get("workflow_match") is True)
-            by_split[split] = {"records": len(split_items), "workflow_accuracy": _rate(matched, len(split_items)), "ci95": _ci95_halfwidth(matched, len(split_items))}
+            accepted = sum(1 for item in split_items if item.get("workflow_match_any_accepted") is True)
+            by_split[split] = {
+                "records": len(split_items),
+                "workflow_accuracy": _rate(matched, len(split_items)),
+                "ci95": _ci95_halfwidth(matched, len(split_items)),
+                "accepted_accuracy": _rate(accepted, len(split_items)),
+            }
 
         summary["methods"][method] = {
             "metric_definitions": "see evaluation/METRICS.md",

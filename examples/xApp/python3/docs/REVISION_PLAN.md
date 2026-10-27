@@ -191,6 +191,25 @@ First tasks for the execution session:
    `--retrieval-k 8` and `0`, with/without `FLEXRIC_RAPP_DIRECTORY`), then T6 once `ns-oran-sim` reports, then T7.
    Owner inputs still missing: spark1 endpoint/credentials, `LLM_SERVER_HARDWARE` line, OAI rfsim live-run decision.
 
+## 3c. Owner inputs (open questions — execution session, 2026-10-27)
+
+| # | Question | Blocks | Status |
+|---|---|---|---|
+| O1 | Re-pull gpt-oss on spark2 (`ollama pull gpt-oss:20b` or a build that loads under Ollama 0.40); check: `curl http://130.233.158.22:11434/api/generate -d '{"model":"gpt-oss:latest","prompt":"hi","stream":false}'` returns no `error` | Final batches A and B (paper model) | **open** — still HTTP 500 `gpt-oss.expert_feed_forward_length` at 18:15 |
+| O2 | spark1 vLLM endpoint: `OPENAI_BASE_URL`, served model id, API key if any | Batch B second model | **open** |
+| O3 | GPU line for spark2 (and spark1): `nvidia-smi --query-gpu=name,memory.total --format=csv` → `LLM_SERVER_HARDWARE` and `evaluation/HARDWARE.md` | manifests, paper hardware sentence | **open** (preliminary manifests say "GPU model pending owner") |
+| O4 | Live side of the twin experiment: OAI rfsim gNB, or ns-3 seed B + traffic perturbation | T6 | **open** — default ns-3 seed B unless the owner says OAI |
+| O5 | Reasoning mode for the final batch: gpt-oss reasons by default (keep `FLEXRIC_LLM_THINK` unset). Preliminary qwen batches use `FLEXRIC_LLM_THINK=false` (24 s → 1.4 s per call); confirm that is acceptable for any qwen numbers shown | labelling of qwen results | **open** |
+
+## 3d. Execution log
+- Ack path: pilot TC call unacknowledged because the TC suite prints ~30 setup lines before `Applied`
+  and the portal tail is 20 lines; the E2 `CONTROL-ACK` line is now a TC/SLICE marker and a negative
+  line is only final once the xApp exited.
+- Harness writes `records.partial.jsonl` + a progress line per record (long batches are watchable).
+- `FLEXRIC_LLM_THINK` switch (recorded in the manifest); OpenAI path now sends temperature/seed.
+- `make_paper_figures.py` / `plot_final.py` rebuilt on records + CIs (see `evaluation/METRICS.md`).
+- `accepted_workflows` rule for the 50 original intents in `build_intents_v2.py` (11 intents gain one chain).
+
 ## 4. Done criteria
 A fresh clone + the README's three commands reproduce every number and figure in the revised paper
 from `evaluation/runs/<id>/records.jsonl`, and every reviewer row in §1 has a pointer to the

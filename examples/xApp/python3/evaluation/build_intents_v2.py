@@ -13,10 +13,25 @@ Chains name agents by registry id (upper-cased for comparison); rApp ids are
 count as wrong selections (the directory contains them as distractors).
 `accepted_workflows` lists the alternative valid chains where the ordering of
 observation and prediction steps is genuinely interchangeable.
+
+rApp alternatives for the 50 original intents (directory ON only changes what is
+*available*, never what the task needs). An original xApp chain gains one extra
+accepted chain per rule below, and only when all conditions hold:
+  1. the rApp family is read-only (its card's control scopes are all `read`):
+     QOE_PREDICTION, ANOMALY_DETECTION, ROOT_CAUSE, PM_KPI. Write-scope rApps
+     (SLICE_SLA, TRANSPORT_QOS, MOBILITY_OPTIMIZATION, ...) are never accepted,
+     because they would duplicate or replace the xApp control step the label
+     specifies (two writers on one control resource);
+  2. the intent text explicitly asks for that analytic function (whole-word
+     patterns in RAPP_TRIGGERS; the intent id and tags are not consulted);
+  3. the chain has a KPM step; the rApp is inserted immediately after it
+     (every rApp consumes KPM data), and every original step is kept in order.
+Chains that drop or reorder an xApp step, or add a second rApp, stay wrong.
 """
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -57,6 +72,24 @@ NEW_INTENTS: List[Dict[str, Any]] = [
 
 RAPP_CAPABILITIES_NOT_IN_TEMPLATES = {"RAPP."}
 
+# Read-only analytic rApps and the intent wording that explicitly asks for them (rule 2 above).
+RAPP_TRIGGERS: Dict[str, str] = {
+    "RAPP.QOE_PREDICTION": r"\b(qoe|mos|quality of experience)\b",
+    "RAPP.ANOMALY_DETECTION": r"\b(anomal(y|ies|ous)|detect|drift)\b",
+    "RAPP.ROOT_CAUSE": r"\b(root cause|diagnose|investigate|triage)\b",
+    "RAPP.PM_KPI": r"\b(report|audit)\b",
+}
+
+
+def rapp_alternatives(item: Dict[str, Any]) -> List[List[str]]:
+    """Extra accepted chains for an original xApp intent (see module docstring)."""
+    chain = [str(step) for step in item["expected_workflow"]]
+    if "KPM" not in chain:
+        return []
+    text = str(item.get("intent") or "").lower()
+    at = chain.index("KPM") + 1
+    return [chain[:at] + [rapp] + chain[at:] for rapp, pattern in RAPP_TRIGGERS.items() if re.search(pattern, text)]
+
 
 def main() -> int:
     base = json.loads((HERE / "intents_50.json").read_text(encoding="utf-8"))
@@ -65,6 +98,7 @@ def main() -> int:
         entry = dict(item)
         entry["split"] = "open_world" if item.get("open_world") else "known"
         entry.setdefault("accepted_workflows", [list(item["expected_workflow"])])
+        entry["accepted_workflows"] += [alt for alt in rapp_alternatives(item) if alt not in entry["accepted_workflows"]]
         out.append(entry)
     for item in NEW_INTENTS:
         entry = dict(item)

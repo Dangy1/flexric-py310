@@ -1,41 +1,53 @@
 #!/usr/bin/env python3
-"""Build IEEE-magazine-quality figures, tables, and CSVs for the AppWeaver paper.
+"""Build the AppWeaver paper figures, LaTeX tables and CSV from evaluation batches.
+
+Every number is recomputed from a batch's `records.jsonl`; `manifest.json` supplies the model,
+inference settings and registry size. Nothing is read from the May-2026 batches.
 
 Inputs
-  --final-run      runs/20260508T130259_final          (open model: gpt-oss via Ollama, 700 records)
-  --claude-run     runs/20260702T102407_787374Z        (Claude Fable 5 pilot via headless CLI)
+  --batch-a RUN            Batch A: intents_50.json, paper registry (FLEXRIC_RAPP_DIRECTORY unset)
+  --batch-b RUN [RUN ...]  Batch B: intents_v2.json with the rApp Directory; one run per
+                           retrieval depth (labelled from manifest -> retrieval_k)
 
-Outputs (into this directory)
-  combined_results.csv      per-method metrics, one row per (model, method)
-  results_table.tex         booktabs table ready for IEEEtran
-  README.md                 human-readable summary
-  fig_workflow_accuracy.[pdf|png]   known vs open-world composition accuracy
-  fig_quality_metrics.[pdf|png]     tool success / conflict detection / policy validity
-  fig_latency.[pdf|png]             orchestration latency (log scale)
-  fig_model_comparison.[pdf|png]    Claude vs open model on jointly covered cells
+Outputs (into --out, default: this directory)
+  combined_results.csv           one row per (batch, method): value, ci_lo, ci_hi per metric
+  results_table.tex              Batch A table (Table II)
+  results_table_registry.tex     Batch B table (written only with --batch-b)
+  figures/fig_accuracy.[pdf|png]       Batch A known vs open-world accuracy, 95% CI
+  figures/fig_reliability.[pdf|png]    acknowledged tool calls, conflict recall, conflict FP rate
+  figures/fig_latency.[pdf|png]        per-record latency distribution (log scale)
+  figures/fig_registry_splits.[pdf|png] Batch B accuracy per split and retrieval depth
+  figures/fig_hallucination.[pdf|png]  hallucinated references per record
 
-Style: single-column IEEE (3.5 in wide), serif fonts, colorblind- and
-grayscale-safe (hatches + distinct lightness), no in-figure titles (captions
-belong in LaTeX).
+Confidence intervals (stated in every caption/README):
+  * accuracies and acknowledged-call rate: intent-clustered percentile bootstrap (2000 resamples,
+    seed 0). Repeats of one intent are correlated, so intents, not records, are resampled.
+  * conflict recall / false-positive rate: Wilson score interval over records (only 6 seeded
+    intents, too few clusters for a bootstrap).
+
+Accuracy is "accepted" accuracy (exact ordered match with any chain in the intent's
+`accepted_workflows`; for intents_50 that is the single labelled chain) unless a column says
+"exact" or "set". See evaluation/METRICS.md.
 
 Run inside the flexric-py310 conda env:
-  python make_paper_figures.py --final-run ../runs/20260508T130259_final \
-      --claude-run ../runs/20260702T102407_787374Z
+  python make_paper_figures.py --batch-a ../runs/<A> --batch-b ../runs/<B_k8> ../runs/<B_k0>
 """
 from __future__ import annotations
 
 import argparse
 import csv
 import json
+import math
+import random
+from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-# ---------------------------------------------------------------- IEEE style
 plt.rcParams.update(
     {
         "font.family": "serif",
@@ -43,7 +55,7 @@ plt.rcParams.update(
         "font.size": 8,
         "axes.labelsize": 8,
         "axes.linewidth": 0.6,
-        "xtick.labelsize": 7,
+        "xtick.labelsize": 6.5,
         "ytick.labelsize": 7,
         "legend.fontsize": 6.5,
         "legend.frameon": False,
@@ -51,348 +63,521 @@ plt.rcParams.update(
         "savefig.dpi": 300,
         "savefig.bbox": "tight",
         "savefig.pad_inches": 0.02,
-        "pdf.fonttype": 42,  # embed TrueType for IEEE PDF eXpress
+        "pdf.fonttype": 42,
         "ps.fonttype": 42,
     }
 )
 
 SINGLE_COL = 3.5  # inches
+DOUBLE_COL = 7.16
 
-# Method ids -> paper labels. langgraph_agentcard is the AppWeaver approach.
-METHODS = [
-    ("manual_rule", "Manual\nrule"),
-    ("single_xapp", "Single\nxApp"),
-    ("llm_only", "LLM-\nonly"),
-    ("langgraph_override", "LG-\nOverride"),
-    ("langgraph_enforced", "LG-\nEnforced"),
-    ("langgraph_llm", "LG-LLM\n(recov.)"),
-    ("langgraph_agentcard", "AppWeaver\n(agent-card)"),
+METHODS: List[Tuple[str, str]] = [
+    ("manual_rule", "Rule\nrouter"),
+    ("single_xapp", "Single\napp"),
+    ("llm_blind", "LLM\n(no catalog)"),
+    ("llm_only", "LLM\n(catalog)"),
+    ("agentcard_no_repair", "AppWeaver\n(no repair)"),
+    ("langgraph_agentcard", "AppWeaver"),
 ]
-METHOD_IDS = [m for m, _ in METHODS]
-METHOD_LABELS = [l for _, l in METHODS]
+LABEL = dict(METHODS)
+SPLITS = [("known", "Known"), ("open_world", "Open-world"), ("unseen_capability", "Unseen capability")]
 
-# Colorblind-safe palette (Okabe-Ito) with distinct lightness for grayscale.
-C_BLUE = "#0072B2"
-C_ORANGE = "#E69F00"
-C_GREEN = "#009E73"
-C_VERM = "#D55E00"
-C_GRAY = "#999999"
-C_SKY = "#56B4E9"
-
-METRICS_FOR_TABLE = [
-    ("workflow_accuracy", "Workflow acc."),
-    ("known_workflow_accuracy", "Known acc."),
-    ("open_world_workflow_accuracy", "Open-world acc."),
-    ("tool_call_success_rate", "Tool success"),
-    ("conflict_detection_accuracy", "Conflict det."),
-    ("policy_validity_rate", "Policy valid"),
-    ("internal_recovery_success_rate", "Int. recovery"),
-    ("average_orchestration_latency_ms", "Latency (ms)"),
-]
+# Okabe-Ito, validated with the dataviz palette checker (light surface); hatches carry identity in print.
+C_BLUE, C_ORANGE, C_GREEN, C_VERM, C_SKY, C_GRAY = "#0072B2", "#E69F00", "#009E73", "#D55E00", "#56B4E9", "#999999"
+HATCHES = ["", "//", ".."]
+BOOT_N = 2000
 
 
-def load_final_summary(final_run: Path) -> Dict[str, Dict[str, Any]]:
-    data = json.loads((final_run / "summary.json").read_text(encoding="utf-8"))
-    return data["methods"]
+# ---------------------------------------------------------------- loading
+class Batch:
+    def __init__(self, path: Path, role: str) -> None:
+        self.path = path
+        self.role = role
+        self.id = path.name
+        self.manifest: Dict[str, Any] = json.loads((path / "manifest.json").read_text(encoding="utf-8"))
+        records_file = path / "records.jsonl"
+        if not records_file.exists():
+            records_file = path / "records.partial.jsonl"  # unfinished batch, for previews only
+        self.complete = records_file.name == "records.jsonl"
+        self.records = [json.loads(line) for line in records_file.read_text(encoding="utf-8").splitlines() if line.strip()]
+        self.records = [r for r in self.records if r.get("method_available") is not False]
+        self.methods = [m for m, _ in METHODS if any(r.get("method") == m for r in self.records)]
+
+    @property
+    def model(self) -> str:
+        models = {str(r.get("planner_model")) for r in self.records if r.get("planner_model")}
+        if models:
+            return ",".join(sorted(models))
+        for provider in self.manifest.get("providers", []):
+            if provider.get("enabled") and provider.get("id") != "claude":
+                return str(provider.get("model"))
+        return "unknown"
+
+    @property
+    def settings(self) -> Dict[str, Any]:
+        return dict(self.manifest.get("planner_inference_settings") or {})
+
+    @property
+    def retrieval_k(self) -> int:
+        return int((self.manifest.get("evaluation_runtime_config") or {}).get("retrieval_k") or 0)
+
+    @property
+    def preliminary(self) -> bool:
+        return not self.model.startswith("gpt-oss")
+
+    def describe(self) -> str:
+        reg = self.manifest.get("registry") or {}
+        repeats = len({r.get("repeat_index") for r in self.records})
+        intents = len({r.get("intent_id") for r in self.records})
+        return (
+            f"`{self.id}` - {intents} intents x {len(self.methods)} methods x {repeats} repeats = "
+            f"{len(self.records)} records; planner `{self.model}`, settings {json.dumps(self.settings, sort_keys=True)}, "
+            f"registry {reg.get('agent_count', '?')} cards, retrieval_k={self.retrieval_k}"
+            + ("" if self.complete else " **(INCOMPLETE: partial records)**")
+            + (" **PRELIMINARY (not the paper's model)**" if self.preliminary else "")
+        )
 
 
-def load_claude_records(claude_run: Path) -> List[Dict[str, Any]]:
-    records = []
-    with (claude_run / "records.jsonl").open(encoding="utf-8") as handle:
-        for line in handle:
-            if line.strip():
-                records.append(json.loads(line))
-    return records
+def split_of(record: Dict[str, Any]) -> str:
+    return str(record.get("intent_split") or ("open_world" if record.get("intent_open_world") else "known"))
 
 
-def rate(values: List[bool]) -> float:
-    return sum(1 for v in values if v) / len(values) if values else float("nan")
+# ---------------------------------------------------------------- statistics
+def _clusters(records: Sequence[Dict[str, Any]]) -> List[List[Dict[str, Any]]]:
+    groups: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+    for r in records:
+        groups[str(r.get("intent_id"))].append(r)
+    return [groups[k] for k in sorted(groups)]
 
 
-def summarize_claude(records: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
-    out: Dict[str, Dict[str, Any]] = {}
-    for method in METHOD_IDS:
-        rows = [r for r in records if r.get("method") == method]
-        if not rows:
-            continue
-        tools = sum(int(r.get("tool_call_count") or 0) for r in rows)
-        tools_ok = sum(int(r.get("tool_call_success_count") or 0) for r in rows)
-        lat = [float(r.get("orchestration_latency_ms") or 0.0) for r in rows]
-        out[method] = {
-            "run_count": len(rows),
-            "workflow_accuracy": rate([bool(r.get("workflow_match")) for r in rows]),
-            "known_workflow_accuracy": rate([bool(r.get("workflow_match")) for r in rows if not r.get("intent_open_world")]),
-            "open_world_workflow_accuracy": rate([bool(r.get("workflow_match")) for r in rows if r.get("intent_open_world")]),
-            "tool_call_success_rate": tools_ok / tools if tools else float("nan"),
-            "conflict_detection_accuracy": rate([bool(r.get("conflict_detection_correct")) for r in rows if r.get("conflict_label")]),
-            "policy_validity_rate": rate([bool(r.get("policy_valid", True)) for r in rows]),
-            "internal_recovery_success_rate": float("nan"),
-            "average_orchestration_latency_ms": sum(lat) / len(lat) if lat else float("nan"),
-        }
+def ratio_bootstrap(records: Sequence[Dict[str, Any]], num: Callable[[Dict[str, Any]], float],
+                    den: Callable[[Dict[str, Any]], float]) -> Tuple[Optional[float], Optional[float], Optional[float]]:
+    """Point estimate sum(num)/sum(den) with an intent-clustered percentile bootstrap CI."""
+    clusters = _clusters(records)
+    sums = [(sum(num(r) for r in c), sum(den(r) for r in c)) for c in clusters]
+    total_den = sum(d for _, d in sums)
+    if not clusters or total_den == 0:
+        return None, None, None
+    point = sum(n for n, _ in sums) / total_den
+    if len(clusters) == 1:
+        return point, None, None
+    rng = random.Random(0)
+    stats = []
+    for _ in range(BOOT_N):
+        draw = [sums[rng.randrange(len(sums))] for _ in sums]
+        d = sum(x for _, x in draw)
+        if d:
+            stats.append(sum(x for x, _ in draw) / d)
+    stats.sort()
+    return point, stats[int(0.025 * (len(stats) - 1))], stats[int(math.ceil(0.975 * (len(stats) - 1)))]
+
+
+def wilson(successes: int, total: int) -> Tuple[Optional[float], Optional[float], Optional[float]]:
+    if total <= 0:
+        return None, None, None
+    z = 1.959964
+    p = successes / total
+    denom = 1 + z * z / total
+    centre = (p + z * z / (2 * total)) / denom
+    half = z * math.sqrt(p * (1 - p) / total + z * z / (4 * total * total)) / denom
+    return p, max(0.0, centre - half), min(1.0, centre + half)
+
+
+def percentile(values: Sequence[float], q: float) -> Optional[float]:
+    if not values:
+        return None
+    ordered = sorted(values)
+    return ordered[min(len(ordered) - 1, max(0, int(math.ceil(q * len(ordered))) - 1))]
+
+
+def flag(key: str) -> Callable[[Dict[str, Any]], float]:
+    return lambda r: 1.0 if r.get(key) is True else 0.0
+
+
+ONE = lambda r: 1.0  # noqa: E731
+
+
+def method_metrics(records: List[Dict[str, Any]]) -> Dict[str, Any]:
+    out: Dict[str, Any] = {"records": len(records), "intents": len({r.get("intent_id") for r in records}),
+                           "repeats": len({r.get("repeat_index") for r in records})}
+    out["accuracy"] = ratio_bootstrap(records, flag("workflow_match_any_accepted"), ONE)
+    out["exact_accuracy"] = ratio_bootstrap(records, flag("workflow_match"), ONE)
+    out["set_accuracy"] = ratio_bootstrap(records, flag("workflow_set_match"), ONE)
+    for split, _ in SPLITS:
+        subset = [r for r in records if split_of(r) == split]
+        out[f"{split}_records"] = len(subset)
+        out[f"{split}_intents"] = len({r.get("intent_id") for r in subset})
+        out[f"{split}_accuracy"] = ratio_bootstrap(subset, flag("workflow_match_any_accepted"), ONE)
+
+    calls = lambda r: [c for c in (r.get("tool_calls") or []) if c.get("acknowledged") is not None]  # noqa: E731
+    out["tool_calls"] = sum(len(r.get("tool_calls") or []) for r in records)
+    out["ack_rate"] = ratio_bootstrap(records, lambda r: sum(1 for c in calls(r) if c.get("acknowledged") is True),
+                                      lambda r: len(calls(r)))
+    out["launch_rate"] = ratio_bootstrap(records, lambda r: sum(1 for c in (r.get("tool_calls") or []) if c.get("status") == "success"),
+                                         lambda r: len(r.get("tool_calls") or []))
+
+    seeded = [r for r in records if r.get("conflict_label") is True]
+    unseeded = [r for r in records if r.get("conflict_label") is False]
+    out["seeded_records"] = len(seeded)
+    out["conflict_recall"] = wilson(sum(1 for r in seeded if r.get("conflict_detected") is True), len(seeded))
+    out["conflict_fp_rate"] = wilson(sum(1 for r in unseeded if r.get("conflict_detected") is True), len(unseeded))
+    out["seeded_recovered"] = wilson(sum(1 for r in seeded if (r.get("execution_artifacts") or {}).get("internal_recovery_succeeded")), len(seeded))
+
+    out["hallucinated_refs"] = sum(int(r.get("hallucinated_reference_count") or 0) for r in records)
+    out["hallucinated_per_record"] = ratio_bootstrap(records, lambda r: float(r.get("hallucinated_reference_count") or 0), ONE)
+    out["records_with_hallucination"] = sum(1 for r in records if int(r.get("hallucinated_reference_count") or 0) > 0)
+
+    retr = [r for r in records if r.get("retrieval_hit") is not None]
+    out["retrieval_hit_rate"] = ratio_bootstrap(retr, flag("retrieval_hit"), ONE) if retr else (None, None, None)
+    compat = [r for r in records if r.get("compat_ok") is not None]
+    out["compat_ok_rate"] = wilson(sum(1 for r in compat if r.get("compat_ok") is True), len(compat)) if compat else (None, None, None)
+
+    lat = [float(r["orchestration_latency_ms"]) for r in records if r.get("orchestration_latency_ms") is not None]
+    out["latency_values_ms"] = lat
+    out["latency_n"] = len(lat)
+    out["latency_mean_ms"] = sum(lat) / len(lat) if lat else None
+    out["latency_sd_ms"] = (math.sqrt(sum((x - out["latency_mean_ms"]) ** 2 for x in lat) / (len(lat) - 1)) if len(lat) > 1 else None)
+    out["latency_median_ms"] = percentile(lat, 0.5)
+    out["latency_p95_ms"] = percentile(lat, 0.95)
+    out["latency_max_ms"] = max(lat) if lat else None
+    out["planner_cached_records"] = sum(1 for r in records if r.get("planner_cached") is True)
     return out
 
 
-def fmt(value: Any, metric: str) -> str:
-    try:
-        v = float(value)
-    except (TypeError, ValueError):
+def batch_metrics(batch: Batch) -> Dict[str, Dict[str, Any]]:
+    return {m: method_metrics([r for r in batch.records if r.get("method") == m]) for m in batch.methods}
+
+
+# ---------------------------------------------------------------- formatting
+def pct(triple: Tuple[Optional[float], Optional[float], Optional[float]], ci: bool = True) -> str:
+    v, lo, hi = triple
+    if v is None:
         return "--"
-    if v != v:  # NaN
+    if not ci or lo is None:
+        return f"{100 * v:.1f}"
+    return f"{100 * v:.1f} {{\\scriptsize[{100 * lo:.0f},{100 * hi:.0f}]}}"
+
+
+def pct_md(triple: Tuple[Optional[float], Optional[float], Optional[float]]) -> str:
+    v, lo, hi = triple
+    if v is None:
         return "--"
-    if metric == "average_orchestration_latency_ms":
-        return f"{v:,.0f}"
-    return f"{100 * v:.1f}"
+    return f"{100 * v:.1f}%" + (f" [{100 * lo:.0f}, {100 * hi:.0f}]" if lo is not None else "")
+
+
+def secs(ms: Optional[float], tex: bool = True) -> str:
+    if ms is None:
+        return "--"
+    return f"{ms / 1000:.2f}" if ms >= 10 else ("$<$0.01" if tex else "<0.01")
+
+
+def _yerr(triples: Sequence[Tuple[Optional[float], Optional[float], Optional[float]]]) -> Tuple[List[float], List[List[float]]]:
+    vals, lo, hi = [], [], []
+    for v, l, h in triples:
+        v = float("nan") if v is None else v
+        vals.append(v)
+        lo.append(0.0 if l is None or v != v else max(0.0, v - l))
+        hi.append(0.0 if h is None or v != v else max(0.0, h - v))
+    return vals, [lo, hi]
+
+
+def grouped(ax, groups: List[List[Tuple]], labels: List[str], colors: List[str], width: float = 0.8,
+            value_labels: bool = True) -> None:
+    n = len(groups)
+    sw = width / n
+    for i, (triples, label, color) in enumerate(zip(groups, labels, colors)):
+        vals, err = _yerr(triples)
+        xs = [j - width / 2 + sw * (i + 0.5) for j in range(len(vals))]
+        ax.bar(xs, vals, width=sw * 0.9, label=label, color=color, hatch=HATCHES[i % len(HATCHES)],
+               edgecolor="black", linewidth=0.4, zorder=2)
+        ax.errorbar(xs, vals, yerr=err, fmt="none", ecolor="black", elinewidth=0.5, capsize=1.2, capthick=0.5, zorder=3)
+        if value_labels:
+            for x, v, top in zip(xs, vals, err[1]):
+                if v == v:
+                    ax.text(x, v + top + 0.015, f"{100 * v:.0f}", ha="center", va="bottom", fontsize=5.5, zorder=4)
+
+
+def _finish(ax, ylabel: str, methods: List[str]) -> None:
+    ax.set_xticks(range(len(methods)))
+    ax.set_xticklabels([LABEL[m] for m in methods], fontsize=5.6)
+    ax.set_ylabel(ylabel)
+    ax.set_ylim(0, 1.12)
+    ax.yaxis.grid(True, linewidth=0.3, alpha=0.5)
+    ax.set_axisbelow(True)
+    if "langgraph_agentcard" in methods:
+        i = methods.index("langgraph_agentcard")
+        ax.axvspan(i - 0.5, i + 0.5, color="#F2F2F2", zorder=0)
+
+
+def save(fig, out: Path, name: str) -> None:
+    for ext in ("pdf", "png"):
+        fig.savefig(out / f"{name}.{ext}")
+    plt.close(fig)
 
 
 # ---------------------------------------------------------------- figures
-def grouped_bars(ax, series, labels, colors, hatches, width=0.8):
-    n = len(series)
-    sw = width / n
-    for i, (values, label, color, hatch) in enumerate(zip(series, labels, colors, hatches)):
-        xs = [j - width / 2 + sw * (i + 0.5) for j in range(len(values))]
-        ax.bar(xs, values, width=sw * 0.92, label=label, color=color, hatch=hatch,
-               edgecolor="black", linewidth=0.4)
+def fig_accuracy(batch: Batch, metrics: Dict[str, Dict[str, Any]], out: Path) -> None:
+    methods = batch.methods
+    m0 = metrics[methods[0]]
+    fig, ax = plt.subplots(figsize=(SINGLE_COL, 2.0))
+    grouped(ax, [[metrics[m]["known_accuracy"] for m in methods], [metrics[m]["open_world_accuracy"] for m in methods]],
+            [f"Known intents ({m0['known_intents']} intents)", f"Open-world intents ({m0['open_world_intents']} intents)"],
+            [C_BLUE, C_ORANGE], width=0.72)
+    _finish(ax, "Workflow accuracy", methods)
+    ax.legend(ncol=2, loc="upper left", bbox_to_anchor=(0, 1.16), handlelength=1.4, columnspacing=1.0)
+    save(fig, out, "fig_accuracy")
 
 
-def fig_workflow_accuracy(final: Dict[str, Dict[str, Any]], out: Path) -> None:
-    known = [float(final[m]["known_workflow_accuracy"]) for m in METHOD_IDS]
-    openw = [float(final[m]["open_world_workflow_accuracy"]) for m in METHOD_IDS]
-    overall = [float(final[m]["workflow_accuracy"]) for m in METHOD_IDS]
-    fig, ax = plt.subplots(figsize=(SINGLE_COL, 1.9))
-    grouped_bars(ax, [known, openw, overall],
-                 ["Known intents", "Open-world intents", "Overall"],
-                 [C_BLUE, C_ORANGE, C_GRAY], ["", "//", ".."])
-    ax.set_xticks(range(len(METHOD_IDS)))
-    ax.set_xticklabels(METHOD_LABELS, fontsize=5.5)
-    ax.set_ylabel("Composition accuracy")
-    ax.set_ylim(0, 1.05)
-    ax.yaxis.grid(True, linewidth=0.3, alpha=0.5)
-    ax.set_axisbelow(True)
-    ax.legend(ncol=3, loc="upper left", bbox_to_anchor=(0, 1.14), handlelength=1.4, columnspacing=0.9)
-    for ext in ("pdf", "png"):
-        fig.savefig(out / f"fig_workflow_accuracy.{ext}")
-    plt.close(fig)
+def fig_reliability(batch: Batch, metrics: Dict[str, Dict[str, Any]], out: Path) -> None:
+    methods = batch.methods
+    fig, ax = plt.subplots(figsize=(SINGLE_COL, 2.0))
+    grouped(ax, [[metrics[m]["ack_rate"] for m in methods], [metrics[m]["conflict_recall"] for m in methods],
+                 [metrics[m]["conflict_fp_rate"] for m in methods]],
+            ["Acknowledged tool calls", "Conflict recall (seeded)", "Conflict false-positive rate"],
+            [C_GREEN, C_VERM, C_SKY])
+    _finish(ax, "Rate", methods)
+    ax.legend(ncol=3, loc="upper left", bbox_to_anchor=(0, 1.16), handlelength=1.4, columnspacing=0.8)
+    save(fig, out, "fig_reliability")
 
 
-def fig_quality_metrics(final: Dict[str, Dict[str, Any]], out: Path) -> None:
-    tool = [float(final[m]["tool_call_success_rate"]) for m in METHOD_IDS]
-    conflict = [float(final[m]["conflict_detection_accuracy"]) for m in METHOD_IDS]
-    policy = [float(final[m]["policy_validity_rate"]) for m in METHOD_IDS]
-    fig, ax = plt.subplots(figsize=(SINGLE_COL, 1.9))
-    grouped_bars(ax, [tool, conflict, policy],
-                 ["Tool-call success", "Conflict detection", "Policy validity"],
-                 [C_GREEN, C_VERM, C_SKY], ["", "\\\\", "xx"])
-    ax.set_xticks(range(len(METHOD_IDS)))
-    ax.set_xticklabels(METHOD_LABELS, fontsize=5.5)
-    ax.set_ylabel("Rate")
-    ax.set_ylim(0, 1.05)
-    ax.yaxis.grid(True, linewidth=0.3, alpha=0.5)
-    ax.set_axisbelow(True)
-    ax.legend(ncol=3, loc="upper left", bbox_to_anchor=(0, 1.14), handlelength=1.4, columnspacing=0.9)
-    for ext in ("pdf", "png"):
-        fig.savefig(out / f"fig_quality_metrics.{ext}")
-    plt.close(fig)
-
-
-def fig_latency(final: Dict[str, Dict[str, Any]], claude: Dict[str, Dict[str, Any]], out: Path) -> None:
-    base = [float(final[m]["average_orchestration_latency_ms"]) for m in METHOD_IDS]
-    fig, ax = plt.subplots(figsize=(SINGLE_COL, 1.9))
-    xs = range(len(METHOD_IDS))
-    ax.bar(xs, base, width=0.55, color=C_BLUE, edgecolor="black", linewidth=0.4,
-           label="Open model (gpt-oss)")
-    # Overlay Claude pilot where covered (markers, not bars: different sample size).
-    cx = [i for i, m in enumerate(METHOD_IDS) if m in claude]
-    cy = [float(claude[METHOD_IDS[i]]["average_orchestration_latency_ms"]) for i in cx]
-    if cx:
-        ax.plot(cx, cy, linestyle="none", marker="D", markersize=4, color=C_VERM,
-                markeredgecolor="black", markeredgewidth=0.4, label="Claude (pilot, no plan cache)")
+def fig_latency(batch: Batch, metrics: Dict[str, Dict[str, Any]], out: Path) -> None:
+    methods = [m for m in batch.methods if metrics[m]["latency_values_ms"]]
+    data = [[max(v, 0.1) / 1000.0 for v in metrics[m]["latency_values_ms"]] for m in methods]
+    fig, ax = plt.subplots(figsize=(SINGLE_COL, 2.0))
+    ax.boxplot(data, positions=range(len(methods)), widths=0.5, whis=(5, 95), showfliers=True,
+               flierprops={"marker": ".", "markersize": 2, "markerfacecolor": C_GRAY, "markeredgecolor": "none"},
+               medianprops={"color": C_VERM, "linewidth": 0.9}, boxprops={"linewidth": 0.5},
+               whiskerprops={"linewidth": 0.5}, capprops={"linewidth": 0.5})
+    ax.axhline(1.0, color=C_GRAY, linewidth=0.6, linestyle=(0, (3, 2)))
+    ax.text(len(methods) - 0.5, 1.08, "Non-RT RIC loop (1 s)", ha="right", va="bottom", fontsize=5.5, color="#555555")
     ax.set_yscale("log")
-    ax.set_ylim(top=max(max(base), max(cy) if cx else 0) * 20)
-    ax.set_xticks(list(xs))
-    ax.set_xticklabels(METHOD_LABELS, fontsize=5.5)
-    ax.set_ylabel("Latency (ms, log)")
-    ax.yaxis.grid(True, which="both", linewidth=0.3, alpha=0.4)
+    ax.set_xticks(range(len(methods)))
+    ax.set_xticklabels([LABEL[m] for m in methods], fontsize=5.6)
+    ax.set_ylabel("Intent-to-plan latency (s, log)")
+    ax.yaxis.grid(True, which="major", linewidth=0.3, alpha=0.5)
     ax.set_axisbelow(True)
-    ax.legend(loc="upper left", handlelength=1.4)
-    for ext in ("pdf", "png"):
-        fig.savefig(out / f"fig_latency.{ext}")
-    plt.close(fig)
+    save(fig, out, "fig_latency")
 
 
-def summarize_subset(records: List[Dict[str, Any]], intents: set, methods: List[str]) -> Dict[str, Dict[str, Any]]:
-    """Aggregate a records list restricted to given intents/methods (for a fair like-for-like cell comparison)."""
-    subset = [r for r in records if str(r.get("intent_id")) in intents and r.get("method") in methods]
-    return summarize_claude(subset)  # same aggregation logic
+def fig_registry_splits(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[str, Any]]], out: Path) -> None:
+    fig, axes = plt.subplots(1, len(batches), figsize=(DOUBLE_COL if len(batches) > 1 else SINGLE_COL, 2.0), sharey=True,
+                             squeeze=False)
+    for ax, batch in zip(axes[0], batches):
+        metrics = all_metrics[batch.id]
+        methods = batch.methods
+        m0 = metrics[methods[0]]
+        splits = [(s, label) for s, label in SPLITS if m0[f"{s}_intents"]]
+        grouped(ax, [[metrics[m][f"{s}_accuracy"] for m in methods] for s, _ in splits],
+                [f"{label} ({m0[f'{s}_intents']} intents)" for s, label in splits], [C_BLUE, C_ORANGE, C_GREEN])
+        _finish(ax, "Workflow accuracy" if ax is axes[0][0] else "", methods)
+        ax.set_title(f"rApp Directory, retrieval k={batch.retrieval_k or 'all'}", fontsize=7, pad=14)
+    axes[0][0].legend(ncol=3, loc="upper left", bbox_to_anchor=(0, 1.12), handlelength=1.4, columnspacing=0.9)
+    save(fig, out, "fig_registry_splits")
 
 
-def fig_model_comparison(final_records: List[Dict[str, Any]], claude: Dict[str, Dict[str, Any]],
-                         claude_records: List[Dict[str, Any]], out: Path) -> None:
-    """Claude vs open model restricted to the SAME (intent, method) cells the Claude pilot covered."""
-    methods = [m for m in METHOD_IDS if m in claude]
-    if not methods:
-        return
-    covered_intents = {str(r.get("intent_id")) for r in claude_records}
-    open_subset = summarize_subset(final_records, covered_intents, methods)
-    metrics = [("workflow_accuracy", "Workflow acc."), ("tool_call_success_rate", "Tool success")]
-    fig, axes = plt.subplots(1, len(metrics), figsize=(SINGLE_COL, 1.8), sharey=True)
-    for ax, (metric, label) in zip(axes, metrics):
-        cl = [float(claude[m][metric]) for m in methods]
-        op = [float(open_subset.get(m, {}).get(metric, float("nan"))) for m in methods]
-        grouped_bars(ax, [cl, op], ["Claude (Fable 5)", "Open model (gpt-oss)"],
-                     [C_VERM, C_BLUE], ["", "//"], width=0.7)
-        ax.set_xticks(range(len(methods)))
-        ax.set_xticklabels([dict(METHODS)[m] for m in methods], fontsize=6)
-        ax.set_xlabel(label, fontsize=7)
-        ax.set_ylim(0, 1.1)
-        ax.yaxis.grid(True, linewidth=0.3, alpha=0.5)
-        ax.set_axisbelow(True)
-    axes[0].set_ylabel("Rate")
-    axes[0].legend(ncol=2, loc="upper left", bbox_to_anchor=(0, 1.18), handlelength=1.4)
-    for ext in ("pdf", "png"):
-        fig.savefig(out / f"fig_model_comparison.{ext}")
-    plt.close(fig)
+def fig_hallucination(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[str, Any]]], out: Path) -> None:
+    methods = [m for m, _ in METHODS if any(m in b.methods for b in batches)]
+    fig, ax = plt.subplots(figsize=(SINGLE_COL, 1.9))
+    colors = [C_BLUE, C_ORANGE, C_GREEN, C_SKY]
+    groups, labels = [], []
+    for batch in batches:
+        metrics = all_metrics[batch.id]
+        groups.append([metrics[m]["hallucinated_per_record"] if m in metrics else (None, None, None) for m in methods])
+        labels.append(batch_label(batch))
+    n = len(groups)
+    sw = 0.8 / n
+    ymax = 0.0
+    for i, (triples, label) in enumerate(zip(groups, labels)):
+        vals, err = _yerr(triples)
+        xs = [j - 0.4 + sw * (i + 0.5) for j in range(len(vals))]
+        ax.bar(xs, vals, width=sw * 0.9, label=label, color=colors[i % 4], hatch=HATCHES[i % 3], edgecolor="black", linewidth=0.4, zorder=2)
+        ax.errorbar(xs, vals, yerr=err, fmt="none", ecolor="black", elinewidth=0.5, capsize=1.2, capthick=0.5, zorder=3)
+        ymax = max([ymax] + [v + e for v, e in zip(vals, err[1]) if v == v])
+    ax.set_xticks(range(len(methods)))
+    ax.set_xticklabels([LABEL[m] for m in methods], fontsize=5.6)
+    ax.set_ylabel("Hallucinated refs / record")
+    ax.set_ylim(0, max(0.5, ymax * 1.25))
+    ax.yaxis.grid(True, linewidth=0.3, alpha=0.5)
+    ax.set_axisbelow(True)
+    ax.legend(loc="upper right", handlelength=1.4)
+    save(fig, out, "fig_hallucination")
 
 
-# ---------------------------------------------------------------- tables/CSV
-def write_combined_csv(final: Dict[str, Dict[str, Any]], claude: Dict[str, Dict[str, Any]], out: Path) -> None:
-    columns = ["model", "method", "runs"] + [m for m, _ in METRICS_FOR_TABLE]
-    rows = []
-    for method in METHOD_IDS:
-        payload = final[method]
-        rows.append({"model": "gpt-oss (Ollama)", "method": method, "runs": payload.get("run_count", ""),
-                     **{k: payload.get(k, "") for k, _ in METRICS_FOR_TABLE}})
-    for method in METHOD_IDS:
-        if method in claude:
-            payload = claude[method]
-            rows.append({"model": "Claude Fable 5 (pilot)", "method": method, "runs": payload.get("run_count", ""),
-                         **{k: payload.get(k, "") for k, _ in METRICS_FOR_TABLE}})
+def batch_label(batch: Batch) -> str:
+    if batch.role == "A":
+        return "Batch A (paper registry)"
+    return f"Batch B (directory, k={batch.retrieval_k or 'all'})"
+
+
+# ---------------------------------------------------------------- tables / CSV
+CSV_METRICS = ["accuracy", "exact_accuracy", "set_accuracy", "known_accuracy", "open_world_accuracy",
+               "unseen_capability_accuracy", "ack_rate", "launch_rate", "conflict_recall", "conflict_fp_rate",
+               "seeded_recovered", "hallucinated_per_record", "retrieval_hit_rate", "compat_ok_rate"]
+CSV_SCALARS = ["records", "intents", "repeats", "known_records", "open_world_records", "unseen_capability_records",
+               "tool_calls", "seeded_records", "hallucinated_refs", "records_with_hallucination", "latency_n",
+               "latency_mean_ms", "latency_sd_ms", "latency_median_ms", "latency_p95_ms", "latency_max_ms",
+               "planner_cached_records"]
+
+
+def write_csv(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[str, Any]]], out: Path) -> None:
+    columns = ["batch", "role", "model", "think", "retrieval_k", "method"] + CSV_SCALARS
+    for key in CSV_METRICS:
+        columns += [key, f"{key}_ci_lo", f"{key}_ci_hi"]
     with (out / "combined_results.csv").open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=columns)
         writer.writeheader()
-        writer.writerows(rows)
+        for batch in batches:
+            for method, m in all_metrics[batch.id].items():
+                row = {"batch": batch.id, "role": batch.role, "model": batch.model, "think": batch.settings.get("think", ""),
+                       "retrieval_k": batch.retrieval_k, "method": method}
+                row.update({k: m.get(k) for k in CSV_SCALARS})
+                for key in CSV_METRICS:
+                    row[key], row[f"{key}_ci_lo"], row[f"{key}_ci_hi"] = m[key]
+                writer.writerow(row)
 
 
-def write_latex_table(final: Dict[str, Dict[str, Any]], out: Path) -> None:
-    label_by_id = {m: l.replace("-\n", "-").replace("\n", " ") for m, l in METHODS}
-    lines = [
-        "% Auto-generated from evaluation batch 20260508T130259_final (50 intents x 7 methods x 2 repeats, 700 records).",
-        "% Open model: gpt-oss via Ollama. Values in percent except latency (ms).",
-        "\\begin{table}[t]",
-        "\\centering",
-        "\\caption{Workflow orchestration performance across composition methods (50-intent catalog).}",
-        "\\label{tab:appweaver-results}",
-        "\\footnotesize",
-        "\\setlength{\\tabcolsep}{3.5pt}",
-        "\\begin{tabular}{@{}lcccccc@{}}",
-        "\\toprule",
-        "\\textbf{Method} & \\makecell{\\textbf{Known}\\\\\\textbf{acc.}} & \\makecell{\\textbf{Open-world}\\\\\\textbf{acc.}} & \\makecell{\\textbf{Tool}\\\\\\textbf{succ.}} & \\makecell{\\textbf{Conflict}\\\\\\textbf{det.}} & \\makecell{\\textbf{Policy}\\\\\\textbf{valid}} & \\makecell{\\textbf{Latency}\\\\\\textbf{(ms)}} \\\\",
+def _tex_header(batch: Batch, what: str) -> List[str]:
+    lines = [f"% Auto-generated by make_paper_figures.py from evaluation/runs/{batch.id} ({what}).",
+             f"% Planner {batch.model}, inference settings {json.dumps(batch.settings, sort_keys=True)}.",
+             "% Percent with 95% CI in brackets (intent-clustered bootstrap; conflict columns: Wilson)."]
+    if batch.preliminary:
+        lines.append("% PRELIMINARY: planner is not the paper's model (gpt-oss); do not cite as final.")
+    return lines
+
+
+def write_table_a(batch: Batch, metrics: Dict[str, Dict[str, Any]], out: Path) -> None:
+    m0 = metrics[batch.methods[0]]
+    caption = (f"Composition and reliability on the 50-intent benchmark ({m0['known_intents']} known, "
+               f"{m0['open_world_intents']} open-world intents; {m0['repeats']} repeats; planner {batch.model}). "
+               "Percent with 95\\% CI; latency is intent-to-plan wall clock, median / p95 in seconds.")
+    if batch.preliminary:
+        caption = "\\textbf{PRELIMINARY.} " + caption
+    lines = _tex_header(batch, "Batch A") + [
+        "\\begin{table*}[t]", "\\centering", f"\\caption{{{caption}}}", "\\label{tab:appweaver-results}",
+        "\\footnotesize", "\\setlength{\\tabcolsep}{3pt}", "\\begin{tabular}{@{}lccccccc@{}}", "\\toprule",
+        "\\textbf{Method} & \\makecell{\\textbf{Known}\\\\\\textbf{acc.}} & \\makecell{\\textbf{Open-world}\\\\\\textbf{acc.}} & "
+        "\\makecell{\\textbf{Set}\\\\\\textbf{acc.}} & \\makecell{\\textbf{Ack.}\\\\\\textbf{tool calls}} & "
+        "\\makecell{\\textbf{Conflict}\\\\\\textbf{recall}} & \\makecell{\\textbf{Halluc.}\\\\\\textbf{refs}} & "
+        "\\makecell{\\textbf{Latency (s)}\\\\\\textbf{med. / p95}} \\\\",
         "\\midrule",
     ]
-    for method in METHOD_IDS:
-        p = final[method]
+    for method in batch.methods:
+        m = metrics[method]
+        name = LABEL[method].replace("\n", " ")
         row = " & ".join([
-            label_by_id[method] if method != "langgraph_agentcard" else "\\textbf{AppWeaver (agent-card)}",
-            fmt(p.get("known_workflow_accuracy"), "known_workflow_accuracy"),
-            fmt(p.get("open_world_workflow_accuracy"), "open_world_workflow_accuracy"),
-            fmt(p.get("tool_call_success_rate"), "tool_call_success_rate"),
-            fmt(p.get("conflict_detection_accuracy"), "conflict_detection_accuracy"),
-            fmt(p.get("policy_validity_rate"), "policy_validity_rate"),
-            fmt(p.get("average_orchestration_latency_ms"), "average_orchestration_latency_ms"),
+            f"\\textbf{{{name}}}" if method == "langgraph_agentcard" else name,
+            pct(m["known_accuracy"]), pct(m["open_world_accuracy"]), pct(m["set_accuracy"]),
+            pct(m["ack_rate"]) + f" {{\\scriptsize(n={m['tool_calls']})}}",
+            pct(m["conflict_recall"]), str(m["hallucinated_refs"]),
+            f"{secs(m['latency_median_ms'])} / {secs(m['latency_p95_ms'])}",
         ])
-        prefix = "\\rowcolor{gray!12}\n" if method == "langgraph_agentcard" else ""
-        lines.append(prefix + row + " \\\\")
-    lines += ["\\bottomrule", "\\end{tabular}", "\\end{table}", ""]
+        lines.append(("\\rowcolor{gray!12}\n" if method == "langgraph_agentcard" else "") + row + " \\\\")
+    lines += ["\\bottomrule", "\\end{tabular}", "\\end{table*}", ""]
     (out / "results_table.tex").write_text("\n".join(lines), encoding="utf-8")
 
 
-def write_readme(final: Dict[str, Dict[str, Any]], claude: Dict[str, Dict[str, Any]],
-                 final_run: Path, claude_run: Path, out: Path) -> None:
-    def table(models: Dict[str, Dict[str, Any]]) -> List[str]:
-        header = "| Method | " + " | ".join(label for _, label in METRICS_FOR_TABLE) + " |"
-        sep = "|---" * (len(METRICS_FOR_TABLE) + 1) + "|"
-        body = []
-        for method in METHOD_IDS:
-            if method not in models:
-                continue
-            p = models[method]
-            cells = " | ".join(fmt(p.get(k), k) + ("" if k == "average_orchestration_latency_ms" else "%") if fmt(p.get(k), k) != "--" else "--"
-                               for k, _ in METRICS_FOR_TABLE)
-            body.append(f"| {dict(METHODS)[method].replace(chr(10), ' ')} | {cells} |")
-        return [header, sep] + body
-
-    lines = [
-        "# AppWeaver paper results",
-        "",
-        f"Generated 2026-07-02 from:",
-        f"- **Open model (gpt-oss via Ollama)**: `{final_run.name}` — 50 intents x 7 methods x 2 repeats = 700 records",
-        f"- **Claude Fable 5 (headless CLI)**: `{claude_run.name}` — pilot batch, 2 intents x 2 methods (planner cache disabled)",
-        "",
-        "`langgraph_agentcard` corresponds to the **AppWeaver** approach (agent-card discovery",
-        "and adaptive composition); the other methods are baselines.",
-        "",
-        "## Open model (gpt-oss) — full batch",
-        "",
-        *table(final),
-        "",
-        "## Claude Fable 5 — pilot batch (coverage: xr_latency_guard, congestion_relief; llm_only + agentcard)",
-        "",
-        *table(claude),
-        "",
-        "## Caveats for the paper",
-        "",
-        "- The Claude column is a **pilot** (4 records); the full 50-intent Claude batch was",
-        "  stopped early by the operator. Rerun `run_harness.py` with `CLAUDE_CLI_PROVIDER=1`",
-        "  for a publishable sample before citing Claude numbers beyond a qualitative check.",
-        "- Claude pilot latency is **not directly comparable** to the open-model batch: the",
-        "  pilot disabled the planner cache (every record pays full planning cost) while the",
-        "  final gpt-oss batch used a 7200 s planner cache.",
-        "- Network-effect KPIs (latency/throughput/PRB deltas) were unavailable in both runs",
-        "  (live KPM telemetry down); metrics cover orchestration behavior only.",
-        "- Recovery: prefer `internal_recovery_success_rate` over `recovery_rate` (the latter",
-        "  is inflated by external replay after stressor removal).",
-        "",
-        "## Files",
-        "",
-        "- `combined_results.csv` — machine-readable per-method metrics for both models",
-        "- `results_table.tex` — IEEEtran booktabs table (uses `\\makecell`, `xcolor` `gray!12` — already in your preamble)",
-        "- `fig_workflow_accuracy.pdf` — known vs open-world composition accuracy",
-        "- `fig_quality_metrics.pdf` — tool success / conflict detection / policy validity",
-        "- `fig_latency.pdf` — orchestration latency, log scale (Claude pilot overlaid as markers)",
-        "- `fig_model_comparison.pdf` — Claude vs open model on jointly covered cells",
-        "- PNG twins of each figure for slides/preview.",
-        "",
-        "Suggested captions map to the paper metrics: composition accuracy ~ workflow validity,",
-        "tool-call success ~ deployment success, orchestration latency ~ time-to-deploy.",
+def write_table_b(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[str, Any]]], out: Path) -> None:
+    first = batches[0]
+    m0 = all_metrics[first.id][first.methods[0]]
+    reg = first.manifest.get("registry") or {}
+    caption = (f"Registry-scale benchmark: {reg.get('agent_count', '?')} cards in the Agent Registry "
+               f"({m0['known_intents']} known, {m0['open_world_intents']} open-world, "
+               f"{m0['unseen_capability_intents']} unseen-capability intents; {m0['repeats']} repeats; planner {first.model}). "
+               "Accuracy counts any accepted chain; retrieval hit = all needed cards in the top-$k$ prompt.")
+    if any(b.preliminary for b in batches):
+        caption = "\\textbf{PRELIMINARY.} " + caption
+    lines = []
+    for b in batches:
+        lines += _tex_header(b, f"Batch B, retrieval_k={b.retrieval_k}")
+    lines += [
+        "\\begin{table*}[t]", "\\centering", f"\\caption{{{caption}}}", "\\label{tab:appweaver-registry}",
+        "\\footnotesize", "\\setlength{\\tabcolsep}{3pt}", "\\begin{tabular}{@{}llcccccc@{}}", "\\toprule",
+        "\\textbf{Method} & $k$ & \\makecell{\\textbf{Known}\\\\\\textbf{acc.}} & \\makecell{\\textbf{Open-world}\\\\\\textbf{acc.}} & "
+        "\\makecell{\\textbf{Unseen-cap.}\\\\\\textbf{acc.}} & \\makecell{\\textbf{Retrieval}\\\\\\textbf{hit}} & "
+        "\\makecell{\\textbf{Halluc.}\\\\\\textbf{refs}} & \\makecell{\\textbf{Compat.}\\\\\\textbf{clean}} \\\\",
+        "\\midrule",
     ]
+    for b in batches:
+        for method in b.methods:
+            m = all_metrics[b.id][method]
+            name = LABEL[method].replace("\n", " ")
+            lines.append(" & ".join([
+                f"\\textbf{{{name}}}" if method == "langgraph_agentcard" else name, str(b.retrieval_k or "all"),
+                pct(m["known_accuracy"]), pct(m["open_world_accuracy"]), pct(m["unseen_capability_accuracy"]),
+                pct(m["retrieval_hit_rate"], ci=False), str(m["hallucinated_refs"]), pct(m["compat_ok_rate"], ci=False),
+            ]) + " \\\\")
+        if b is not batches[-1]:
+            lines.append("\\midrule")
+    lines += ["\\bottomrule", "\\end{tabular}", "\\end{table*}", ""]
+    (out / "results_table_registry.tex").write_text("\n".join(lines), encoding="utf-8")
+
+
+def write_readme(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[str, Any]]], out: Path) -> None:
+    lines = ["# AppWeaver paper results", "",
+             "Generated by `make_paper_figures.py` from the batches below (every number is recomputed from",
+             "`records.jsonl`). Metric definitions: `../METRICS.md`. 95% CIs: intent-clustered percentile bootstrap",
+             "(2000 resamples) for accuracies, acknowledged calls and hallucinations per record; Wilson score",
+             "interval for conflict recall / false-positive rate (6 seeded intents).", "",
+             "No number from the May-2026 batches appears here.", "", "## Batches", ""]
+    lines += [f"- **{batch_label(b)}**: {b.describe()}" for b in batches]
+    for b in batches:
+        metrics = all_metrics[b.id]
+        lines += ["", f"## {batch_label(b)} - `{b.id}`", ""]
+        if b.preliminary:
+            lines += [f"> **Preliminary.** Planner `{b.model}` stands in for gpt-oss (broken on spark2 under Ollama 0.40).",
+                      "> These numbers validate the pipeline; they are not the paper's results.", ""]
+        lines += ["| Method | Accuracy | Known | Open-world | Unseen cap. | Exact | Set | Ack. calls | Conflict recall | Conflict FP | Halluc. refs | Retrieval hit | Latency med / p95 / max (s) |",
+                  "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+        for method in b.methods:
+            m = metrics[method]
+            lines.append("| " + " | ".join([
+                LABEL[method].replace("\n", " "), pct_md(m["accuracy"]), pct_md(m["known_accuracy"]), pct_md(m["open_world_accuracy"]),
+                pct_md(m["unseen_capability_accuracy"]), pct_md(m["exact_accuracy"]), pct_md(m["set_accuracy"]),
+                f"{pct_md(m['ack_rate'])} (n={m['tool_calls']})",
+                f"{pct_md(m['conflict_recall'])} (n={m['seeded_records']})", pct_md(m["conflict_fp_rate"]),
+                f"{m['hallucinated_refs']} in {m['records_with_hallucination']} records", pct_md(m["retrieval_hit_rate"]),
+                " / ".join(secs(m[k], tex=False) for k in ("latency_median_ms", "latency_p95_ms", "latency_max_ms")),
+            ]) + " |")
+        cached = sum(m["planner_cached_records"] for m in metrics.values())
+        lines += ["", f"Planner-cached records: {cached} (must be 0 for headline latency)."]
+    lines += ["", "## Files", "",
+              "- `combined_results.csv` - per (batch, method): value and CI bounds for every metric",
+              "- `results_table.tex` - Batch A table; `results_table_registry.tex` - Batch B table",
+              "- `figures/fig_accuracy` - Batch A known vs open-world accuracy with 95% CI",
+              "- `figures/fig_reliability` - acknowledged tool calls, conflict recall, conflict FP rate",
+              "- `figures/fig_latency` - per-record intent-to-plan latency (box = IQR, whiskers 5-95th pct, dots beyond)",
+              "- `figures/fig_registry_splits` - Batch B accuracy per split, one panel per retrieval depth",
+              "- `figures/fig_hallucination` - hallucinated registry references per record",
+              "- `plot_final.py` - slide-style variants built from `combined_results.csv`", ""]
     (out / "README.md").write_text("\n".join(lines), encoding="utf-8")
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--final-run", required=True)
-    parser.add_argument("--claude-run", required=True)
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--batch-a", required=True)
+    parser.add_argument("--batch-b", nargs="*", default=[])
     parser.add_argument("--out", default=str(Path(__file__).resolve().parent))
     args = parser.parse_args()
 
-    final_run = Path(args.final_run).resolve()
-    claude_run = Path(args.claude_run).resolve()
     out = Path(args.out).resolve()
-    out.mkdir(parents=True, exist_ok=True)
+    figures = out / "figures"
+    figures.mkdir(parents=True, exist_ok=True)
+    batch_a = Batch(Path(args.batch_a).resolve(), "A")
+    batches_b = sorted((Batch(Path(p).resolve(), "B") for p in args.batch_b), key=lambda b: -(b.retrieval_k or 10**6))
+    batches = [batch_a] + batches_b
+    all_metrics = {b.id: batch_metrics(b) for b in batches}
 
-    final = load_final_summary(final_run)
-    claude = summarize_claude(load_claude_records(claude_run))
-
-    write_combined_csv(final, claude, out)
-    write_latex_table(final, out)
-    write_readme(final, claude, final_run, claude_run, out)
-    fig_workflow_accuracy(final, out)
-    fig_quality_metrics(final, out)
-    fig_latency(final, claude, out)
-    final_records = load_claude_records(final_run)  # same JSONL loader works for any run
-    claude_records = load_claude_records(claude_run)
-    fig_model_comparison(final_records, claude, claude_records, out)
-
-    print(f"Wrote CSV, LaTeX table, README, and figures to {out}")
+    write_csv(batches, all_metrics, out)
+    write_table_a(batch_a, all_metrics[batch_a.id], out)
+    fig_accuracy(batch_a, all_metrics[batch_a.id], figures)
+    fig_reliability(batch_a, all_metrics[batch_a.id], figures)
+    fig_latency(batch_a, all_metrics[batch_a.id], figures)
+    if batches_b:
+        write_table_b(batches_b, all_metrics, out)
+        fig_registry_splits(batches_b, all_metrics, figures)
+    fig_hallucination(batches, all_metrics, figures)
+    write_readme(batches, all_metrics, out)
+    print(f"Wrote CSV, tables, README and figures to {out}")
     return 0
 
 

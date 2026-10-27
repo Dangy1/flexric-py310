@@ -12,7 +12,7 @@ A record is one (intent, method, repeat). Accuracies carry a normal-approximatio
 | Accepted accuracy | exact ordered match with *any* chain in `intent.accepted_workflows` (defaults to the single expected chain) | available records |
 | **Tool calls** | number of application invocations the method issued (one per `(agent, action)` launch, including cached observations and calls that were refused) | — |
 | Launched | call's launch status is `running/starting/completed` (the xApp process started) | tool calls |
-| **Acknowledged** | within `--tool-ack-timeout-s` the run log shows evidence of real work: KPM records for observation, a subscription/`Applied …` line for slice/TC control, an RC subscription line for validation (markers in `run_harness.TOOL_ACK_MARKERS`). Refused/queued/failed calls are unacknowledged. | tool calls with a verdict |
+| **Acknowledged** | within `--tool-ack-timeout-s` the run log shows evidence of real work: KPM records for observation, the E2 `CONTROL-ACK` from the RAN or a subscription/`Applied …` line for slice/TC control, an RC subscription line for validation, an `rApp ack:` line for emulated rApps (markers in `run_harness.TOOL_ACK_MARKERS`). A negative line (`Error`, `Traceback`, …) is final only once the process has exited; while it runs the harness keeps polling until the deadline. Refused/queued/failed calls are unacknowledged. | tool calls with a verdict |
 | **Hallucinated references** | count of application names in the generated workflow, or `(agent, action)` pairs in tool calls, that do not exist in the Agent Registry | summed over records |
 | **Conflict recall** | seeded-conflict records where the method flagged the conflict *before* issuing control (`conflict_detected`: lease/queue refusal, blocked reason, twin rejection) | seeded records (6 intents × repeats) |
 | Conflict precision | TP / (TP + FP) where FP = unseeded records flagged as conflict | — |
@@ -24,11 +24,28 @@ Legacy fields still emitted for comparison with the May-2026 batch, **not for th
 `conflict_detection_accuracy` (includes true negatives and after-the-fact recoveries),
 `tool_call_success_rate` (= launch success), `recovery_rate` (includes external replay).
 
+## Confidence intervals in the paper figures and tables
+`summary.json` keeps the normal-approximation half-width (`*_ci95`) for quick reads. The paper
+artefacts (`paper_results/make_paper_figures.py`) recompute every number from `records.jsonl` and use
+an **intent-clustered percentile bootstrap** (2000 resamples, seed 0) for accuracies, the
+acknowledged-call rate and hallucinations per record — the 5 repeats of one intent are correlated, so
+intents are resampled, not records — and a **Wilson score interval** for conflict recall and
+false-positive rate (only 6 seeded intents, too few clusters to bootstrap).
+
+## Accepted chains
+`intents_50.json` has one labelled chain per intent. `intents_v2.json` adds alternatives: for the new
+rApp intents where observation/prediction order is interchangeable, and for 11 of the 50 original
+intents a read-only analytic rApp inserted after KPM when the intent text asks for that function (rule
+in `build_intents_v2.py`). *Accuracy* in the paper = exact ordered match with any accepted chain.
+
 ## Seeded conflicts
 See `CONFLICTS.md`.
 
 ## Inference settings
 Recorded per batch in `manifest.json → planner_inference_settings` (temperature, seed, num_predict,
 timeout) and per record in `planner_provider` / `planner_model`. Set them with
-`FLEXRIC_LLM_TEMPERATURE`, `FLEXRIC_LLM_SEED`, `FLEXRIC_LLM_NUM_PREDICT`. Hardware of the LLM host is
+`FLEXRIC_LLM_TEMPERATURE`, `FLEXRIC_LLM_SEED`, `FLEXRIC_LLM_NUM_PREDICT`, and `FLEXRIC_LLM_THINK`
+(true/false; unset = the model's default reasoning mode — Ollama `think`, vLLM
+`chat_template_kwargs.enable_thinking`). The OpenAI-compatible path (vLLM on spark1) sends the same
+temperature/seed/max_tokens. Hardware of the LLM host is
 recorded from `LLM_SERVER_HARDWARE`.

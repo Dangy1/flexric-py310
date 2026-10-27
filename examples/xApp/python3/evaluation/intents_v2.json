@@ -370,6 +370,11 @@
       [
         "KPM",
         "RC"
+      ],
+      [
+        "KPM",
+        "RAPP.ROOT_CAUSE",
+        "RC"
       ]
     ]
   },
@@ -395,6 +400,11 @@
       [
         "KPM",
         "RC"
+      ],
+      [
+        "KPM",
+        "RAPP.ANOMALY_DETECTION",
+        "RC"
       ]
     ]
   },
@@ -419,6 +429,11 @@
     "accepted_workflows": [
       [
         "KPM",
+        "RC"
+      ],
+      [
+        "KPM",
+        "RAPP.ROOT_CAUSE",
         "RC"
       ]
     ]
@@ -526,6 +541,12 @@
         "SLICE",
         "KPM",
         "RC"
+      ],
+      [
+        "SLICE",
+        "KPM",
+        "RAPP.PM_KPI",
+        "RC"
       ]
     ]
   },
@@ -577,6 +598,11 @@
     "accepted_workflows": [
       [
         "KPM",
+        "RC"
+      ],
+      [
+        "KPM",
+        "RAPP.ANOMALY_DETECTION",
         "RC"
       ]
     ]
@@ -794,6 +820,11 @@
       [
         "KPM",
         "RC"
+      ],
+      [
+        "KPM",
+        "RAPP.ROOT_CAUSE",
+        "RC"
       ]
     ]
   },
@@ -818,6 +849,11 @@
     "accepted_workflows": [
       [
         "KPM",
+        "RC"
+      ],
+      [
+        "KPM",
+        "RAPP.ROOT_CAUSE",
         "RC"
       ]
     ]
@@ -988,6 +1024,12 @@
         "KPM",
         "SLICE",
         "RC"
+      ],
+      [
+        "KPM",
+        "RAPP.ANOMALY_DETECTION",
+        "SLICE",
+        "RC"
       ]
     ]
   },
@@ -1123,6 +1165,11 @@
       [
         "KPM",
         "RC"
+      ],
+      [
+        "KPM",
+        "RAPP.ROOT_CAUSE",
+        "RC"
       ]
     ]
   },
@@ -1148,6 +1195,12 @@
     "accepted_workflows": [
       [
         "KPM",
+        "SLICE",
+        "RC"
+      ],
+      [
+        "KPM",
+        "RAPP.ANOMALY_DETECTION",
         "SLICE",
         "RC"
       ]
@@ -1200,6 +1253,12 @@
     "accepted_workflows": [
       [
         "KPM",
+        "TC",
+        "RC"
+      ],
+      [
+        "KPM",
+        "RAPP.ANOMALY_DETECTION",
         "TC",
         "RC"
       ]

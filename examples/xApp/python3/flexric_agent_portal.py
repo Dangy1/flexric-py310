@@ -2607,12 +2607,46 @@ def _llm_sampling_options() -> Dict[str, Any]:
     return options
 
 
+def _llm_think() -> Optional[bool]:
+    """Reasoning-mode switch for thinking models (FLEXRIC_LLM_THINK=true/false; unset = model default)."""
+    value = os.getenv("FLEXRIC_LLM_THINK", "").strip().lower()
+    if value in {"1", "true", "yes", "on"}:
+        return True
+    if value in {"0", "false", "no", "off"}:
+        return False
+    return None
+
+
 def llm_sampling_settings() -> Dict[str, Any]:
     """Public view of the planner inference settings for evaluation manifests."""
+    think = _llm_think()
     return {
         "timeout_s": int(os.getenv("FLEXRIC_AGENT_PROVIDER_TIMEOUT", "90")),
+        "think": "model-default" if think is None else think,
         **_llm_sampling_options(),
     }
+
+
+def _openai_chat_body(model: str, system: str, prompt: str) -> Dict[str, Any]:
+    """Chat-completions body carrying the same pinned sampling settings as the Ollama path."""
+    body: Dict[str, Any] = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": prompt},
+        ],
+    }
+    options = _llm_sampling_options()
+    if "temperature" in options:
+        body["temperature"] = options["temperature"]
+    if "seed" in options:
+        body["seed"] = options["seed"]
+    if "num_predict" in options:
+        body["max_tokens"] = options["num_predict"]
+    if _llm_think() is not None:
+        # vLLM: forwarded to the chat template of reasoning models (Qwen3, gpt-oss ignores it).
+        body["chat_template_kwargs"] = {"enable_thinking": _llm_think()}
+    return body
 
 
 def _invoke_provider(provider: Dict[str, Any], agent: AgentCard, prompt: str) -> str:
@@ -2648,15 +2682,18 @@ def _invoke_provider(provider: Dict[str, Any], agent: AgentCard, prompt: str) ->
         return text
 
     if provider["id"] == "ollama":
+        body: Dict[str, Any] = {
+            "model": provider["model"],
+            "system": system,
+            "prompt": full_prompt,
+            "stream": False,
+            "options": _llm_sampling_options(),
+        }
+        if _llm_think() is not None:
+            body["think"] = _llm_think()
         response = requests.post(
             f"{provider['endpoint'].rstrip('/')}/api/generate",
-            json={
-                "model": provider["model"],
-                "system": system,
-                "prompt": full_prompt,
-                "stream": False,
-                "options": _llm_sampling_options(),
-            },
+            json=body,
             timeout=timeout_s,
         )
         response.raise_for_status()
@@ -2674,13 +2711,7 @@ def _invoke_provider(provider: Dict[str, Any], agent: AgentCard, prompt: str) ->
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
             },
-            json={
-                "model": provider["model"],
-                "messages": [
-                    {"role": "system", "content": system},
-                    {"role": "user", "content": full_prompt},
-                ],
-            },
+            json=_openai_chat_body(provider["model"], system, full_prompt),
             timeout=timeout_s,
         )
         response.raise_for_status()

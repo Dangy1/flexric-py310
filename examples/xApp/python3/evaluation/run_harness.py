@@ -75,8 +75,11 @@ METHOD_LABELS = {
 # acknowledgement). Until then it is merely a successful *launch*.
 TOOL_ACK_MARKERS = {
     "kpm": ["RRU.", "DRB.", "\"meas\"", "indication"],
-    "slice": ["Slice monitor subscribed", "Applied STATIC", "Applied NVS", "Applied EDF", "Monitor-only mode", "SLICE ind tstamp="],
-    "tc": ["Applied TC profile"],
+    "slice": ["Slice monitor subscribed", "Applied STATIC", "Applied NVS", "Applied EDF", "Monitor-only mode", "SLICE ind tstamp=",
+              "Successfully received CONTROL-ACK"],
+    # The TC suite prints ~30 setup lines before "Applied"; the E2 CONTROL-ACK from the RAN is the
+    # actual control acknowledgement and arrives first (the portal only exposes a 20-line tail).
+    "tc": ["Applied TC profile", "Successfully received CONTROL-ACK"],
     "rc": ["KPM/RC suite running", "RC profile selected", "RC indication received"],
 }
 TOOL_ACK_NEGATIVE_MARKERS = ["No KPM bus records were received", "Traceback", "Error", "refused"]
@@ -545,6 +548,10 @@ def acknowledge_tool_calls(tool_calls: List[Dict[str, Any]], timeout_s: float) -
                 pending.remove(call)
                 continue
             verdict = _log_acknowledges(str(call.get("agent_id")), list(run.get("tail") or []))
+            if verdict is False and str(run.get("status")) in WORKFLOW_TRANSITIONAL_STATUSES:
+                # A negative line while the xApp is still running is not final: keep polling for a
+                # positive marker until the deadline (the 20-line tail scrolls).
+                verdict = None
             if verdict is None and str(run.get("status")) in {"completed", "exited"} and run.get("returncode") == 0:
                 verdict = True
             if verdict is None and str(run.get("status")) in {"failed", "cancelled", "timed_out"}:
@@ -1997,6 +2004,10 @@ def main(argv: List[str]) -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     batch_manifest = manifest(methods, intents, args.repeat, args.duration_s)
+    (output_dir / "manifest.json").write_text(json.dumps(batch_manifest, indent=2, sort_keys=True), encoding="utf-8")
+    # Records are appended as they finish so a long batch can be watched and survives a crash.
+    partial_path = output_dir / "records.partial.jsonl"
+    total = max(1, int(args.repeat)) * len(intents) * len(methods)
     records: List[Dict[str, Any]] = []
     for repeat_index in range(1, max(1, int(args.repeat)) + 1):
         for intent in intents:
@@ -2009,8 +2020,12 @@ def main(argv: List[str]) -> int:
                     enable_recovery=not args.disable_recovery,
                 )
                 records.append(record)
+                with partial_path.open("a", encoding="utf-8") as handle:
+                    handle.write(json.dumps(record, sort_keys=True) + "\n")
+                print(f"[{len(records)}/{total}] r{repeat_index} {method} {intent.get('id')}", flush=True)
 
     write_artifacts(output_dir, intents, records, batch_manifest)
+    partial_path.unlink(missing_ok=True)
     print(output_dir)
     return 0
 
