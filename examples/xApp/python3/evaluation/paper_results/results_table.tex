@@ -1,0 +1,23 @@
+% Auto-generated from evaluation batch 20260508T130259_final (50 intents x 7 methods x 2 repeats, 700 records).
+% Open model: gpt-oss via Ollama. Values in percent except latency (ms).
+\begin{table}[t]
+\centering
+\caption{Workflow orchestration performance across composition methods (50-intent catalog).}
+\label{tab:appweaver-results}
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+\textbf{Method} & \makecell{\textbf{Known}\\\textbf{acc.}} & \makecell{\textbf{Open-world}\\\textbf{acc.}} & \makecell{\textbf{Tool}\\\textbf{succ.}} & \makecell{\textbf{Conflict}\\\textbf{det.}} & \makecell{\textbf{Policy}\\\textbf{valid}} & \makecell{\textbf{Latency}\\\textbf{(ms)}} \\
+\midrule
+Manual rule & 100.0 & 12.8 & 95.6 & 88.0 & 100.0 & 1 \\
+Single xApp & 27.3 & 0.0 & 92.0 & 88.0 & 100.0 & 0 \\
+LLM-only & 72.7 & 17.9 & 98.2 & 88.0 & 100.0 & 1,014 \\
+LG-Override & 100.0 & 12.8 & 100.0 & 100.0 & 100.0 & 135 \\
+LG-Enforced & 100.0 & 12.8 & 89.7 & 100.0 & 100.0 & 47 \\
+LG-LLM (recov.) & 100.0 & 12.8 & 100.0 & 100.0 & 100.0 & 315 \\
+\rowcolor{gray!12}
+\textbf{AppWeaver (agent-card)} & 100.0 & 50.0 & 100.0 & 96.0 & 100.0 & 3,250 \\
+\bottomrule
+\end{tabular}
+\end{table}

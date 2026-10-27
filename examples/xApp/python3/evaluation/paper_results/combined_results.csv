@@ -1,0 +1,10 @@
+model,method,runs,workflow_accuracy,known_workflow_accuracy,open_world_workflow_accuracy,tool_call_success_rate,conflict_detection_accuracy,policy_validity_rate,internal_recovery_success_rate,average_orchestration_latency_ms
+gpt-oss (Ollama),manual_rule,100,0.32,1.0,0.1282051282051282,0.9558823529411765,0.88,1.0,,1.28976
+gpt-oss (Ollama),single_xapp,100,0.06,0.2727272727272727,0.0,0.92,0.88,1.0,,0.36469999999999997
+gpt-oss (Ollama),llm_only,100,0.3,0.7272727272727273,0.1794871794871795,0.9818181818181818,0.88,1.0,,1013.74727
+gpt-oss (Ollama),langgraph_override,100,0.32,1.0,0.1282051282051282,1.0,1.0,1.0,,134.82372999999998
+gpt-oss (Ollama),langgraph_enforced,100,0.32,1.0,0.1282051282051282,0.8970588235294118,1.0,1.0,,47.049260000000004
+gpt-oss (Ollama),langgraph_llm,100,0.32,1.0,0.1282051282051282,1.0,1.0,1.0,1.0,314.62532
+gpt-oss (Ollama),langgraph_agentcard,100,0.61,1.0,0.5,1.0,0.96,1.0,1.0,3249.69522
+Claude Fable 5 (pilot),llm_only,2,1.0,1.0,nan,1.0,nan,1.0,nan,10941.1515
+Claude Fable 5 (pilot),langgraph_agentcard,2,1.0,1.0,nan,1.0,nan,1.0,nan,15963.972

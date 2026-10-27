@@ -1,0 +1,146 @@
+{
+  "created_at": "2026-07-02T10:24:07.787454Z",
+  "duration_s": 45,
+  "evaluation_runtime_config": {
+    "metrics_min_interval_s": 15.0,
+    "metrics_mode": "cached",
+    "observation_cache_ttl_s": 20.0,
+    "planner_cache_ttl_s": 0.0,
+    "workflow_poll_interval_s": 0.05,
+    "workflow_poll_timeout_s": 2.0
+  },
+  "intent_count": 2,
+  "methods": [
+    "llm_only",
+    "langgraph_agentcard"
+  ],
+  "notes": [
+    "This manifest captures the platform state observed by the harness at batch start.",
+    "The current environment may not expose live RPC, MCP, or KPM services. Those limits are recorded in the result files rather than hidden.",
+    "Metrics snapshots and KPM observation actions can be cached by the harness to reduce platform load and avoid punishing planners for telemetry polling frequency.",
+    "Agent-card discovery methods can generate custom workflow chains when an intent does not align with the predefined workflow catalog."
+  ],
+  "providers": [
+    {
+      "enabled": true,
+      "endpoint": "claude -p (headless)",
+      "id": "claude",
+      "label": "Claude CLI",
+      "model": "cli-default",
+      "notes": "Headless Claude Code CLI; uses the operator's configured default model unless CLAUDE_CLI_MODEL is set.",
+      "supports_tasks": true
+    },
+    {
+      "enabled": false,
+      "endpoint": "http://130.233.158.22:11434",
+      "id": "ollama",
+      "label": "Ollama",
+      "model": "not-configured",
+      "notes": "Best for private on-box automation loops and local model routing.",
+      "supports_tasks": false
+    },
+    {
+      "enabled": false,
+      "endpoint": "https://api.openai.com/v1",
+      "id": "openai",
+      "label": "OpenAI API",
+      "model": "not-configured",
+      "notes": "Best for richer planning or cross-domain automation once API credentials are configured.",
+      "supports_tasks": false
+    }
+  ],
+  "repeat_count": 1,
+  "service_health": [
+    {
+      "detail": "Local portal process is serving this request.",
+      "id": "portal",
+      "label": "Agent Portal",
+      "latency_ms": 0,
+      "ok": true,
+      "public_url": "http://127.0.0.1:8088/",
+      "status": "ready",
+      "url": "http://127.0.0.1:8088/api/overview"
+    },
+    {
+      "detail": "HTTPConnectionPool(host='127.0.0.1', port=8090): Max retries exceeded with url: /health (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=8090): Failed to establish a new connection: [Errno 111] Connection refused\"))",
+      "id": "rpc",
+      "label": "xApp RPC",
+      "latency_ms": null,
+      "ok": false,
+      "public_url": "http://127.0.0.1:8090/health",
+      "status": "down",
+      "url": "http://127.0.0.1:8090/health"
+    },
+    {
+      "detail": "HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /healthz (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=8000): Failed to establish a new connection: [Errno 111] Connection refused\"))",
+      "id": "mcp",
+      "label": "MCP Metrics",
+      "latency_ms": null,
+      "ok": false,
+      "public_url": "http://127.0.0.1:8000/healthz",
+      "status": "down",
+      "url": "http://127.0.0.1:8000/healthz"
+    },
+    {
+      "detail": "HTTPConnectionPool(host='127.0.0.1', port=8091): Max retries exceeded with url: /healthz (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=8091): Failed to establish a new connection: [Errno 111] Connection refused\"))",
+      "id": "kpm_bus",
+      "label": "KPM Bus",
+      "latency_ms": null,
+      "ok": false,
+      "public_url": "http://127.0.0.1:8091/healthz",
+      "status": "down",
+      "url": "http://127.0.0.1:8091/healthz"
+    }
+  ],
+  "workflow_actions": {
+    "observe-diagnose-optimize": {
+      "kpm": "observe-rru",
+      "rc": "rc-scaffold",
+      "slice": "monitor",
+      "tc": "apply-codel"
+    },
+    "slice-assurance": {
+      "kpm": "observe-rru",
+      "rc": "rc-scaffold",
+      "slice": "monitor"
+    },
+    "transport-qos": {
+      "tc": "apply-codel"
+    }
+  },
+  "workflow_templates": {
+    "observe-diagnose-optimize": {
+      "description": "Collect KPIs, correlate MAC/slice pressure, enforce policy, then validate with RC.",
+      "label": "Observe, Diagnose, Optimize",
+      "steps": [
+        "orchestrator",
+        "kpm",
+        "mac",
+        "slice",
+        "tc",
+        "rc"
+      ]
+    },
+    "slice-assurance": {
+      "description": "Apply or monitor slice policy, measure impact, then review control readiness.",
+      "label": "Slice Assurance Loop",
+      "steps": [
+        "orchestrator",
+        "slice",
+        "kpm",
+        "rc"
+      ]
+    },
+    "transport-qos": {
+      "description": "Use TC actions and downstream bearer/tunnel observers for transport-aware feedback.",
+      "label": "Transport QoS Chain",
+      "steps": [
+        "orchestrator",
+        "tc",
+        "rlc",
+        "pdcp",
+        "gtp"
+      ]
+    }
+  }
+}

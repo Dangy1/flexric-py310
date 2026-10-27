@@ -1,0 +1,83 @@
+{
+  "intents": {
+    "congestion_relief": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Reduce downlink congestion before users experience throughput collapse.",
+      "methods": [
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "run_count": 2,
+      "workflow_match_rate": 1.0
+    },
+    "xr_latency_guard": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Guarantee XR latency below 5 ms for the active slice.",
+      "methods": [
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "run_count": 2,
+      "workflow_match_rate": 1.0
+    }
+  },
+  "methods": {
+    "langgraph_agentcard": {
+      "availability_rate": 1.0,
+      "available_run_count": 2,
+      "average_orchestration_latency_ms": 15963.972,
+      "cached_observation_rate": 0.5,
+      "conflict_detection_accuracy": 1.0,
+      "custom_workflow_rate": 0.0,
+      "external_recovery_rate": null,
+      "hallucination_rate": 0.0,
+      "human_intervention_rate": 0.0,
+      "internal_recovery_attempt_rate": 0.0,
+      "internal_recovery_success_rate": null,
+      "known_workflow_accuracy": 1.0,
+      "latency_delta_ms": null,
+      "metrics_availability_rate": 0.0,
+      "non_observation_tool_success_rate": 1.0,
+      "observation_tool_success_rate": 1.0,
+      "open_world_workflow_accuracy": null,
+      "policy_validity_rate": 1.0,
+      "prb_delta": null,
+      "recovery_rate": null,
+      "run_count": 2,
+      "sla_violation_delta": null,
+      "throughput_delta_mbps": null,
+      "tool_call_success_rate": 1.0,
+      "workflow_accuracy": 1.0
+    },
+    "llm_only": {
+      "availability_rate": 1.0,
+      "available_run_count": 2,
+      "average_orchestration_latency_ms": 10941.1515,
+      "cached_observation_rate": 0.5,
+      "conflict_detection_accuracy": 1.0,
+      "custom_workflow_rate": 0.0,
+      "external_recovery_rate": null,
+      "hallucination_rate": 0.0,
+      "human_intervention_rate": 0.0,
+      "internal_recovery_attempt_rate": 0.0,
+      "internal_recovery_success_rate": null,
+      "known_workflow_accuracy": 1.0,
+      "latency_delta_ms": null,
+      "metrics_availability_rate": 0.0,
+      "non_observation_tool_success_rate": 1.0,
+      "observation_tool_success_rate": 1.0,
+      "open_world_workflow_accuracy": null,
+      "policy_validity_rate": 1.0,
+      "prb_delta": null,
+      "recovery_rate": null,
+      "run_count": 2,
+      "sla_violation_delta": null,
+      "throughput_delta_mbps": null,
+      "tool_call_success_rate": 1.0,
+      "workflow_accuracy": 1.0
+    }
+  },
+  "record_count": 4
+}

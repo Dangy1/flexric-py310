@@ -1,0 +1,41 @@
+[
+  {
+    "id": "xr_latency_guard",
+    "intent": "Guarantee XR latency below 5 ms for the active slice.",
+    "category": "latency",
+    "expected_workflow_id": "observe-diagnose-optimize",
+    "expected_workflow": [
+      "KPM",
+      "SLICE",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": false,
+    "tags": [
+      "xr",
+      "latency",
+      "closed-world"
+    ],
+    "notes": "Closed-loop latency reduction with KPI observation, slice review, TC action, and RC validation."
+  },
+  {
+    "id": "congestion_relief",
+    "intent": "Reduce downlink congestion before users experience throughput collapse.",
+    "category": "latency",
+    "expected_workflow_id": "observe-diagnose-optimize",
+    "expected_workflow": [
+      "KPM",
+      "SLICE",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": false,
+    "tags": [
+      "congestion",
+      "closed-world"
+    ],
+    "notes": "General congestion-control orchestration using the current optimization chain."
+  }
+]

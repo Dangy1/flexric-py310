@@ -1,8 +1,6 @@
-*.out 
+*.out
 *.pyc
-*.py
 *.swp
-*.json
 .env
 __pycache__/
 *.db
@@ -11,3 +9,8 @@ build/
 tags
 archives/
 test_results*.html
+# runtime state and per-record evaluation dumps
+agent_portal.db
+examples/xApp/python3/evaluation/runs/*/records/
+examples/xApp/python3/evaluation/runs/*/figures_*/
+agent_app_workflow_slide.html

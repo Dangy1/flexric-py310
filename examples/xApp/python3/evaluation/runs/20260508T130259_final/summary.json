@@ -1,0 +1,996 @@
+{
+  "intents": {
+    "anomaly_containment_degraded_service": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Contain a degraded-service anomaly before it cascades across user groups.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.0
+    },
+    "backhaul_delay_mitigation": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Mitigate backhaul delay spikes seen by mobile broadband sessions.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.14285714285714285
+    },
+    "backhaul_queue_conflict_recovery": {
+      "conflict_rate": 0.2857142857142857,
+      "failure_rate": 0.42857142857142855,
+      "intent": "Recover from a backhaul queue mitigation request when TC is already busy with another control loop.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.07142857142857142
+    },
+    "bearer_stall_triage": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Triage a suspected bearer stall without applying unnecessary control actions.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.0
+    },
+    "campus_slice_drift_detection": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Detect campus slice drift after a maintenance change window.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.0
+    },
+    "cell_edge_fairness_protection": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Protect cell-edge fairness without overreacting to a short-lived KPI fluctuation.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.07142857142857142
+    },
+    "codel_rollback_verification": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Verify that a recent CoDel rollback did not regress queue health.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.0
+    },
+    "congestion_relief": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Reduce downlink congestion before users experience throughput collapse.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.8571428571428571
+    },
+    "cross_slice_resource_rebalance": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Rebalance cross-slice resources to protect interactive traffic during a demand spike.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.2857142857142857
+    },
+    "downlink_jitter_containment": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Contain downlink jitter for cloud gaming traffic without forcing a slice reconfiguration.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.14285714285714285
+    },
+    "drb_delay_hotspot": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Investigate a DRB delay hotspot reported by the operations team.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.14285714285714285
+    },
+    "ecn_policy_validation": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Validate whether the current ECN policy remains safe after a transport profile change.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.0
+    },
+    "edge_gaming_jitter_protection": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Protect edge gaming sessions from jitter caused by mixed slice and queue pressure.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.8571428571428571
+    },
+    "emergency_traffic_preemption": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Prepare a safe preemption path for emergency traffic during mixed-service congestion.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.7857142857142857
+    },
+    "enterprise_slice_audit": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Audit enterprise slice reservations after a multi-tenant maintenance window.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.7142857142857143
+    },
+    "enterprise_tunnel_busy_tc": {
+      "conflict_rate": 0.2857142857142857,
+      "failure_rate": 0.2857142857142857,
+      "intent": "Protect enterprise tunnel latency while TC is already busy with another workflow.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.0
+    },
+    "gtp_tunnel_health_validation": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Validate GTP tunnel health for a business-critical application path.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.0
+    },
+    "handover_ping_pong_detection": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Detect handover ping-pong behavior before user complaints appear.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.0
+    },
+    "handover_resilience_triage": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Improve handover resilience for mobility-sensitive UEs.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.8571428571428571
+    },
+    "handover_route_risk_screening": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Screen handover-route risk before a busy commuting window starts.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.0
+    },
+    "latency_regression_root_cause": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Find the likely root cause of a new latency regression before any control change is applied.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.0
+    },
+    "latency_under_busy_tc": {
+      "conflict_rate": 0.2857142857142857,
+      "failure_rate": 0.14285714285714285,
+      "intent": "Protect latency while TC control is already busy with another workflow.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.7142857142857143
+    },
+    "low_priority_traffic_shaping_guard": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Shape low-priority traffic more safely without disturbing protected services.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.0
+    },
+    "mmtc_capacity_preservation": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Preserve mMTC capacity while keeping premium slices within policy bounds.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.0
+    },
+    "mobility_hotspot_stabilization": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Stabilize mobility performance around a hotspot where fast-moving UEs see rising delay.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.14285714285714285
+    },
+    "pdcp_reorder_investigation": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Investigate PDCP reordering symptoms that appear after recent QoS changes.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.07142857142857142
+    },
+    "prb_imbalance_correction": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Correct PRB imbalance across slices before fairness complaints increase.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.14285714285714285
+    },
+    "premium_qos_isolation": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Protect premium QoS isolation when slice pressure and transport queueing rise together.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.2857142857142857
+    },
+    "qos_policy_sanity_check": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Run a QoS policy sanity check after a TC profile update.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.0
+    },
+    "radio_capacity_headroom": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Recover radio capacity headroom while keeping the current service-level objective.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.8571428571428571
+    },
+    "rlc_queue_anomaly_detection": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Detect an RLC queue anomaly before it becomes a visible service outage.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.0
+    },
+    "slice_admission_control": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Prepare a safer slice admission policy for a burst of new premium devices.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.14285714285714285
+    },
+    "slice_drift_correction": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Correct a gradual slice drift that is eroding enterprise-service guarantees.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.14285714285714285
+    },
+    "slice_fairness_assurance": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Improve slice fairness for premium traffic without over-allocating PRBs.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.7142857142857143
+    },
+    "slice_isolation_validation": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Validate slice isolation after a policy update for enterprise traffic.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.8571428571428571
+    },
+    "slice_oversubscription_repair": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Repair slice oversubscription before latency violations spread to neighboring traffic classes.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.14285714285714285
+    },
+    "slice_policy_race_recovery": {
+      "conflict_rate": 0.2857142857142857,
+      "failure_rate": 0.42857142857142855,
+      "intent": "Repair a slice-policy race when another slice workflow is already running.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.14285714285714285
+    },
+    "stadium_congestion_surge": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Respond to a stadium congestion surge without destabilizing protected traffic classes.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.8571428571428571
+    },
+    "tc_conflict_recovery": {
+      "conflict_rate": 0.2857142857142857,
+      "failure_rate": 0.42857142857142855,
+      "intent": "Queue a TC optimization request behind an already running transport control session and recover cleanly.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 1.0
+    },
+    "transport_bufferbloat_mitigation": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Mitigate transport bufferbloat on the active bearer path.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 1.0
+    },
+    "transport_queue_partition_tuning": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Tune transport queue partitioning for mixed traffic without changing slice policy.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.0
+    },
+    "transport_tunnel_stability": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Stabilize tunnel-side QoS for a sensitive application flow.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 1.0
+    },
+    "tunnel_retransmission_diagnosis": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Diagnose whether bearer tunnel instability is driving retransmissions for a priority UE group.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.14285714285714285
+    },
+    "unknown_busy_runtime_recovery": {
+      "conflict_rate": 0.2857142857142857,
+      "failure_rate": 0.14285714285714285,
+      "intent": "Recover a safe adaptive workflow for an undefined service issue while TC is already busy.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.0
+    },
+    "unknown_enterprise_xr_slowdown": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Prepare a safe control loop for an unexplained enterprise XR slowdown that may involve slice pressure and bearer queuing.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.8571428571428571
+    },
+    "uplink_queue_stability": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Stabilize uplink queue latency for interactive users before retransmissions rise.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.14285714285714285
+    },
+    "urllc_reliability_safeguard": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Safeguard URLLC reliability when queueing and slice pressure rise together.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.7857142857142857
+    },
+    "video_throughput_smoothing": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Smooth video throughput fluctuations caused by intermittent transport queue buildup.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.0
+    },
+    "volte_latency_safeguard": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Safeguard VoLTE latency during a transient transport queue event.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.14285714285714285
+    },
+    "xr_latency_guard": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Guarantee XR latency below 5 ms for the active slice.",
+      "methods": [
+        "langgraph_agentcard",
+        "langgraph_enforced",
+        "langgraph_llm",
+        "langgraph_override",
+        "llm_only",
+        "manual_rule",
+        "single_xapp"
+      ],
+      "run_count": 14,
+      "workflow_match_rate": 0.8571428571428571
+    }
+  },
+  "methods": {
+    "langgraph_agentcard": {
+      "availability_rate": 1.0,
+      "available_run_count": 100,
+      "average_orchestration_latency_ms": 3249.69522,
+      "cached_observation_rate": 0.9361702127659575,
+      "conflict_detection_accuracy": 0.96,
+      "custom_workflow_rate": 0.62,
+      "external_recovery_rate": null,
+      "hallucination_rate": 0.0,
+      "human_intervention_rate": 0.0,
+      "internal_recovery_attempt_rate": 0.08,
+      "internal_recovery_success_rate": 1.0,
+      "known_workflow_accuracy": 1.0,
+      "latency_delta_ms": null,
+      "metrics_availability_rate": 0.0,
+      "non_observation_tool_success_rate": 1.0,
+      "observation_tool_success_rate": 1.0,
+      "open_world_workflow_accuracy": 0.5,
+      "policy_validity_rate": 1.0,
+      "prb_delta": null,
+      "recovery_rate": 1.0,
+      "run_count": 100,
+      "sla_violation_delta": null,
+      "throughput_delta_mbps": null,
+      "tool_call_success_rate": 1.0,
+      "workflow_accuracy": 0.61
+    },
+    "langgraph_enforced": {
+      "availability_rate": 1.0,
+      "available_run_count": 100,
+      "average_orchestration_latency_ms": 47.049260000000004,
+      "cached_observation_rate": 0.9032258064516129,
+      "conflict_detection_accuracy": 1.0,
+      "custom_workflow_rate": 0.0,
+      "external_recovery_rate": null,
+      "hallucination_rate": 0.0,
+      "human_intervention_rate": 0.0,
+      "internal_recovery_attempt_rate": 0.0,
+      "internal_recovery_success_rate": null,
+      "known_workflow_accuracy": 1.0,
+      "latency_delta_ms": null,
+      "metrics_availability_rate": 0.0,
+      "non_observation_tool_success_rate": 0.8952380952380953,
+      "observation_tool_success_rate": 0.9032258064516129,
+      "open_world_workflow_accuracy": 0.1282051282051282,
+      "policy_validity_rate": 1.0,
+      "prb_delta": null,
+      "recovery_rate": 1.0,
+      "run_count": 100,
+      "sla_violation_delta": null,
+      "throughput_delta_mbps": null,
+      "tool_call_success_rate": 0.8970588235294118,
+      "workflow_accuracy": 0.32
+    },
+    "langgraph_llm": {
+      "availability_rate": 1.0,
+      "available_run_count": 100,
+      "average_orchestration_latency_ms": 314.62532,
+      "cached_observation_rate": 1.0,
+      "conflict_detection_accuracy": 1.0,
+      "custom_workflow_rate": 0.0,
+      "external_recovery_rate": null,
+      "hallucination_rate": 0.0,
+      "human_intervention_rate": 0.04,
+      "internal_recovery_attempt_rate": 0.12,
+      "internal_recovery_success_rate": 1.0,
+      "known_workflow_accuracy": 1.0,
+      "latency_delta_ms": null,
+      "metrics_availability_rate": 0.0,
+      "non_observation_tool_success_rate": 1.0,
+      "observation_tool_success_rate": 1.0,
+      "open_world_workflow_accuracy": 0.1282051282051282,
+      "policy_validity_rate": 1.0,
+      "prb_delta": null,
+      "recovery_rate": 1.0,
+      "run_count": 100,
+      "sla_violation_delta": null,
+      "throughput_delta_mbps": null,
+      "tool_call_success_rate": 1.0,
+      "workflow_accuracy": 0.32
+    },
+    "langgraph_override": {
+      "availability_rate": 1.0,
+      "available_run_count": 100,
+      "average_orchestration_latency_ms": 134.82372999999998,
+      "cached_observation_rate": 1.0,
+      "conflict_detection_accuracy": 1.0,
+      "custom_workflow_rate": 0.0,
+      "external_recovery_rate": null,
+      "hallucination_rate": 0.0,
+      "human_intervention_rate": 1.0,
+      "internal_recovery_attempt_rate": 0.0,
+      "internal_recovery_success_rate": null,
+      "known_workflow_accuracy": 1.0,
+      "latency_delta_ms": null,
+      "metrics_availability_rate": 0.0,
+      "non_observation_tool_success_rate": 1.0,
+      "observation_tool_success_rate": 1.0,
+      "open_world_workflow_accuracy": 0.1282051282051282,
+      "policy_validity_rate": 1.0,
+      "prb_delta": null,
+      "recovery_rate": 1.0,
+      "run_count": 100,
+      "sla_violation_delta": null,
+      "throughput_delta_mbps": null,
+      "tool_call_success_rate": 1.0,
+      "workflow_accuracy": 0.32
+    },
+    "llm_only": {
+      "availability_rate": 1.0,
+      "available_run_count": 100,
+      "average_orchestration_latency_ms": 1013.74727,
+      "cached_observation_rate": 0.9878048780487805,
+      "conflict_detection_accuracy": 0.88,
+      "custom_workflow_rate": 0.0,
+      "external_recovery_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "human_intervention_rate": 0.0,
+      "internal_recovery_attempt_rate": 0.0,
+      "internal_recovery_success_rate": null,
+      "known_workflow_accuracy": 0.7272727272727273,
+      "latency_delta_ms": null,
+      "metrics_availability_rate": 0.0,
+      "non_observation_tool_success_rate": 0.9758064516129032,
+      "observation_tool_success_rate": 1.0,
+      "open_world_workflow_accuracy": 0.1794871794871795,
+      "policy_validity_rate": 1.0,
+      "prb_delta": null,
+      "recovery_rate": 1.0,
+      "run_count": 100,
+      "sla_violation_delta": null,
+      "throughput_delta_mbps": null,
+      "tool_call_success_rate": 0.9818181818181818,
+      "workflow_accuracy": 0.3
+    },
+    "manual_rule": {
+      "availability_rate": 1.0,
+      "available_run_count": 100,
+      "average_orchestration_latency_ms": 1.28976,
+      "cached_observation_rate": 0.9516129032258065,
+      "conflict_detection_accuracy": 0.88,
+      "custom_workflow_rate": 0.0,
+      "external_recovery_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "human_intervention_rate": 0.0,
+      "internal_recovery_attempt_rate": 0.0,
+      "internal_recovery_success_rate": null,
+      "known_workflow_accuracy": 1.0,
+      "latency_delta_ms": null,
+      "metrics_availability_rate": 0.0,
+      "non_observation_tool_success_rate": 0.9428571428571428,
+      "observation_tool_success_rate": 1.0,
+      "open_world_workflow_accuracy": 0.1282051282051282,
+      "policy_validity_rate": 1.0,
+      "prb_delta": null,
+      "recovery_rate": 1.0,
+      "run_count": 100,
+      "sla_violation_delta": null,
+      "throughput_delta_mbps": null,
+      "tool_call_success_rate": 0.9558823529411765,
+      "workflow_accuracy": 0.32
+    },
+    "single_xapp": {
+      "availability_rate": 1.0,
+      "available_run_count": 100,
+      "average_orchestration_latency_ms": 0.36469999999999997,
+      "cached_observation_rate": 1.0,
+      "conflict_detection_accuracy": 0.88,
+      "custom_workflow_rate": 0.0,
+      "external_recovery_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "human_intervention_rate": 0.0,
+      "internal_recovery_attempt_rate": 0.0,
+      "internal_recovery_success_rate": null,
+      "known_workflow_accuracy": 0.2727272727272727,
+      "latency_delta_ms": null,
+      "metrics_availability_rate": 0.0,
+      "non_observation_tool_success_rate": 0.8461538461538461,
+      "observation_tool_success_rate": 1.0,
+      "open_world_workflow_accuracy": 0.0,
+      "policy_validity_rate": 1.0,
+      "prb_delta": null,
+      "recovery_rate": 1.0,
+      "run_count": 100,
+      "sla_violation_delta": null,
+      "throughput_delta_mbps": null,
+      "tool_call_success_rate": 0.92,
+      "workflow_accuracy": 0.06
+    }
+  },
+  "record_count": 700
+}

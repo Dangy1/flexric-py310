@@ -1,0 +1,94 @@
+[
+  {
+    "id": "xr_latency_guard",
+    "intent": "Guarantee XR latency below 5 ms for the active slice.",
+    "category": "latency",
+    "expected_workflow_id": "observe-diagnose-optimize",
+    "expected_workflow": ["KPM", "SLICE", "TC", "RC"],
+    "expects_conflict": false,
+    "notes": "Closed-loop latency reduction with KPI observation, slice review, TC action, and RC validation."
+  },
+  {
+    "id": "congestion_relief",
+    "intent": "Reduce downlink congestion before users experience throughput collapse.",
+    "category": "latency",
+    "expected_workflow_id": "observe-diagnose-optimize",
+    "expected_workflow": ["KPM", "SLICE", "TC", "RC"],
+    "expects_conflict": false,
+    "notes": "General congestion-control orchestration using the current optimization chain."
+  },
+  {
+    "id": "slice_fairness_assurance",
+    "intent": "Improve slice fairness for premium traffic without over-allocating PRBs.",
+    "category": "slice",
+    "expected_workflow_id": "slice-assurance",
+    "expected_workflow": ["SLICE", "KPM", "RC"],
+    "expects_conflict": false,
+    "notes": "Slice-specific control and KPI validation."
+  },
+  {
+    "id": "slice_isolation_validation",
+    "intent": "Validate slice isolation after a policy update for enterprise traffic.",
+    "category": "slice",
+    "expected_workflow_id": "slice-assurance",
+    "expected_workflow": ["SLICE", "KPM", "RC"],
+    "expects_conflict": false,
+    "notes": "Policy-assurance scenario centered on slice state and RC review."
+  },
+  {
+    "id": "transport_bufferbloat_mitigation",
+    "intent": "Mitigate transport bufferbloat on the active bearer path.",
+    "category": "transport",
+    "expected_workflow_id": "transport-qos",
+    "expected_workflow": ["TC"],
+    "expects_conflict": false,
+    "notes": "TC-only action path in the current platform."
+  },
+  {
+    "id": "transport_tunnel_stability",
+    "intent": "Stabilize tunnel-side QoS for a sensitive application flow.",
+    "category": "transport",
+    "expected_workflow_id": "transport-qos",
+    "expected_workflow": ["TC"],
+    "expects_conflict": false,
+    "notes": "Transport/QoS control baseline focused on TC."
+  },
+  {
+    "id": "handover_resilience_triage",
+    "intent": "Improve handover resilience for mobility-sensitive UEs.",
+    "category": "latency",
+    "expected_workflow_id": "observe-diagnose-optimize",
+    "expected_workflow": ["KPM", "SLICE", "TC", "RC"],
+    "expects_conflict": false,
+    "notes": "Current platform does not expose a dedicated mobility workflow, so it falls back to the main optimization chain."
+  },
+  {
+    "id": "radio_capacity_headroom",
+    "intent": "Recover radio capacity headroom while keeping the current service-level objective.",
+    "category": "latency",
+    "expected_workflow_id": "observe-diagnose-optimize",
+    "expected_workflow": ["KPM", "SLICE", "TC", "RC"],
+    "expects_conflict": false,
+    "notes": "Capacity-management scenario using the current optimization workflow."
+  },
+  {
+    "id": "tc_conflict_recovery",
+    "intent": "Queue a TC optimization request behind an already running transport control session and recover cleanly.",
+    "category": "transport",
+    "expected_workflow_id": "transport-qos",
+    "expected_workflow": ["TC"],
+    "expects_conflict": true,
+    "conflict_seed": "transport-qos",
+    "notes": "Deliberately introduces a TC resource conflict to test queueing or blocked launch handling."
+  },
+  {
+    "id": "latency_under_busy_tc",
+    "intent": "Protect latency while TC control is already busy with another workflow.",
+    "category": "latency",
+    "expected_workflow_id": "observe-diagnose-optimize",
+    "expected_workflow": ["KPM", "SLICE", "TC", "RC"],
+    "expects_conflict": true,
+    "conflict_seed": "transport-qos",
+    "notes": "Tests whether a broader optimization workflow detects the busy TC resource and can recover on retry."
+  }
+]

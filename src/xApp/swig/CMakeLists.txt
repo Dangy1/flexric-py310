@@ -179,6 +179,12 @@ if(XAPP_TARGET_LANGUAGE STREQUAL "PYTHON_LANG")
      "${CMAKE_SOURCE_DIR}/examples/xApp/python3/scripts"
      "${CMAKE_BINARY_DIR}/examples/xApp/python3/scripts" )
 
+   # Evaluation harness, intent benchmark and published result batches travel
+   # with the build tree so run_harness.py sits next to the generated SDK.
+   add_custom_command(TARGET xapp_sdk POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
+     "${CMAKE_SOURCE_DIR}/examples/xApp/python3/evaluation"
+     "${CMAKE_BINARY_DIR}/examples/xApp/python3/evaluation" )
+
    add_custom_command(TARGET xapp_sdk POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
      "${CMAKE_SOURCE_DIR}/examples/xApp/python3/build_agent_portal_stack.sh"
      "${CMAKE_BINARY_DIR}/examples/xApp/python3/build_agent_portal_stack.sh" )

@@ -1,0 +1,81 @@
+% ===================================================================
+% Evaluation section draft for the AppWeaver paper (IEEEtran).
+% Grounded in: runs/20260508T130259_final (gpt-oss, 700 records) and
+% runs/20260702T102407_787374Z (Claude Fable 5 pilot, planner cache off).
+% Companion artifacts: results_table.tex, fig_workflow_accuracy.pdf,
+% fig_quality_metrics.pdf, fig_latency.pdf, fig_model_comparison.pdf.
+% ===================================================================
+
+\subsection{Prototype and Setup}
+We prototype AppWeaver on an OpenAirInterface (OAI) RAN connected to a
+FlexRIC Near-RT RIC over E2, with monitoring and control exercised through
+E2SM-KPM, E2SM-RC, and the slice, traffic-control (TC), MAC, RLC, PDCP, and
+GTP service models. Each RIC application is wrapped by a domain agent that
+publishes a machine-readable Agent Card at a standard discovery endpoint
+(\texttt{/.well-known/agents/}) describing its skills, measurements, control
+scope, resource requirements, and tool endpoints; MCP servers expose the
+applications' monitoring and control functions as typed, callable tools. The
+orchestration core is a LangGraph state machine that drives each intent
+through an observe--diagnose--approve--act--verify--summarize loop, with the
+agents coordinated over an A2A JSON-RPC bus. A scheduler mediates all control
+actions through shared and exclusive resource leases (e.g., KPM subscriptions
+are shared, while slice, TC, and RC control are exclusive), queueing
+conflicting workflows instead of rejecting them, and an RC guardrail agent
+gates enforced actions on platform health with optional human-in-the-loop
+approval. All state, leases, and audit events persist in SQLite so workflows
+and operator decisions remain traceable across restarts.
+
+The planner LLM is pluggable. Our main batch uses \texttt{gpt-oss}, an open
+model served locally via Ollama; a second configuration routes planning
+through Claude (Fable~5) in headless mode. In both cases the LLM operates
+strictly at the workflow-orchestration level: it selects and orders
+applications but never touches E2 or A1 directly, and every generated plan
+passes a policy-catalog validation layer that repairs or rejects references
+to unknown applications or actions before execution.
+
+\subsection{Performance Evaluation}
+We evaluate workflow composition over a catalog of 50 operator intents (11
+mapping to known workflow templates and 39 open-world intents with no
+predefined template), spanning latency assurance, slice management,
+transport QoS, and deliberately seeded cross-application conflicts. AppWeaver
+(agent-card discovery and composition) is compared against six baselines:
+deterministic rule routing (\emph{Manual rule}), launching a single
+application (\emph{Single xApp}), unconstrained LLM planning
+(\emph{LLM-only}), and three LangGraph variants with catalog repair
+(human-approved \emph{LG-Override}, autonomous \emph{LG-Enforced}, and
+\emph{LG-LLM} with LLM-driven recovery). Each intent runs twice per method,
+yielding 700 records. Table~\ref{tab:appweaver-results} and
+Figs.~\ref{fig:accuracy}--\ref{fig:latency} summarize the results.
+
+Three findings stand out. First, agent-card discovery is the only approach
+that generalizes: AppWeaver composes the correct workflow for 50\% of
+open-world intents while retaining 100\% accuracy on known intents, whereas
+every catalog-bound method collapses to 12.8\% open-world accuracy and
+LLM-only planning reaches just 17.9\%. Since open-world intents dominate
+realistic service requests, this lifts overall composition accuracy to 61\%
+versus 30--32\% for the strongest baselines. Second, the governance layers do
+not tax reliability: AppWeaver sustains 100\% tool-call success and policy
+validity with zero hallucinated application references, and detects 96\% of
+seeded cross-application conflicts (100\% for the catalog-repaired LangGraph
+variants); its LLM-driven recovery resolved every failure it attempted
+in-run. Third, adaptivity has a latency cost that remains compatible with
+orchestration timescales: mean intent-to-execution latency is 3.2\,s for
+AppWeaver, versus 47--315\,ms for catalog-bound LangGraph variants and
+1\,ms for rule-based routing, i.e., well within the seconds-to-minutes
+orchestration loop that AppWeaver targets while native E2/A1 loops continue
+at their own timescales.
+
+To assess sensitivity to the planner LLM, we replayed a pilot subset of the
+catalog with Claude (Fable~5) as the planning model under stricter
+conditions (planner caching disabled, so every request pays the full
+reasoning cost). On the covered intent--method cells both models compose
+identical, correct workflows with full tool-call success
+(Fig.~\ref{fig:models}); end-to-end latency rises to 11--16\,s, reflecting
+uncached remote-scale reasoning versus the locally served open model. This
+suggests the Agent-Card abstraction, rather than a particular LLM, carries
+the composition capability, though a full-catalog comparison across models
+remains future work. Two further caveats apply: live before/after KPM
+deltas were unavailable in this batch (the telemetry bus was offline), so we
+report orchestration-level metrics rather than network-effect KPIs; and the
+harness-level recovery rate includes external replay, so we cite only
+in-run (internal) recovery for the recovery claim above.

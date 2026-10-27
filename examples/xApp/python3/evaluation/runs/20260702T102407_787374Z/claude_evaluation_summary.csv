@@ -1,0 +1,3 @@
+method,runs,workflow_accuracy,known_workflow_accuracy,open_world_workflow_accuracy,custom_workflow_rate,tool_call_success_rate,policy_validity_rate,hallucination_rate,conflict_detection_accuracy,recovery_rate,internal_recovery_success_rate,average_orchestration_latency_ms
+llm_only,2,1.0,1.0,0.0,0.0,1.0,1.0,0.0,0.0,0.0,0.0,10941.2
+langgraph_agentcard,2,1.0,1.0,0.0,0.0,1.0,1.0,0.0,0.0,0.0,0.0,15964.0

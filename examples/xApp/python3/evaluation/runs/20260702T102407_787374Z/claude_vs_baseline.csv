@@ -1,0 +1,13 @@
+method,metric,metric_label,claude,baseline,baseline_label,delta
+llm_only,workflow_accuracy,Workflow accuracy,1.0,0.3,gpt-oss (Ollama),0.7
+llm_only,known_workflow_accuracy,Known accuracy,1.0,0.7272727272727273,gpt-oss (Ollama),0.2727
+llm_only,open_world_workflow_accuracy,Open-world accuracy,0.0,0.1794871794871795,gpt-oss (Ollama),-0.1795
+llm_only,tool_call_success_rate,Tool success,1.0,0.9818181818181818,gpt-oss (Ollama),0.0182
+llm_only,conflict_detection_accuracy,Conflict detection,0.0,0.88,gpt-oss (Ollama),-0.88
+llm_only,average_orchestration_latency_ms,Latency (ms),10941.2,1013.74727,gpt-oss (Ollama),9927.4527
+langgraph_agentcard,workflow_accuracy,Workflow accuracy,1.0,0.61,gpt-oss (Ollama),0.39
+langgraph_agentcard,known_workflow_accuracy,Known accuracy,1.0,1.0,gpt-oss (Ollama),0.0
+langgraph_agentcard,open_world_workflow_accuracy,Open-world accuracy,0.0,0.5,gpt-oss (Ollama),-0.5
+langgraph_agentcard,tool_call_success_rate,Tool success,1.0,1.0,gpt-oss (Ollama),0.0
+langgraph_agentcard,conflict_detection_accuracy,Conflict detection,0.0,0.96,gpt-oss (Ollama),-0.96
+langgraph_agentcard,average_orchestration_latency_ms,Latency (ms),15964.0,3249.69522,gpt-oss (Ollama),12714.3048
