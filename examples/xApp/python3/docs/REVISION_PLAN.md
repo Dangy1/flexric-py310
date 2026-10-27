@@ -171,6 +171,15 @@ Running on this host at handoff:
   manual_rule / llm_blind / langgraph_agentcard × 1 repeat). Check `acknowledged`, `retrieval`,
   `compat_report`, `planner_model`, `hallucinated_reference_count` in `records.jsonl`.
 
+Pilot `runs/20261027T160039_707043Z_pilot_qwen` (qwen3.6:27b, 3 known intents × 5 methods, directory ON,
+k=8) validated the pipeline: all tool calls acknowledged (KPM/SLICE/TC/RC and rApp runtime), `llm_blind`
+hallucinated 7 non-existent apps in 3 records, `llm_only` 3/3, AppWeaver 0/3 exact because it composed
+rApp chains (e.g. `KPM→RAPP.QOE_PREDICTION→TC→RC`) that the xApp-only labels reject. Consequences:
+batch A runs with `FLEXRIC_RAPP_DIRECTORY` unset (same registry as the paper); batch B on `intents_v2.json`
+needs `accepted_workflows` extended for the 50 old intents where an rApp substitution is genuinely valid
+(decide per intent, document the rule). `compat_ok=False` on a record means the check removed steps
+before execution (designed behaviour; the executed chain is `generated_workflow`).
+
 First tasks for the execution session:
 1. Verify the ack path in the pilot records; tune `TOOL_ACK_MARKERS` if an xApp never acks.
 2. Port `evaluation/paper_results/make_paper_figures.py` / `plot_final.py` to the new summary fields
