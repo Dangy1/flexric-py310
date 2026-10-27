@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from evaluation.analyze_results import build_markdown, build_summary
+from evaluation.analyze_results import build_markdown, build_summary, is_lease_refusal
 from backend.orchestration.compat import check_chain  # type: ignore
 from backend.orchestration.discovery import discover  # type: ignore
 from flexric_agent_portal import (  # type: ignore
@@ -612,7 +612,8 @@ def detect_conflict(execution: Dict[str, Any], tool_calls: List[Dict[str, Any]])
         return True
     if execution.get("blocked_reason"):
         return True
-    return any(call.get("status") in {"conflict", "queued"} for call in tool_calls)
+    # A lease refusal (409) inside a template workflow is the same event as `blocked_reason` on a custom chain.
+    return any(call.get("status") in {"conflict", "queued"} or is_lease_refusal(call) for call in tool_calls)
 
 
 def detect_failure(execution: Dict[str, Any], tool_calls: List[Dict[str, Any]]) -> bool:
@@ -1723,7 +1724,13 @@ def build_record(
         generated_workflow,
         tool_calls,
     )
-    conflict_detected = detect_conflict(execution, tool_calls)
+    # With internal recovery `execution` is the clean re-run; a conflict hit on the first execution
+    # (refused before control) still counts as detected.
+    initial_execution = execution.get("initial_execution")
+    conflict_detected = detect_conflict(execution, tool_calls) or (
+        isinstance(initial_execution, dict)
+        and detect_conflict(initial_execution, list(initial_execution.get("tool_calls") or []))
+    )
     failure_detected = bool(method_error) or detect_failure(execution, tool_calls)
     conflict_label = intent.get("expects_conflict")
     workflow_run = execution.get("workflow_run")

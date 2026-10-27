@@ -12,7 +12,7 @@ Usage:
 Outputs:
     figures/appweaver_accuracy.png / .pdf      known vs open-world accuracy, 95% CI
     figures/appweaver_latency.png / .pdf       median intent-to-plan latency, whisker to p95
-    figures/appweaver_reliability.png / .pdf   acknowledged tool calls and conflict recall, 95% CI
+    figures/appweaver_reliability.png / .pdf   acknowledged tool calls and seeded-conflict recovery, 95% CI
 """
 
 from pathlib import Path
@@ -170,11 +170,11 @@ mark_preliminary(ax)
 ax.legend(loc="upper left", frameon=False)
 save_figure(fig, "appweaver_latency")
 
-# Figure 3: reliability, acknowledged tool calls and conflict recall, 95% CI
+# Figure 3: reliability, acknowledged tool calls and seeded-conflict recovery, 95% CI
 fig, ax = plt.subplots(figsize=(4.6, 2.6))
 highlight_appweaver_column(ax)
 bars(ax, -bar_width / 2, "ack_rate", "Acknowledged tool calls", SLATE)
-bars(ax, bar_width / 2, "conflict_recall", "Conflict recall", ACCENT, hatch="//")
+bars(ax, bar_width / 2, "seeded_recovered", "Seeded conflict recovered", ACCENT, hatch="//")
 ax.set_ylim(0, 112)
 ax.yaxis.set_major_formatter(PercentFormatter())
 finish(ax, "Rate")

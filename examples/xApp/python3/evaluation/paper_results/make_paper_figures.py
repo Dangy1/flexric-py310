@@ -43,10 +43,14 @@ import random
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+import sys
 
 import matplotlib
 
 matplotlib.use("Agg")
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from analyze_results import conflict_flagged  # noqa: E402  (same detection rule as the batch summaries)
 import matplotlib.pyplot as plt
 
 plt.rcParams.update(
@@ -220,8 +224,8 @@ def method_metrics(records: List[Dict[str, Any]]) -> Dict[str, Any]:
     seeded = [r for r in records if r.get("conflict_label") is True]
     unseeded = [r for r in records if r.get("conflict_label") is False]
     out["seeded_records"] = len(seeded)
-    out["conflict_recall"] = wilson(sum(1 for r in seeded if r.get("conflict_detected") is True), len(seeded))
-    out["conflict_fp_rate"] = wilson(sum(1 for r in unseeded if r.get("conflict_detected") is True), len(unseeded))
+    out["conflict_recall"] = wilson(sum(1 for r in seeded if conflict_flagged(r)), len(seeded))
+    out["conflict_fp_rate"] = wilson(sum(1 for r in unseeded if conflict_flagged(r)), len(unseeded))
     out["seeded_recovered"] = wilson(sum(1 for r in seeded if (r.get("execution_artifacts") or {}).get("internal_recovery_succeeded")), len(seeded))
 
     out["hallucinated_refs"] = sum(int(r.get("hallucinated_reference_count") or 0) for r in records)
@@ -332,9 +336,11 @@ def fig_accuracy(batch: Batch, metrics: Dict[str, Dict[str, Any]], out: Path) ->
 def fig_reliability(batch: Batch, metrics: Dict[str, Dict[str, Any]], out: Path) -> None:
     methods = batch.methods
     fig, ax = plt.subplots(figsize=(SINGLE_COL, 2.0))
+    # Seeded conflicts are refused by the portal lease for every method that reaches the busy agent;
+    # what differs is whether the method then reaches a clean execution (internal recovery).
     grouped(ax, [[metrics[m]["ack_rate"] for m in methods], [metrics[m]["conflict_recall"] for m in methods],
-                 [metrics[m]["conflict_fp_rate"] for m in methods]],
-            ["Acknowledged tool calls", "Conflict recall (seeded)", "Conflict false-positive rate"],
+                 [metrics[m]["seeded_recovered"] for m in methods]],
+            ["Acknowledged tool calls", "Seeded conflict refused", "Seeded conflict recovered"],
             [C_GREEN, C_VERM, C_SKY])
     _finish(ax, "Rate", methods)
     ax.legend(ncol=3, loc="upper left", bbox_to_anchor=(0, 1.16), handlelength=1.4, columnspacing=0.8)
@@ -409,45 +415,57 @@ TWIN_KPIS = [("prb_used_dl", "DL PRBs used"), ("dl_throughput_mbps", "DL through
              ("energy_j_per_s", "gNB energy")]
 
 
-def fig_twin(twin_dir: Path, out: Path) -> None:
-    """Predicted (twin) vs actual (live) relative KPI change, one point per workflow run pair."""
-    summary = json.loads((twin_dir / "summary.json").read_text(encoding="utf-8"))
-    rows = summary["rows"]
-    fig, axes = plt.subplots(1, len(TWIN_KPIS), figsize=(DOUBLE_COL, 1.9))
+def twin_title(twin_dir: Path) -> str:
+    manifest = json.loads((twin_dir / "manifest.json").read_text(encoding="utf-8"))
+    return f"twin {manifest.get('twin_ues')} UEs, live {manifest.get('live_ues')} UEs"
+
+
+def fig_twin(twin_dirs: List[Path], out: Path) -> None:
+    """Predicted (twin) vs actual (live) relative KPI change, one point per seed pair; one row per T6 batch.
+
+    The RLC buffer is left out: its no-op level is near zero in several runs, so its relative change is
+    not meaningful (TWIN_VALIDATION.md reports it in kB).
+    """
+    kpis = [(k, label) for k, label in TWIN_KPIS if k != "dl_buffer_kbytes"]
+    fig, axes = plt.subplots(len(twin_dirs), len(kpis), figsize=(DOUBLE_COL * 0.8, 2.3 * len(twin_dirs)), squeeze=False)
     markers = {"energy_saving": "o", "traffic_steering": "s", "qoe_steering": "^"}
     colors = {"energy_saving": C_GREEN, "traffic_steering": C_BLUE, "qoe_steering": C_ORANGE}
-    for ax, (kpi, label) in zip(axes, TWIN_KPIS):
-        lim = 1.0
-        for wf, wf_label in TWIN_WORKFLOWS:
-            pts = [(100 * r["predicted_delta"] / r["twin_noop"], 100 * r["actual_delta"] / r["live_noop"])
-                   for r in rows if r["workflow"] == wf and r["kpi"] == kpi and r["twin_noop"] and r["live_noop"]]
-            if not pts:
-                continue
-            xs, ys = zip(*pts)
-            lim = max([lim] + [abs(v) for v in xs + ys])
-            ax.scatter(xs, ys, s=12, marker=markers[wf], color=colors[wf], edgecolor="black", linewidth=0.3,
-                       label=wf_label, zorder=3)
-        lim *= 1.15
-        ax.plot([-lim, lim], [-lim, lim], color=C_GRAY, linewidth=0.6, linestyle=(0, (3, 2)), zorder=1)
-        ax.axhline(0, color="#CCCCCC", linewidth=0.4, zorder=0)
-        ax.axvline(0, color="#CCCCCC", linewidth=0.4, zorder=0)
-        ax.set_xlim(-lim, lim)
-        ax.set_ylim(-lim, lim)
-        ax.set_aspect("equal")
-        ax.set_title(label, fontsize=7)
-        ax.set_xlabel("Twin-predicted change (%)", fontsize=6.5)
-        ax.tick_params(labelsize=6)
-    axes[0].set_ylabel("Measured live change (%)", fontsize=6.5)
-    axes[0].legend(loc="upper left", bbox_to_anchor=(0, 1.32), ncol=3, handlelength=1.0)
+    for row, twin_dir in zip(axes, twin_dirs):
+        rows = json.loads((twin_dir / "summary.json").read_text(encoding="utf-8"))["rows"]
+        for ax, (kpi, label) in zip(row, kpis):
+            lim = 1.0
+            for wf, wf_label in TWIN_WORKFLOWS:
+                pts = [(100 * r["predicted_delta"] / r["twin_noop"], 100 * r["actual_delta"] / r["live_noop"])
+                       for r in rows if r["workflow"] == wf and r["kpi"] == kpi and r["twin_noop"] and r["live_noop"]]
+                if not pts:
+                    continue
+                xs, ys = zip(*pts)
+                lim = max([lim] + [abs(v) for v in xs + ys])
+                ax.scatter(xs, ys, s=14, marker=markers[wf], color=colors[wf], edgecolor="black", linewidth=0.3,
+                           label=wf_label, zorder=3)
+            lim *= 1.15
+            ax.plot([-lim, lim], [-lim, lim], color=C_GRAY, linewidth=0.6, linestyle=(0, (3, 2)), zorder=1)
+            ax.axhline(0, color="#CCCCCC", linewidth=0.4, zorder=0)
+            ax.axvline(0, color="#CCCCCC", linewidth=0.4, zorder=0)
+            ax.set_xlim(-lim, lim)
+            ax.set_ylim(-lim, lim)
+            ax.set_box_aspect(1)
+            ax.set_title(f"{label}\n({twin_title(twin_dir)})", fontsize=6.5)
+            ax.set_xlabel("Twin-predicted change (%)", fontsize=6.5)
+            ax.tick_params(labelsize=6)
+        row[0].set_ylabel("Measured live change (%)", fontsize=6.5)
+    handles, labels = axes[0][0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="upper center", ncol=3, handlelength=1.0, bbox_to_anchor=(0.5, 1.02))
+    fig.tight_layout(rect=(0, 0, 1, 0.95))
     save(fig, out, "fig_twin_validation")
 
 
-def twin_macros(twin_dir: Path) -> List[str]:
+def twin_macros(twin_dir: Path, role: str = "T") -> List[str]:
     summary = json.loads((twin_dir / "summary.json").read_text(encoding="utf-8"))
     manifest = json.loads((twin_dir / "manifest.json").read_text(encoding="utf-8"))
 
     def put(method: str, key: str, value: Any) -> str:
-        return f"\\expandafter\\def\\csname awr@T@{method}@{key}\\endcsname{{{value}}}"
+        return f"\\expandafter\\def\\csname awr@{role}@{method}@{key}\\endcsname{{{value}}}"
 
     lines = [put("batch", "id", twin_dir.name.replace("_", "\\_"))]
     lines += [put("batch", key, manifest.get(key)) for key in ("twin_ues", "live_ues", "n_gnb", "sim_time_s")]
@@ -509,15 +527,18 @@ def write_table_a(batch: Batch, metrics: Dict[str, Dict[str, Any]], out: Path) -
     m0 = metrics[batch.methods[0]]
     caption = (f"Composition and reliability on the 50-intent benchmark ({m0['known_intents']} known, "
                f"{m0['open_world_intents']} open-world intents; {m0['repeats']} repeats; planner {batch.model}). "
-               "Percent with 95\\% CI; latency is intent-to-plan wall clock, median / p95 in seconds.")
+               "Percent with 95\\% CI; conflicts: seeded records refused by the lease before control (refused) and "
+               "brought to a clean execution by the method (recovered); no method flagged an unseeded record. "
+               "Latency is intent-to-plan wall clock, median / p95 in seconds.")
     if batch.preliminary:
         caption = "\\textbf{PRELIMINARY.} " + caption
     lines = _tex_header(batch, "Batch A") + [
         "\\begin{table*}[t]", "\\centering", f"\\caption{{{caption}}}", "\\label{tab:appweaver-results}",
-        "\\footnotesize", "\\setlength{\\tabcolsep}{3pt}", "\\begin{tabular}{@{}lccccccc@{}}", "\\toprule",
+        "\\footnotesize", "\\setlength{\\tabcolsep}{3pt}", "\\begin{tabular}{@{}lcccccccc@{}}", "\\toprule",
         "\\textbf{Method} & \\makecell{\\textbf{Known}\\\\\\textbf{acc.}} & \\makecell{\\textbf{Open-world}\\\\\\textbf{acc.}} & "
         "\\makecell{\\textbf{Set}\\\\\\textbf{acc.}} & \\makecell{\\textbf{Ack.}\\\\\\textbf{tool calls}} & "
-        "\\makecell{\\textbf{Conflict}\\\\\\textbf{recall}} & \\makecell{\\textbf{Halluc.}\\\\\\textbf{refs}} & "
+        "\\makecell{\\textbf{Conflict}\\\\\\textbf{refused}} & \\makecell{\\textbf{Conflict}\\\\\\textbf{recovered}} & "
+        "\\makecell{\\textbf{Halluc.}\\\\\\textbf{refs}} & "
         "\\makecell{\\textbf{Latency (s)}\\\\\\textbf{med. / p95}} \\\\",
         "\\midrule",
     ]
@@ -528,7 +549,7 @@ def write_table_a(batch: Batch, metrics: Dict[str, Dict[str, Any]], out: Path) -
             f"\\textbf{{{name}}}" if method == "langgraph_agentcard" else name,
             pct(m["known_accuracy"]), pct(m["open_world_accuracy"]), pct(m["set_accuracy"]),
             pct(m["ack_rate"]) + f" {{\\scriptsize(n={m['tool_calls']})}}",
-            pct(m["conflict_recall"]), str(m["hallucinated_refs"]),
+            pct(m["conflict_recall"]), pct(m["seeded_recovered"]), str(m["hallucinated_refs"]),
             f"{secs(m['latency_median_ms'])} / {secs(m['latency_p95_ms'])}",
         ])
         lines.append(("\\rowcolor{gray!12}\n" if method == "langgraph_agentcard" else "") + row + " \\\\")
@@ -577,7 +598,7 @@ def macro_role(batch: Batch) -> str:
 
 
 def write_macros(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[str, Any]]], out: Path,
-                 twin_dir: Optional[Path] = None) -> None:
+                 twin_dirs: Sequence[Path] = ()) -> None:
     """`\\awres{<A|B8|Ball>}{<method>}{<metric>}` for every number the paper text cites.
 
     Rates are percent with one decimal (`<metric>`, `<metric>_lo`, `<metric>_hi`); latencies in seconds;
@@ -616,8 +637,9 @@ def write_macros(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[str
             for key in ("records", "tool_calls", "seeded_records", "hallucinated_refs", "records_with_hallucination",
                         "known_intents", "open_world_intents", "unseen_capability_intents", "planner_cached_records"):
                 put(role, method, key, str(m.get(key, "")))
-    if twin_dir is not None:
-        lines += twin_macros(twin_dir)
+    # T = first T6 batch (twin load unknown), TL = second (load-calibrated twin).
+    for twin_dir, role in zip(twin_dirs, ("T", "TL")):
+        lines += twin_macros(twin_dir, role)
     (out / "results_macros.tex").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -635,15 +657,15 @@ def write_readme(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[str
         if b.preliminary:
             lines += [f"> **Preliminary.** Planner `{b.model}` stands in for gpt-oss (broken on spark2 under Ollama 0.40).",
                       "> These numbers validate the pipeline; they are not the paper's results.", ""]
-        lines += ["| Method | Accuracy | Known | Open-world | Unseen cap. | Exact | Set | Ack. calls | Conflict recall | Conflict FP | Halluc. refs | Retrieval hit | Latency med / p95 / max (s) |",
-                  "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+        lines += ["| Method | Accuracy | Known | Open-world | Unseen cap. | Exact | Set | Ack. calls | Conflict refused | Conflict recovered | Conflict FP | Halluc. refs | Retrieval hit | Latency med / p95 / max (s) |",
+                  "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
         for method in b.methods:
             m = metrics[method]
             lines.append("| " + " | ".join([
                 LABEL[method].replace("\n", " "), pct_md(m["accuracy"]), pct_md(m["known_accuracy"]), pct_md(m["open_world_accuracy"]),
                 pct_md(m["unseen_capability_accuracy"]), pct_md(m["exact_accuracy"]), pct_md(m["set_accuracy"]),
                 f"{pct_md(m['ack_rate'])} (n={m['tool_calls']})",
-                f"{pct_md(m['conflict_recall'])} (n={m['seeded_records']})", pct_md(m["conflict_fp_rate"]),
+                f"{pct_md(m['conflict_recall'])} (n={m['seeded_records']})", pct_md(m["seeded_recovered"]), pct_md(m["conflict_fp_rate"]),
                 f"{m['hallucinated_refs']} in {m['records_with_hallucination']} records", pct_md(m["retrieval_hit_rate"]),
                 " / ".join(secs(m[k], tex=False) for k in ("latency_median_ms", "latency_p95_ms", "latency_max_ms")),
             ]) + " |")
@@ -653,7 +675,7 @@ def write_readme(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[str
               "- `combined_results.csv` - per (batch, method): value and CI bounds for every metric",
               "- `results_table.tex` - Batch A table; `results_table_registry.tex` - Batch B table",
               "- `figures/fig_accuracy` - Batch A known vs open-world accuracy with 95% CI",
-              "- `figures/fig_reliability` - acknowledged tool calls, conflict recall, conflict FP rate",
+              "- `figures/fig_reliability` - acknowledged tool calls, seeded conflicts refused by the lease and recovered",
               "- `figures/fig_latency` - per-record intent-to-plan latency (box = IQR, whiskers 5-95th pct, dots beyond)",
               "- `figures/fig_registry_splits` - Batch B accuracy per split, one panel per retrieval depth",
               "- `figures/fig_hallucination` - hallucinated registry references per record",
@@ -665,7 +687,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--batch-a", required=True)
     parser.add_argument("--batch-b", nargs="*", default=[])
-    parser.add_argument("--twin", default="", help="T6 run directory (run_twin_validation.py output)")
+    parser.add_argument("--twin", nargs="*", default=[], help="T6 run directories (run_twin_validation.py output): base, then load-calibrated")
     parser.add_argument("--out", default=str(Path(__file__).resolve().parent))
     args = parser.parse_args()
 
@@ -687,10 +709,10 @@ def main() -> int:
         fig_registry_splits(batches_b, all_metrics, figures)
     fig_hallucination(batches, all_metrics, figures)
     write_readme(batches, all_metrics, out)
-    twin_dir = Path(args.twin).resolve() if args.twin else None
-    if twin_dir is not None:
-        fig_twin(twin_dir, figures)
-    write_macros(batches, all_metrics, out, twin_dir)
+    twin_dirs = [Path(p).resolve() for p in args.twin]
+    if twin_dirs:
+        fig_twin(twin_dirs, figures)
+    write_macros(batches, all_metrics, out, twin_dirs)
     print(f"Wrote CSV, tables, README and figures to {out}")
     return 0
 

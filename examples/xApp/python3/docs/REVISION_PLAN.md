@@ -200,6 +200,8 @@ First tasks for the execution session:
 | O3 | GPU line for spark2 (and spark1): `nvidia-smi --query-gpu=name,memory.total --format=csv` → `LLM_SERVER_HARDWARE` and `evaluation/HARDWARE.md` | manifests, paper hardware sentence | **open** (preliminary manifests say "GPU model pending owner") |
 | O4 | Live side of the twin experiment: OAI rfsim gNB, or ns-3 seed B + traffic perturbation | T6 | **open** — default ns-3 seed B unless the owner says OAI |
 | O5 | Reasoning mode for the final batch: gpt-oss reasons by default (keep `FLEXRIC_LLM_THINK` unset). Preliminary qwen batches use `FLEXRIC_LLM_THINK=false` (24 s → 1.4 s per call); confirm that is acceptable for any qwen numbers shown | labelling of qwen results | **open** |
+| O6 | Labelling: should an observe-first reordering of a known template (e.g. `KPM→SLICE→RC` for the `SLICE→KPM→RC` slice-assurance template) be an accepted chain? AppWeaver composes observe-first and scores 9 % on known intents vs 100 % for the template router; set accuracy (any order) is reported alongside. Changing `accepted_workflows` after seeing results must be a rule decided independently of which method gains, and applied to all methods | known-split accuracy in Table II | **open** — labels unchanged until decided |
+| O7 | Paper claim on conflicts: with one rule for all methods the per-agent lease refuses seeded conflicts for every method whose chain reaches the busy app (rule router 100 %, AppWeaver 80 %); only AppWeaver recovers (80 % vs 0 %). Proposed framing: AppWeaver's contribution is recovery, not detection | §IV text, response R1.6/R3.5 | **open** — drafted that way |
 
 ## 3d. Execution log
 - Ack path: pilot TC call unacknowledged because the TC suite prints ~30 setup lines before `Applied`
@@ -231,6 +233,11 @@ First tasks for the execution session:
   100 % in every 50-record chunk up to record 700).
 - **T6 results** in `evaluation/TWIN_VALIDATION.md`; twin RngRun 3 with 10 UEs aborts inside ns-3
   (deterministic), replaced by pair 9.
+- **Batch A preliminary merged (2026-10-28 00:45):** `20261028T004100Z_A_prelim_qwen36_nothink_merged`
+  (repeats 1–2 of the first run + 3–5 of `…_r3to5_probe`, 7 records re-run after a wedge). Found and
+  fixed while generating Table II: conflict detection was read from the final execution only (AppWeaver's
+  internal recovery hid its own lease refusal) and lease refusals in template workflows were not counted.
+  Unified rule in `analyze_results.conflict_flagged`; see O6/O7.
 
 ## 4. Done criteria
 A fresh clone + the README's three commands reproduce every number and figure in the revised paper

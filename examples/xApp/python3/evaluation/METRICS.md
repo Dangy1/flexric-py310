@@ -14,11 +14,16 @@ A record is one (intent, method, repeat). Accuracies carry a normal-approximatio
 | Launched | call's launch status is `running/starting/completed` (the xApp process started) | tool calls |
 | **Acknowledged** | within `--tool-ack-timeout-s` the run log shows evidence of real work: KPM records for observation, the E2 `CONTROL-ACK` from the RAN or a subscription/`Applied …` line for slice/TC control, an RC subscription line for validation, an `rApp ack:` line for emulated rApps (markers in `run_harness.TOOL_ACK_MARKERS`). A negative line (`Error`, `Traceback`, …) is final only once the process has exited; while it runs the harness keeps polling until the deadline. Refused/queued/failed calls are unacknowledged. | tool calls with a verdict |
 | **Hallucinated references** | count of application names in the generated workflow, or `(agent, action)` pairs in tool calls, that do not exist in the Agent Registry | summed over records |
-| **Conflict recall** | seeded-conflict records where the method flagged the conflict *before* issuing control (`conflict_detected`: lease/queue refusal, blocked reason, twin rejection) | seeded records (6 intents × repeats) |
+| **Conflict refused** (`conflict_recall`) | seeded-conflict records in which the conflict was caught *before* control was issued, on the record's first or final execution (`analyze_results.conflict_flagged`): queue, `blocked_reason`, or a tool call refused by the portal's per-agent lease (HTTP 409, `already has an active action`). The lease is shared by every method, so this measures whether the method's chain reached the busy application, not a method-specific check. | seeded records (6 intents × repeats) |
 | Conflict precision | TP / (TP + FP) where FP = unseeded records flagged as conflict | — |
 | Conflict FP rate | unseeded records flagged as conflict | unseeded records |
-| Seeded recovered | seeded records where the method's *internal* recovery produced a clean execution after the conflict | seeded records |
+| **Seeded recovered** | seeded records where the method's *internal* recovery produced a clean execution after the refusal — the method-specific part of conflict handling | seeded records |
 | **Latency** | wall-clock from intent submission to a validated, launched plan (planner calls + validation + launch). Excludes the acknowledgement wait and the 30 s xApp run. Reported as n, mean ± sd, median, p95, max. Planner caching is off in headline runs; `planner_cached_record_count` must be 0. | records with a latency |
+
+Until 2026-10-28 `conflict_detected` was set from the final execution only, and a lease refusal inside a
+template workflow (recorded as a failed tool call) was not counted while the same refusal on a custom
+chain (`blocked_reason`) was. Both are fixed in `run_harness.py`; `conflict_flagged` re-derives the
+unified rule from the raw record, so earlier batches score the same as new ones.
 
 Legacy fields still emitted for comparison with the May-2026 batch, **not for the paper**:
 `conflict_detection_accuracy` (includes true negatives and after-the-fact recoveries),

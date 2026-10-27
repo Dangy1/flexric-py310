@@ -45,8 +45,39 @@ def _metric_delta_values(records: List[Dict[str, Any]], metric_name: str) -> Lis
     return deltas
 
 
-def _conflict_detected_or_handled(item: Dict[str, Any]) -> bool:
+def _execution_conflict(execution: Dict[str, Any]) -> bool:
+    """Same rule as run_harness.detect_conflict: queued run, blocked launch, or a refused tool call."""
+    if str(execution.get("status") or "") == "queued" or execution.get("blocked_reason"):
+        return True
+    return any(call.get("status") in {"conflict", "queued"} or is_lease_refusal(call) for call in execution.get("tool_calls") or [])
+
+
+def is_lease_refusal(call: Dict[str, Any]) -> bool:
+    """The portal's per-agent lease refused the launch (HTTP 409) - before any control was issued.
+
+    Template workflows record this as a failed tool call, custom chains as `blocked_reason`; both are
+    the same event and count as a detected conflict for every method.
+    """
+    return str(call.get("detail") or "").startswith("409") or "already has an active action" in str(call.get("detail") or "")
+
+
+def conflict_flagged(item: Dict[str, Any]) -> bool:
+    """Conflict flagged before control, in the record's final execution *or* its first execution.
+
+    With internal recovery the final execution is the clean re-run, so a conflict the method hit and
+    refused on its first execution is only visible in `execution_artifacts.initial_execution`.
+    """
     if item.get("conflict_detected") is True:
+        return True
+    # Recomputed from the raw record so batches written before the rule was unified score the same.
+    if item.get("blocked_reason") or any(is_lease_refusal(call) for call in item.get("tool_calls") or []):
+        return True
+    initial = (item.get("execution_artifacts") or {}).get("initial_execution")
+    return isinstance(initial, dict) and _execution_conflict(initial)
+
+
+def _conflict_detected_or_handled(item: Dict[str, Any]) -> bool:
+    if conflict_flagged(item):
         return True
     artifacts = item.get("execution_artifacts") or {}
     return bool(artifacts.get("internal_recovery_attempted")) or bool(artifacts.get("recovery_reset_runtime"))
@@ -139,15 +170,15 @@ def build_summary(records: List[Dict[str, Any]]) -> Dict[str, Any]:
                 if _conflict_detected_or_handled(item):
                     conflict_correct += 1
             elif label is False:
-                if item.get("conflict_detected") is False:
+                if not conflict_flagged(item):
                     conflict_correct += 1
         # Detection proper: the method flagged the seeded conflict before issuing
         # control (queue/lease/twin decision). Recovery after the fact is reported
         # separately and never counted as detection.
         seeded = [item for item in conflict_labeled if item.get("conflict_label") is True]
         unseeded = [item for item in conflict_labeled if item.get("conflict_label") is False]
-        true_positive = sum(1 for item in seeded if item.get("conflict_detected") is True)
-        false_positive = sum(1 for item in unseeded if item.get("conflict_detected") is True)
+        true_positive = sum(1 for item in seeded if conflict_flagged(item))
+        false_positive = sum(1 for item in unseeded if conflict_flagged(item))
         seeded_recovered = sum(
             1 for item in seeded
             if bool((item.get("execution_artifacts") or {}).get("internal_recovery_succeeded"))
@@ -235,7 +266,7 @@ def build_summary(records: List[Dict[str, Any]]) -> Dict[str, Any]:
             "methods": sorted({str(item.get("method")) for item in items}),
             "workflow_match_rate": _rate(sum(1 for item in items if item.get("workflow_match") is True), len(items)),
             "failure_rate": _rate(sum(1 for item in items if item.get("failure_detected") is True), len(items)),
-            "conflict_rate": _rate(sum(1 for item in items if item.get("conflict_detected") is True), len(items)),
+            "conflict_rate": _rate(sum(1 for item in items if conflict_flagged(item)), len(items)),
         }
 
     return summary

@@ -115,8 +115,8 @@ counted — and *AppWeaver (no repair)*, which isolates the repair step.
 **R1.6 — Reliability denominators, seeded conflicts, hallucination counts.**
 
 *Change.* Table II reports the number of tool calls and the acknowledged fraction, the number of seeded
-conflict records (6 intents × 5 repeats), conflict recall and false-positive rate, and hallucinated
-references per method. `evaluation/CONFLICTS.md` documents each seed (what runs first, which lease it
+conflict records (6 intents × 5 repeats), the fraction refused before control (by the shared lease) and
+the fraction the method recovered from, the false-positive rate, and hallucinated references per method. `evaluation/CONFLICTS.md` documents each seed (what runs first, which lease it
 holds, what counts as a correct detection).
 
 *Where.* §IV-A, Table II, Fig. 5.
@@ -169,9 +169,12 @@ retrieval-depth comparison (top-8 cards vs. all cards in the prompt).
 
 **R3.5 — Conflict detection is reported as accuracy.**
 
-*Change.* Replaced by recall over seeded conflicts and false-positive rate over unseeded records; a
-detection counts only if the method flags the conflict before issuing control. After-the-fact recovery
-is a separate column.
+*Change.* Replaced by two rates over seeded conflicts and a false-positive rate over unseeded records.
+*Refused*: the conflict was caught before control was issued. In our platform this is done by the
+portal's per-agent lease, which every method uses; it fires whenever a method's chain reaches the busy
+application, so it is not a property of AppWeaver and we no longer claim it as one. *Recovered*: the
+method then reached a clean execution on its own. Only AppWeaver recovers (Table II); every baseline
+stops at the refusal. No method flagged an unseeded record.
 
 **R3.6 — Latency distribution and the Non-RT timescale.**
 
