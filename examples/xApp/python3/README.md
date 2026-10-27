@@ -1,3 +1,33 @@
+## AppWeaver reproduction
+
+AppWeaver (agentic discovery and composition of O-RAN apps) is the agent portal in this folder plus
+the evaluation harness in `evaluation/`. See `docs/REVISION_PLAN.md` for the roadmap and
+`docs/REVIEW_ASSESSMENT_2026-10-27.md` for the audit of the first submission.
+
+```bash
+# 1. build the Python SDK and copy the portal, rApp directory and harness into the build tree
+cmake -S . -B build -DXAPP_TARGET_LANGUAGE=PYTHON_LANG -DPython3_EXECUTABLE="${CONDA_PREFIX}/bin/python"
+cmake --build build --target xapp_sdk -j8
+
+# 2. start nearRT-RIC, E2 agent (emulator or ns-3), portal, RPC, MCP and the KPM bus
+cd build/examples/xApp/python3
+export OLLAMA_BASE_URL=http://<gpu-host>:11434 OLLAMA_MODEL=gpt-oss:latest
+export FLEXRIC_LLM_TEMPERATURE=0.2 FLEXRIC_LLM_SEED=7 LLM_SERVER_HARDWARE="<gpu model, VRAM>"
+export FLEXRIC_RAPP_DIRECTORY=1     # 55-card registry (4 xApps + 46 emulated rApps); unset for the 9-card portal
+./scripts/run_agent_portal_stack.sh
+
+# 3. run a batch (5 repeats, no planner cache, acknowledged tool calls) and analyse it
+python evaluation/run_harness.py --intents evaluation/intents_v2.json --retrieval-k 8 --label v2_gptoss
+python evaluation/analyze_results.py evaluation/runs/<batch>/records.jsonl
+```
+
+- Metric definitions: `evaluation/METRICS.md`; seeded conflicts: `evaluation/CONFLICTS.md`.
+- Methods: `manual_rule`, `single_xapp`, `llm_blind`, `llm_only` (catalog-aware), `langgraph_*`,
+  `agentcard_no_repair`, `langgraph_agentcard` (= AppWeaver). Labels in `run_harness.METHOD_LABELS`.
+- Agent-Card schema v2 fields and the compose-time compatibility checks live in
+  `backend/common/models.py` and `backend/orchestration/compat.py`; discovery in
+  `backend/orchestration/discovery.py`; the rApp Directory in `rapps/`.
+
 ## Architecture
 
 ## Source Layout
