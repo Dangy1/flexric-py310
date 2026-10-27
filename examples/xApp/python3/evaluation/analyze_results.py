@@ -52,6 +52,29 @@ def _conflict_detected_or_handled(item: Dict[str, Any]) -> bool:
     return bool(artifacts.get("internal_recovery_attempted")) or bool(artifacts.get("recovery_reset_runtime"))
 
 
+def _latency_stats(values: List[float]) -> Dict[str, Any]:
+    if not values:
+        return {"n": 0, "mean_ms": None, "sd_ms": None, "median_ms": None, "p95_ms": None, "max_ms": None}
+    ordered = sorted(values)
+    p95_index = min(len(ordered) - 1, int(round(0.95 * (len(ordered) - 1))))
+    return {
+        "n": len(ordered),
+        "mean_ms": statistics.fmean(ordered),
+        "sd_ms": statistics.pstdev(ordered) if len(ordered) > 1 else 0.0,
+        "median_ms": statistics.median(ordered),
+        "p95_ms": ordered[p95_index],
+        "max_ms": ordered[-1],
+    }
+
+
+def _ci95_halfwidth(successes: int, total: int) -> float | None:
+    """Normal-approximation 95% half-width for a proportion."""
+    if total <= 0:
+        return None
+    p = successes / total
+    return 1.96 * ((p * (1 - p)) / total) ** 0.5
+
+
 def build_summary(records: List[Dict[str, Any]]) -> Dict[str, Any]:
     by_method: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
     by_intent: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
@@ -118,9 +141,47 @@ def build_summary(records: List[Dict[str, Any]]) -> Dict[str, Any]:
             elif label is False:
                 if item.get("conflict_detected") is False:
                     conflict_correct += 1
+        # Detection proper: the method flagged the seeded conflict before issuing
+        # control (queue/lease/twin decision). Recovery after the fact is reported
+        # separately and never counted as detection.
+        seeded = [item for item in conflict_labeled if item.get("conflict_label") is True]
+        unseeded = [item for item in conflict_labeled if item.get("conflict_label") is False]
+        true_positive = sum(1 for item in seeded if item.get("conflict_detected") is True)
+        false_positive = sum(1 for item in unseeded if item.get("conflict_detected") is True)
+        seeded_recovered = sum(
+            1 for item in seeded
+            if bool((item.get("execution_artifacts") or {}).get("internal_recovery_succeeded"))
+        )
         latency_values = [float(item["orchestration_latency_ms"]) for item in available_items if item.get("orchestration_latency_ms") is not None]
+        acknowledged_calls = sum(1 for call in tool_calls if call.get("acknowledged") is True)
+        ack_known_calls = sum(1 for call in tool_calls if call.get("acknowledged") is not None)
+        set_match = sum(1 for item in available_items if item.get("workflow_set_match") is True)
+        any_accepted_match = sum(1 for item in available_items if item.get("workflow_match_any_accepted") is True)
+        hallucinated_references = sum(int(item.get("hallucinated_reference_count") or 0) for item in available_items)
+        cached_planner = sum(1 for item in available_items if item.get("planner_cached") is True)
 
         summary["methods"][method] = {
+            "metric_definitions": "see evaluation/METRICS.md",
+            "intent_count": len({str(item.get("intent_id")) for item in items}),
+            "repeat_count": len({int(item.get("repeat_index") or 0) for item in items}),
+            "workflow_accuracy_ci95": _ci95_halfwidth(exact_workflow, len(available_items)),
+            "known_workflow_accuracy_ci95": _ci95_halfwidth(known_exact_workflow, len(known_items)),
+            "open_world_workflow_accuracy_ci95": _ci95_halfwidth(open_world_exact_workflow, len(open_world_items)),
+            "workflow_set_accuracy": _rate(set_match, len(available_items)),
+            "workflow_accepted_accuracy": _rate(any_accepted_match, len(available_items)),
+            "tool_call_total": len(tool_calls),
+            "tool_call_launch_success_rate": _rate(tool_success, len(tool_calls)),
+            "tool_call_acknowledged_rate": _rate(acknowledged_calls, ack_known_calls),
+            "hallucinated_reference_count": hallucinated_references,
+            "planner_cached_record_count": cached_planner,
+            "seeded_conflict_records": len(seeded),
+            "conflict_true_positive": true_positive,
+            "conflict_false_positive": false_positive,
+            "conflict_recall": _rate(true_positive, len(seeded)),
+            "conflict_precision": _rate(true_positive, true_positive + false_positive),
+            "conflict_false_positive_rate": _rate(false_positive, len(unseeded)),
+            "seeded_conflict_internal_recovery_rate": _rate(seeded_recovered, len(seeded)),
+            "latency": _latency_stats(latency_values),
             "run_count": len(items),
             "available_run_count": len(available_items),
             "availability_rate": _rate(len(available_items), len(items)),
@@ -171,30 +232,43 @@ def build_markdown(summary: Dict[str, Any]) -> str:
     lines.append("")
     lines.append("## Method Summary")
     lines.append("")
-    lines.append("| Method | Runs | Available runs | Workflow accuracy | Known accuracy | Open-world accuracy | Custom workflow rate | Tool success | Non-observation tool success | Cached observation rate | Policy validity | Hallucination | Recovery | Internal recovery | Conflict detection | Avg orchestration latency (ms) |")
-    lines.append("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
+    lines.append("Metric definitions: `evaluation/METRICS.md`. Accuracies are exact ordered matches with ±95% CI half-widths; latency is intent→validated plan, excluding the tool-acknowledgement wait.")
+    lines.append("")
+    lines.append("| Method | Records (intents×repeats) | Workflow acc. | Known acc. | Open-world acc. | Set acc. | Tool calls | Launched | Acknowledged | Halluc. refs | Conflict recall (TP/seeded) | Conflict FP rate | Seeded recovered | Latency mean±sd / median / p95 / max (ms) |")
+    lines.append("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |")
     for method, item in sorted(summary.get("methods", {}).items()):
+        lat = item.get("latency") or {}
         lines.append(
-            "| {method} | {runs} | {available_runs} ({availability}) | {workflow} | {known_workflow} | {open_world_workflow} | {custom_workflow} | {tool} | {non_observation_tool} | {cached_observation} | {policy} | {hall} | {recovery} | {internal_recovery} | {conflict} | {latency} |".format(
+            "| {method} | {runs} ({intents}×{repeats}) | {workflow} ±{workflow_ci} | {known_workflow} ±{known_ci} | {open_world_workflow} ±{open_ci} | {set_acc} | {calls} | {launched} | {acked} | {hall} | {recall} ({tp}/{seeded}) | {fpr} | {recovered} | {lat_mean}±{lat_sd} / {lat_med} / {lat_p95} / {lat_max} |".format(
                 method=method,
-                runs=item.get("run_count", 0),
-                available_runs=item.get("available_run_count", 0),
-                availability=_format_rate(item.get("availability_rate")),
+                runs=item.get("available_run_count", 0),
+                intents=item.get("intent_count", 0),
+                repeats=item.get("repeat_count", 0),
                 workflow=_format_rate(item.get("workflow_accuracy")),
+                workflow_ci=_format_rate(item.get("workflow_accuracy_ci95")),
                 known_workflow=_format_rate(item.get("known_workflow_accuracy")),
+                known_ci=_format_rate(item.get("known_workflow_accuracy_ci95")),
                 open_world_workflow=_format_rate(item.get("open_world_workflow_accuracy")),
-                custom_workflow=_format_rate(item.get("custom_workflow_rate")),
-                tool=_format_rate(item.get("tool_call_success_rate")),
-                non_observation_tool=_format_rate(item.get("non_observation_tool_success_rate")),
-                cached_observation=_format_rate(item.get("cached_observation_rate")),
-                policy=_format_rate(item.get("policy_validity_rate")),
-                hall=_format_rate(item.get("hallucination_rate")),
-                recovery=_format_rate(item.get("recovery_rate")),
-                internal_recovery=_format_rate(item.get("internal_recovery_success_rate")),
-                conflict=_format_rate(item.get("conflict_detection_accuracy")),
-                latency=_format_float(item.get("average_orchestration_latency_ms")),
+                open_ci=_format_rate(item.get("open_world_workflow_accuracy_ci95")),
+                set_acc=_format_rate(item.get("workflow_set_accuracy")),
+                calls=item.get("tool_call_total", 0),
+                launched=_format_rate(item.get("tool_call_launch_success_rate")),
+                acked=_format_rate(item.get("tool_call_acknowledged_rate")),
+                hall=item.get("hallucinated_reference_count", 0),
+                recall=_format_rate(item.get("conflict_recall")),
+                tp=item.get("conflict_true_positive", 0),
+                seeded=item.get("seeded_conflict_records", 0),
+                fpr=_format_rate(item.get("conflict_false_positive_rate")),
+                recovered=_format_rate(item.get("seeded_conflict_internal_recovery_rate")),
+                lat_mean=_format_float(lat.get("mean_ms")),
+                lat_sd=_format_float(lat.get("sd_ms")),
+                lat_med=_format_float(lat.get("median_ms")),
+                lat_p95=_format_float(lat.get("p95_ms")),
+                lat_max=_format_float(lat.get("max_ms")),
             )
         )
+    lines.append("")
+    lines.append("Legacy columns (kept for comparison with the May-2026 batch): `conflict_detection_accuracy` counts true negatives and recoveries; `tool_call_success_rate` is launch success. Do not quote them in the paper.")
     lines.append("")
     lines.append("## Intent Summary")
     lines.append("")

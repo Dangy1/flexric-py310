@@ -2591,6 +2591,30 @@ def _enabled_provider(provider_hint: str) -> Dict[str, Any]:
     raise HTTPException(status_code=400, detail="No LLM provider is configured. Set Ollama or OpenAI env vars first.")
 
 
+def _llm_sampling_options() -> Dict[str, Any]:
+    """Sampling settings shared by every provider call so evaluation batches can
+    pin and report them (FLEXRIC_LLM_TEMPERATURE, FLEXRIC_LLM_SEED, FLEXRIC_LLM_NUM_PREDICT)."""
+    options: Dict[str, Any] = {}
+    temperature = os.getenv("FLEXRIC_LLM_TEMPERATURE", "").strip()
+    seed = os.getenv("FLEXRIC_LLM_SEED", "").strip()
+    num_predict = os.getenv("FLEXRIC_LLM_NUM_PREDICT", "").strip()
+    if temperature:
+        options["temperature"] = float(temperature)
+    if seed:
+        options["seed"] = int(seed)
+    if num_predict:
+        options["num_predict"] = int(num_predict)
+    return options
+
+
+def llm_sampling_settings() -> Dict[str, Any]:
+    """Public view of the planner inference settings for evaluation manifests."""
+    return {
+        "timeout_s": int(os.getenv("FLEXRIC_AGENT_PROVIDER_TIMEOUT", "90")),
+        **_llm_sampling_options(),
+    }
+
+
 def _invoke_provider(provider: Dict[str, Any], agent: AgentCard, prompt: str) -> str:
     system = (
         "You are a FlexRIC service-model agent. Reply concisely with a practical network-automation answer, "
@@ -2631,6 +2655,7 @@ def _invoke_provider(provider: Dict[str, Any], agent: AgentCard, prompt: str) ->
                 "system": system,
                 "prompt": full_prompt,
                 "stream": False,
+                "options": _llm_sampling_options(),
             },
             timeout=timeout_s,
         )

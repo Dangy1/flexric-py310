@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from backend.agents.factory import suite_action
-from backend.common.models import AgentCard
+from backend.common.models import AgentCard, ControlScope
 
 
 def build_agent(python_bin: str, base_dir: Path) -> AgentCard:
@@ -27,4 +27,14 @@ def build_agent(python_bin: str, base_dir: Path) -> AgentCard:
             suite_action('apply-static', 'Apply Static Slice', 'Apply the STATIC profile and monitor it.', python_bin, base_dir, 'xapp_slice_suite.py', '--profile', 'static', '--duration-s', '30', '--verbose'),
         ],
         notes=['Backed by xapp_slice_suite.py profiles monitor/static/nvs-rate/nvs-cap/edf/all.'],
+        app_type='xapp',
+        ric='near-rt',
+        interfaces=['E2SM-SLICE (FlexRIC custom)'],
+        consumes=['RRU.PrbTotDl'],
+        produces=['slice.policy', 'slice.ue_association'],
+        control_scopes=[ControlScope(target='slice', mode='write', resource='slice_control')],
+        timescale_s=1.0,
+        capabilities=['slice_control', 'slice_assurance', 'capacity_partitioning'],
+        conflicts_with=[],
+        mcp_endpoint='http://127.0.0.1:8000/mcp',
     )

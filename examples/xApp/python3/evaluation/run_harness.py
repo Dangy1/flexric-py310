@@ -4,6 +4,8 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+import os
+import platform
 import re
 import shutil
 import sys
@@ -18,6 +20,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from evaluation.analyze_results import build_markdown, build_summary
+from backend.orchestration.compat import check_chain  # type: ignore
 from flexric_agent_portal import (  # type: ignore
     AGENTS,
     WORKFLOW_ACTIONS,
@@ -27,12 +30,14 @@ from flexric_agent_portal import (  # type: ignore
     WorkflowApprovalRequest,
     WorkflowRequest,
     api_agent_figures,
+    api_run,
     api_run_action,
     api_run_task,
     api_runtime_reset,
     api_workflow_approve,
     api_workflow_run,
     api_workflow_status,
+    llm_sampling_settings,
     _provider_statuses,
     _service_health,
 )
@@ -40,12 +45,40 @@ from flexric_agent_portal import (  # type: ignore
 METHODS = [
     "manual_rule",
     "single_xapp",
+    "llm_blind",
+    "llm_only",
     "langgraph_override",
     "langgraph_enforced",
     "langgraph_llm",
+    "agentcard_no_repair",
     "langgraph_agentcard",
-    "llm_only",
 ]
+
+# Paper-facing names. `llm_only` keeps its historical id but is the
+# catalog-aware LLM baseline (its prompt lists the workflow templates and its
+# plan is repaired against them); `llm_blind` is the genuinely ungrounded one.
+METHOD_LABELS = {
+    "manual_rule": "Rule router",
+    "single_xapp": "Single app",
+    "llm_blind": "LLM (no catalog)",
+    "llm_only": "LLM (catalog-aware)",
+    "langgraph_override": "LangGraph + human approval",
+    "langgraph_enforced": "LangGraph enforced",
+    "langgraph_llm": "LangGraph + LLM recovery",
+    "agentcard_no_repair": "AppWeaver (no repair)",
+    "langgraph_agentcard": "AppWeaver",
+}
+
+# A launched action only counts as a successful tool call once its log shows
+# the xApp actually did its job (observation records or a control/subscription
+# acknowledgement). Until then it is merely a successful *launch*.
+TOOL_ACK_MARKERS = {
+    "kpm": ["RRU.", "DRB.", "\"meas\"", "indication"],
+    "slice": ["Slice monitor subscribed", "Applied STATIC", "Applied NVS", "Applied EDF", "Monitor-only mode"],
+    "tc": ["Applied TC profile"],
+    "rc": ["KPM/RC suite running", "RC profile selected", "RC indication received"],
+}
+TOOL_ACK_NEGATIVE_MARKERS = ["No KPM bus records were received", "Traceback", "Error", "refused"]
 
 OBSERVATION_AGENTS = {"kpm"}
 VALIDATION_AGENTS = {"rc"}
@@ -58,6 +91,7 @@ EVAL_RUNTIME_CONFIG: Dict[str, Any] = {
     "observation_cache_ttl_s": 20.0,
     "planner_cache_ttl_s": 600.0,
     "workflow_poll_timeout_s": 0.6,
+    "tool_ack_timeout_s": 10.0,
     "workflow_poll_interval_s": 0.05,
 }
 
@@ -441,6 +475,60 @@ def invoke_action(agent_id: str, action_id: str) -> Tuple[Dict[str, Any], Option
         return build_tool_call(agent_id, action_id, latency_ms, None, error=str(exc)), None, str(exc)
 
 
+def _log_acknowledges(agent_id: str, tail: List[str]) -> Optional[bool]:
+    text = "\n".join(str(line) for line in tail)
+    if any(marker in text for marker in TOOL_ACK_MARKERS.get(agent_id, [])):
+        return True
+    if any(marker in text for marker in TOOL_ACK_NEGATIVE_MARKERS):
+        return False
+    return None
+
+
+def acknowledge_tool_calls(tool_calls: List[Dict[str, Any]], timeout_s: float) -> None:
+    """Poll each launched run's log until it shows evidence of real work.
+
+    Sets `acknowledged` (True/False) and `ack_latency_ms` on every tool call.
+    Cached observation results inherit the acknowledgement of the run they
+    were copied from. This wait is deliberately excluded from orchestration
+    latency: it measures the xApp, not the planner.
+    """
+    deadline = time.time() + max(0.0, float(timeout_s))
+    pending = [call for call in tool_calls if call.get("run_id") and not str(call.get("run_id")).startswith("cached-")]
+    for call in tool_calls:
+        call.setdefault("acknowledged", None)
+        call.setdefault("ack_latency_ms", None)
+        if call.get("status") in {"failed", "conflict", "queued"}:
+            call["acknowledged"] = False
+    started = time.time()
+    while pending and time.time() < deadline:
+        for call in list(pending):
+            try:
+                run = api_run(str(call["run_id"]))
+            except Exception as exc:  # pragma: no cover - runtime dependent
+                call["acknowledged"] = False
+                call["ack_detail"] = str(exc)
+                pending.remove(call)
+                continue
+            verdict = _log_acknowledges(str(call.get("agent_id")), list(run.get("tail") or []))
+            if verdict is None and str(run.get("status")) in {"completed", "exited"} and run.get("returncode") == 0:
+                verdict = True
+            if verdict is None and str(run.get("status")) in {"failed", "cancelled", "timed_out"}:
+                verdict = False
+            if verdict is not None:
+                call["acknowledged"] = verdict
+                call["ack_latency_ms"] = round((time.time() - started) * 1000.0, 3)
+                pending.remove(call)
+        if pending:
+            time.sleep(0.5)
+    for call in pending:
+        call["acknowledged"] = False
+        call["ack_detail"] = f"No acknowledgement within {timeout_s:.0f}s."
+    by_key = {(c.get("agent_id"), c.get("action_id")): c.get("acknowledged") for c in tool_calls if not c.get("cached_result")}
+    for call in tool_calls:
+        if call.get("cached_result") and call.get("acknowledged") is None:
+            call["acknowledged"] = by_key.get((call.get("agent_id"), call.get("action_id")))
+
+
 def seed_conflict_if_needed(intent: Dict[str, Any], method: str, duration_s: int) -> Dict[str, Any]:
     seed_workflow = intent.get("conflict_seed")
     if not seed_workflow:
@@ -579,6 +667,52 @@ def llm_prompt(intent: Dict[str, Any]) -> str:
     )
 
 
+def llm_blind_prompt(intent: Dict[str, Any]) -> str:
+    # No catalog, no agent cards: the model must name applications from its
+    # own knowledge, which is what an ungrounded baseline actually looks like.
+    return (
+        "You are the orchestrator of an O-RAN Non-RT RIC. Compose an ordered workflow of\n"
+        "xApps/rApps that realizes the operator intent below.\n"
+        "Return only JSON with keys generated_workflow and rationale.\n"
+        "- generated_workflow is a list of application names in execution order (1 to 4 items).\n"
+        "- Use short upper-case application identifiers.\n"
+        f"Intent: {intent.get('intent')}\n"
+        f"Category: {intent.get('category')}\n"
+        f"Notes: {intent.get('notes', '')}\n"
+    )
+
+
+def plan_blind(intent: Dict[str, Any]) -> Dict[str, Any]:
+    task_payload = api_run_task("orchestrator", AgentTaskRequest(prompt=llm_blind_prompt(intent), provider="auto"))
+    task = dict(task_payload.get("task") or {})
+    response_text = str(task.get("response") or task.get("error") or "")
+    if task.get("status") != "completed":
+        planner_unavailable = _is_provider_unavailable(response_text)
+        return {
+            "ok": False,
+            "planner_task": task,
+            "planner_error": response_text or "Provider task failed.",
+            "planner_unavailable": planner_unavailable,
+            "method_available": not planner_unavailable,
+            "generated_workflow": [],
+            "rationale": "",
+        }
+    try:
+        plan = parse_llm_plan(response_text)
+    except Exception as exc:
+        plan = {"generated_workflow": [], "rationale": f"unparseable: {exc}"}
+    return {
+        "ok": True,
+        "planner_task": task,
+        "planner_plan": plan,
+        "planner_error": "",
+        "planner_unavailable": False,
+        "method_available": True,
+        "generated_workflow": normalize_generated_workflow(plan.get("generated_workflow")),
+        "rationale": str(plan.get("rationale") or ""),
+    }
+
+
 def _planner_cache_key(intent: Dict[str, Any]) -> str:
     return str(intent.get("id") or intent.get("intent") or uuid.uuid4().hex)
 
@@ -713,18 +847,9 @@ def validate_or_repair_agentcard_plan(intent: Dict[str, Any], generated_workflow
             continue
         normalized_chain.append(agent_name)
 
-    expected_chain = [str(item).strip().upper() for item in list(intent.get("expected_workflow") or []) if str(item).strip()]
-    expected_workflow_id = str(intent.get("expected_workflow_id") or "").strip()
-    if intent.get("open_world") is not True and expected_chain:
-        resolved_pairs = action_pairs_for_chain(expected_chain, intent, requested_steps=steps)
-        return {
-            "workflow_id": expected_workflow_id or (workflow_id_from_chain(expected_chain) or custom_workflow_id_from_chain(expected_chain)),
-            "generated_workflow": expected_chain,
-            "resolved_steps": [{"agent_id": agent_id, "action_id": action_id} for agent_id, action_id in resolved_pairs],
-            "planner_repaired": normalized_chain != expected_chain,
-            "repair_reason": "" if normalized_chain == expected_chain else "Aligned the adaptive plan to the known workflow catalog for this closed-world intent.",
-        }
-
+    # Repair may only consult the registry. Earlier revisions substituted the
+    # intent's ground-truth chain for closed-world intents here, which leaked
+    # the benchmark label into the method under test; that path is gone.
     if not normalized_chain:
         normalized_chain = deterministic_discovery_chain(intent)
         planner_repaired = True
@@ -746,7 +871,7 @@ def validate_or_repair_agentcard_plan(intent: Dict[str, Any], generated_workflow
     }
 
 
-def plan_with_agent_cards(intent: Dict[str, Any]) -> Dict[str, Any]:
+def plan_with_agent_cards(intent: Dict[str, Any], repair: bool = True) -> Dict[str, Any]:
     task_payload = api_run_task("orchestrator", AgentTaskRequest(prompt=agentcard_prompt(intent), provider="auto"))
     task = dict(task_payload.get("task") or {})
     response_text = str(task.get("response") or task.get("error") or "")
@@ -764,11 +889,50 @@ def plan_with_agent_cards(intent: Dict[str, Any]) -> Dict[str, Any]:
             "rationale": "",
         }
 
-    plan = parse_llm_plan(response_text)
+    try:
+        plan = parse_llm_plan(response_text)
+    except Exception as exc:
+        plan = {"generated_workflow": [], "steps": [], "rationale": f"unparseable: {exc}"}
     generated_workflow = normalize_generated_workflow(plan.get("generated_workflow"))
     steps = normalize_discovery_steps(plan.get("steps"))
+    if not repair:
+        # Execute the raw plan: unknown agents stay in generated_workflow so
+        # they are counted as hallucinations, and only real ones are launched.
+        raw_pairs = action_pairs_for_chain(generated_workflow, intent, requested_steps=steps)
+        return {
+            "ok": True,
+            "planner_task": task,
+            "planner_plan": plan,
+            "planner_error": "",
+            "planner_unavailable": False,
+            "method_available": True,
+            "workflow_id": workflow_id_from_chain(generated_workflow) or custom_workflow_id_from_chain(generated_workflow),
+            "generated_workflow": generated_workflow,
+            "steps": [{"agent_id": agent_id, "action_id": action_id} for agent_id, action_id in raw_pairs],
+            "rationale": str(plan.get("rationale") or ""),
+            "planner_repaired": False,
+            "repair_reason": "",
+            "compat_report": check_chain(AGENTS, generated_workflow).to_dict(),
+        }
     repaired = validate_or_repair_agentcard_plan(intent, generated_workflow, steps)
+    # Compose-time compatibility check over the Agent Cards (dependency,
+    # interface, control scope, timescale). Steps that fail with an error are
+    # dropped and the report travels with the record.
+    compat = check_chain(AGENTS, list(repaired.get("generated_workflow") or []))
+    if not compat.ok:
+        bad_indices = {f.step_index for f in compat.findings if f.severity == "error"}
+        kept_chain = [name for index, name in enumerate(repaired["generated_workflow"]) if index not in bad_indices]
+        kept_steps = [step for index, step in enumerate(repaired.get("resolved_steps") or []) if index not in bad_indices]
+        repaired = {
+            **repaired,
+            "generated_workflow": kept_chain,
+            "resolved_steps": kept_steps,
+            "workflow_id": workflow_id_from_chain(kept_chain) or custom_workflow_id_from_chain(kept_chain),
+            "planner_repaired": True,
+            "repair_reason": (repaired.get("repair_reason") or "") + " Compatibility check removed incompatible steps.",
+        }
     return {
+        "compat_report": compat.to_dict(),
         "ok": True,
         "planner_task": task,
         "planner_plan": plan,
@@ -1205,8 +1369,8 @@ def execute_agentcard_sequence(intent: Dict[str, Any], workflow_id: str, generat
     }
 
 
-def execute_langgraph_agentcard(intent: Dict[str, Any], duration_s: int) -> Dict[str, Any]:
-    planner = plan_with_agent_cards(intent)
+def execute_langgraph_agentcard(intent: Dict[str, Any], duration_s: int, repair: bool = True, recover: bool = True) -> Dict[str, Any]:
+    planner = plan_with_agent_cards(intent, repair=repair)
     if not planner.get("ok"):
         return {
             "generated_workflow_id": None,
@@ -1237,13 +1401,14 @@ def execute_langgraph_agentcard(intent: Dict[str, Any], duration_s: int) -> Dict
             "planner_repaired": planner.get("planner_repaired", False),
             "planner_repair_reason": planner.get("repair_reason", ""),
             "selected_steps": list(planner.get("steps") or []),
+            "compat_report": planner.get("compat_report"),
         }
     )
 
     tool_calls = list(initial.get("tool_calls") or [])
     initial_conflict = detect_conflict(initial, tool_calls)
     initial_failure = detect_failure(initial, tool_calls)
-    if not (initial_conflict or initial_failure):
+    if not recover or not (initial_conflict or initial_failure):
         initial["internal_recovery_attempted"] = False
         initial["internal_recovery_succeeded"] = False
         return initial
@@ -1392,9 +1557,62 @@ def _is_provider_unavailable(detail: str) -> bool:
     return any(marker in text for marker in markers)
 
 
+def execute_llm_blind(intent: Dict[str, Any], duration_s: int) -> Dict[str, Any]:
+    del duration_s
+    planner = plan_blind(intent)
+    if not planner.get("ok"):
+        planner_unavailable = bool(planner.get("planner_unavailable"))
+        return {
+            "generated_workflow_id": None,
+            "generated_workflow": [],
+            "tool_calls": [],
+            "raw_runs": [],
+            "workflow_run": None,
+            "status": "unavailable" if planner_unavailable else "failed",
+            "blocked_reason": "",
+            "manual_override": False,
+            "planner_task": planner.get("planner_task"),
+            "planner_error": planner.get("planner_error", ""),
+            "planner_unavailable": planner_unavailable,
+            "method_available": not planner_unavailable,
+        }
+    generated_workflow = list(planner.get("generated_workflow") or [])
+    known_by_label = {agent_id.upper(): agent_id for agent_id in AGENTS.keys()}
+    tool_calls: List[Dict[str, Any]] = []
+    raw_runs: List[Dict[str, Any]] = []
+    for name in generated_workflow:
+        agent_id = known_by_label.get(name)
+        if not agent_id or not AGENTS[agent_id].actions:
+            # Unknown application: nothing to launch, policy_validation records
+            # the hallucinated reference from generated_workflow.
+            continue
+        action_id = default_action_for_agent(agent_id, intent) or AGENTS[agent_id].actions[0].id
+        tool_call, run_payload, _ = invoke_action(agent_id, action_id)
+        tool_calls.append(tool_call)
+        if run_payload is not None:
+            raw_runs.append(run_payload)
+    return {
+        "generated_workflow_id": workflow_id_from_chain(generated_workflow) or custom_workflow_id_from_chain(generated_workflow),
+        "generated_workflow": generated_workflow,
+        "tool_calls": tool_calls,
+        "raw_runs": raw_runs,
+        "workflow_run": None,
+        "status": "completed_with_issues" if any(call["status"] == "failed" for call in tool_calls) else "completed",
+        "blocked_reason": "",
+        "manual_override": False,
+        "planner_task": planner.get("planner_task"),
+        "planner_plan": planner.get("planner_plan"),
+        "method_available": True,
+    }
+
+
 def execute_method(method: str, intent: Dict[str, Any], duration_s: int) -> Dict[str, Any]:
     if method == "manual_rule":
         return execute_manual_rule(intent, duration_s)
+    if method == "llm_blind":
+        return execute_llm_blind(intent, duration_s)
+    if method == "agentcard_no_repair":
+        return execute_langgraph_agentcard(intent, duration_s, repair=False, recover=False)
     if method == "single_xapp":
         return execute_single_xapp(intent, duration_s)
     if method == "langgraph_override":
@@ -1453,7 +1671,26 @@ def build_record(
     failure_detected = bool(method_error) or detect_failure(execution, tool_calls)
     conflict_label = intent.get("expects_conflict")
     workflow_run = execution.get("workflow_run")
-    tool_success = sum(1 for call in tool_calls if call.get("status") == "success")
+    tool_launch_success = sum(1 for call in tool_calls if call.get("status") == "success")
+    tool_success = sum(1 for call in tool_calls if call.get("acknowledged") is True)
+    hallucinated_call_count = sum(
+        1 for call in tool_calls
+        if AGENTS.get(str(call.get("agent_id") or "")) is None
+        or not any(action.id == str(call.get("action_id") or "") for action in AGENTS[str(call.get("agent_id"))].actions)
+    )
+    known_agent_ids = {str(agent_id).upper() for agent_id in AGENTS.keys()}
+    hallucinated_reference_count = hallucinated_call_count + sum(1 for xapp in generated_workflow if str(xapp).upper() not in known_agent_ids)
+
+    # Some intents admit more than one valid chain; the benchmark lists them
+    # under accepted_workflows. Set match ignores order.
+    accepted = [list(item) for item in (intent.get("accepted_workflows") or [])] or [expected_workflow]
+    workflow_match_any = any(generated_workflow == candidate for candidate in accepted)
+    workflow_set_match = any(set(generated_workflow) == set(candidate) for candidate in accepted) and bool(generated_workflow)
+
+    planner_task = (execution.get("planner_task") or {}) if isinstance(execution.get("planner_task"), dict) else {}
+    providers = {item.get("id"): item for item in _provider_statuses()}
+    planner_provider = planner_task.get("provider_id")
+    planner_model = (providers.get(planner_provider) or {}).get("model") if planner_provider else None
 
     record = {
         "record_id": uuid.uuid4().hex,
@@ -1470,12 +1707,22 @@ def build_record(
         "generated_workflow_id": execution.get("generated_workflow_id"),
         "generated_workflow": generated_workflow,
         "workflow_match": generated_workflow == expected_workflow,
+        "workflow_match_any_accepted": workflow_match_any,
+        "workflow_set_match": workflow_set_match,
+        "accepted_workflows": accepted,
+        "planner_provider": planner_provider,
+        "planner_model": planner_model,
+        "planner_cached": bool(execution.get("planner_cached", False)),
+        "compat_ok": (execution.get("compat_report") or {}).get("ok") if execution.get("compat_report") else None,
+        "compat_report": execution.get("compat_report"),
         "tool_calls": tool_calls,
         "tool_call_count": len(tool_calls),
+        "tool_call_launch_success_count": tool_launch_success,
         "tool_call_success_count": tool_success,
         "policy_valid": policy_valid,
         "policy_notes": policy_notes,
         "hallucinated_api": hallucinated_api,
+        "hallucinated_reference_count": hallucinated_reference_count,
         "conflict_label": conflict_label,
         "conflict_detected": conflict_detected,
         "conflict_detection_correct": (conflict_detected == conflict_label) if conflict_label is not None else None,
@@ -1547,6 +1794,7 @@ def run_record(method: str, intent: Dict[str, Any], repeat_index: int, duration_
         }
         method_error = str(exc)
     orchestration_latency_ms = (time.perf_counter() - started) * 1000.0
+    acknowledge_tool_calls(list(execution.get("tool_calls") or []), float(EVAL_RUNTIME_CONFIG.get("tool_ack_timeout_s") or 0.0))
     after_snapshot = capture_metrics_snapshot()
 
     conflict_detected = detect_conflict(execution, list(execution.get("tool_calls") or []))
@@ -1599,6 +1847,22 @@ def manifest(methods: List[str], intents: List[Dict[str, Any]], repeats: int, du
         "repeat_count": repeats,
         "duration_s": duration_s,
         "evaluation_runtime_config": copy.deepcopy(EVAL_RUNTIME_CONFIG),
+        "method_labels": {method: METHOD_LABELS.get(method, method) for method in methods},
+        "planner_inference_settings": llm_sampling_settings(),
+        "hardware": {
+            "orchestration_host": platform.node(),
+            "orchestration_platform": platform.platform(),
+            "orchestration_cpu": platform.processor() or platform.machine(),
+            "orchestration_python": platform.python_version(),
+            # Set LLM_SERVER_HARDWARE to e.g. "NVIDIA RTX 6000 Ada 48GB x1" on the GPU host.
+            "llm_server": os.getenv("LLM_SERVER_HARDWARE", "unrecorded"),
+        },
+        "registry": {
+            "agent_count": len(AGENTS),
+            "executable_agent_count": sum(1 for agent in AGENTS.values() if agent.actions),
+            "action_count": sum(len(agent.actions) for agent in AGENTS.values()),
+            "agent_ids": sorted(AGENTS.keys()),
+        },
         "service_health": _service_health(),
         "providers": _provider_statuses(),
         "workflow_templates": WORKFLOW_TEMPLATES,
@@ -1636,16 +1900,20 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     parser.add_argument("--intents", default=str(Path(__file__).resolve().parent / "intents.json"))
     parser.add_argument("--output-root", default=str(Path(__file__).resolve().parent / "runs"))
     parser.add_argument("--methods", nargs="+", default=list(METHODS))
-    parser.add_argument("--repeat", type=int, default=1)
+    # Defaults are the headline-run settings: every record pays full planning
+    # cost (no planner or observation cache), five repeats, live telemetry.
+    parser.add_argument("--repeat", type=int, default=5)
     parser.add_argument("--duration-s", type=int, default=45)
     parser.add_argument("--max-intents", type=int, default=0)
     parser.add_argument("--disable-recovery", action="store_true")
-    parser.add_argument("--metrics-mode", choices=["off", "cached", "live"], default="cached")
+    parser.add_argument("--metrics-mode", choices=["off", "cached", "live"], default="live")
     parser.add_argument("--metrics-min-interval-s", type=float, default=15.0)
-    parser.add_argument("--observation-cache-ttl-s", type=float, default=20.0)
-    parser.add_argument("--planner-cache-ttl-s", type=float, default=600.0)
-    parser.add_argument("--workflow-poll-timeout-s", type=float, default=0.6)
+    parser.add_argument("--observation-cache-ttl-s", type=float, default=0.0)
+    parser.add_argument("--planner-cache-ttl-s", type=float, default=0.0)
+    parser.add_argument("--workflow-poll-timeout-s", type=float, default=2.0)
     parser.add_argument("--workflow-poll-interval-s", type=float, default=0.05)
+    parser.add_argument("--tool-ack-timeout-s", type=float, default=10.0, help="How long to wait for launched xApps to show real work in their logs before marking the tool call unacknowledged.")
+    parser.add_argument("--label", default="", help="Optional suffix for the run directory name.")
     return parser.parse_args(argv)
 
 
@@ -1659,6 +1927,7 @@ def main(argv: List[str]) -> int:
             "planner_cache_ttl_s": float(args.planner_cache_ttl_s),
             "workflow_poll_timeout_s": float(args.workflow_poll_timeout_s),
             "workflow_poll_interval_s": float(args.workflow_poll_interval_s),
+            "tool_ack_timeout_s": float(args.tool_ack_timeout_s),
         }
     )
     intent_path = Path(args.intents).resolve()
@@ -1674,7 +1943,7 @@ def main(argv: List[str]) -> int:
         intents = intents[: args.max_intents]
 
     timestamp = datetime.utcnow().strftime("%Y%m%dT%H%M%S_%fZ")
-    output_dir = output_root / timestamp
+    output_dir = output_root / (f"{timestamp}_{args.label}" if args.label else timestamp)
     if output_dir.exists():
         shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)

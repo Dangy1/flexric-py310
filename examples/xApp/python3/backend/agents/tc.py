@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from backend.agents.factory import suite_action
-from backend.common.models import AgentCard
+from backend.common.models import AgentCard, ControlScope
 
 
 def build_agent(python_bin: str, base_dir: Path) -> AgentCard:
@@ -27,4 +27,14 @@ def build_agent(python_bin: str, base_dir: Path) -> AgentCard:
             suite_action('apply-all', 'Run Full TC Flow', 'Run the TC suite with the full profile and RLC monitor.', python_bin, base_dir, 'xapp_tc_suite.py', '--profile', 'all', '--duration-s', '30', '--monitor-rlc'),
         ],
         notes=['Backed by xapp_tc_suite.py profiles segregate/partition/shaper/codel/ecn/osi_codel/all.'],
+        app_type='xapp',
+        ric='near-rt',
+        interfaces=['E2SM-TC (FlexRIC custom)', 'E2SM-RLC (FlexRIC custom)'],
+        consumes=['DRB.RlcSduDelayDl'],
+        produces=['tc.policy', 'RLC.queue_stats'],
+        control_scopes=[ControlScope(target='transport', mode='write', resource='tc_control')],
+        timescale_s=1.0,
+        capabilities=['transport_qos', 'bufferbloat_mitigation', 'traffic_shaping'],
+        conflicts_with=[],
+        mcp_endpoint='http://127.0.0.1:8000/mcp',
     )

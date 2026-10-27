@@ -14,6 +14,14 @@ class AgentAction:
 
 
 @dataclass
+class ControlScope:
+    """What an application may write, and at which granularity."""
+    target: str          # cell | ue | slice | node | transport
+    mode: str = "read"   # read | write
+    resource: str = ""   # lease class, e.g. slice_control, tc_control, rc_control, cell_power
+
+
+@dataclass
 class AgentCard:
     id: str
     name: str
@@ -32,3 +40,22 @@ class AgentCard:
     actions: List[AgentAction]
     notes: List[str]
     timeline: List[str] = field(default_factory=list)
+    # --- O-RAN compatibility fields (schema v2) --------------------------------
+    # These are what Compose checks before a chain is accepted: dependency
+    # (requires ⊆ produced upstream), interface (shared E2SM/A1 data models
+    # between consecutive steps), control scope (write/write on the same
+    # resource needs a lease order) and timescale (no near-RT step after a
+    # non-RT step without an observation in between).
+    app_type: str = "xapp"                 # xapp | rapp | orchestrator
+    ric: str = "near-rt"                   # near-rt | non-rt | none
+    vendor: str = "Aalto 6G Lab"
+    version: str = "1.0.0"
+    interfaces: List[str] = field(default_factory=list)      # e.g. E2SM-KPM v3.00, E2SM-RC v1.03, A1-P policy-type 20008, O1
+    consumes: List[str] = field(default_factory=list)        # data models / KPI names it needs upstream
+    produces: List[str] = field(default_factory=list)        # data models / KPI names / decisions it emits
+    control_scopes: List[ControlScope] = field(default_factory=list)
+    timescale_s: float = 1.0                                 # typical decision period (near-RT 0.01–1 s, non-RT ≥ 1 s)
+    requires: List[str] = field(default_factory=list)        # capability ids that must run earlier in the chain
+    conflicts_with: List[str] = field(default_factory=list)  # lease classes it must not share a window with
+    mcp_endpoint: str = ""                                   # MCP server URL exposing the actions as tools
+    capabilities: List[str] = field(default_factory=list)    # discovery vocabulary, e.g. energy_saving, qoe_prediction

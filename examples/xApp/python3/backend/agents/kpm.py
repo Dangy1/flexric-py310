@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from backend.agents.factory import suite_action
-from backend.common.models import AgentCard
+from backend.common.models import AgentCard, ControlScope
 
 
 def build_agent(python_bin: str, base_dir: Path) -> AgentCard:
@@ -27,4 +27,13 @@ def build_agent(python_bin: str, base_dir: Path) -> AgentCard:
             suite_action('observe-ue', 'Observe UE KPIs', 'Read shared UE/DRB-oriented KPM records from the KPM bus for a short window.', python_bin, base_dir, 'xapp_kpm_bus_reader.py', '--mode', 'ue', '--duration-s', '30'),
         ],
         notes=['Backed by the shared kpm_bus_service.py collector and xapp_kpm_bus_reader.py readers.'],
+        app_type='xapp',
+        ric='near-rt',
+        interfaces=['E2SM-KPM v2.03'],
+        consumes=[],
+        produces=['RRU.PrbTotDl', 'RRU.PrbTotUl', 'DRB.UEThpDl', 'DRB.RlcSduDelayDl', 'kpm.snapshot'],
+        control_scopes=[ControlScope(target='cell', mode='read', resource='kpm_subscription')],
+        timescale_s=1.0,
+        capabilities=['kpi_monitoring', 'congestion_detection', 'anomaly_evidence'],
+        mcp_endpoint='http://127.0.0.1:8000/mcp',
     )
