@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import argparse
 import copy
+import hashlib
+import inspect
 import json
 import os
 import platform
@@ -994,6 +996,12 @@ def plan_with_agent_cards(intent: Dict[str, Any], repair: bool = True) -> Dict[s
     }
 
 
+def prompt_builders_sha256() -> Dict[str, str]:
+    """Hash of each planner prompt builder's source, so a batch pins the exact prompts it used."""
+    builders = [llm_prompt, llm_blind_prompt, agentcard_prompt, agentcard_recovery_prompt, llm_recovery_prompt]
+    return {fn.__name__: hashlib.sha256(inspect.getsource(fn).encode("utf-8")).hexdigest()[:16] for fn in builders}
+
+
 def agentcard_recovery_prompt(intent: Dict[str, Any], execution: Dict[str, Any]) -> str:
     failure_summary = {
         "status": execution.get("status"),
@@ -1899,6 +1907,7 @@ def manifest(methods: List[str], intents: List[Dict[str, Any]], repeats: int, du
         "evaluation_runtime_config": copy.deepcopy(EVAL_RUNTIME_CONFIG),
         "method_labels": {method: METHOD_LABELS.get(method, method) for method in methods},
         "planner_inference_settings": llm_sampling_settings(),
+        "planner_prompt_sha256": prompt_builders_sha256(),
         "hardware": {
             "orchestration_host": platform.node(),
             "orchestration_platform": platform.platform(),
