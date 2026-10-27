@@ -5,6 +5,7 @@ import importlib.util
 import json
 import os
 import re
+import shutil
 import sqlite3
 import subprocess
 import sys
@@ -16,8 +17,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import requests
+import secrets
+import signal
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -109,13 +112,30 @@ def _portal_asset_version() -> str:
     return str(latest or int(time.time()))
 
 
+def _portal_api_token() -> str:
+    """Optional shared-secret guard for mutating API calls (set FLEXRIC_PORTAL_API_TOKEN).
+
+    Recommended when the portal binds to a non-loopback interface (run_agent_portal_lan.sh):
+    without it, anyone on the network can launch xApp subprocesses through the API.
+    """
+    return os.getenv("FLEXRIC_PORTAL_API_TOKEN", "").strip()
+
+
 def _portal_html() -> str:
     html = (PORTAL_DIR / "index.html").read_text(encoding="utf-8")
     version = _portal_asset_version()
-    return (
+    html = (
         html.replace('/portal/assets/styles.css', f'/portal/assets/styles.css?v={version}')
         .replace('/portal/assets/app.js', f'/portal/assets/app.js?v={version}')
     )
+    # Surface the API token to the same-origin UI so fetch calls can authenticate. Because the
+    # page itself is unauthenticated, this primarily defeats cross-origin/CSRF-style mutations
+    # (other origins cannot read this meta tag or send the custom header without CORS approval);
+    # for network-level protection keep the portal bound to 127.0.0.1 or front it with a proxy.
+    token = _portal_api_token()
+    if token:
+        html = html.replace("<head>", f'<head>\n  <meta name="portal-token" content="{token}">', 1)
+    return html
 
 
 def _graph_stage_events(events: List[Dict[str, Any]], stage: str) -> List[Dict[str, Any]]:
@@ -699,6 +719,23 @@ class RuntimeResetRequest(BaseModel):
     clear_saved_workflows: bool = False
 
 
+MAX_GOAL_CHARS = 2000
+MAX_PROMPT_CHARS = 8000
+MAX_MESSAGE_CHARS = 4000
+MAX_REASON_CHARS = 1000
+MAX_NAME_CHARS = 200
+ALLOWED_WORKFLOW_MODES = {"advisory", "enforced"}
+
+
+def _validate_text(value: str, field_name: str, max_chars: int, *, required: bool = False) -> str:
+    text = (value or "").strip()
+    if required and not text:
+        raise HTTPException(status_code=400, detail=f"{field_name} is required.")
+    if len(text) > max_chars:
+        raise HTTPException(status_code=400, detail=f"{field_name} exceeds the {max_chars}-character limit.")
+    return text
+
+
 def _package_available(name: str) -> bool:
     return importlib.util.find_spec(name) is not None
 
@@ -810,6 +847,18 @@ MESSAGES: List[Dict[str, Any]] = []
 WORKFLOW_RUNS: List[Dict[str, Any]] = []
 MANAGED_SERVICE_PROCS: Dict[str, subprocess.Popen] = {}
 STATE_LOCK = threading.RLock()
+
+
+class AgentBusyError(RuntimeError):
+    """Raised when an agent already runs an action; treated as a scheduling conflict, not a hard failure."""
+
+
+def _assert_state_lock_held() -> None:
+    # Guard `_locked` helpers against future unlocked callers. RLock._is_owned() is private but
+    # stable across CPython releases; if unavailable we skip the check rather than fail.
+    is_owned = getattr(STATE_LOCK, "_is_owned", None)
+    if callable(is_owned) and not is_owned():
+        raise RuntimeError("STATE_LOCK must be held before mutating portal run state")
 
 
 def _db_connect() -> sqlite3.Connection:
@@ -1149,12 +1198,22 @@ def _platform_payload_locked() -> Dict[str, Any]:
     }
 
 
+def _claude_cli_available() -> bool:
+    return shutil.which("claude") is not None
+
+
 def _provider_statuses() -> List[Dict[str, Any]]:
     ollama_url = os.getenv("OLLAMA_BASE_URL", "").strip() or os.getenv("OLLAMA_URL", "").strip() or "http://127.0.0.1:11434"
     ollama_model = os.getenv("OLLAMA_MODEL", "").strip()
     openai_base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
     openai_model = os.getenv("OPENAI_MODEL", "").strip()
+    # Claude provider (opt-in): set CLAUDE_CLI_PROVIDER=1 to route tasks through the local
+    # `claude` CLI in headless mode. Listed first so provider="auto" prefers it when enabled.
+    claude_opt_in = os.getenv("CLAUDE_CLI_PROVIDER", "").strip().lower() in {"1", "true", "yes", "on"}
+    claude_enabled = claude_opt_in and _claude_cli_available()
+    claude_model = os.getenv("CLAUDE_CLI_MODEL", "").strip()
     return [
+        {"id": "claude", "label": "Claude CLI", "enabled": claude_enabled, "endpoint": "claude -p (headless)", "model": claude_model or "cli-default", "notes": "Headless Claude Code CLI; uses the operator's configured default model unless CLAUDE_CLI_MODEL is set.", "supports_tasks": claude_enabled},
         {"id": "ollama", "label": "Ollama", "enabled": bool(ollama_model), "endpoint": ollama_url, "model": ollama_model or "not-configured", "notes": "Best for private on-box automation loops and local model routing.", "supports_tasks": bool(ollama_model)},
         {"id": "openai", "label": "OpenAI API", "enabled": bool(os.getenv("OPENAI_API_KEY")) and bool(openai_model), "endpoint": openai_base_url, "model": openai_model or "not-configured", "notes": "Best for richer planning or cross-domain automation once API credentials are configured.", "supports_tasks": bool(os.getenv("OPENAI_API_KEY")) and bool(openai_model)},
     ]
@@ -1179,6 +1238,11 @@ def _approve_graph_workflow_locked(workflow: Dict[str, Any], reason: str) -> Dic
     toolbox = _portal_toolbox_locked()
     events = workflow.setdefault("events", [])
     approval_reason = reason.strip() or "Manually approved from the portal UI. Execute the selected actions now."
+    # Preserve the graph/RC gate's original decision note instead of silently overwriting it, so
+    # the audit trail keeps both the automated verdict and the operator's manual approval.
+    graph_reason = str(workflow.get("approval_reason") or "").strip()
+    if graph_reason and graph_reason != approval_reason:
+        workflow["graph_approval_reason"] = workflow.get("graph_approval_reason") or graph_reason
     workflow["approval_required"] = True
     workflow["approved"] = True
     workflow["approval_reason"] = approval_reason
@@ -1199,6 +1263,7 @@ def _approve_graph_workflow_locked(workflow: Dict[str, Any], reason: str) -> Dic
             "manual": True,
             "mode": workflow.get("mode", "advisory"),
             "action_count": len(selected_actions),
+            "graph_approval_reason": workflow.get("graph_approval_reason") or "",
         },
     ) if toolbox is not None else {
         "timestamp": time.time(),
@@ -1212,6 +1277,7 @@ def _approve_graph_workflow_locked(workflow: Dict[str, Any], reason: str) -> Dic
             "manual": True,
             "mode": workflow.get("mode", "advisory"),
             "action_count": len(selected_actions),
+            "graph_approval_reason": workflow.get("graph_approval_reason") or "",
         },
     }
     events.append(approval_event)
@@ -1742,20 +1808,47 @@ def _workflow_terminal_status_locked(run: Dict[str, Any]) -> str:
 
 
 def _launch_scheduled_actions_locked(workflow: Dict[str, Any], *, manual: bool = False) -> Dict[str, Any]:
+    _assert_state_lock_held()
     toolbox = _portal_toolbox_locked()
     events = workflow.setdefault("events", [])
     errors = list(workflow.get("errors", []))
     run_results = list(workflow.get("run_results", []))
     selected_actions = list(workflow.get("selected_actions", []))
     launched = 0
+
+    def _is_live_run(existing: Dict[str, Any]) -> bool:
+        run_id = existing.get("id") or existing.get("run_id")
+        return bool(run_id) and run_id in RUNS
+
     for item in selected_actions:
         agent_id = str(item.get("agent_id") or "unknown")
         action_id = str(item.get("action_id") or "unknown")
         label = str(item.get("label") or action_id)
-        existing_real = next((existing for existing in run_results if str(existing.get("agent_id")) == agent_id and str(existing.get("action_id")) == action_id and (existing.get("id") or existing.get("run_id")) and str(existing.get("status") or "") in {"launching", "starting", "running", "completed", "exited", "success", "blocked_by_conflict", "failed", "timed_out", "cancelled"}), None)
+        # Only results that map to a real launch (a RunState this portal instance created) or a
+        # completed/terminal execution block a relaunch. "blocked_by_conflict" is deliberately
+        # re-launchable: a later admission (queue promotion or manual approval) must retry it.
+        existing_real = next(
+            (
+                existing for existing in run_results
+                if str(existing.get("agent_id")) == agent_id and str(existing.get("action_id")) == action_id
+                and str(existing.get("status") or "") in {"launching", "starting", "running", "completed", "exited", "success", "failed", "timed_out", "cancelled"}
+                and (_is_live_run(existing) or str(existing.get("status") or "") not in {"launching", "starting", "running"})
+            ),
+            None,
+        )
         if existing_real is not None:
             continue
-        run_results = [existing for existing in run_results if not (str(existing.get("agent_id")) == agent_id and str(existing.get("action_id")) == action_id and str(existing.get("status") or "") in {"queued", "blocked_by_conflict"} and not (existing.get("id") or existing.get("run_id")))]
+        # Drop stale placeholders (graph "queued" reservations and prior "blocked_by_conflict"
+        # markers) that do not correspond to a live RunState, so the relaunch below replaces them
+        # instead of stacking duplicate sibling results.
+        run_results = [
+            existing for existing in run_results
+            if not (
+                str(existing.get("agent_id")) == agent_id and str(existing.get("action_id")) == action_id
+                and str(existing.get("status") or "") in {"queued", "blocked_by_conflict"}
+                and not _is_live_run(existing)
+            )
+        ]
         try:
             launched_run = _run_action_public_locked(agent_id, action_id)
             launched_run.setdefault("agent_id", agent_id)
@@ -1770,7 +1863,9 @@ def _launch_scheduled_actions_locked(workflow: Dict[str, Any], *, manual: bool =
                     "timestamp": time.time(), "stage": "act", "kind": "action-launched", "agent_id": agent_id, "content": f"Launched {label} for {agent_id}.", "metadata": {"action_id": action_id, "run": dict(launched_run), "manual": manual},
                 }
             )
-        except Exception as exc:
+        except AgentBusyError as exc:
+            # Genuine scheduling conflict: another action holds the agent. Recorded as
+            # blocked_by_conflict so a later admission retries it.
             detail = str(exc)
             errors.append(detail)
             blocked = {
@@ -1781,6 +1876,23 @@ def _launch_scheduled_actions_locked(workflow: Dict[str, Any], *, manual: bool =
             events.append(
                 toolbox.event("act", "action-blocked", f"Blocked {label} for {agent_id}: {detail}", agent_id=agent_id, metadata={"action_id": action_id, "manual": manual}) if toolbox is not None else {
                     "timestamp": time.time(), "stage": "act", "kind": "action-blocked", "agent_id": agent_id, "content": f"Blocked {label} for {agent_id}: {detail}", "metadata": {"action_id": action_id, "manual": manual},
+                }
+            )
+        except Exception as exc:
+            # Environment/config failures (missing script, permissions, unknown agent/action)
+            # are NOT conflicts: mark them failed so operators can distinguish and the queue
+            # does not retry a permanently broken action.
+            detail = getattr(exc, "detail", None) or str(exc)
+            detail = f"Launch failed ({type(exc).__name__}): {detail}"
+            errors.append(detail)
+            failed = {
+                "id": f"failed:{workflow.get('id')}:{agent_id}:{action_id}", "agent_id": agent_id, "action_id": action_id, "label": label,
+                "status": "failed", "detail": detail, "started_at": time.time(), "ended_at": time.time(), "manual": manual,
+            }
+            run_results.append(failed)
+            events.append(
+                toolbox.event("act", "action-error", f"Failed to launch {label} for {agent_id}: {detail}", agent_id=agent_id, metadata={"action_id": action_id, "manual": manual, "error_type": type(exc).__name__}) if toolbox is not None else {
+                    "timestamp": time.time(), "stage": "act", "kind": "action-error", "agent_id": agent_id, "content": f"Failed to launch {label} for {agent_id}: {detail}", "metadata": {"action_id": action_id, "manual": manual, "error_type": type(exc).__name__},
                 }
             )
     workflow["run_results"] = run_results
@@ -1817,14 +1929,62 @@ def _scheduler_submit_workflow_locked(workflow: Dict[str, Any], *, manual: bool 
     return _launch_scheduled_actions_locked(workflow, manual=manual)
 
 
+def _workflow_has_live_children_locked(workflow: Dict[str, Any]) -> bool:
+    for result in list(workflow.get("run_results", [])):
+        run_id = result.get("id") or result.get("run_id")
+        child = RUNS.get(run_id) if run_id else None
+        if child is not None and child.status in {"starting", "running"}:
+            return True
+    return False
+
+
 def _refresh_scheduler_heartbeats_locked() -> None:
     now = time.time()
     for workflow in WORKFLOW_RUNS:
         lease_state = workflow.get("lease_state") or {}
         if str(lease_state.get("state") or "") != "active":
             continue
+        # Heartbeat only workflows that demonstrably make progress: a live child process, or a
+        # freshly admitted workflow still inside its execution window. A silently dead workflow
+        # therefore stops heartbeating and its lease timeout becomes enforceable.
+        deadline = float(workflow.get("execution_deadline_at") or 0.0)
+        if not _workflow_has_live_children_locked(workflow) and not (deadline and now <= deadline):
+            continue
         for lease in list(lease_state.get("leases", [])):
             lease["heartbeat_at"] = now
+
+
+def _enforce_lease_timeouts_locked() -> int:
+    """Force-release leases held past timeout_at with no live child processes.
+
+    Prevents zombie workflows (silently crashed subprocesses, portal hiccups) from blocking the
+    queue indefinitely. Returns the number of workflows whose leases were force-released.
+    """
+    now = time.time()
+    released = 0
+    for workflow in WORKFLOW_RUNS:
+        lease_state = workflow.get("lease_state") or {}
+        if str(lease_state.get("state") or "") != "active":
+            continue
+        leases = list(lease_state.get("leases", []))
+        if not leases:
+            continue
+        expired = all(float(lease.get("timeout_at") or 0.0) <= now for lease in leases)
+        if not expired or _workflow_has_live_children_locked(workflow):
+            continue
+        reason = "Lease timeout exceeded with no live actions; scheduler force-released the lease."
+        _release_workflow_leases_locked(workflow, reason)
+        if str(workflow.get("status") or "") not in {"completed", "completed_with_issues", "cancelled", "expired"}:
+            workflow["status"] = "completed_with_issues"
+            workflow["completed_at"] = workflow.get("completed_at") or now
+            workflow.setdefault("errors", []).append(reason)
+            workflow.setdefault("events", []).append({
+                "timestamp": now, "stage": "act", "kind": "lease-timeout", "agent_id": "orchestrator",
+                "content": reason, "metadata": {"leases": leases},
+            })
+        _persist_workflow_run_locked(workflow)
+        released += 1
+    return released
 
 
 def _promote_queued_workflows_locked() -> None:
@@ -1833,7 +1993,15 @@ def _promote_queued_workflows_locked() -> None:
             continue
         if not _workflow_has_scheduler_queue_state(workflow):
             continue
-        if _scheduler_blockers_locked(workflow):
+        blockers = _scheduler_blockers_locked(workflow)
+        if blockers:
+            # Keep the queue diagnostics current: blockers can change as other leases release
+            # (previously blocked_reason/queue_entries went stale after the first evaluation).
+            blocked_reason = "; ".join(blockers)
+            if blocked_reason != str(workflow.get("blocked_reason") or ""):
+                workflow["blocked_reason"] = blocked_reason
+                workflow["queue_entries"] = _queue_entries_for_workflow(workflow, blockers)
+                workflow["updated_at"] = time.time()
             workflow["queue_position"] = _workflow_queue_position_locked(workflow)
             continue
         _scheduler_submit_workflow_locked(workflow, manual=False)
@@ -1898,7 +2066,7 @@ def _cancel_or_drain_workflow_locked(workflow: Dict[str, Any], *, mode: str, act
 
 def _reconcile_scheduler_locked() -> Dict[str, Any]:
     now = time.time()
-    released = 0
+    released = _enforce_lease_timeouts_locked()
     expired = 0
     for workflow in WORKFLOW_RUNS:
         if str(workflow.get("status") or "") == "queued":
@@ -2283,6 +2451,7 @@ def _advance_workflow_locked(run: Dict[str, Any]) -> None:
 def _poll_workflows_locked() -> None:
     _expire_queued_workflows_locked()
     _refresh_scheduler_heartbeats_locked()
+    _enforce_lease_timeouts_locked()
     for workflow in WORKFLOW_RUNS:
         _expire_workflow_locked(workflow)
         if isinstance(workflow.get("run_results"), list):
@@ -2431,6 +2600,29 @@ def _invoke_provider(provider: Dict[str, Any], agent: AgentCard, prompt: str) ->
     full_prompt = f"{context}\n\nUser task:\n{prompt}"
     timeout_s = int(os.getenv("FLEXRIC_AGENT_PROVIDER_TIMEOUT", "90"))
 
+    if provider["id"] == "claude":
+        # Headless Claude Code CLI: prompt on stdin, plain-text response on stdout. No tools are
+        # granted, so this is a pure text-generation call like the other providers.
+        cmd = ["claude", "-p", "--output-format", "text"]
+        model = str(provider.get("model") or "").strip()
+        if model and model != "cli-default":
+            cmd += ["--model", model]
+        claude_timeout_s = int(os.getenv("CLAUDE_CLI_TIMEOUT", str(max(timeout_s, 180))))
+        completed = subprocess.run(
+            cmd,
+            input=f"{system}\n\n{full_prompt}",
+            capture_output=True,
+            text=True,
+            timeout=claude_timeout_s,
+            cwd=str(THIS_DIR),
+        )
+        if completed.returncode != 0:
+            raise RuntimeError(f"Claude CLI failed (rc={completed.returncode}): {completed.stderr.strip()[:400]}")
+        text = completed.stdout.strip()
+        if not text:
+            raise RuntimeError("Claude CLI returned an empty response")
+        return text
+
     if provider["id"] == "ollama":
         response = requests.post(
             f"{provider['endpoint'].rstrip('/')}/api/generate",
@@ -2509,12 +2701,13 @@ def _run_task_locked(agent: AgentCard, provider_hint: str, prompt: str) -> TaskS
 
 
 def _run_action_locked(agent: AgentCard, action: AgentAction) -> RunState:
+    _assert_state_lock_held()
     if not action.command:
         raise HTTPException(status_code=400, detail=f"Action {action.id} does not launch a local suite")
 
     active = next((item for item in RUNS.values() if item.agent_id == agent.id and item.status in {"starting", "running"}), None)
     if active is not None:
-        raise RuntimeError(
+        raise AgentBusyError(
             f"Agent {agent.id} already has an active action ({active.action_id}, run {active.id[:8]}). Wait for it to finish before launching another one."
         )
 
@@ -2769,6 +2962,38 @@ def _test_all_agents_locked(include_actions: bool, include_messages: bool) -> Di
     return summary
 
 
+def _terminate_orphan_processes(runs: List[Dict[str, Any]]) -> int:
+    """Terminate xApp subprocesses left behind by a previous portal instance.
+
+    On restart the portal marks persisted in-flight runs as failed, but the actual child
+    processes (launched with start_new_session=True) survive and keep holding E2 resources.
+    We verify via /proc/<pid>/cmdline that the pid still belongs to one of our xApp suite
+    scripts before signalling its process group, so recycled pids are never touched.
+    """
+    terminated = 0
+    for run in runs:
+        for result in list(run.get("run_results", [])):
+            pid = result.get("pid")
+            if not pid or str(result.get("status") or "") not in {"starting", "running", "launching", "timed_out", "failed"}:
+                continue
+            try:
+                cmdline_path = Path(f"/proc/{int(pid)}/cmdline")
+                if not cmdline_path.exists():
+                    continue
+                cmdline = cmdline_path.read_bytes().replace(b"\x00", b" ").decode(errors="replace")
+            except (OSError, ValueError):
+                continue
+            if "xapp_" not in cmdline and str(THIS_DIR) not in cmdline:
+                continue
+            try:
+                os.killpg(int(pid), signal.SIGTERM)
+                terminated += 1
+                result["detail"] = (result.get("detail") or "") + " Orphaned process terminated on portal restart."
+            except (OSError, ProcessLookupError):
+                continue
+    return terminated
+
+
 _init_portal_db()
 _record_change_log_locked(
     "workflow-concurrency-v1",
@@ -2776,6 +3001,13 @@ _record_change_log_locked(
     "startup-recorded",
 )
 WORKFLOW_RUNS.extend(_load_persisted_workflow_runs())
+_ORPHANS_TERMINATED = _terminate_orphan_processes(WORKFLOW_RUNS)
+if _ORPHANS_TERMINATED:
+    _record_change_log_locked(
+        "orphan-cleanup",
+        f"Terminated {_ORPHANS_TERMINATED} orphaned xApp process(es) from a previous portal instance.",
+        "startup-recorded",
+    )
 
 
 app = FastAPI(
@@ -2783,6 +3015,19 @@ app = FastAPI(
     description="Agent-centric orchestration layer for FlexRIC service models, workflows, and A2A-style handoffs.",
 )
 app.mount("/portal/assets", StaticFiles(directory=str(PORTAL_DIR)), name="portal-assets")
+
+
+@app.middleware("http")
+async def _portal_token_middleware(request, call_next):
+    # When FLEXRIC_PORTAL_API_TOKEN is set, every mutating API call must carry the matching
+    # X-Portal-Token header. GETs stay open so dashboards keep working; all POSTs that launch
+    # subprocesses, approve workflows, or mutate scheduler state are gated.
+    token = _portal_api_token()
+    if token and request.method in {"POST", "PUT", "DELETE", "PATCH"} and request.url.path.startswith("/api/"):
+        provided = request.headers.get("x-portal-token", "")
+        if not secrets.compare_digest(provided, token):
+            return JSONResponse(status_code=401, content={"detail": "Missing or invalid X-Portal-Token header."})
+    return await call_next(request)
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -2965,12 +3210,13 @@ def api_run_action(agent_id: str, action_id: str) -> Dict[str, Any]:
 
 @app.post("/api/agents/{agent_id}/tasks/run")
 def api_run_task(agent_id: str, request: AgentTaskRequest) -> Dict[str, Any]:
+    prompt = _validate_text(request.prompt, "Task prompt", MAX_PROMPT_CHARS, required=True)
     with STATE_LOCK:
         _poll_runs_locked()
         agent = AGENTS.get(agent_id)
         if agent is None:
             raise HTTPException(status_code=404, detail="Unknown agent")
-        task = _run_task_locked(agent, request.provider, request.prompt)
+        task = _run_task_locked(agent, request.provider, prompt)
         return {"status": "success" if task.status == "completed" else "failed", "task": task.to_public()}
 
 
@@ -3006,11 +3252,13 @@ def api_tasks() -> List[Dict[str, Any]]:
 
 @app.post("/api/agents/{agent_id}/message")
 def api_agent_message(agent_id: str, request: MessageRequest) -> Dict[str, Any]:
+    content = _validate_text(request.content, "Handoff message", MAX_MESSAGE_CHARS, required=True)
+    kind = _validate_text(request.kind, "Message kind", MAX_NAME_CHARS) or "handoff"
     with STATE_LOCK:
         _poll_runs_locked()
         if agent_id not in AGENTS or request.target_id not in AGENTS:
             raise HTTPException(status_code=404, detail="Unknown agent in handoff")
-        message = _record_message(agent_id, request.target_id, request.content, request.kind)
+        message = _record_message(agent_id, request.target_id, content, kind)
         return {"status": "success", "message": message}
 
 
@@ -3027,11 +3275,16 @@ def api_workflow_run(workflow_id: str, request: WorkflowRequest) -> Dict[str, An
     if template is None:
         raise HTTPException(status_code=404, detail="Unknown workflow")
 
+    mode = request.mode.strip().lower() or "advisory"
+    if mode not in ALLOWED_WORKFLOW_MODES:
+        raise HTTPException(status_code=400, detail=f"Unsupported workflow mode '{mode}'. Use one of: {sorted(ALLOWED_WORKFLOW_MODES)}.")
+    goal = _validate_text(request.goal, "Workflow goal", MAX_GOAL_CHARS) or WorkflowRequest().goal
+
     with STATE_LOCK:
         _poll_runs_locked()
         _poll_workflows_locked()
         toolbox = _portal_toolbox_locked()
-        mode = request.mode.strip().lower() or "advisory"
+        request.goal = goal
         duration_s, duration_note = _apply_workflow_duration_policy(workflow_id, request.duration_s)
         if run_graph_workflow is not None and toolbox is not None:
             graph_state = run_graph_workflow(
@@ -3120,7 +3373,9 @@ def api_workflow_save(run_id: str, request: SavedWorkflowRequest) -> Dict[str, A
         _poll_runs_locked()
         _poll_workflows_locked()
         run = _workflow_run_by_id(run_id)
-        saved = _save_workflow_record_locked(run, request.name, request.purpose)
+        name = _validate_text(request.name, "Saved workflow name", MAX_NAME_CHARS, required=True)
+        purpose = _validate_text(request.purpose, "Saved workflow purpose", MAX_REASON_CHARS)
+        saved = _save_workflow_record_locked(run, name, purpose)
         return {"status": "success", "saved_workflow": saved}
 
 
@@ -3130,10 +3385,12 @@ def api_workflow_approve(run_id: str, request: Optional[WorkflowApprovalRequest]
         _poll_runs_locked()
         _poll_workflows_locked()
         workflow = _workflow_run_by_id(run_id)
-        approved = _approve_graph_workflow_locked(
-            workflow,
-            request.reason if request is not None else "Manually approved from the portal UI. Execute the selected actions now.",
-        )
+        reason = _validate_text(
+            request.reason if request is not None else "",
+            "Approval reason",
+            MAX_REASON_CHARS,
+        ) or "Manually approved from the portal UI. Execute the selected actions now."
+        approved = _approve_graph_workflow_locked(workflow, reason)
         return {"status": "success", "run": approved}
 
 

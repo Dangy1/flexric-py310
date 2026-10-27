@@ -1,4 +1,19 @@
+function escapeHtml(text) {
+  return String(text)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 async function fetchJson(url, options) {
+  // Attach the portal API token (when configured) so mutating calls pass the backend guard.
+  const meta = document.querySelector('meta[name="portal-token"]');
+  const token = meta ? meta.content : "";
+  if (token && options && options.method && options.method.toUpperCase() !== "GET") {
+    options = {...options, headers: {...(options.headers || {}), "X-Portal-Token": token}};
+  }
   const response = await fetch(url, options);
   if (!response.ok) {
     throw new Error(`Request failed: ${response.status}`);
@@ -89,7 +104,7 @@ async function loadAgentPage() {
       body: JSON.stringify(payload),
     });
     document.getElementById("handoff-result").innerHTML = `
-      <div class="message-item"><strong>Sent</strong><br>${result.message.content}</div>
+      <div class="message-item"><strong>Sent</strong><br>${escapeHtml(result.message.content)}</div>
     `;
     await refreshAgent(agentId);
   });
@@ -109,7 +124,7 @@ async function refreshAgent(agentId) {
         <strong>${agent.latest_run.label}</strong><br>
         ${statusPill(agent.latest_run.status)}
       </div>
-      <div class="run-tail">${(agent.latest_run.tail || []).join("\n") || "No log lines yet."}</div>
+      <div class="run-tail">${escapeHtml((agent.latest_run.tail || []).join("\n") || "No log lines yet.")}</div>
     `;
   } else {
     document.getElementById("run-panel").innerHTML = `<div class="message-item">No run launched for this agent yet.</div>`;

@@ -47,13 +47,33 @@ function loadComparisonSnapshots() {
 
 function saveComparisonSnapshots() {
   try {
-    window.localStorage.setItem("flexric-comparison-snapshots", JSON.stringify(portalState.comparisonSnapshots || {}));
+    // Only the two known snapshot slots are persisted so the localStorage entry stays bounded.
+    const snapshots = portalState.comparisonSnapshots || {};
+    const pruned = {};
+    for (const kind of ["baseline", "optimized"]) {
+      if (snapshots[kind]) {
+        pruned[kind] = snapshots[kind];
+      }
+    }
+    window.localStorage.setItem("flexric-comparison-snapshots", JSON.stringify(pruned));
   } catch (error) {
     console.error(error);
+    setBanner("Could not persist comparison snapshot (storage quota?). The snapshot stays available for this session.", "warning");
   }
 }
 
+function portalApiToken() {
+  const meta = document.querySelector('meta[name="portal-token"]');
+  return meta ? meta.content : "";
+}
+
 async function fetchJson(url, options) {
+  // Attach the portal API token (when the operator configured one) so mutating
+  // calls pass the backend's X-Portal-Token guard.
+  const token = portalApiToken();
+  if (token && options && options.method && options.method.toUpperCase() !== "GET") {
+    options = {...options, headers: {...(options.headers || {}), "X-Portal-Token": token}};
+  }
   const response = await fetch(url, options);
   if (!response.ok) {
     const detail = await response.text();
@@ -833,9 +853,9 @@ function renderMessages(messages, rootId = "message-feed") {
     ? `<div class="message-item">No recent agent messages yet.</div>`
     : messages.map((message) => `
       <div class="message-item">
-        <strong>${message.source_id}</strong> -> <strong>${message.target_id}</strong>
-        <div class="muted">${message.kind}</div>
-        <div>${message.content}</div>
+        <strong>${escapeHtml(message.source_id)}</strong> -> <strong>${escapeHtml(message.target_id)}</strong>
+        <div class="muted">${escapeHtml(message.kind)}</div>
+        <div>${escapeHtml(message.content)}</div>
       </div>
     `).join("");
 }
@@ -2214,7 +2234,7 @@ function wireAgentForms(agentId) {
         body: JSON.stringify(payload),
       });
       document.getElementById("handoff-result").innerHTML = `
-        <div class="message-item"><strong>Sent</strong><br>${result.message.content}</div>
+        <div class="message-item"><strong>Sent</strong><br>${escapeHtml(result.message.content)}</div>
       `;
       await loadPortal(portalState.selectedWorkflowRunId);
       setBanner(`Handoff sent from ${agentId} to ${payload.target_id}.`, "success");
