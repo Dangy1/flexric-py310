@@ -219,6 +219,18 @@ First tasks for the execution session:
   workflows (energy saving, traffic steering, QoE-driven steering) + no-op; A/A repeat shows the
   simulator deterministic (≤0.4 %). Second run with a load-calibrated twin (twin UE count = live).
   Transport QoS and slice assurance cannot be actuated in ns-O-RAN (no TC/SLICE SM) → not in T6.
+- **RIC wedge, second form (2026-10-27 22:40):** after each restart the RIC stopped answering E42
+  setup again within ~75 records (RSS stays 4.8 MB, so not the leak; `SCTP_SEND_FAILED` to
+  disconnected xApps in its log). The fixed-interval restart cannot prevent it, so the r3–5 re-run
+  `20261027T184147_635835Z_A_prelim_qwen36_nothink_r3to5` is discarded. New: `scripts/probe_e42.sh`
+  (registers a throw-away xApp, 1 s when healthy, times out when wedged) runs after every record
+  (`run_harness.py --health-cmd`); a record that ends on a wedged RIC goes to
+  `records.discarded.jsonl`, the stack restarts and the record is re-run (`infra_attempts`,
+  manifest `maintenance.health_failures`). Repeats 3–5 and Batch B re-launched this way
+  (`/tmp/appweaver_batches/chain_AB_prelim_v2.sh`). Repeats 1–2 of the first run stay valid (RC acked
+  100 % in every 50-record chunk up to record 700).
+- **T6 results** in `evaluation/TWIN_VALIDATION.md`; twin RngRun 3 with 10 UEs aborts inside ns-3
+  (deterministic), replaced by pair 9.
 
 ## 4. Done criteria
 A fresh clone + the README's three commands reproduce every number and figure in the revised paper

@@ -1979,6 +1979,8 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     parser.add_argument("--repeat-start", type=int, default=1, help="First repeat index (continue a batch whose later repeats were invalid).")
     parser.add_argument("--maintenance-cmd", default="", help="Shell command run between records every --maintenance-every records (e.g. scripts/restart_agent_portal_stack.sh); outside every timed path, logged in the manifest.")
     parser.add_argument("--maintenance-every", type=int, default=0)
+    parser.add_argument("--health-cmd", default="", help="Shell command run after every record (e.g. scripts/probe_e42.sh); on failure the record is discarded, --maintenance-cmd runs and the record is re-run.")
+    parser.add_argument("--health-retries", type=int, default=2)
     return parser.parse_args(argv)
 
 
@@ -2023,18 +2025,35 @@ def main(argv: List[str]) -> int:
     first_repeat = max(1, int(args.repeat_start))
     total = max(1, int(args.repeat)) * len(intents) * len(methods)
     batch_manifest["repeat_start"] = first_repeat
-    batch_manifest["maintenance"] = {"cmd": args.maintenance_cmd, "every": args.maintenance_every, "runs": []}
+    batch_manifest["maintenance"] = {"cmd": args.maintenance_cmd, "every": args.maintenance_every, "runs": [],
+                                     "health_cmd": args.health_cmd, "health_retries": args.health_retries,
+                                     "health_failures": []}
     records: List[Dict[str, Any]] = []
     for repeat_index in range(first_repeat, first_repeat + max(1, int(args.repeat))):
         for intent in intents:
             for method in methods:
-                record = run_record(
-                    method=method,
-                    intent=intent,
-                    repeat_index=repeat_index,
-                    duration_s=int(args.duration_s),
-                    enable_recovery=not args.disable_recovery,
-                )
+                for attempt in range(1 + max(0, int(args.health_retries))):
+                    record = run_record(
+                        method=method,
+                        intent=intent,
+                        repeat_index=repeat_index,
+                        duration_s=int(args.duration_s),
+                        enable_recovery=not args.disable_recovery,
+                    )
+                    # A record run while the RIC was wedged says nothing about the method: discard it
+                    # (kept in records.discarded.jsonl), restart the stack and run the record again.
+                    if not args.health_cmd or subprocess.call(args.health_cmd, shell=True) == 0:
+                        break
+                    with (output_dir / "records.discarded.jsonl").open("a", encoding="utf-8") as handle:
+                        handle.write(json.dumps(record, sort_keys=True) + "\n")
+                    rc = subprocess.call(args.maintenance_cmd, shell=True) if args.maintenance_cmd else None
+                    batch_manifest["maintenance"]["health_failures"].append(
+                        {"after_record": len(records), "intent_id": intent.get("id"), "method": method,
+                         "repeat_index": repeat_index, "attempt": attempt + 1, "restart_returncode": rc})
+                    print(f"health check failed after r{repeat_index} {method} {intent.get('id')}: restarted rc={rc}, re-running", flush=True)
+                else:
+                    record["infra_unhealthy"] = True  # every attempt ended on a wedged RIC; kept and flagged
+                record["infra_attempts"] = attempt + 1
                 records.append(record)
                 with partial_path.open("a", encoding="utf-8") as handle:
                     handle.write(json.dumps(record, sort_keys=True) + "\n")
