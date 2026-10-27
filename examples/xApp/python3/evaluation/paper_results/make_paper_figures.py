@@ -404,6 +404,65 @@ def fig_hallucination(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dic
     save(fig, out, "fig_hallucination")
 
 
+TWIN_WORKFLOWS = [("energy_saving", "Energy saving"), ("traffic_steering", "Traffic steering"), ("qoe_steering", "QoE-driven steering")]
+TWIN_KPIS = [("prb_used_dl", "DL PRBs used"), ("dl_throughput_mbps", "DL throughput"), ("dl_buffer_kbytes", "DL buffer"),
+             ("energy_j_per_s", "gNB energy")]
+
+
+def fig_twin(twin_dir: Path, out: Path) -> None:
+    """Predicted (twin) vs actual (live) relative KPI change, one point per workflow run pair."""
+    summary = json.loads((twin_dir / "summary.json").read_text(encoding="utf-8"))
+    rows = summary["rows"]
+    fig, axes = plt.subplots(1, len(TWIN_KPIS), figsize=(DOUBLE_COL, 1.9))
+    markers = {"energy_saving": "o", "traffic_steering": "s", "qoe_steering": "^"}
+    colors = {"energy_saving": C_GREEN, "traffic_steering": C_BLUE, "qoe_steering": C_ORANGE}
+    for ax, (kpi, label) in zip(axes, TWIN_KPIS):
+        lim = 1.0
+        for wf, wf_label in TWIN_WORKFLOWS:
+            pts = [(100 * r["predicted_delta"] / r["twin_noop"], 100 * r["actual_delta"] / r["live_noop"])
+                   for r in rows if r["workflow"] == wf and r["kpi"] == kpi and r["twin_noop"] and r["live_noop"]]
+            if not pts:
+                continue
+            xs, ys = zip(*pts)
+            lim = max([lim] + [abs(v) for v in xs + ys])
+            ax.scatter(xs, ys, s=12, marker=markers[wf], color=colors[wf], edgecolor="black", linewidth=0.3,
+                       label=wf_label, zorder=3)
+        lim *= 1.15
+        ax.plot([-lim, lim], [-lim, lim], color=C_GRAY, linewidth=0.6, linestyle=(0, (3, 2)), zorder=1)
+        ax.axhline(0, color="#CCCCCC", linewidth=0.4, zorder=0)
+        ax.axvline(0, color="#CCCCCC", linewidth=0.4, zorder=0)
+        ax.set_xlim(-lim, lim)
+        ax.set_ylim(-lim, lim)
+        ax.set_aspect("equal")
+        ax.set_title(label, fontsize=7)
+        ax.set_xlabel("Twin-predicted change (%)", fontsize=6.5)
+        ax.tick_params(labelsize=6)
+    axes[0].set_ylabel("Measured live change (%)", fontsize=6.5)
+    axes[0].legend(loc="upper left", bbox_to_anchor=(0, 1.32), ncol=3, handlelength=1.0)
+    save(fig, out, "fig_twin_validation")
+
+
+def twin_macros(twin_dir: Path) -> List[str]:
+    summary = json.loads((twin_dir / "summary.json").read_text(encoding="utf-8"))
+    manifest = json.loads((twin_dir / "manifest.json").read_text(encoding="utf-8"))
+
+    def put(method: str, key: str, value: Any) -> str:
+        return f"\\expandafter\\def\\csname awr@T@{method}@{key}\\endcsname{{{value}}}"
+
+    lines = [put("batch", "id", twin_dir.name.replace("_", "\\_"))]
+    lines += [put("batch", key, manifest.get(key)) for key in ("twin_ues", "live_ues", "n_gnb", "sim_time_s")]
+    lines.append(put("batch", "pairs", len({r["pair"] for r in summary["rows"]})))
+    for key, stats in summary["by_workflow_kpi"].items():
+        wf, kpi = key.split("/")
+        for stat in ("mape_pct", "sign_agreement", "mean_actual_rel_pct", "mean_predicted_rel_pct", "mean_abs_rel_error_pp", "pairs"):
+            value = stats.get(stat)
+            if value is None:
+                continue
+            text = f"{100 * value:.0f}" if stat == "sign_agreement" else (str(value) if stat == "pairs" else f"{value:.1f}")
+            lines.append(put(wf, f"{kpi}_{stat}", text))
+    return lines
+
+
 def batch_label(batch: Batch) -> str:
     if batch.role == "A":
         return "Batch A (paper registry)"
@@ -517,7 +576,8 @@ def macro_role(batch: Batch) -> str:
     return "A" if batch.role == "A" else f"B{batch.retrieval_k or 'all'}"
 
 
-def write_macros(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[str, Any]]], out: Path) -> None:
+def write_macros(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[str, Any]]], out: Path,
+                 twin_dir: Optional[Path] = None) -> None:
     """`\\awres{<A|B8|Ball>}{<method>}{<metric>}` for every number the paper text cites.
 
     Rates are percent with one decimal (`<metric>`, `<metric>_lo`, `<metric>_hi`); latencies in seconds;
@@ -556,6 +616,8 @@ def write_macros(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[str
             for key in ("records", "tool_calls", "seeded_records", "hallucinated_refs", "records_with_hallucination",
                         "known_intents", "open_world_intents", "unseen_capability_intents", "planner_cached_records"):
                 put(role, method, key, str(m.get(key, "")))
+    if twin_dir is not None:
+        lines += twin_macros(twin_dir)
     (out / "results_macros.tex").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -603,6 +665,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--batch-a", required=True)
     parser.add_argument("--batch-b", nargs="*", default=[])
+    parser.add_argument("--twin", default="", help="T6 run directory (run_twin_validation.py output)")
     parser.add_argument("--out", default=str(Path(__file__).resolve().parent))
     args = parser.parse_args()
 
@@ -624,7 +687,10 @@ def main() -> int:
         fig_registry_splits(batches_b, all_metrics, figures)
     fig_hallucination(batches, all_metrics, figures)
     write_readme(batches, all_metrics, out)
-    write_macros(batches, all_metrics, out)
+    twin_dir = Path(args.twin).resolve() if args.twin else None
+    if twin_dir is not None:
+        fig_twin(twin_dir, figures)
+    write_macros(batches, all_metrics, out, twin_dir)
     print(f"Wrote CSV, tables, README and figures to {out}")
     return 0
 
