@@ -210,6 +210,16 @@ First tasks for the execution session:
 - `make_paper_figures.py` / `plot_final.py` rebuilt on records + CIs (see `evaluation/METRICS.md`).
 - `accepted_workflows` rule for the 50 original intents in `build_intents_v2.py` (11 intents gain one chain).
 
+- **RIC wedge (2026-10-27 20:30):** the portal nearRT-RIC reached 18 GB RSS after ~4k xApp runs and
+  stopped answering E42 setup; preliminary batch A records from ~700 on had every SLICE/TC/RC call
+  unacknowledged. Kept repeats 1–2 of `20261027T161707_898276Z_A_prelim_qwen36_nothink`, re-ran repeats
+  3–5 with a stack restart every 200 records (`--maintenance-cmd scripts/restart_agent_portal_stack.sh`),
+  merged with `evaluation/merge_runs.py`. Every later batch uses the restart hook.
+- **T6:** ns-O-RAN-flexric twin-vs-live harness (`evaluation/twin/`), 8 seed pairs × 3 RC-actuated
+  workflows (energy saving, traffic steering, QoE-driven steering) + no-op; A/A repeat shows the
+  simulator deterministic (≤0.4 %). Second run with a load-calibrated twin (twin UE count = live).
+  Transport QoS and slice assurance cannot be actuated in ns-O-RAN (no TC/SLICE SM) → not in T6.
+
 ## 4. Done criteria
 A fresh clone + the README's three commands reproduce every number and figure in the revised paper
 from `evaluation/runs/<id>/records.jsonl`, and every reviewer row in §1 has a pointer to the
