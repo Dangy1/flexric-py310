@@ -490,14 +490,15 @@ def write_report(out: Path, summary: Dict[str, Any], results: List[Dict[str, Any
             acted[(r["role"], r["workflow"])] += 1
     lines = [f"# Twin-vs-live results - `{out.name}`", "",
              f"Runs: {len(results)} ({len(failed)} failed). Pairs analysed per workflow/KPI in the table.", "",
-             "| Workflow | KPI | Pairs | Mean predicted change | Mean measured change | Abs. error of relative change (pp) | MAPE of deltas | Sign agreement |",
-             "|---|---|---|---|---|---|---|---|"]
+             "| Workflow | KPI | Pairs | Predicted delta | Measured delta | Predicted change | Measured change | Abs. error of relative change (pp) | MAPE of deltas | Sign agreement |",
+             "|---|---|---|---|---|---|---|---|---|---|"]
     for key, st in summary["by_workflow_kpi"].items():
         wf, kpi = key.split("/")
         fmt = lambda v: "--" if v is None else f"{v:+.1f}%"  # noqa: E731
         err = "--" if st.get("mean_abs_rel_error_pp") is None else f"{st['mean_abs_rel_error_pp']:.1f}"
         mape = "--" if st.get("mape_pct") is None else f"{st['mape_pct']:.0f}% (n={st['mape_pairs']})"
-        lines.append(f"| {wf} | {kpi} | {st['pairs']} | {fmt(st.get('mean_predicted_rel_pct'))} | "
+        lines.append(f"| {wf} | {kpi} | {st['pairs']} | {st['mean_predicted_delta']:+.2f} | {st['mean_actual_delta']:+.2f} | "
+                     f"{fmt(st.get('mean_predicted_rel_pct'))} | "
                      f"{fmt(st.get('mean_actual_rel_pct'))} | {err} | {mape} | {100 * st['sign_agreement']:.0f}% |")
     lines += ["", "Runs in which the deployed policy produced RC commands:", ""]
     lines += [f"- {role} {wf}: {n}" for (role, wf), n in sorted(acted.items())]
@@ -513,6 +514,8 @@ def main() -> int:
     parser.add_argument("--parallel", type=int, default=4)
     parser.add_argument("--workflows", nargs="+", default=list(WORKFLOWS))
     parser.add_argument("--only", default="", help="role:seed:workflow for a single smoke run")
+    parser.add_argument("--twin-ues", type=int, default=TWIN_UES,
+                        help="UEs in the twin (default 8; set to the live count for a load-calibrated twin)")
     args = parser.parse_args()
     out = Path(args.out).resolve()
     out.mkdir(parents=True, exist_ok=True)
@@ -527,11 +530,11 @@ def main() -> int:
     else:
         for pair in range(1, args.pairs + 1):
             for wf in args.workflows:
-                units.append([("twin", pair, TWIN_UES, wf), ("live", pair + 100, LIVE_UES, wf)])
+                units.append([("twin", pair, args.twin_ues, wf), ("live", pair + 100, LIVE_UES, wf)])
     n_jobs = sum(len(u) for u in units)
     (out / "manifest.json").write_text(json.dumps({
         "created_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "scenario": SCENARIO, "ns3_bin": str(NS3_BIN),
-        "flexric": str(FLEXRIC_TAAP), "n_gnb": N_GNB, "twin_ues": TWIN_UES, "live_ues": LIVE_UES,
+        "flexric": str(FLEXRIC_TAAP), "n_gnb": N_GNB, "twin_ues": args.twin_ues, "live_ues": LIVE_UES,
         "sim_time_s": SIM_TIME, "t_act_s": T_ACT, "settle_s": SETTLE, "indication_period_s": IND_PERIOD,
         "workflows": WORKFLOWS, "jobs": n_jobs, "kpis": KPIS,
         "protocol": "policy decided on the twin at t_act, deployed unchanged on live; deltas vs same-instance noop",

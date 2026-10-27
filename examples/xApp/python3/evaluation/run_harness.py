@@ -10,6 +10,7 @@ import os
 import platform
 import re
 import shutil
+import subprocess
 import sys
 import time
 import uuid
@@ -1975,6 +1976,9 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     parser.add_argument("--retrieval-k", type=int, default=0, help="Agent-card retrieval depth for the planner prompt; 0 = include every executable card (small-registry mode).")
     parser.add_argument("--retrieval-include-deprecated", action="store_true", help="Let deprecated directory cards be retrieved (harder discovery).")
     parser.add_argument("--label", default="", help="Optional suffix for the run directory name.")
+    parser.add_argument("--repeat-start", type=int, default=1, help="First repeat index (continue a batch whose later repeats were invalid).")
+    parser.add_argument("--maintenance-cmd", default="", help="Shell command run between records every --maintenance-every records (e.g. scripts/restart_agent_portal_stack.sh); outside every timed path, logged in the manifest.")
+    parser.add_argument("--maintenance-every", type=int, default=0)
     return parser.parse_args(argv)
 
 
@@ -2016,9 +2020,12 @@ def main(argv: List[str]) -> int:
     (output_dir / "manifest.json").write_text(json.dumps(batch_manifest, indent=2, sort_keys=True), encoding="utf-8")
     # Records are appended as they finish so a long batch can be watched and survives a crash.
     partial_path = output_dir / "records.partial.jsonl"
+    first_repeat = max(1, int(args.repeat_start))
     total = max(1, int(args.repeat)) * len(intents) * len(methods)
+    batch_manifest["repeat_start"] = first_repeat
+    batch_manifest["maintenance"] = {"cmd": args.maintenance_cmd, "every": args.maintenance_every, "runs": []}
     records: List[Dict[str, Any]] = []
-    for repeat_index in range(1, max(1, int(args.repeat)) + 1):
+    for repeat_index in range(first_repeat, first_repeat + max(1, int(args.repeat))):
         for intent in intents:
             for method in methods:
                 record = run_record(
@@ -2032,6 +2039,11 @@ def main(argv: List[str]) -> int:
                 with partial_path.open("a", encoding="utf-8") as handle:
                     handle.write(json.dumps(record, sort_keys=True) + "\n")
                 print(f"[{len(records)}/{total}] r{repeat_index} {method} {intent.get('id')}", flush=True)
+                if args.maintenance_cmd and args.maintenance_every > 0 and len(records) % args.maintenance_every == 0 and len(records) < total:
+                    started_m = time.time()
+                    rc = subprocess.call(args.maintenance_cmd, shell=True)
+                    batch_manifest["maintenance"]["runs"].append({"after_record": len(records), "returncode": rc, "duration_s": round(time.time() - started_m, 1)})
+                    print(f"maintenance after {len(records)} records rc={rc}", flush=True)
 
     write_artifacts(output_dir, intents, records, batch_manifest)
     partial_path.unlink(missing_ok=True)
