@@ -118,6 +118,10 @@ def check_chain(registry: Dict[str, AgentCard], chain: Iterable[str]) -> CompatR
             if not shared_family and not shared_data and card.consumes:
                 report.findings.append(Finding("interface", "warning", index, card.id, f"No shared interface or data model with previous step '{prev.id}'."))
         # control scope
+        # conflicts_with may name lease resources or capabilities of earlier writers
+        conflicting_caps = set(card.conflicts_with) & available_caps
+        if _write_scopes(card) and conflicting_caps:
+            report.findings.append(Finding("control_scope", "error", index, card.id, f"Writes while a conflicting capability is active earlier in the chain: {sorted(conflicting_caps)}."))
         for resource in _write_scopes(card):
             if resource in held_writes:
                 report.findings.append(Finding("control_scope", "warning", index, card.id, f"Second writer on '{resource}' after step {held_writes[resource]}; scheduler will serialise them."))

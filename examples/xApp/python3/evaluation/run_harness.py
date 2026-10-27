@@ -21,6 +21,7 @@ if str(ROOT) not in sys.path:
 
 from evaluation.analyze_results import build_markdown, build_summary
 from backend.orchestration.compat import check_chain  # type: ignore
+from backend.orchestration.discovery import discover  # type: ignore
 from flexric_agent_portal import (  # type: ignore
     AGENTS,
     WORKFLOW_ACTIONS,
@@ -152,9 +153,35 @@ def custom_workflow_id_from_chain(chain: List[str]) -> str:
     return "custom:" + "-".join(normalized)
 
 
-def executable_agent_cards() -> List[Dict[str, Any]]:
+def discover_cards(intent: Optional[Dict[str, Any]]) -> Tuple[List[Any], Dict[str, Any]]:
+    """Discover agent cards for an intent.
+
+    With retrieval_k == 0 (small registry) every executable card is returned.
+    Otherwise BM25 over the card text returns the top-k, and the retrieval
+    record (ranked ids, whether the ground-truth agents were retrieved) is
+    attached to the evaluation record so top-k recall can be reported.
+    """
+    k = int(EVAL_RUNTIME_CONFIG.get("retrieval_k") or 0)
+    query = _intent_text(intent) if intent else ""
+    ranked = discover(AGENTS, query, k=k, executable_only=True, include_deprecated=bool(EVAL_RUNTIME_CONFIG.get("retrieval_include_deprecated")))
+    cards = [card for card, _ in ranked]
+    expected = [str(item).lower() for item in list((intent or {}).get("expected_workflow") or [])]
+    retrieved_ids = [card.id for card in cards]
+    return cards, {
+        "k": k,
+        "registry_executable_count": sum(1 for card in AGENTS.values() if card.actions),
+        "retrieved": retrieved_ids,
+        "scores": {card.id: round(score, 3) for card, score in ranked[:20]},
+        "expected_agents": expected,
+        "expected_retrieved": all(agent in retrieved_ids for agent in expected) if expected else None,
+    }
+
+
+def executable_agent_cards(intent: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
     cards: List[Dict[str, Any]] = []
-    for agent_id, agent in AGENTS.items():
+    selected, _ = discover_cards(intent) if intent is not None else (list(AGENTS.values()), {})
+    for agent in selected:
+        agent_id = agent.id
         actions = []
         for action in agent.actions:
             actions.append(
@@ -171,7 +198,12 @@ def executable_agent_cards() -> List[Dict[str, Any]]:
             {
                 "agent_id": agent_id,
                 "label": agent.name,
+                "app_type": getattr(agent, "app_type", "xapp"),
                 "description": getattr(agent, "description", ""),
+                "capabilities": list(getattr(agent, "capabilities", [])),
+                "requires": list(getattr(agent, "requires", [])),
+                "control_scopes": [{"target": s.target, "mode": s.mode, "resource": s.resource} for s in getattr(agent, "control_scopes", [])],
+                "status": agent.status,
                 "actions": actions,
             }
         )
@@ -477,8 +509,11 @@ def invoke_action(agent_id: str, action_id: str) -> Tuple[Dict[str, Any], Option
 
 def _log_acknowledges(agent_id: str, tail: List[str]) -> Optional[bool]:
     text = "\n".join(str(line) for line in tail)
-    if any(marker in text for marker in TOOL_ACK_MARKERS.get(agent_id, [])):
+    markers = TOOL_ACK_MARKERS.get(agent_id) or (["rApp ack:"] if agent_id.startswith("rapp.") else [])
+    if any(marker in text for marker in markers):
         return True
+    if agent_id.startswith("rapp.") and "rApp error:" in text:
+        return False
     if any(marker in text for marker in TOOL_ACK_NEGATIVE_MARKERS):
         return False
     return None
@@ -829,7 +864,7 @@ def agentcard_prompt(intent: Dict[str, Any]) -> str:
         f"Intent: {intent.get('intent')}\n"
         f"Category: {intent.get('category')}\n"
         f"Notes: {intent.get('notes', '')}\n"
-        f"Executable agent cards: {json.dumps(executable_agent_cards())}\n"
+        f"Executable agent cards: {json.dumps(executable_agent_cards(intent))}\n"
     )
 
 
@@ -872,6 +907,7 @@ def validate_or_repair_agentcard_plan(intent: Dict[str, Any], generated_workflow
 
 
 def plan_with_agent_cards(intent: Dict[str, Any], repair: bool = True) -> Dict[str, Any]:
+    _, retrieval = discover_cards(intent)
     task_payload = api_run_task("orchestrator", AgentTaskRequest(prompt=agentcard_prompt(intent), provider="auto"))
     task = dict(task_payload.get("task") or {})
     response_text = str(task.get("response") or task.get("error") or "")
@@ -879,6 +915,7 @@ def plan_with_agent_cards(intent: Dict[str, Any], repair: bool = True) -> Dict[s
         planner_unavailable = _is_provider_unavailable(response_text)
         return {
             "ok": False,
+            "retrieval": retrieval,
             "planner_task": task,
             "planner_error": response_text or "Provider task failed.",
             "planner_unavailable": planner_unavailable,
@@ -912,6 +949,7 @@ def plan_with_agent_cards(intent: Dict[str, Any], repair: bool = True) -> Dict[s
             "rationale": str(plan.get("rationale") or ""),
             "planner_repaired": False,
             "repair_reason": "",
+            "retrieval": retrieval,
             "compat_report": check_chain(AGENTS, generated_workflow).to_dict(),
         }
     repaired = validate_or_repair_agentcard_plan(intent, generated_workflow, steps)
@@ -932,6 +970,7 @@ def plan_with_agent_cards(intent: Dict[str, Any], repair: bool = True) -> Dict[s
             "repair_reason": (repaired.get("repair_reason") or "") + " Compatibility check removed incompatible steps.",
         }
     return {
+        "retrieval": retrieval,
         "compat_report": compat.to_dict(),
         "ok": True,
         "planner_task": task,
@@ -1402,6 +1441,7 @@ def execute_langgraph_agentcard(intent: Dict[str, Any], duration_s: int, repair:
             "planner_repair_reason": planner.get("repair_reason", ""),
             "selected_steps": list(planner.get("steps") or []),
             "compat_report": planner.get("compat_report"),
+            "retrieval": planner.get("retrieval"),
         }
     )
 
@@ -1698,6 +1738,7 @@ def build_record(
         "intent": intent.get("intent"),
         "intent_category": intent.get("category"),
         "intent_open_world": bool(intent.get("open_world")),
+        "intent_split": str(intent.get("split") or ("open_world" if intent.get("open_world") else "known")),
         "intent_tags": list(intent.get("tags") or []),
         "method": method,
         "repeat_index": repeat_index,
@@ -1715,6 +1756,8 @@ def build_record(
         "planner_cached": bool(execution.get("planner_cached", False)),
         "compat_ok": (execution.get("compat_report") or {}).get("ok") if execution.get("compat_report") else None,
         "compat_report": execution.get("compat_report"),
+        "retrieval": execution.get("retrieval"),
+        "retrieval_hit": (execution.get("retrieval") or {}).get("expected_retrieved") if execution.get("retrieval") else None,
         "tool_calls": tool_calls,
         "tool_call_count": len(tool_calls),
         "tool_call_launch_success_count": tool_launch_success,
@@ -1913,6 +1956,8 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     parser.add_argument("--workflow-poll-timeout-s", type=float, default=2.0)
     parser.add_argument("--workflow-poll-interval-s", type=float, default=0.05)
     parser.add_argument("--tool-ack-timeout-s", type=float, default=10.0, help="How long to wait for launched xApps to show real work in their logs before marking the tool call unacknowledged.")
+    parser.add_argument("--retrieval-k", type=int, default=0, help="Agent-card retrieval depth for the planner prompt; 0 = include every executable card (small-registry mode).")
+    parser.add_argument("--retrieval-include-deprecated", action="store_true", help="Let deprecated directory cards be retrieved (harder discovery).")
     parser.add_argument("--label", default="", help="Optional suffix for the run directory name.")
     return parser.parse_args(argv)
 
@@ -1928,6 +1973,9 @@ def main(argv: List[str]) -> int:
             "workflow_poll_timeout_s": float(args.workflow_poll_timeout_s),
             "workflow_poll_interval_s": float(args.workflow_poll_interval_s),
             "tool_ack_timeout_s": float(args.tool_ack_timeout_s),
+            "retrieval_k": int(args.retrieval_k),
+            "retrieval_include_deprecated": bool(args.retrieval_include_deprecated),
+            "rapp_directory_enabled": os.getenv("FLEXRIC_RAPP_DIRECTORY", "").strip().lower() in {"1", "true", "yes", "on"},
         }
     )
     intent_path = Path(args.intents).resolve()

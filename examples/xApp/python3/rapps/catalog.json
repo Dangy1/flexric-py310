@@ -1,0 +1,2623 @@
+[
+  {
+    "id": "rapp.energy_saving",
+    "name": "Cell Sleep Energy Saver",
+    "vendor": "Aalto 6G Lab",
+    "version": "2.1.0",
+    "status": "active",
+    "family": "energy_saving",
+    "solution_area": "Network Optimization",
+    "use_case": "O-RAN UC21 cell switch on/off energy saving",
+    "description": "Cell Sleep Energy Saver rApp (O-RAN UC21 cell switch on/off energy saving). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "energy_saving",
+      "cell_switch_off",
+      "carrier_shutdown"
+    ],
+    "interfaces": [
+      "A1-P policy-type 20008",
+      "E2SM-RC v1.03",
+      "O1"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "RRU.PrbTotUl",
+      "DRB.UEThpDl"
+    ],
+    "produces": [
+      "es.cell_state",
+      "es.energy_kwh_estimate"
+    ],
+    "control_scopes": [
+      {
+        "target": "cell",
+        "mode": "write",
+        "resource": "cell_power"
+      }
+    ],
+    "timescale_s": 60,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [
+      "capacity_boost"
+    ],
+    "tools": [
+      {
+        "id": "recommend_sleep_cells",
+        "label": "Recommend Sleep Cells",
+        "description": "Rank cells for deep sleep from PRB utilisation."
+      },
+      {
+        "id": "apply_cell_sleep",
+        "label": "Apply Cell Sleep",
+        "description": "Switch the selected cells off via RC and confirm."
+      },
+      {
+        "id": "wake_cells",
+        "label": "Wake Cells",
+        "description": "Restore switched-off cells."
+      }
+    ],
+    "distractor": false,
+    "notes": []
+  },
+  {
+    "id": "rapp.energy_saving.northwind",
+    "name": "Northwind Cell Sleep Energy Saver",
+    "vendor": "Northwind Radio",
+    "version": "1.1.0",
+    "status": "active",
+    "family": "energy_saving",
+    "solution_area": "Network Optimization",
+    "use_case": "O-RAN UC21 cell switch on/off energy saving",
+    "description": "Cell Sleep Energy Saver rApp (O-RAN UC21 cell switch on/off energy saving). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "energy_saving",
+      "cell_switch_off",
+      "carrier_shutdown"
+    ],
+    "interfaces": [
+      "A1-P policy-type 20008",
+      "E2SM-RC v1.03",
+      "O1"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "RRU.PrbTotUl",
+      "DRB.UEThpDl"
+    ],
+    "produces": [
+      "es.cell_state",
+      "es.energy_kwh_estimate"
+    ],
+    "control_scopes": [
+      {
+        "target": "cell",
+        "mode": "write",
+        "resource": "cell_power"
+      }
+    ],
+    "timescale_s": 60,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [
+      "capacity_boost"
+    ],
+    "tools": [
+      {
+        "id": "northwind_recommend_sleep_cells",
+        "label": "Recommend Sleep Cells",
+        "description": "Rank cells for deep sleep from PRB utilisation."
+      },
+      {
+        "id": "northwind_apply_cell_sleep",
+        "label": "Apply Cell Sleep",
+        "description": "Switch the selected cells off via RC and confirm."
+      },
+      {
+        "id": "northwind_wake_cells",
+        "label": "Wake Cells",
+        "description": "Restore switched-off cells."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Vendor variant of Cell Sleep Energy Saver; same capability family, different tool names."
+    ]
+  },
+  {
+    "id": "rapp.energy_saving.kestrel",
+    "name": "Kestrel Cell Sleep Energy Saver",
+    "vendor": "Kestrel Networks",
+    "version": "1.2.0",
+    "status": "active",
+    "family": "energy_saving",
+    "solution_area": "Network Optimization",
+    "use_case": "O-RAN UC21 cell switch on/off energy saving",
+    "description": "Cell Sleep Energy Saver rApp (O-RAN UC21 cell switch on/off energy saving). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "energy_saving",
+      "cell_switch_off",
+      "carrier_shutdown"
+    ],
+    "interfaces": [
+      "A1-P policy-type 20008",
+      "E2SM-RC v1.03",
+      "O1"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "RRU.PrbTotUl",
+      "DRB.UEThpDl"
+    ],
+    "produces": [
+      "es.cell_state",
+      "es.energy_kwh_estimate"
+    ],
+    "control_scopes": [
+      {
+        "target": "cell",
+        "mode": "write",
+        "resource": "cell_power"
+      }
+    ],
+    "timescale_s": 60,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [
+      "capacity_boost"
+    ],
+    "tools": [
+      {
+        "id": "kestrel_recommend_sleep_cells",
+        "label": "Recommend Sleep Cells",
+        "description": "Rank cells for deep sleep from PRB utilisation."
+      },
+      {
+        "id": "kestrel_apply_cell_sleep",
+        "label": "Apply Cell Sleep",
+        "description": "Switch the selected cells off via RC and confirm."
+      },
+      {
+        "id": "kestrel_wake_cells",
+        "label": "Wake Cells",
+        "description": "Restore switched-off cells."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Vendor variant of Cell Sleep Energy Saver; same capability family, different tool names."
+    ]
+  },
+  {
+    "id": "rapp.energy_saving.v0",
+    "name": "Cell Sleep Energy Saver (legacy)",
+    "vendor": "Aalto 6G Lab",
+    "version": "0.9.0",
+    "status": "deprecated",
+    "family": "energy_saving",
+    "solution_area": "Network Optimization",
+    "use_case": "O-RAN UC21 cell switch on/off energy saving",
+    "description": "Cell Sleep Energy Saver rApp (O-RAN UC21 cell switch on/off energy saving). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "energy_saving",
+      "cell_switch_off",
+      "carrier_shutdown"
+    ],
+    "interfaces": [
+      "A1-P policy-type 20008",
+      "E2SM-RC v1.03",
+      "O1"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "RRU.PrbTotUl",
+      "DRB.UEThpDl"
+    ],
+    "produces": [
+      "es.cell_state",
+      "es.energy_kwh_estimate"
+    ],
+    "control_scopes": [
+      {
+        "target": "cell",
+        "mode": "write",
+        "resource": "cell_power"
+      }
+    ],
+    "timescale_s": 60,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [
+      "capacity_boost"
+    ],
+    "tools": [
+      {
+        "id": "recommend_sleep_cells",
+        "label": "Recommend Sleep Cells",
+        "description": "Rank cells for deep sleep from PRB utilisation."
+      },
+      {
+        "id": "apply_cell_sleep",
+        "label": "Apply Cell Sleep",
+        "description": "Switch the selected cells off via RC and confirm."
+      },
+      {
+        "id": "wake_cells",
+        "label": "Wake Cells",
+        "description": "Restore switched-off cells."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Deprecated release kept in the directory for migration; superseded by the 2.x card."
+    ]
+  },
+  {
+    "id": "rapp.traffic_steering",
+    "name": "Traffic Steering",
+    "vendor": "Aalto 6G Lab",
+    "version": "2.1.0",
+    "status": "active",
+    "family": "traffic_steering",
+    "solution_area": "Network Optimization",
+    "use_case": "O-RAN UC1 traffic steering",
+    "description": "Traffic Steering rApp (O-RAN UC1 traffic steering). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "traffic_steering",
+      "load_balancing",
+      "handover_policy"
+    ],
+    "interfaces": [
+      "A1-P policy-type 20000",
+      "E2SM-RC v1.03",
+      "E2SM-KPM v3.00"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "DRB.UEThpDl"
+    ],
+    "produces": [
+      "ts.ue_steering_policy"
+    ],
+    "control_scopes": [
+      {
+        "target": "ue",
+        "mode": "write",
+        "resource": "rc_control"
+      }
+    ],
+    "timescale_s": 10,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [
+      "cell_power"
+    ],
+    "tools": [
+      {
+        "id": "compute_steering_targets",
+        "label": "Compute Steering Targets",
+        "description": "Pick target cells for load-balancing handovers."
+      },
+      {
+        "id": "apply_steering_policy",
+        "label": "Apply Steering Policy",
+        "description": "Push an A1 traffic-steering policy."
+      },
+      {
+        "id": "rollback_steering",
+        "label": "Rollback Steering",
+        "description": "Withdraw the policy."
+      }
+    ],
+    "distractor": false,
+    "notes": []
+  },
+  {
+    "id": "rapp.traffic_steering.northwind",
+    "name": "Northwind Traffic Steering",
+    "vendor": "Northwind Radio",
+    "version": "1.1.0",
+    "status": "active",
+    "family": "traffic_steering",
+    "solution_area": "Network Optimization",
+    "use_case": "O-RAN UC1 traffic steering",
+    "description": "Traffic Steering rApp (O-RAN UC1 traffic steering). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "traffic_steering",
+      "load_balancing",
+      "handover_policy"
+    ],
+    "interfaces": [
+      "A1-P policy-type 20000",
+      "E2SM-RC v1.03",
+      "E2SM-KPM v3.00"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "DRB.UEThpDl"
+    ],
+    "produces": [
+      "ts.ue_steering_policy"
+    ],
+    "control_scopes": [
+      {
+        "target": "ue",
+        "mode": "write",
+        "resource": "rc_control"
+      }
+    ],
+    "timescale_s": 10,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [
+      "cell_power"
+    ],
+    "tools": [
+      {
+        "id": "northwind_compute_steering_targets",
+        "label": "Compute Steering Targets",
+        "description": "Pick target cells for load-balancing handovers."
+      },
+      {
+        "id": "northwind_apply_steering_policy",
+        "label": "Apply Steering Policy",
+        "description": "Push an A1 traffic-steering policy."
+      },
+      {
+        "id": "northwind_rollback_steering",
+        "label": "Rollback Steering",
+        "description": "Withdraw the policy."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Vendor variant of Traffic Steering; same capability family, different tool names."
+    ]
+  },
+  {
+    "id": "rapp.traffic_steering.kestrel",
+    "name": "Kestrel Traffic Steering",
+    "vendor": "Kestrel Networks",
+    "version": "1.2.0",
+    "status": "active",
+    "family": "traffic_steering",
+    "solution_area": "Network Optimization",
+    "use_case": "O-RAN UC1 traffic steering",
+    "description": "Traffic Steering rApp (O-RAN UC1 traffic steering). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "traffic_steering",
+      "load_balancing",
+      "handover_policy"
+    ],
+    "interfaces": [
+      "A1-P policy-type 20000",
+      "E2SM-RC v1.03",
+      "E2SM-KPM v3.00"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "DRB.UEThpDl"
+    ],
+    "produces": [
+      "ts.ue_steering_policy"
+    ],
+    "control_scopes": [
+      {
+        "target": "ue",
+        "mode": "write",
+        "resource": "rc_control"
+      }
+    ],
+    "timescale_s": 10,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [
+      "cell_power"
+    ],
+    "tools": [
+      {
+        "id": "kestrel_compute_steering_targets",
+        "label": "Compute Steering Targets",
+        "description": "Pick target cells for load-balancing handovers."
+      },
+      {
+        "id": "kestrel_apply_steering_policy",
+        "label": "Apply Steering Policy",
+        "description": "Push an A1 traffic-steering policy."
+      },
+      {
+        "id": "kestrel_rollback_steering",
+        "label": "Rollback Steering",
+        "description": "Withdraw the policy."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Vendor variant of Traffic Steering; same capability family, different tool names."
+    ]
+  },
+  {
+    "id": "rapp.traffic_steering.v0",
+    "name": "Traffic Steering (legacy)",
+    "vendor": "Aalto 6G Lab",
+    "version": "0.9.0",
+    "status": "deprecated",
+    "family": "traffic_steering",
+    "solution_area": "Network Optimization",
+    "use_case": "O-RAN UC1 traffic steering",
+    "description": "Traffic Steering rApp (O-RAN UC1 traffic steering). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "traffic_steering",
+      "load_balancing",
+      "handover_policy"
+    ],
+    "interfaces": [
+      "A1-P policy-type 20000",
+      "E2SM-RC v1.03",
+      "E2SM-KPM v3.00"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "DRB.UEThpDl"
+    ],
+    "produces": [
+      "ts.ue_steering_policy"
+    ],
+    "control_scopes": [
+      {
+        "target": "ue",
+        "mode": "write",
+        "resource": "rc_control"
+      }
+    ],
+    "timescale_s": 10,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [
+      "cell_power"
+    ],
+    "tools": [
+      {
+        "id": "compute_steering_targets",
+        "label": "Compute Steering Targets",
+        "description": "Pick target cells for load-balancing handovers."
+      },
+      {
+        "id": "apply_steering_policy",
+        "label": "Apply Steering Policy",
+        "description": "Push an A1 traffic-steering policy."
+      },
+      {
+        "id": "rollback_steering",
+        "label": "Rollback Steering",
+        "description": "Withdraw the policy."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Deprecated release kept in the directory for migration; superseded by the 2.x card."
+    ]
+  },
+  {
+    "id": "rapp.qoe_prediction",
+    "name": "QoE Predictor",
+    "vendor": "Aalto 6G Lab",
+    "version": "2.1.0",
+    "status": "active",
+    "family": "qoe_prediction",
+    "solution_area": "Automation and AI Foundation",
+    "use_case": "O-RAN UC2 QoE optimisation",
+    "description": "QoE Predictor rApp (O-RAN UC2 QoE optimisation). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "qoe_prediction",
+      "mos_estimation",
+      "at_risk_ue_detection"
+    ],
+    "interfaces": [
+      "E2SM-KPM v3.00",
+      "A1-EI enrichment"
+    ],
+    "consumes": [
+      "DRB.UEThpDl",
+      "DRB.RlcSduDelayDl"
+    ],
+    "produces": [
+      "qoe.mos_forecast",
+      "qoe.at_risk_ues"
+    ],
+    "control_scopes": [
+      {
+        "target": "ue",
+        "mode": "read",
+        "resource": ""
+      }
+    ],
+    "timescale_s": 5,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "predict_qoe",
+        "label": "Predict Qoe",
+        "description": "Forecast per-cell MOS and at-risk UE count from KPM."
+      },
+      {
+        "id": "explain_qoe_bottleneck",
+        "label": "Explain Qoe Bottleneck",
+        "description": "Attribute predicted QoE loss to radio, transport or scheduling."
+      }
+    ],
+    "distractor": false,
+    "notes": []
+  },
+  {
+    "id": "rapp.qoe_prediction.northwind",
+    "name": "Northwind QoE Predictor",
+    "vendor": "Northwind Radio",
+    "version": "1.1.0",
+    "status": "active",
+    "family": "qoe_prediction",
+    "solution_area": "Automation and AI Foundation",
+    "use_case": "O-RAN UC2 QoE optimisation",
+    "description": "QoE Predictor rApp (O-RAN UC2 QoE optimisation). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "qoe_prediction",
+      "mos_estimation",
+      "at_risk_ue_detection"
+    ],
+    "interfaces": [
+      "E2SM-KPM v3.00",
+      "A1-EI enrichment"
+    ],
+    "consumes": [
+      "DRB.UEThpDl",
+      "DRB.RlcSduDelayDl"
+    ],
+    "produces": [
+      "qoe.mos_forecast",
+      "qoe.at_risk_ues"
+    ],
+    "control_scopes": [
+      {
+        "target": "ue",
+        "mode": "read",
+        "resource": ""
+      }
+    ],
+    "timescale_s": 5,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "northwind_predict_qoe",
+        "label": "Predict Qoe",
+        "description": "Forecast per-cell MOS and at-risk UE count from KPM."
+      },
+      {
+        "id": "northwind_explain_qoe_bottleneck",
+        "label": "Explain Qoe Bottleneck",
+        "description": "Attribute predicted QoE loss to radio, transport or scheduling."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Vendor variant of QoE Predictor; same capability family, different tool names."
+    ]
+  },
+  {
+    "id": "rapp.qoe_prediction.kestrel",
+    "name": "Kestrel QoE Predictor",
+    "vendor": "Kestrel Networks",
+    "version": "1.2.0",
+    "status": "active",
+    "family": "qoe_prediction",
+    "solution_area": "Automation and AI Foundation",
+    "use_case": "O-RAN UC2 QoE optimisation",
+    "description": "QoE Predictor rApp (O-RAN UC2 QoE optimisation). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "qoe_prediction",
+      "mos_estimation",
+      "at_risk_ue_detection"
+    ],
+    "interfaces": [
+      "E2SM-KPM v3.00",
+      "A1-EI enrichment"
+    ],
+    "consumes": [
+      "DRB.UEThpDl",
+      "DRB.RlcSduDelayDl"
+    ],
+    "produces": [
+      "qoe.mos_forecast",
+      "qoe.at_risk_ues"
+    ],
+    "control_scopes": [
+      {
+        "target": "ue",
+        "mode": "read",
+        "resource": ""
+      }
+    ],
+    "timescale_s": 5,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "kestrel_predict_qoe",
+        "label": "Predict Qoe",
+        "description": "Forecast per-cell MOS and at-risk UE count from KPM."
+      },
+      {
+        "id": "kestrel_explain_qoe_bottleneck",
+        "label": "Explain Qoe Bottleneck",
+        "description": "Attribute predicted QoE loss to radio, transport or scheduling."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Vendor variant of QoE Predictor; same capability family, different tool names."
+    ]
+  },
+  {
+    "id": "rapp.qoe_prediction.v0",
+    "name": "QoE Predictor (legacy)",
+    "vendor": "Aalto 6G Lab",
+    "version": "0.9.0",
+    "status": "deprecated",
+    "family": "qoe_prediction",
+    "solution_area": "Automation and AI Foundation",
+    "use_case": "O-RAN UC2 QoE optimisation",
+    "description": "QoE Predictor rApp (O-RAN UC2 QoE optimisation). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "qoe_prediction",
+      "mos_estimation",
+      "at_risk_ue_detection"
+    ],
+    "interfaces": [
+      "E2SM-KPM v3.00",
+      "A1-EI enrichment"
+    ],
+    "consumes": [
+      "DRB.UEThpDl",
+      "DRB.RlcSduDelayDl"
+    ],
+    "produces": [
+      "qoe.mos_forecast",
+      "qoe.at_risk_ues"
+    ],
+    "control_scopes": [
+      {
+        "target": "ue",
+        "mode": "read",
+        "resource": ""
+      }
+    ],
+    "timescale_s": 5,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "predict_qoe",
+        "label": "Predict Qoe",
+        "description": "Forecast per-cell MOS and at-risk UE count from KPM."
+      },
+      {
+        "id": "explain_qoe_bottleneck",
+        "label": "Explain Qoe Bottleneck",
+        "description": "Attribute predicted QoE loss to radio, transport or scheduling."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Deprecated release kept in the directory for migration; superseded by the 2.x card."
+    ]
+  },
+  {
+    "id": "rapp.mobility_optimization",
+    "name": "Mobility Robustness Optimizer",
+    "vendor": "Aalto 6G Lab",
+    "version": "2.1.0",
+    "status": "active",
+    "family": "mobility_optimization",
+    "solution_area": "Network Optimization",
+    "use_case": "Mobility robustness optimisation (MRO)",
+    "description": "Mobility Robustness Optimizer rApp (Mobility robustness optimisation (MRO)). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "mobility_optimization",
+      "handover_tuning",
+      "ping_pong_mitigation"
+    ],
+    "interfaces": [
+      "A1-P policy-type 20001",
+      "E2SM-RC v1.03"
+    ],
+    "consumes": [
+      "RRC.HO_attempts",
+      "RRC.HO_failures"
+    ],
+    "produces": [
+      "mro.ho_margin_policy"
+    ],
+    "control_scopes": [
+      {
+        "target": "cell",
+        "mode": "write",
+        "resource": "rc_control"
+      }
+    ],
+    "timescale_s": 30,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "detect_ping_pong",
+        "label": "Detect Ping Pong",
+        "description": "Find cells with oscillating handovers."
+      },
+      {
+        "id": "tune_handover_margins",
+        "label": "Tune Handover Margins",
+        "description": "Adjust A3 offset / TTT per cell pair."
+      },
+      {
+        "id": "rollback_margins",
+        "label": "Rollback Margins",
+        "description": "Restore previous margins."
+      }
+    ],
+    "distractor": false,
+    "notes": []
+  },
+  {
+    "id": "rapp.mobility_optimization.northwind",
+    "name": "Northwind Mobility Robustness Optimizer",
+    "vendor": "Northwind Radio",
+    "version": "1.1.0",
+    "status": "active",
+    "family": "mobility_optimization",
+    "solution_area": "Network Optimization",
+    "use_case": "Mobility robustness optimisation (MRO)",
+    "description": "Mobility Robustness Optimizer rApp (Mobility robustness optimisation (MRO)). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "mobility_optimization",
+      "handover_tuning",
+      "ping_pong_mitigation"
+    ],
+    "interfaces": [
+      "A1-P policy-type 20001",
+      "E2SM-RC v1.03"
+    ],
+    "consumes": [
+      "RRC.HO_attempts",
+      "RRC.HO_failures"
+    ],
+    "produces": [
+      "mro.ho_margin_policy"
+    ],
+    "control_scopes": [
+      {
+        "target": "cell",
+        "mode": "write",
+        "resource": "rc_control"
+      }
+    ],
+    "timescale_s": 30,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "northwind_detect_ping_pong",
+        "label": "Detect Ping Pong",
+        "description": "Find cells with oscillating handovers."
+      },
+      {
+        "id": "northwind_tune_handover_margins",
+        "label": "Tune Handover Margins",
+        "description": "Adjust A3 offset / TTT per cell pair."
+      },
+      {
+        "id": "northwind_rollback_margins",
+        "label": "Rollback Margins",
+        "description": "Restore previous margins."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Vendor variant of Mobility Robustness Optimizer; same capability family, different tool names."
+    ]
+  },
+  {
+    "id": "rapp.mobility_optimization.v0",
+    "name": "Mobility Robustness Optimizer (legacy)",
+    "vendor": "Aalto 6G Lab",
+    "version": "0.9.0",
+    "status": "deprecated",
+    "family": "mobility_optimization",
+    "solution_area": "Network Optimization",
+    "use_case": "Mobility robustness optimisation (MRO)",
+    "description": "Mobility Robustness Optimizer rApp (Mobility robustness optimisation (MRO)). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "mobility_optimization",
+      "handover_tuning",
+      "ping_pong_mitigation"
+    ],
+    "interfaces": [
+      "A1-P policy-type 20001",
+      "E2SM-RC v1.03"
+    ],
+    "consumes": [
+      "RRC.HO_attempts",
+      "RRC.HO_failures"
+    ],
+    "produces": [
+      "mro.ho_margin_policy"
+    ],
+    "control_scopes": [
+      {
+        "target": "cell",
+        "mode": "write",
+        "resource": "rc_control"
+      }
+    ],
+    "timescale_s": 30,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "detect_ping_pong",
+        "label": "Detect Ping Pong",
+        "description": "Find cells with oscillating handovers."
+      },
+      {
+        "id": "tune_handover_margins",
+        "label": "Tune Handover Margins",
+        "description": "Adjust A3 offset / TTT per cell pair."
+      },
+      {
+        "id": "rollback_margins",
+        "label": "Rollback Margins",
+        "description": "Restore previous margins."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Deprecated release kept in the directory for migration; superseded by the 2.x card."
+    ]
+  },
+  {
+    "id": "rapp.ret_tilt",
+    "name": "Remote Electrical Tilt Optimizer",
+    "vendor": "Aalto 6G Lab",
+    "version": "2.1.0",
+    "status": "active",
+    "family": "ret_tilt",
+    "solution_area": "Network Optimization",
+    "use_case": "Coverage & capacity optimisation (RET)",
+    "description": "Remote Electrical Tilt Optimizer rApp (Coverage & capacity optimisation (RET)). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "coverage_optimization",
+      "antenna_tilt",
+      "capacity_boost"
+    ],
+    "interfaces": [
+      "O1",
+      "E2SM-CCC v6.00"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "RRC.ConnMean"
+    ],
+    "produces": [
+      "ret.tilt_plan"
+    ],
+    "control_scopes": [
+      {
+        "target": "cell",
+        "mode": "write",
+        "resource": "antenna_config"
+      }
+    ],
+    "timescale_s": 300,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [
+      "cell_power"
+    ],
+    "tools": [
+      {
+        "id": "propose_tilt_changes",
+        "label": "Propose Tilt Changes",
+        "description": "Propose per-cell tilt deltas."
+      },
+      {
+        "id": "apply_tilt",
+        "label": "Apply Tilt",
+        "description": "Apply tilt via O1/CCC."
+      }
+    ],
+    "distractor": false,
+    "notes": []
+  },
+  {
+    "id": "rapp.ret_tilt.northwind",
+    "name": "Northwind Remote Electrical Tilt Optimizer",
+    "vendor": "Northwind Radio",
+    "version": "1.1.0",
+    "status": "active",
+    "family": "ret_tilt",
+    "solution_area": "Network Optimization",
+    "use_case": "Coverage & capacity optimisation (RET)",
+    "description": "Remote Electrical Tilt Optimizer rApp (Coverage & capacity optimisation (RET)). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "coverage_optimization",
+      "antenna_tilt",
+      "capacity_boost"
+    ],
+    "interfaces": [
+      "O1",
+      "E2SM-CCC v6.00"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "RRC.ConnMean"
+    ],
+    "produces": [
+      "ret.tilt_plan"
+    ],
+    "control_scopes": [
+      {
+        "target": "cell",
+        "mode": "write",
+        "resource": "antenna_config"
+      }
+    ],
+    "timescale_s": 300,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [
+      "cell_power"
+    ],
+    "tools": [
+      {
+        "id": "northwind_propose_tilt_changes",
+        "label": "Propose Tilt Changes",
+        "description": "Propose per-cell tilt deltas."
+      },
+      {
+        "id": "northwind_apply_tilt",
+        "label": "Apply Tilt",
+        "description": "Apply tilt via O1/CCC."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Vendor variant of Remote Electrical Tilt Optimizer; same capability family, different tool names."
+    ]
+  },
+  {
+    "id": "rapp.ret_tilt.v0",
+    "name": "Remote Electrical Tilt Optimizer (legacy)",
+    "vendor": "Aalto 6G Lab",
+    "version": "0.9.0",
+    "status": "deprecated",
+    "family": "ret_tilt",
+    "solution_area": "Network Optimization",
+    "use_case": "Coverage & capacity optimisation (RET)",
+    "description": "Remote Electrical Tilt Optimizer rApp (Coverage & capacity optimisation (RET)). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "coverage_optimization",
+      "antenna_tilt",
+      "capacity_boost"
+    ],
+    "interfaces": [
+      "O1",
+      "E2SM-CCC v6.00"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "RRC.ConnMean"
+    ],
+    "produces": [
+      "ret.tilt_plan"
+    ],
+    "control_scopes": [
+      {
+        "target": "cell",
+        "mode": "write",
+        "resource": "antenna_config"
+      }
+    ],
+    "timescale_s": 300,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [
+      "cell_power"
+    ],
+    "tools": [
+      {
+        "id": "propose_tilt_changes",
+        "label": "Propose Tilt Changes",
+        "description": "Propose per-cell tilt deltas."
+      },
+      {
+        "id": "apply_tilt",
+        "label": "Apply Tilt",
+        "description": "Apply tilt via O1/CCC."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Deprecated release kept in the directory for migration; superseded by the 2.x card."
+    ]
+  },
+  {
+    "id": "rapp.root_cause",
+    "name": "Root Cause Analyzer",
+    "vendor": "Aalto 6G Lab",
+    "version": "2.1.0",
+    "status": "active",
+    "family": "root_cause",
+    "solution_area": "Network Healing",
+    "use_case": "Root cause analysis",
+    "description": "Root Cause Analyzer rApp (Root cause analysis). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "root_cause_analysis",
+      "anomaly_attribution",
+      "fault_correlation"
+    ],
+    "interfaces": [
+      "E2SM-KPM v3.00",
+      "O1 alarms"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "DRB.RlcSduDelayDl",
+      "RLC.queue_stats"
+    ],
+    "produces": [
+      "rca.report"
+    ],
+    "control_scopes": [
+      {
+        "target": "node",
+        "mode": "read",
+        "resource": ""
+      }
+    ],
+    "timescale_s": 60,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "diagnose_degradation",
+        "label": "Diagnose Degradation",
+        "description": "Correlate KPI drops with recent control actions and alarms."
+      },
+      {
+        "id": "rank_hypotheses",
+        "label": "Rank Hypotheses",
+        "description": "Order likely causes with confidence."
+      }
+    ],
+    "distractor": false,
+    "notes": []
+  },
+  {
+    "id": "rapp.root_cause.northwind",
+    "name": "Northwind Root Cause Analyzer",
+    "vendor": "Northwind Radio",
+    "version": "1.1.0",
+    "status": "active",
+    "family": "root_cause",
+    "solution_area": "Network Healing",
+    "use_case": "Root cause analysis",
+    "description": "Root Cause Analyzer rApp (Root cause analysis). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "root_cause_analysis",
+      "anomaly_attribution",
+      "fault_correlation"
+    ],
+    "interfaces": [
+      "E2SM-KPM v3.00",
+      "O1 alarms"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "DRB.RlcSduDelayDl",
+      "RLC.queue_stats"
+    ],
+    "produces": [
+      "rca.report"
+    ],
+    "control_scopes": [
+      {
+        "target": "node",
+        "mode": "read",
+        "resource": ""
+      }
+    ],
+    "timescale_s": 60,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "northwind_diagnose_degradation",
+        "label": "Diagnose Degradation",
+        "description": "Correlate KPI drops with recent control actions and alarms."
+      },
+      {
+        "id": "northwind_rank_hypotheses",
+        "label": "Rank Hypotheses",
+        "description": "Order likely causes with confidence."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Vendor variant of Root Cause Analyzer; same capability family, different tool names."
+    ]
+  },
+  {
+    "id": "rapp.root_cause.v0",
+    "name": "Root Cause Analyzer (legacy)",
+    "vendor": "Aalto 6G Lab",
+    "version": "0.9.0",
+    "status": "deprecated",
+    "family": "root_cause",
+    "solution_area": "Network Healing",
+    "use_case": "Root cause analysis",
+    "description": "Root Cause Analyzer rApp (Root cause analysis). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "root_cause_analysis",
+      "anomaly_attribution",
+      "fault_correlation"
+    ],
+    "interfaces": [
+      "E2SM-KPM v3.00",
+      "O1 alarms"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "DRB.RlcSduDelayDl",
+      "RLC.queue_stats"
+    ],
+    "produces": [
+      "rca.report"
+    ],
+    "control_scopes": [
+      {
+        "target": "node",
+        "mode": "read",
+        "resource": ""
+      }
+    ],
+    "timescale_s": 60,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "diagnose_degradation",
+        "label": "Diagnose Degradation",
+        "description": "Correlate KPI drops with recent control actions and alarms."
+      },
+      {
+        "id": "rank_hypotheses",
+        "label": "Rank Hypotheses",
+        "description": "Order likely causes with confidence."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Deprecated release kept in the directory for migration; superseded by the 2.x card."
+    ]
+  },
+  {
+    "id": "rapp.anomaly_detection",
+    "name": "KPI Anomaly Detector",
+    "vendor": "Aalto 6G Lab",
+    "version": "2.1.0",
+    "status": "active",
+    "family": "anomaly_detection",
+    "solution_area": "Network Healing",
+    "use_case": "KPI anomaly detection",
+    "description": "KPI Anomaly Detector rApp (KPI anomaly detection). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "anomaly_detection",
+      "kpi_baselining",
+      "alerting"
+    ],
+    "interfaces": [
+      "E2SM-KPM v3.00"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "DRB.UEThpDl",
+      "DRB.RlcSduDelayDl"
+    ],
+    "produces": [
+      "ad.anomaly_events"
+    ],
+    "control_scopes": [
+      {
+        "target": "cell",
+        "mode": "read",
+        "resource": ""
+      }
+    ],
+    "timescale_s": 5,
+    "requires": [],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "detect_anomalies",
+        "label": "Detect Anomalies",
+        "description": "Flag KPI series that leave their learned baseline."
+      },
+      {
+        "id": "summarize_anomalies",
+        "label": "Summarize Anomalies",
+        "description": "Group anomalies per cell/slice."
+      }
+    ],
+    "distractor": false,
+    "notes": []
+  },
+  {
+    "id": "rapp.anomaly_detection.northwind",
+    "name": "Northwind KPI Anomaly Detector",
+    "vendor": "Northwind Radio",
+    "version": "1.1.0",
+    "status": "active",
+    "family": "anomaly_detection",
+    "solution_area": "Network Healing",
+    "use_case": "KPI anomaly detection",
+    "description": "KPI Anomaly Detector rApp (KPI anomaly detection). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "anomaly_detection",
+      "kpi_baselining",
+      "alerting"
+    ],
+    "interfaces": [
+      "E2SM-KPM v3.00"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "DRB.UEThpDl",
+      "DRB.RlcSduDelayDl"
+    ],
+    "produces": [
+      "ad.anomaly_events"
+    ],
+    "control_scopes": [
+      {
+        "target": "cell",
+        "mode": "read",
+        "resource": ""
+      }
+    ],
+    "timescale_s": 5,
+    "requires": [],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "northwind_detect_anomalies",
+        "label": "Detect Anomalies",
+        "description": "Flag KPI series that leave their learned baseline."
+      },
+      {
+        "id": "northwind_summarize_anomalies",
+        "label": "Summarize Anomalies",
+        "description": "Group anomalies per cell/slice."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Vendor variant of KPI Anomaly Detector; same capability family, different tool names."
+    ]
+  },
+  {
+    "id": "rapp.anomaly_detection.kestrel",
+    "name": "Kestrel KPI Anomaly Detector",
+    "vendor": "Kestrel Networks",
+    "version": "1.2.0",
+    "status": "active",
+    "family": "anomaly_detection",
+    "solution_area": "Network Healing",
+    "use_case": "KPI anomaly detection",
+    "description": "KPI Anomaly Detector rApp (KPI anomaly detection). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "anomaly_detection",
+      "kpi_baselining",
+      "alerting"
+    ],
+    "interfaces": [
+      "E2SM-KPM v3.00"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "DRB.UEThpDl",
+      "DRB.RlcSduDelayDl"
+    ],
+    "produces": [
+      "ad.anomaly_events"
+    ],
+    "control_scopes": [
+      {
+        "target": "cell",
+        "mode": "read",
+        "resource": ""
+      }
+    ],
+    "timescale_s": 5,
+    "requires": [],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "kestrel_detect_anomalies",
+        "label": "Detect Anomalies",
+        "description": "Flag KPI series that leave their learned baseline."
+      },
+      {
+        "id": "kestrel_summarize_anomalies",
+        "label": "Summarize Anomalies",
+        "description": "Group anomalies per cell/slice."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Vendor variant of KPI Anomaly Detector; same capability family, different tool names."
+    ]
+  },
+  {
+    "id": "rapp.anomaly_detection.v0",
+    "name": "KPI Anomaly Detector (legacy)",
+    "vendor": "Aalto 6G Lab",
+    "version": "0.9.0",
+    "status": "deprecated",
+    "family": "anomaly_detection",
+    "solution_area": "Network Healing",
+    "use_case": "KPI anomaly detection",
+    "description": "KPI Anomaly Detector rApp (KPI anomaly detection). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "anomaly_detection",
+      "kpi_baselining",
+      "alerting"
+    ],
+    "interfaces": [
+      "E2SM-KPM v3.00"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "DRB.UEThpDl",
+      "DRB.RlcSduDelayDl"
+    ],
+    "produces": [
+      "ad.anomaly_events"
+    ],
+    "control_scopes": [
+      {
+        "target": "cell",
+        "mode": "read",
+        "resource": ""
+      }
+    ],
+    "timescale_s": 5,
+    "requires": [],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "detect_anomalies",
+        "label": "Detect Anomalies",
+        "description": "Flag KPI series that leave their learned baseline."
+      },
+      {
+        "id": "summarize_anomalies",
+        "label": "Summarize Anomalies",
+        "description": "Group anomalies per cell/slice."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Deprecated release kept in the directory for migration; superseded by the 2.x card."
+    ]
+  },
+  {
+    "id": "rapp.slice_sla",
+    "name": "Slice SLA Assurance",
+    "vendor": "Aalto 6G Lab",
+    "version": "2.1.0",
+    "status": "active",
+    "family": "slice_sla",
+    "solution_area": "Network Optimization",
+    "use_case": "O-RAN UC3 slice SLA assurance",
+    "description": "Slice SLA Assurance rApp (O-RAN UC3 slice SLA assurance). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "slice_assurance",
+      "sla_monitoring",
+      "slice_reconfiguration"
+    ],
+    "interfaces": [
+      "A1-P policy-type 20010",
+      "E2SM-SLICE (FlexRIC custom)",
+      "E2SM-KPM v3.00"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "slice.policy"
+    ],
+    "produces": [
+      "sla.violation_report",
+      "sla.slice_target"
+    ],
+    "control_scopes": [
+      {
+        "target": "slice",
+        "mode": "write",
+        "resource": "slice_control"
+      }
+    ],
+    "timescale_s": 10,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "evaluate_sla",
+        "label": "Evaluate Sla",
+        "description": "Compare per-slice KPIs with SLA targets."
+      },
+      {
+        "id": "recommend_slice_targets",
+        "label": "Recommend Slice Targets",
+        "description": "Compute new PRB reservations."
+      },
+      {
+        "id": "apply_slice_targets",
+        "label": "Apply Slice Targets",
+        "description": "Push the targets through the slice xApp."
+      }
+    ],
+    "distractor": false,
+    "notes": []
+  },
+  {
+    "id": "rapp.slice_sla.northwind",
+    "name": "Northwind Slice SLA Assurance",
+    "vendor": "Northwind Radio",
+    "version": "1.1.0",
+    "status": "active",
+    "family": "slice_sla",
+    "solution_area": "Network Optimization",
+    "use_case": "O-RAN UC3 slice SLA assurance",
+    "description": "Slice SLA Assurance rApp (O-RAN UC3 slice SLA assurance). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "slice_assurance",
+      "sla_monitoring",
+      "slice_reconfiguration"
+    ],
+    "interfaces": [
+      "A1-P policy-type 20010",
+      "E2SM-SLICE (FlexRIC custom)",
+      "E2SM-KPM v3.00"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "slice.policy"
+    ],
+    "produces": [
+      "sla.violation_report",
+      "sla.slice_target"
+    ],
+    "control_scopes": [
+      {
+        "target": "slice",
+        "mode": "write",
+        "resource": "slice_control"
+      }
+    ],
+    "timescale_s": 10,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "northwind_evaluate_sla",
+        "label": "Evaluate Sla",
+        "description": "Compare per-slice KPIs with SLA targets."
+      },
+      {
+        "id": "northwind_recommend_slice_targets",
+        "label": "Recommend Slice Targets",
+        "description": "Compute new PRB reservations."
+      },
+      {
+        "id": "northwind_apply_slice_targets",
+        "label": "Apply Slice Targets",
+        "description": "Push the targets through the slice xApp."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Vendor variant of Slice SLA Assurance; same capability family, different tool names."
+    ]
+  },
+  {
+    "id": "rapp.slice_sla.v0",
+    "name": "Slice SLA Assurance (legacy)",
+    "vendor": "Aalto 6G Lab",
+    "version": "0.9.0",
+    "status": "deprecated",
+    "family": "slice_sla",
+    "solution_area": "Network Optimization",
+    "use_case": "O-RAN UC3 slice SLA assurance",
+    "description": "Slice SLA Assurance rApp (O-RAN UC3 slice SLA assurance). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "slice_assurance",
+      "sla_monitoring",
+      "slice_reconfiguration"
+    ],
+    "interfaces": [
+      "A1-P policy-type 20010",
+      "E2SM-SLICE (FlexRIC custom)",
+      "E2SM-KPM v3.00"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "slice.policy"
+    ],
+    "produces": [
+      "sla.violation_report",
+      "sla.slice_target"
+    ],
+    "control_scopes": [
+      {
+        "target": "slice",
+        "mode": "write",
+        "resource": "slice_control"
+      }
+    ],
+    "timescale_s": 10,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "evaluate_sla",
+        "label": "Evaluate Sla",
+        "description": "Compare per-slice KPIs with SLA targets."
+      },
+      {
+        "id": "recommend_slice_targets",
+        "label": "Recommend Slice Targets",
+        "description": "Compute new PRB reservations."
+      },
+      {
+        "id": "apply_slice_targets",
+        "label": "Apply Slice Targets",
+        "description": "Push the targets through the slice xApp."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Deprecated release kept in the directory for migration; superseded by the 2.x card."
+    ]
+  },
+  {
+    "id": "rapp.capacity_mgmt",
+    "name": "Site Capacity Manager",
+    "vendor": "Aalto 6G Lab",
+    "version": "2.1.0",
+    "status": "active",
+    "family": "capacity_mgmt",
+    "solution_area": "Network Deployment",
+    "use_case": "Site capacity management",
+    "description": "Site Capacity Manager rApp (Site capacity management). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "capacity_planning",
+      "capacity_boost",
+      "carrier_add"
+    ],
+    "interfaces": [
+      "O1",
+      "A1-P policy-type 20020"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "RRC.ConnMean"
+    ],
+    "produces": [
+      "cap.forecast",
+      "cap.expansion_plan"
+    ],
+    "control_scopes": [
+      {
+        "target": "node",
+        "mode": "write",
+        "resource": "cell_power"
+      }
+    ],
+    "timescale_s": 3600,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [
+      "energy_saving"
+    ],
+    "tools": [
+      {
+        "id": "forecast_capacity",
+        "label": "Forecast Capacity",
+        "description": "Forecast PRB headroom per site."
+      },
+      {
+        "id": "plan_carrier_add",
+        "label": "Plan Carrier Add",
+        "description": "Recommend carrier/cell activation."
+      }
+    ],
+    "distractor": false,
+    "notes": []
+  },
+  {
+    "id": "rapp.capacity_mgmt.northwind",
+    "name": "Northwind Site Capacity Manager",
+    "vendor": "Northwind Radio",
+    "version": "1.1.0",
+    "status": "active",
+    "family": "capacity_mgmt",
+    "solution_area": "Network Deployment",
+    "use_case": "Site capacity management",
+    "description": "Site Capacity Manager rApp (Site capacity management). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "capacity_planning",
+      "capacity_boost",
+      "carrier_add"
+    ],
+    "interfaces": [
+      "O1",
+      "A1-P policy-type 20020"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "RRC.ConnMean"
+    ],
+    "produces": [
+      "cap.forecast",
+      "cap.expansion_plan"
+    ],
+    "control_scopes": [
+      {
+        "target": "node",
+        "mode": "write",
+        "resource": "cell_power"
+      }
+    ],
+    "timescale_s": 3600,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [
+      "energy_saving"
+    ],
+    "tools": [
+      {
+        "id": "northwind_forecast_capacity",
+        "label": "Forecast Capacity",
+        "description": "Forecast PRB headroom per site."
+      },
+      {
+        "id": "northwind_plan_carrier_add",
+        "label": "Plan Carrier Add",
+        "description": "Recommend carrier/cell activation."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Vendor variant of Site Capacity Manager; same capability family, different tool names."
+    ]
+  },
+  {
+    "id": "rapp.capacity_mgmt.v0",
+    "name": "Site Capacity Manager (legacy)",
+    "vendor": "Aalto 6G Lab",
+    "version": "0.9.0",
+    "status": "deprecated",
+    "family": "capacity_mgmt",
+    "solution_area": "Network Deployment",
+    "use_case": "Site capacity management",
+    "description": "Site Capacity Manager rApp (Site capacity management). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "capacity_planning",
+      "capacity_boost",
+      "carrier_add"
+    ],
+    "interfaces": [
+      "O1",
+      "A1-P policy-type 20020"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "RRC.ConnMean"
+    ],
+    "produces": [
+      "cap.forecast",
+      "cap.expansion_plan"
+    ],
+    "control_scopes": [
+      {
+        "target": "node",
+        "mode": "write",
+        "resource": "cell_power"
+      }
+    ],
+    "timescale_s": 3600,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [
+      "energy_saving"
+    ],
+    "tools": [
+      {
+        "id": "forecast_capacity",
+        "label": "Forecast Capacity",
+        "description": "Forecast PRB headroom per site."
+      },
+      {
+        "id": "plan_carrier_add",
+        "label": "Plan Carrier Add",
+        "description": "Recommend carrier/cell activation."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Deprecated release kept in the directory for migration; superseded by the 2.x card."
+    ]
+  },
+  {
+    "id": "rapp.pm_kpi",
+    "name": "KPI Manager",
+    "vendor": "Aalto 6G Lab",
+    "version": "2.1.0",
+    "status": "active",
+    "family": "pm_kpi",
+    "solution_area": "Automation and AI Foundation",
+    "use_case": "Performance management and KPI reporting",
+    "description": "KPI Manager rApp (Performance management and KPI reporting). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "kpi_reporting",
+      "pm_collection",
+      "sla_evidence"
+    ],
+    "interfaces": [
+      "O1 PM",
+      "E2SM-KPM v3.00"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "RRU.PrbTotUl",
+      "DRB.UEThpDl",
+      "DRB.RlcSduDelayDl"
+    ],
+    "produces": [
+      "pm.report",
+      "kpi.aggregates"
+    ],
+    "control_scopes": [
+      {
+        "target": "node",
+        "mode": "read",
+        "resource": ""
+      }
+    ],
+    "timescale_s": 60,
+    "requires": [],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "build_kpi_report",
+        "label": "Build Kpi Report",
+        "description": "Aggregate KPM into a PM report."
+      },
+      {
+        "id": "export_sla_evidence",
+        "label": "Export Sla Evidence",
+        "description": "Package KPI evidence for an SLA window."
+      }
+    ],
+    "distractor": false,
+    "notes": []
+  },
+  {
+    "id": "rapp.pm_kpi.northwind",
+    "name": "Northwind KPI Manager",
+    "vendor": "Northwind Radio",
+    "version": "1.1.0",
+    "status": "active",
+    "family": "pm_kpi",
+    "solution_area": "Automation and AI Foundation",
+    "use_case": "Performance management and KPI reporting",
+    "description": "KPI Manager rApp (Performance management and KPI reporting). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "kpi_reporting",
+      "pm_collection",
+      "sla_evidence"
+    ],
+    "interfaces": [
+      "O1 PM",
+      "E2SM-KPM v3.00"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "RRU.PrbTotUl",
+      "DRB.UEThpDl",
+      "DRB.RlcSduDelayDl"
+    ],
+    "produces": [
+      "pm.report",
+      "kpi.aggregates"
+    ],
+    "control_scopes": [
+      {
+        "target": "node",
+        "mode": "read",
+        "resource": ""
+      }
+    ],
+    "timescale_s": 60,
+    "requires": [],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "northwind_build_kpi_report",
+        "label": "Build Kpi Report",
+        "description": "Aggregate KPM into a PM report."
+      },
+      {
+        "id": "northwind_export_sla_evidence",
+        "label": "Export Sla Evidence",
+        "description": "Package KPI evidence for an SLA window."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Vendor variant of KPI Manager; same capability family, different tool names."
+    ]
+  },
+  {
+    "id": "rapp.pm_kpi.v0",
+    "name": "KPI Manager (legacy)",
+    "vendor": "Aalto 6G Lab",
+    "version": "0.9.0",
+    "status": "deprecated",
+    "family": "pm_kpi",
+    "solution_area": "Automation and AI Foundation",
+    "use_case": "Performance management and KPI reporting",
+    "description": "KPI Manager rApp (Performance management and KPI reporting). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "kpi_reporting",
+      "pm_collection",
+      "sla_evidence"
+    ],
+    "interfaces": [
+      "O1 PM",
+      "E2SM-KPM v3.00"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "RRU.PrbTotUl",
+      "DRB.UEThpDl",
+      "DRB.RlcSduDelayDl"
+    ],
+    "produces": [
+      "pm.report",
+      "kpi.aggregates"
+    ],
+    "control_scopes": [
+      {
+        "target": "node",
+        "mode": "read",
+        "resource": ""
+      }
+    ],
+    "timescale_s": 60,
+    "requires": [],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "build_kpi_report",
+        "label": "Build Kpi Report",
+        "description": "Aggregate KPM into a PM report."
+      },
+      {
+        "id": "export_sla_evidence",
+        "label": "Export Sla Evidence",
+        "description": "Package KPI evidence for an SLA window."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Deprecated release kept in the directory for migration; superseded by the 2.x card."
+    ]
+  },
+  {
+    "id": "rapp.interference",
+    "name": "Interference Mitigator",
+    "vendor": "Aalto 6G Lab",
+    "version": "2.1.0",
+    "status": "active",
+    "family": "interference",
+    "solution_area": "Network Healing",
+    "use_case": "Interference management",
+    "description": "Interference Mitigator rApp (Interference management). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "interference_mitigation",
+      "pci_optimization",
+      "power_control_policy"
+    ],
+    "interfaces": [
+      "E2SM-RC v1.03",
+      "O1"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "CARR.SINR_dist"
+    ],
+    "produces": [
+      "im.power_policy"
+    ],
+    "control_scopes": [
+      {
+        "target": "cell",
+        "mode": "write",
+        "resource": "rc_control"
+      }
+    ],
+    "timescale_s": 30,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "detect_interference",
+        "label": "Detect Interference",
+        "description": "Locate cells with SINR collapse under low load."
+      },
+      {
+        "id": "apply_power_policy",
+        "label": "Apply Power Policy",
+        "description": "Push a per-cell power cap."
+      }
+    ],
+    "distractor": false,
+    "notes": []
+  },
+  {
+    "id": "rapp.interference.northwind",
+    "name": "Northwind Interference Mitigator",
+    "vendor": "Northwind Radio",
+    "version": "1.1.0",
+    "status": "active",
+    "family": "interference",
+    "solution_area": "Network Healing",
+    "use_case": "Interference management",
+    "description": "Interference Mitigator rApp (Interference management). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "interference_mitigation",
+      "pci_optimization",
+      "power_control_policy"
+    ],
+    "interfaces": [
+      "E2SM-RC v1.03",
+      "O1"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "CARR.SINR_dist"
+    ],
+    "produces": [
+      "im.power_policy"
+    ],
+    "control_scopes": [
+      {
+        "target": "cell",
+        "mode": "write",
+        "resource": "rc_control"
+      }
+    ],
+    "timescale_s": 30,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "northwind_detect_interference",
+        "label": "Detect Interference",
+        "description": "Locate cells with SINR collapse under low load."
+      },
+      {
+        "id": "northwind_apply_power_policy",
+        "label": "Apply Power Policy",
+        "description": "Push a per-cell power cap."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Vendor variant of Interference Mitigator; same capability family, different tool names."
+    ]
+  },
+  {
+    "id": "rapp.interference.v0",
+    "name": "Interference Mitigator (legacy)",
+    "vendor": "Aalto 6G Lab",
+    "version": "0.9.0",
+    "status": "deprecated",
+    "family": "interference",
+    "solution_area": "Network Healing",
+    "use_case": "Interference management",
+    "description": "Interference Mitigator rApp (Interference management). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "interference_mitigation",
+      "pci_optimization",
+      "power_control_policy"
+    ],
+    "interfaces": [
+      "E2SM-RC v1.03",
+      "O1"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "CARR.SINR_dist"
+    ],
+    "produces": [
+      "im.power_policy"
+    ],
+    "control_scopes": [
+      {
+        "target": "cell",
+        "mode": "write",
+        "resource": "rc_control"
+      }
+    ],
+    "timescale_s": 30,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "detect_interference",
+        "label": "Detect Interference",
+        "description": "Locate cells with SINR collapse under low load."
+      },
+      {
+        "id": "apply_power_policy",
+        "label": "Apply Power Policy",
+        "description": "Push a per-cell power cap."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Deprecated release kept in the directory for migration; superseded by the 2.x card."
+    ]
+  },
+  {
+    "id": "rapp.transport_qos",
+    "name": "Transport QoS Advisor",
+    "vendor": "Aalto 6G Lab",
+    "version": "2.1.0",
+    "status": "active",
+    "family": "transport_qos",
+    "solution_area": "Network Optimization",
+    "use_case": "Transport / backhaul QoS",
+    "description": "Transport QoS Advisor rApp (Transport / backhaul QoS). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "transport_qos",
+      "backhaul_monitoring",
+      "queue_policy_recommendation"
+    ],
+    "interfaces": [
+      "E2SM-TC (FlexRIC custom)",
+      "O1"
+    ],
+    "consumes": [
+      "RLC.queue_stats",
+      "DRB.RlcSduDelayDl"
+    ],
+    "produces": [
+      "tq.queue_policy"
+    ],
+    "control_scopes": [
+      {
+        "target": "transport",
+        "mode": "write",
+        "resource": "tc_control"
+      }
+    ],
+    "timescale_s": 10,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "recommend_queue_policy",
+        "label": "Recommend Queue Policy",
+        "description": "Choose CoDel/ECN/shaping per bearer class."
+      },
+      {
+        "id": "apply_queue_policy",
+        "label": "Apply Queue Policy",
+        "description": "Apply through the TC xApp."
+      }
+    ],
+    "distractor": false,
+    "notes": []
+  },
+  {
+    "id": "rapp.transport_qos.northwind",
+    "name": "Northwind Transport QoS Advisor",
+    "vendor": "Northwind Radio",
+    "version": "1.1.0",
+    "status": "active",
+    "family": "transport_qos",
+    "solution_area": "Network Optimization",
+    "use_case": "Transport / backhaul QoS",
+    "description": "Transport QoS Advisor rApp (Transport / backhaul QoS). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "transport_qos",
+      "backhaul_monitoring",
+      "queue_policy_recommendation"
+    ],
+    "interfaces": [
+      "E2SM-TC (FlexRIC custom)",
+      "O1"
+    ],
+    "consumes": [
+      "RLC.queue_stats",
+      "DRB.RlcSduDelayDl"
+    ],
+    "produces": [
+      "tq.queue_policy"
+    ],
+    "control_scopes": [
+      {
+        "target": "transport",
+        "mode": "write",
+        "resource": "tc_control"
+      }
+    ],
+    "timescale_s": 10,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "northwind_recommend_queue_policy",
+        "label": "Recommend Queue Policy",
+        "description": "Choose CoDel/ECN/shaping per bearer class."
+      },
+      {
+        "id": "northwind_apply_queue_policy",
+        "label": "Apply Queue Policy",
+        "description": "Apply through the TC xApp."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Vendor variant of Transport QoS Advisor; same capability family, different tool names."
+    ]
+  },
+  {
+    "id": "rapp.transport_qos.v0",
+    "name": "Transport QoS Advisor (legacy)",
+    "vendor": "Aalto 6G Lab",
+    "version": "0.9.0",
+    "status": "deprecated",
+    "family": "transport_qos",
+    "solution_area": "Network Optimization",
+    "use_case": "Transport / backhaul QoS",
+    "description": "Transport QoS Advisor rApp (Transport / backhaul QoS). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "transport_qos",
+      "backhaul_monitoring",
+      "queue_policy_recommendation"
+    ],
+    "interfaces": [
+      "E2SM-TC (FlexRIC custom)",
+      "O1"
+    ],
+    "consumes": [
+      "RLC.queue_stats",
+      "DRB.RlcSduDelayDl"
+    ],
+    "produces": [
+      "tq.queue_policy"
+    ],
+    "control_scopes": [
+      {
+        "target": "transport",
+        "mode": "write",
+        "resource": "tc_control"
+      }
+    ],
+    "timescale_s": 10,
+    "requires": [
+      "kpi_monitoring"
+    ],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "recommend_queue_policy",
+        "label": "Recommend Queue Policy",
+        "description": "Choose CoDel/ECN/shaping per bearer class."
+      },
+      {
+        "id": "apply_queue_policy",
+        "label": "Apply Queue Policy",
+        "description": "Apply through the TC xApp."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Deprecated release kept in the directory for migration; superseded by the 2.x card."
+    ]
+  },
+  {
+    "id": "rapp.ran_lifecycle",
+    "name": "RAN Lifecycle Orchestrator",
+    "vendor": "Aalto 6G Lab",
+    "version": "2.1.0",
+    "status": "active",
+    "family": "ran_lifecycle",
+    "solution_area": "Network Deployment",
+    "use_case": "RAN lifecycle orchestration",
+    "description": "RAN Lifecycle Orchestrator rApp (RAN lifecycle orchestration). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "lifecycle_management",
+      "config_rollout",
+      "software_upgrade"
+    ],
+    "interfaces": [
+      "O1",
+      "O2"
+    ],
+    "consumes": [],
+    "produces": [
+      "lcm.change_plan"
+    ],
+    "control_scopes": [
+      {
+        "target": "node",
+        "mode": "write",
+        "resource": "node_config"
+      }
+    ],
+    "timescale_s": 3600,
+    "requires": [],
+    "conflicts_with": [
+      "cell_power",
+      "antenna_config"
+    ],
+    "tools": [
+      {
+        "id": "plan_rollout",
+        "label": "Plan Rollout",
+        "description": "Plan a configuration rollout with maintenance windows."
+      },
+      {
+        "id": "execute_rollout",
+        "label": "Execute Rollout",
+        "description": "Execute a planned change."
+      }
+    ],
+    "distractor": false,
+    "notes": []
+  },
+  {
+    "id": "rapp.ue_qos_control",
+    "name": "QoS Priority Controller",
+    "vendor": "Aalto 6G Lab",
+    "version": "2.1.0",
+    "status": "active",
+    "family": "ue_qos_control",
+    "solution_area": "Network Optimization",
+    "use_case": "Per-UE QoS / priority control",
+    "description": "QoS Priority Controller rApp (Per-UE QoS / priority control). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "qos_control",
+      "scheduling_priority",
+      "edge_user_protection"
+    ],
+    "interfaces": [
+      "E2SM-RC v1.03"
+    ],
+    "consumes": [
+      "qoe.at_risk_ues",
+      "DRB.UEThpDl"
+    ],
+    "produces": [
+      "qos.priority_policy"
+    ],
+    "control_scopes": [
+      {
+        "target": "ue",
+        "mode": "write",
+        "resource": "rc_control"
+      }
+    ],
+    "timescale_s": 1,
+    "requires": [
+      "qoe_prediction"
+    ],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "set_priority",
+        "label": "Set Priority",
+        "description": "Raise scheduler priority for listed UEs."
+      },
+      {
+        "id": "clear_priority",
+        "label": "Clear Priority",
+        "description": "Reset priorities."
+      }
+    ],
+    "distractor": false,
+    "notes": []
+  },
+  {
+    "id": "rapp.ue_qos_control.northwind",
+    "name": "Northwind QoS Priority Controller",
+    "vendor": "Northwind Radio",
+    "version": "1.1.0",
+    "status": "active",
+    "family": "ue_qos_control",
+    "solution_area": "Network Optimization",
+    "use_case": "Per-UE QoS / priority control",
+    "description": "QoS Priority Controller rApp (Per-UE QoS / priority control). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "qos_control",
+      "scheduling_priority",
+      "edge_user_protection"
+    ],
+    "interfaces": [
+      "E2SM-RC v1.03"
+    ],
+    "consumes": [
+      "qoe.at_risk_ues",
+      "DRB.UEThpDl"
+    ],
+    "produces": [
+      "qos.priority_policy"
+    ],
+    "control_scopes": [
+      {
+        "target": "ue",
+        "mode": "write",
+        "resource": "rc_control"
+      }
+    ],
+    "timescale_s": 1,
+    "requires": [
+      "qoe_prediction"
+    ],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "northwind_set_priority",
+        "label": "Set Priority",
+        "description": "Raise scheduler priority for listed UEs."
+      },
+      {
+        "id": "northwind_clear_priority",
+        "label": "Clear Priority",
+        "description": "Reset priorities."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Vendor variant of QoS Priority Controller; same capability family, different tool names."
+    ]
+  },
+  {
+    "id": "rapp.ue_qos_control.v0",
+    "name": "QoS Priority Controller (legacy)",
+    "vendor": "Aalto 6G Lab",
+    "version": "0.9.0",
+    "status": "deprecated",
+    "family": "ue_qos_control",
+    "solution_area": "Network Optimization",
+    "use_case": "Per-UE QoS / priority control",
+    "description": "QoS Priority Controller rApp (Per-UE QoS / priority control). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "qos_control",
+      "scheduling_priority",
+      "edge_user_protection"
+    ],
+    "interfaces": [
+      "E2SM-RC v1.03"
+    ],
+    "consumes": [
+      "qoe.at_risk_ues",
+      "DRB.UEThpDl"
+    ],
+    "produces": [
+      "qos.priority_policy"
+    ],
+    "control_scopes": [
+      {
+        "target": "ue",
+        "mode": "write",
+        "resource": "rc_control"
+      }
+    ],
+    "timescale_s": 1,
+    "requires": [
+      "qoe_prediction"
+    ],
+    "conflicts_with": [],
+    "tools": [
+      {
+        "id": "set_priority",
+        "label": "Set Priority",
+        "description": "Raise scheduler priority for listed UEs."
+      },
+      {
+        "id": "clear_priority",
+        "label": "Clear Priority",
+        "description": "Reset priorities."
+      }
+    ],
+    "distractor": true,
+    "notes": [
+      "Deprecated release kept in the directory for migration; superseded by the 2.x card."
+    ]
+  },
+  {
+    "id": "rapp.spectrum_sharing",
+    "name": "Spectrum Share Planner",
+    "vendor": "Aalto 6G Lab",
+    "version": "2.1.0",
+    "status": "active",
+    "family": "spectrum_sharing",
+    "solution_area": "Network Evolution",
+    "use_case": "Dynamic spectrum sharing",
+    "description": "Spectrum Share Planner rApp (Dynamic spectrum sharing). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "spectrum_sharing",
+      "carrier_reconfiguration"
+    ],
+    "interfaces": [
+      "E2SM-CCC v6.00",
+      "O1"
+    ],
+    "consumes": [
+      "RRU.PrbTotDl",
+      "cap.forecast"
+    ],
+    "produces": [
+      "dss.carrier_plan"
+    ],
+    "control_scopes": [
+      {
+        "target": "cell",
+        "mode": "write",
+        "resource": "antenna_config"
+      }
+    ],
+    "timescale_s": 300,
+    "requires": [
+      "capacity_planning"
+    ],
+    "conflicts_with": [
+      "cell_power"
+    ],
+    "tools": [
+      {
+        "id": "plan_spectrum_split",
+        "label": "Plan Spectrum Split",
+        "description": "Split carriers between RATs/slices."
+      },
+      {
+        "id": "apply_spectrum_plan",
+        "label": "Apply Spectrum Plan",
+        "description": "Reconfigure via CCC."
+      }
+    ],
+    "distractor": false,
+    "notes": []
+  },
+  {
+    "id": "rapp.self_healing",
+    "name": "Outage Compensator",
+    "vendor": "Aalto 6G Lab",
+    "version": "2.1.0",
+    "status": "active",
+    "family": "self_healing",
+    "solution_area": "Network Healing",
+    "use_case": "Cell outage compensation",
+    "description": "Outage Compensator rApp (Cell outage compensation). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "capabilities": [
+      "outage_compensation",
+      "neighbour_power_boost",
+      "self_healing"
+    ],
+    "interfaces": [
+      "E2SM-RC v1.03",
+      "O1 alarms"
+    ],
+    "consumes": [
+      "rca.report",
+      "RRU.PrbTotDl"
+    ],
+    "produces": [
+      "coc.compensation_plan"
+    ],
+    "control_scopes": [
+      {
+        "target": "cell",
+        "mode": "write",
+        "resource": "rc_control"
+      }
+    ],
+    "timescale_s": 60,
+    "requires": [
+      "root_cause_analysis"
+    ],
+    "conflicts_with": [
+      "cell_power"
+    ],
+    "tools": [
+      {
+        "id": "plan_compensation",
+        "label": "Plan Compensation",
+        "description": "Pick neighbours to absorb a failed cell."
+      },
+      {
+        "id": "apply_compensation",
+        "label": "Apply Compensation",
+        "description": "Apply power/tilt changes to neighbours."
+      }
+    ],
+    "distractor": false,
+    "notes": []
+  }
+]

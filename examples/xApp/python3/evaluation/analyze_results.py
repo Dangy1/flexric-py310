@@ -160,8 +160,21 @@ def build_summary(records: List[Dict[str, Any]]) -> Dict[str, Any]:
         hallucinated_references = sum(int(item.get("hallucinated_reference_count") or 0) for item in available_items)
         cached_planner = sum(1 for item in available_items if item.get("planner_cached") is True)
 
+        retrieval_items = [item for item in available_items if item.get("retrieval_hit") is not None]
+        retrieval_hits = sum(1 for item in retrieval_items if item.get("retrieval_hit") is True)
+        compat_items = [item for item in available_items if item.get("compat_ok") is not None]
+        compat_ok = sum(1 for item in compat_items if item.get("compat_ok") is True)
+        by_split: Dict[str, Dict[str, Any]] = {}
+        for split in sorted({str(item.get("intent_split") or ("open_world" if item.get("intent_open_world") else "known")) for item in available_items}):
+            split_items = [item for item in available_items if str(item.get("intent_split") or ("open_world" if item.get("intent_open_world") else "known")) == split]
+            matched = sum(1 for item in split_items if item.get("workflow_match") is True)
+            by_split[split] = {"records": len(split_items), "workflow_accuracy": _rate(matched, len(split_items)), "ci95": _ci95_halfwidth(matched, len(split_items))}
+
         summary["methods"][method] = {
             "metric_definitions": "see evaluation/METRICS.md",
+            "by_split": by_split,
+            "retrieval_hit_rate": _rate(retrieval_hits, len(retrieval_items)),
+            "compat_ok_rate": _rate(compat_ok, len(compat_items)),
             "intent_count": len({str(item.get("intent_id")) for item in items}),
             "repeat_count": len({int(item.get("repeat_index") or 0) for item in items}),
             "workflow_accuracy_ci95": _ci95_halfwidth(exact_workflow, len(available_items)),

@@ -1,0 +1,2121 @@
+[
+  {
+    "id": "xr_latency_guard",
+    "intent": "Guarantee XR latency below 5 ms for the active slice.",
+    "category": "latency",
+    "expected_workflow_id": "observe-diagnose-optimize",
+    "expected_workflow": [
+      "KPM",
+      "SLICE",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": false,
+    "tags": [
+      "xr",
+      "latency",
+      "closed-world"
+    ],
+    "notes": "Closed-loop latency reduction with KPI observation, slice review, TC action, and RC validation.",
+    "split": "known",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "SLICE",
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "congestion_relief",
+    "intent": "Reduce downlink congestion before users experience throughput collapse.",
+    "category": "latency",
+    "expected_workflow_id": "observe-diagnose-optimize",
+    "expected_workflow": [
+      "KPM",
+      "SLICE",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": false,
+    "tags": [
+      "congestion",
+      "closed-world"
+    ],
+    "notes": "General congestion-control orchestration using the current optimization chain.",
+    "split": "known",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "SLICE",
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "slice_fairness_assurance",
+    "intent": "Improve slice fairness for premium traffic without over-allocating PRBs.",
+    "category": "slice",
+    "expected_workflow_id": "slice-assurance",
+    "expected_workflow": [
+      "SLICE",
+      "KPM",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": false,
+    "tags": [
+      "slice",
+      "fairness",
+      "closed-world"
+    ],
+    "notes": "Slice-specific control and KPI validation.",
+    "split": "known",
+    "accepted_workflows": [
+      [
+        "SLICE",
+        "KPM",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "slice_isolation_validation",
+    "intent": "Validate slice isolation after a policy update for enterprise traffic.",
+    "category": "slice",
+    "expected_workflow_id": "slice-assurance",
+    "expected_workflow": [
+      "SLICE",
+      "KPM",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": false,
+    "tags": [
+      "slice",
+      "isolation",
+      "closed-world"
+    ],
+    "notes": "Policy-assurance scenario centered on slice state and RC review.",
+    "split": "known",
+    "accepted_workflows": [
+      [
+        "SLICE",
+        "KPM",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "transport_bufferbloat_mitigation",
+    "intent": "Mitigate transport bufferbloat on the active bearer path.",
+    "category": "transport",
+    "expected_workflow_id": "transport-qos",
+    "expected_workflow": [
+      "TC"
+    ],
+    "expects_conflict": false,
+    "open_world": false,
+    "tags": [
+      "transport",
+      "bufferbloat",
+      "closed-world"
+    ],
+    "notes": "TC-only action path in the current platform.",
+    "split": "known",
+    "accepted_workflows": [
+      [
+        "TC"
+      ]
+    ]
+  },
+  {
+    "id": "transport_tunnel_stability",
+    "intent": "Stabilize tunnel-side QoS for a sensitive application flow.",
+    "category": "transport",
+    "expected_workflow_id": "transport-qos",
+    "expected_workflow": [
+      "TC"
+    ],
+    "expects_conflict": false,
+    "open_world": false,
+    "tags": [
+      "transport",
+      "tunnel",
+      "closed-world"
+    ],
+    "notes": "Transport/QoS control baseline focused on TC.",
+    "split": "known",
+    "accepted_workflows": [
+      [
+        "TC"
+      ]
+    ]
+  },
+  {
+    "id": "handover_resilience_triage",
+    "intent": "Improve handover resilience for mobility-sensitive UEs.",
+    "category": "latency",
+    "expected_workflow_id": "observe-diagnose-optimize",
+    "expected_workflow": [
+      "KPM",
+      "SLICE",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": false,
+    "tags": [
+      "handover",
+      "mobility",
+      "closed-world"
+    ],
+    "notes": "Current platform lacks a dedicated mobility workflow, so the baseline uses the main optimization chain.",
+    "split": "known",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "SLICE",
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "radio_capacity_headroom",
+    "intent": "Recover radio capacity headroom while keeping the current service-level objective.",
+    "category": "latency",
+    "expected_workflow_id": "observe-diagnose-optimize",
+    "expected_workflow": [
+      "KPM",
+      "SLICE",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": false,
+    "tags": [
+      "capacity",
+      "closed-world"
+    ],
+    "notes": "Capacity-management scenario using the current optimization workflow.",
+    "split": "known",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "SLICE",
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "tc_conflict_recovery",
+    "intent": "Queue a TC optimization request behind an already running transport control session and recover cleanly.",
+    "category": "transport",
+    "expected_workflow_id": "transport-qos",
+    "expected_workflow": [
+      "TC"
+    ],
+    "expects_conflict": true,
+    "conflict_seed": "transport-qos",
+    "open_world": false,
+    "tags": [
+      "transport",
+      "conflict",
+      "closed-world"
+    ],
+    "notes": "Deliberately introduces a TC resource conflict to test queueing or blocked launch handling.",
+    "split": "known",
+    "accepted_workflows": [
+      [
+        "TC"
+      ]
+    ]
+  },
+  {
+    "id": "latency_under_busy_tc",
+    "intent": "Protect latency while TC control is already busy with another workflow.",
+    "category": "latency",
+    "expected_workflow_id": "observe-diagnose-optimize",
+    "expected_workflow": [
+      "KPM",
+      "SLICE",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": true,
+    "conflict_seed": "transport-qos",
+    "open_world": false,
+    "tags": [
+      "latency",
+      "conflict",
+      "closed-world"
+    ],
+    "notes": "Tests whether a broader optimization workflow detects the busy TC resource and can recover on retry.",
+    "split": "known",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "SLICE",
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "uplink_queue_stability",
+    "intent": "Stabilize uplink queue latency for interactive users before retransmissions rise.",
+    "category": "transport",
+    "expected_workflow_id": "custom:kpm-tc-rc",
+    "expected_workflow": [
+      "KPM",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "uplink",
+      "queue",
+      "open-world"
+    ],
+    "notes": "Observation plus transport control and RC validation.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "downlink_jitter_containment",
+    "intent": "Contain downlink jitter for cloud gaming traffic without forcing a slice reconfiguration.",
+    "category": "transport",
+    "expected_workflow_id": "custom:kpm-tc-rc",
+    "expected_workflow": [
+      "KPM",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "gaming",
+      "jitter",
+      "open-world"
+    ],
+    "notes": "Transport-dominant adaptive control path.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "backhaul_delay_mitigation",
+    "intent": "Mitigate backhaul delay spikes seen by mobile broadband sessions.",
+    "category": "transport",
+    "expected_workflow_id": "custom:kpm-tc-rc",
+    "expected_workflow": [
+      "KPM",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "backhaul",
+      "delay",
+      "open-world"
+    ],
+    "notes": "Requires observation before transport shaping.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "tunnel_retransmission_diagnosis",
+    "intent": "Diagnose whether bearer tunnel instability is driving retransmissions for a priority UE group.",
+    "category": "anomaly",
+    "expected_workflow_id": "custom:kpm-rc",
+    "expected_workflow": [
+      "KPM",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "tunnel",
+      "diagnosis",
+      "open-world"
+    ],
+    "notes": "Observation-only diagnostic workflow with RC review.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "rlc_queue_anomaly_detection",
+    "intent": "Detect an RLC queue anomaly before it becomes a visible service outage.",
+    "category": "anomaly",
+    "expected_workflow_id": "custom:kpm-rc",
+    "expected_workflow": [
+      "KPM",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "rlc",
+      "anomaly",
+      "open-world"
+    ],
+    "notes": "Detection-centric path without direct control.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "pdcp_reorder_investigation",
+    "intent": "Investigate PDCP reordering symptoms that appear after recent QoS changes.",
+    "category": "anomaly",
+    "expected_workflow_id": "custom:kpm-rc",
+    "expected_workflow": [
+      "KPM",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "pdcp",
+      "investigation",
+      "open-world"
+    ],
+    "notes": "Observation plus RC reasoning for a user-plane symptom.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "gtp_tunnel_health_validation",
+    "intent": "Validate GTP tunnel health for a business-critical application path.",
+    "category": "reliability",
+    "expected_workflow_id": "custom:kpm-rc",
+    "expected_workflow": [
+      "KPM",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "gtp",
+      "reliability",
+      "open-world"
+    ],
+    "notes": "Validation flow without mandatory control action.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "slice_admission_control",
+    "intent": "Prepare a safer slice admission policy for a burst of new premium devices.",
+    "category": "slice",
+    "expected_workflow_id": "custom:kpm-slice-rc",
+    "expected_workflow": [
+      "KPM",
+      "SLICE",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "slice",
+      "admission",
+      "open-world"
+    ],
+    "notes": "Observation informs slice policy before RC validation.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "SLICE",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "slice_oversubscription_repair",
+    "intent": "Repair slice oversubscription before latency violations spread to neighboring traffic classes.",
+    "category": "slice",
+    "expected_workflow_id": "custom:kpm-slice-rc",
+    "expected_workflow": [
+      "KPM",
+      "SLICE",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "slice",
+      "oversubscription",
+      "open-world"
+    ],
+    "notes": "Adaptive slice-control loop without explicit TC action.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "SLICE",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "enterprise_slice_audit",
+    "intent": "Audit enterprise slice reservations after a multi-tenant maintenance window.",
+    "category": "slice",
+    "expected_workflow_id": "slice-assurance",
+    "expected_workflow": [
+      "SLICE",
+      "KPM",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": false,
+    "tags": [
+      "enterprise",
+      "audit",
+      "closed-world"
+    ],
+    "notes": "Closed-world assurance path still applies cleanly.",
+    "split": "known",
+    "accepted_workflows": [
+      [
+        "SLICE",
+        "KPM",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "mobility_hotspot_stabilization",
+    "intent": "Stabilize mobility performance around a hotspot where fast-moving UEs see rising delay.",
+    "category": "mobility",
+    "expected_workflow_id": "custom:kpm-tc-rc",
+    "expected_workflow": [
+      "KPM",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "mobility",
+      "hotspot",
+      "open-world"
+    ],
+    "notes": "Uses observation and TC-side mitigation rather than a fixed workflow template.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "handover_ping_pong_detection",
+    "intent": "Detect handover ping-pong behavior before user complaints appear.",
+    "category": "mobility",
+    "expected_workflow_id": "custom:kpm-rc",
+    "expected_workflow": [
+      "KPM",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "handover",
+      "detection",
+      "open-world"
+    ],
+    "notes": "Detection-centric mobility workflow.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "edge_gaming_jitter_protection",
+    "intent": "Protect edge gaming sessions from jitter caused by mixed slice and queue pressure.",
+    "category": "latency",
+    "expected_workflow_id": "custom:kpm-slice-tc-rc",
+    "expected_workflow": [
+      "KPM",
+      "SLICE",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "gaming",
+      "jitter",
+      "cross-domain",
+      "open-world"
+    ],
+    "notes": "Composite optimization intent.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "SLICE",
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "volte_latency_safeguard",
+    "intent": "Safeguard VoLTE latency during a transient transport queue event.",
+    "category": "transport",
+    "expected_workflow_id": "custom:kpm-tc-rc",
+    "expected_workflow": [
+      "KPM",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "volte",
+      "latency",
+      "open-world"
+    ],
+    "notes": "Transport-heavy control with KPI observation.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "urllc_reliability_safeguard",
+    "intent": "Safeguard URLLC reliability when queueing and slice pressure rise together.",
+    "category": "reliability",
+    "expected_workflow_id": "custom:kpm-slice-tc-rc",
+    "expected_workflow": [
+      "KPM",
+      "SLICE",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "urllc",
+      "reliability",
+      "cross-domain",
+      "open-world"
+    ],
+    "notes": "Adaptive closed-loop mitigation across slice and transport.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "SLICE",
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "mmtc_capacity_preservation",
+    "intent": "Preserve mMTC capacity while keeping premium slices within policy bounds.",
+    "category": "capacity",
+    "expected_workflow_id": "custom:kpm-slice-rc",
+    "expected_workflow": [
+      "KPM",
+      "SLICE",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "mmtc",
+      "capacity",
+      "open-world"
+    ],
+    "notes": "Capacity-oriented slice rebalance path.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "SLICE",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "video_throughput_smoothing",
+    "intent": "Smooth video throughput fluctuations caused by intermittent transport queue buildup.",
+    "category": "transport",
+    "expected_workflow_id": "custom:kpm-tc-rc",
+    "expected_workflow": [
+      "KPM",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "video",
+      "throughput",
+      "open-world"
+    ],
+    "notes": "Observation and TC mitigation should be sufficient.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "ecn_policy_validation",
+    "intent": "Validate whether the current ECN policy remains safe after a transport profile change.",
+    "category": "transport",
+    "expected_workflow_id": "custom:tc-rc",
+    "expected_workflow": [
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "ecn",
+      "validation",
+      "open-world"
+    ],
+    "notes": "Direct TC validation chain with RC guardrail.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "codel_rollback_verification",
+    "intent": "Verify that a recent CoDel rollback did not regress queue health.",
+    "category": "transport",
+    "expected_workflow_id": "custom:tc-rc",
+    "expected_workflow": [
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "codel",
+      "rollback",
+      "open-world"
+    ],
+    "notes": "Transport validation without mandatory observation.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "bearer_stall_triage",
+    "intent": "Triage a suspected bearer stall without applying unnecessary control actions.",
+    "category": "anomaly",
+    "expected_workflow_id": "custom:kpm-rc",
+    "expected_workflow": [
+      "KPM",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "bearer",
+      "triage",
+      "open-world"
+    ],
+    "notes": "Investigation-first path.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "drb_delay_hotspot",
+    "intent": "Investigate a DRB delay hotspot reported by the operations team.",
+    "category": "anomaly",
+    "expected_workflow_id": "custom:kpm-rc",
+    "expected_workflow": [
+      "KPM",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "drb",
+      "delay",
+      "open-world"
+    ],
+    "notes": "KPI observation plus RC reasoning.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "prb_imbalance_correction",
+    "intent": "Correct PRB imbalance across slices before fairness complaints increase.",
+    "category": "capacity",
+    "expected_workflow_id": "custom:kpm-slice-rc",
+    "expected_workflow": [
+      "KPM",
+      "SLICE",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "prb",
+      "fairness",
+      "open-world"
+    ],
+    "notes": "Observation-driven slice rebalance.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "SLICE",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "cell_edge_fairness_protection",
+    "intent": "Protect cell-edge fairness without overreacting to a short-lived KPI fluctuation.",
+    "category": "capacity",
+    "expected_workflow_id": "custom:kpm-slice-rc",
+    "expected_workflow": [
+      "KPM",
+      "SLICE",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "cell-edge",
+      "fairness",
+      "open-world"
+    ],
+    "notes": "Requires observation and controlled slice policy adjustment.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "SLICE",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "premium_qos_isolation",
+    "intent": "Protect premium QoS isolation when slice pressure and transport queueing rise together.",
+    "category": "enterprise",
+    "expected_workflow_id": "custom:kpm-slice-tc-rc",
+    "expected_workflow": [
+      "KPM",
+      "SLICE",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "premium",
+      "isolation",
+      "cross-domain",
+      "open-world"
+    ],
+    "notes": "Composite enterprise intent spanning slice and transport domains.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "SLICE",
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "emergency_traffic_preemption",
+    "intent": "Prepare a safe preemption path for emergency traffic during mixed-service congestion.",
+    "category": "enterprise",
+    "expected_workflow_id": "custom:kpm-slice-tc-rc",
+    "expected_workflow": [
+      "KPM",
+      "SLICE",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "emergency",
+      "preemption",
+      "open-world"
+    ],
+    "notes": "High-risk intent that should still end with RC validation.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "SLICE",
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "stadium_congestion_surge",
+    "intent": "Respond to a stadium congestion surge without destabilizing protected traffic classes.",
+    "category": "capacity",
+    "expected_workflow_id": "custom:kpm-slice-tc-rc",
+    "expected_workflow": [
+      "KPM",
+      "SLICE",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "stadium",
+      "congestion",
+      "open-world"
+    ],
+    "notes": "Composite capacity-control scenario.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "SLICE",
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "campus_slice_drift_detection",
+    "intent": "Detect campus slice drift after a maintenance change window.",
+    "category": "enterprise",
+    "expected_workflow_id": "custom:kpm-slice-rc",
+    "expected_workflow": [
+      "KPM",
+      "SLICE",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "campus",
+      "drift",
+      "open-world"
+    ],
+    "notes": "Detection plus slice review without forced TC action.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "SLICE",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "backhaul_queue_conflict_recovery",
+    "intent": "Recover from a backhaul queue mitigation request when TC is already busy with another control loop.",
+    "category": "transport",
+    "expected_workflow_id": "custom:kpm-tc-rc",
+    "expected_workflow": [
+      "KPM",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": true,
+    "conflict_seed": "transport-qos",
+    "open_world": true,
+    "tags": [
+      "backhaul",
+      "conflict",
+      "open-world"
+    ],
+    "notes": "Open-world conflict case for transport-heavy discovery.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "slice_policy_race_recovery",
+    "intent": "Repair a slice-policy race when another slice workflow is already running.",
+    "category": "slice",
+    "expected_workflow_id": "custom:kpm-slice-rc",
+    "expected_workflow": [
+      "KPM",
+      "SLICE",
+      "RC"
+    ],
+    "expects_conflict": true,
+    "conflict_seed": "slice-assurance",
+    "open_world": true,
+    "tags": [
+      "slice",
+      "conflict",
+      "open-world"
+    ],
+    "notes": "Open-world conflict case for slice-control adaptation.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "SLICE",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "enterprise_tunnel_busy_tc",
+    "intent": "Protect enterprise tunnel latency while TC is already busy with another workflow.",
+    "category": "enterprise",
+    "expected_workflow_id": "custom:kpm-tc-rc",
+    "expected_workflow": [
+      "KPM",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": true,
+    "conflict_seed": "transport-qos",
+    "open_world": true,
+    "tags": [
+      "enterprise",
+      "tunnel",
+      "conflict",
+      "open-world"
+    ],
+    "notes": "Transport conflict under an enterprise intent.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "qos_policy_sanity_check",
+    "intent": "Run a QoS policy sanity check after a TC profile update.",
+    "category": "transport",
+    "expected_workflow_id": "custom:tc-rc",
+    "expected_workflow": [
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "qos",
+      "sanity",
+      "open-world"
+    ],
+    "notes": "Direct validation flow for transport policy.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "latency_regression_root_cause",
+    "intent": "Find the likely root cause of a new latency regression before any control change is applied.",
+    "category": "anomaly",
+    "expected_workflow_id": "custom:kpm-rc",
+    "expected_workflow": [
+      "KPM",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "latency",
+      "root-cause",
+      "open-world"
+    ],
+    "notes": "Investigation-only path.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "slice_drift_correction",
+    "intent": "Correct a gradual slice drift that is eroding enterprise-service guarantees.",
+    "category": "enterprise",
+    "expected_workflow_id": "custom:kpm-slice-rc",
+    "expected_workflow": [
+      "KPM",
+      "SLICE",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "slice",
+      "enterprise",
+      "open-world"
+    ],
+    "notes": "Slice control and validation without mandatory TC action.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "SLICE",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "transport_queue_partition_tuning",
+    "intent": "Tune transport queue partitioning for mixed traffic without changing slice policy.",
+    "category": "transport",
+    "expected_workflow_id": "custom:tc-rc",
+    "expected_workflow": [
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "transport",
+      "partitioning",
+      "open-world"
+    ],
+    "notes": "Direct TC plus RC validation.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "anomaly_containment_degraded_service",
+    "intent": "Contain a degraded-service anomaly before it cascades across user groups.",
+    "category": "anomaly",
+    "expected_workflow_id": "custom:kpm-tc-rc",
+    "expected_workflow": [
+      "KPM",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "anomaly",
+      "containment",
+      "open-world"
+    ],
+    "notes": "Anomaly path that escalates from observation to mitigation.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "handover_route_risk_screening",
+    "intent": "Screen handover-route risk before a busy commuting window starts.",
+    "category": "mobility",
+    "expected_workflow_id": "custom:kpm-rc",
+    "expected_workflow": [
+      "KPM",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "handover",
+      "risk",
+      "open-world"
+    ],
+    "notes": "Mobility-focused observation and RC review.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "cross_slice_resource_rebalance",
+    "intent": "Rebalance cross-slice resources to protect interactive traffic during a demand spike.",
+    "category": "slice",
+    "expected_workflow_id": "custom:kpm-slice-tc-rc",
+    "expected_workflow": [
+      "KPM",
+      "SLICE",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "cross-slice",
+      "rebalance",
+      "open-world"
+    ],
+    "notes": "Composite slice and transport mitigation.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "SLICE",
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "low_priority_traffic_shaping_guard",
+    "intent": "Shape low-priority traffic more safely without disturbing protected services.",
+    "category": "transport",
+    "expected_workflow_id": "custom:tc-rc",
+    "expected_workflow": [
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "traffic-shaping",
+      "guard",
+      "open-world"
+    ],
+    "notes": "TC-first validation path.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "unknown_enterprise_xr_slowdown",
+    "intent": "Prepare a safe control loop for an unexplained enterprise XR slowdown that may involve slice pressure and bearer queuing.",
+    "category": "unknown",
+    "expected_workflow_id": "custom:kpm-slice-tc-rc",
+    "expected_workflow": [
+      "KPM",
+      "SLICE",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": false,
+    "open_world": true,
+    "tags": [
+      "unknown-task",
+      "xr",
+      "enterprise",
+      "open-world"
+    ],
+    "notes": "Deliberately open-ended composite intent to test adaptive agent-card planning.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "SLICE",
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "unknown_busy_runtime_recovery",
+    "intent": "Recover a safe adaptive workflow for an undefined service issue while TC is already busy.",
+    "category": "unknown",
+    "expected_workflow_id": "custom:kpm-tc-rc",
+    "expected_workflow": [
+      "KPM",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": true,
+    "conflict_seed": "transport-qos",
+    "open_world": true,
+    "tags": [
+      "unknown-task",
+      "conflict",
+      "open-world"
+    ],
+    "notes": "Open-ended conflict scenario for agent-card recovery planning.",
+    "split": "open_world",
+    "accepted_workflows": [
+      [
+        "KPM",
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "night_energy_saving",
+    "intent": "Reduce RAN energy consumption between 01:00 and 05:00 by switching off lightly loaded cells without breaking coverage.",
+    "category": "energy",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.ENERGY_SAVING",
+      "RC"
+    ],
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.ENERGY_SAVING",
+        "RC"
+      ],
+      [
+        "RAPP.PM_KPI",
+        "RAPP.ENERGY_SAVING",
+        "RC"
+      ]
+    ],
+    "tags": [
+      "energy",
+      "uc21"
+    ],
+    "notes": "Observe PRB load, pick sleep cells, validate the RC control.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.energy_saving-rc",
+    "expects_conflict": false
+  },
+  {
+    "id": "energy_saving_wakeup_guard",
+    "intent": "Wake sleeping cells as soon as PRB utilisation on the neighbours exceeds 70 percent.",
+    "category": "energy",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.ENERGY_SAVING"
+    ],
+    "tags": [
+      "energy"
+    ],
+    "notes": "Observation followed by the energy-saving wake tool.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.energy_saving",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.ENERGY_SAVING"
+      ]
+    ]
+  },
+  {
+    "id": "energy_vs_capacity_conflict",
+    "intent": "Cut site power at night but keep the capacity expansion plan for the stadium site untouched.",
+    "category": "energy",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.ENERGY_SAVING",
+      "RC"
+    ],
+    "tags": [
+      "energy",
+      "conflict-scope"
+    ],
+    "notes": "Capacity manager must not be composed with energy saving (declared conflict).",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.energy_saving-rc",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.ENERGY_SAVING",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "cell_edge_qoe_protection",
+    "intent": "Improve cell-edge QoE for Zone A: predict at-risk users and raise their scheduling priority.",
+    "category": "qoe",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.QOE_PREDICTION",
+      "RAPP.UE_QOS_CONTROL",
+      "RC"
+    ],
+    "tags": [
+      "qoe",
+      "running-example"
+    ],
+    "notes": "The paper's running example, now with real rApps.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.qoe_prediction-rapp.ue_qos_control-rc",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.QOE_PREDICTION",
+        "RAPP.UE_QOS_CONTROL",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "video_qoe_forecast",
+    "intent": "Forecast MOS for video users in the downtown cluster for the next 15 minutes and explain the bottleneck.",
+    "category": "qoe",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.QOE_PREDICTION"
+    ],
+    "tags": [
+      "qoe",
+      "predict-only"
+    ],
+    "notes": "Prediction only, no control.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.qoe_prediction",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.QOE_PREDICTION"
+      ]
+    ]
+  },
+  {
+    "id": "qoe_driven_steering",
+    "intent": "Steer at-risk video users away from the congested cell before their QoE drops.",
+    "category": "qoe",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.QOE_PREDICTION",
+      "RAPP.TRAFFIC_STEERING",
+      "RC"
+    ],
+    "tags": [
+      "qoe",
+      "steering"
+    ],
+    "notes": "Prediction feeds steering.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.qoe_prediction-rapp.traffic_steering-rc",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.QOE_PREDICTION",
+        "RAPP.TRAFFIC_STEERING",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "load_balance_hotspot",
+    "intent": "Balance load between the two busiest cells of the campus using traffic steering.",
+    "category": "mobility",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.TRAFFIC_STEERING",
+      "RC"
+    ],
+    "tags": [
+      "steering"
+    ],
+    "notes": "Observe, steer, validate.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.traffic_steering-rc",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.TRAFFIC_STEERING",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "ping_pong_handover_fix",
+    "intent": "Stop ping-pong handovers on the highway cells by tuning handover margins.",
+    "category": "mobility",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.MOBILITY_OPTIMIZATION",
+      "RC"
+    ],
+    "tags": [
+      "mro"
+    ],
+    "notes": "MRO rApp with RC validation.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.mobility_optimization-rc",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "mobility_root_cause",
+    "intent": "Find out why handover failures doubled yesterday on the ring road cells.",
+    "category": "anomaly",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.ROOT_CAUSE"
+    ],
+    "tags": [
+      "rca",
+      "diagnose-only"
+    ],
+    "notes": "Diagnosis only.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.root_cause",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.ROOT_CAUSE"
+      ]
+    ]
+  },
+  {
+    "id": "coverage_hole_tilt",
+    "intent": "Close the coverage hole near the harbour by adjusting antenna tilt on the surrounding cells.",
+    "category": "coverage",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.RET_TILT",
+      "RC"
+    ],
+    "tags": [
+      "ret"
+    ],
+    "notes": "RET optimisation.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.ret_tilt-rc",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.RET_TILT",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "tilt_after_outage",
+    "intent": "A cell is down: compensate its coverage with the neighbours' tilt and power until it is repaired.",
+    "category": "healing",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.ROOT_CAUSE",
+      "RAPP.SELF_HEALING",
+      "RC"
+    ],
+    "tags": [
+      "coc"
+    ],
+    "notes": "Outage compensation requires root-cause evidence first.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.root_cause-rapp.self_healing-rc",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.ROOT_CAUSE",
+        "RAPP.SELF_HEALING",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "kpi_anomaly_sweep",
+    "intent": "Flag any cell whose downlink delay left its weekly baseline in the last hour.",
+    "category": "anomaly",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.ANOMALY_DETECTION"
+    ],
+    "tags": [
+      "anomaly"
+    ],
+    "notes": "Detection only.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.anomaly_detection",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.ANOMALY_DETECTION"
+      ]
+    ]
+  },
+  {
+    "id": "anomaly_to_transport_fix",
+    "intent": "When delay anomalies point at the backhaul, apply a CoDel policy on the affected bearers.",
+    "category": "transport",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.ANOMALY_DETECTION",
+      "TC",
+      "RC"
+    ],
+    "tags": [
+      "anomaly",
+      "transport"
+    ],
+    "notes": "Detector gates the TC action.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.anomaly_detection-tc-rc",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.ANOMALY_DETECTION",
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "slice_sla_breach",
+    "intent": "The enterprise slice is breaching its latency SLA; re-balance PRB reservations and verify.",
+    "category": "slice",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.SLICE_SLA",
+      "SLICE",
+      "RC"
+    ],
+    "tags": [
+      "slice",
+      "sla"
+    ],
+    "notes": "SLA assurance drives the slice xApp.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.slice_sla-slice-rc",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.SLICE_SLA",
+        "SLICE",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "slice_sla_report",
+    "intent": "Produce the monthly SLA evidence report for all tenant slices.",
+    "category": "enterprise",
+    "expected_workflow": [
+      "RAPP.PM_KPI"
+    ],
+    "tags": [
+      "pm",
+      "report-only"
+    ],
+    "notes": "Single rApp.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:rapp.pm_kpi",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "RAPP.PM_KPI"
+      ]
+    ]
+  },
+  {
+    "id": "capacity_headroom_forecast",
+    "intent": "Forecast PRB headroom per site for next quarter and list sites that need a new carrier.",
+    "category": "capacity",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.CAPACITY_MGMT"
+    ],
+    "tags": [
+      "capacity"
+    ],
+    "notes": "Planning only.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.capacity_mgmt",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.CAPACITY_MGMT"
+      ]
+    ]
+  },
+  {
+    "id": "spectrum_resplit",
+    "intent": "Re-split the shared carrier between the two RATs based on the capacity forecast.",
+    "category": "capacity",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.CAPACITY_MGMT",
+      "RAPP.SPECTRUM_SHARING",
+      "RC"
+    ],
+    "tags": [
+      "dss"
+    ],
+    "notes": "Spectrum planner requires capacity planning upstream.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.capacity_mgmt-rapp.spectrum_sharing-rc",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.SPECTRUM_SHARING",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "interference_hotspot",
+    "intent": "SINR collapsed on three low-load cells; mitigate the interference.",
+    "category": "healing",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.INTERFERENCE",
+      "RC"
+    ],
+    "tags": [
+      "interference"
+    ],
+    "notes": "Interference mitigation.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.interference-rc",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.INTERFERENCE",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "backhaul_policy_advice",
+    "intent": "Recommend a queue policy per bearer class for the congested backhaul link and apply it.",
+    "category": "transport",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.TRANSPORT_QOS",
+      "TC",
+      "RC"
+    ],
+    "tags": [
+      "transport"
+    ],
+    "notes": "Advisor rApp then TC xApp.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.transport_qos-tc-rc",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.TRANSPORT_QOS",
+        "TC",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "pm_report_daily",
+    "intent": "Aggregate today's KPM into the daily performance report.",
+    "category": "enterprise",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.PM_KPI"
+    ],
+    "tags": [
+      "pm"
+    ],
+    "notes": "Observation plus report.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.pm_kpi",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.PM_KPI"
+      ]
+    ]
+  },
+  {
+    "id": "config_rollout_window",
+    "intent": "Roll out the new scheduler configuration to all sites in tonight's maintenance window.",
+    "category": "deployment",
+    "expected_workflow": [
+      "RAPP.RAN_LIFECYCLE"
+    ],
+    "tags": [
+      "lcm"
+    ],
+    "notes": "Lifecycle orchestration only.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:rapp.ran_lifecycle",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "RAPP.RAN_LIFECYCLE"
+      ]
+    ]
+  },
+  {
+    "id": "rollout_blocked_by_energy",
+    "intent": "Roll out the configuration tonight, but energy saving is switching cells off at the same time.",
+    "category": "deployment",
+    "expected_workflow": [
+      "RAPP.RAN_LIFECYCLE"
+    ],
+    "tags": [
+      "lcm",
+      "conflict-scope"
+    ],
+    "notes": "Lifecycle conflicts with cell_power writers; energy saving must not be composed.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:rapp.ran_lifecycle",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "RAPP.RAN_LIFECYCLE"
+      ]
+    ]
+  },
+  {
+    "id": "priority_for_emergency_ues",
+    "intent": "Give emergency-service UEs top scheduling priority in the stadium cell right now.",
+    "category": "qoe",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.QOE_PREDICTION",
+      "RAPP.UE_QOS_CONTROL"
+    ],
+    "tags": [
+      "qos"
+    ],
+    "notes": "QoS controller requires QoE prediction upstream (card dependency).",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.qoe_prediction-rapp.ue_qos_control",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.QOE_PREDICTION",
+        "RAPP.UE_QOS_CONTROL"
+      ]
+    ]
+  },
+  {
+    "id": "deprecated_card_trap",
+    "intent": "Use the legacy energy saver to switch off cells tonight.",
+    "category": "energy",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.ENERGY_SAVING",
+      "RC"
+    ],
+    "tags": [
+      "energy",
+      "distractor"
+    ],
+    "notes": "Intent mentions the legacy card; the deprecated release must still not be selected.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.energy_saving-rc",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.ENERGY_SAVING",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "vendor_variant_trap",
+    "intent": "Run Northwind's traffic steering to relieve the hotspot cell.",
+    "category": "mobility",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.TRAFFIC_STEERING",
+      "RC"
+    ],
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.TRAFFIC_STEERING",
+        "RC"
+      ],
+      [
+        "KPM",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RC"
+      ]
+    ],
+    "tags": [
+      "steering",
+      "distractor"
+    ],
+    "notes": "Either the canonical or the named vendor variant is acceptable.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.traffic_steering-rc",
+    "expects_conflict": false
+  },
+  {
+    "id": "qoe_without_observation",
+    "intent": "Estimate current MOS per cell.",
+    "category": "qoe",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.QOE_PREDICTION"
+    ],
+    "tags": [
+      "qoe",
+      "underspecified"
+    ],
+    "notes": "Underspecified: planner must add the observation step the predictor requires.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.qoe_prediction",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.QOE_PREDICTION"
+      ]
+    ]
+  },
+  {
+    "id": "healing_full_chain",
+    "intent": "Detect, diagnose and compensate a degraded cell automatically.",
+    "category": "healing",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.ANOMALY_DETECTION",
+      "RAPP.ROOT_CAUSE",
+      "RAPP.SELF_HEALING",
+      "RC"
+    ],
+    "tags": [
+      "healing",
+      "long-chain"
+    ],
+    "notes": "Five-step chain across three rApps.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.anomaly_detection-rapp.root_cause-rapp.self_healing-rc",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.ANOMALY_DETECTION",
+        "RAPP.ROOT_CAUSE",
+        "RAPP.SELF_HEALING",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "steering_then_energy",
+    "intent": "Consolidate users onto fewer cells, then put the emptied cells to sleep.",
+    "category": "energy",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.TRAFFIC_STEERING",
+      "RAPP.ENERGY_SAVING",
+      "RC"
+    ],
+    "tags": [
+      "energy",
+      "steering",
+      "long-chain"
+    ],
+    "notes": "Steering writes rc_control, energy saving writes cell_power; traffic steering declares cell_power as conflicting, so order matters.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.traffic_steering-rapp.energy_saving-rc",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.ENERGY_SAVING",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "unknown_vertical_request",
+    "intent": "Our drone-delivery pilot needs stable uplink video in the industrial park this afternoon.",
+    "category": "unknown",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.QOE_PREDICTION",
+      "RAPP.UE_QOS_CONTROL",
+      "RC"
+    ],
+    "tags": [
+      "underspecified",
+      "vertical"
+    ],
+    "notes": "No keyword overlap with any card name.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.qoe_prediction-rapp.ue_qos_control-rc",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.QOE_PREDICTION",
+        "RAPP.UE_QOS_CONTROL",
+        "RC"
+      ]
+    ]
+  },
+  {
+    "id": "report_then_tilt",
+    "intent": "Build the coverage KPI report for the harbour cluster and fix the weakest cell's tilt.",
+    "category": "coverage",
+    "expected_workflow": [
+      "KPM",
+      "RAPP.PM_KPI",
+      "RAPP.RET_TILT",
+      "RC"
+    ],
+    "tags": [
+      "ret",
+      "pm"
+    ],
+    "notes": "Report precedes control.",
+    "open_world": true,
+    "split": "unseen_capability",
+    "expected_workflow_id": "custom:kpm-rapp.pm_kpi-rapp.ret_tilt-rc",
+    "expects_conflict": false,
+    "accepted_workflows": [
+      [
+        "KPM",
+        "RAPP.PM_KPI",
+        "RAPP.RET_TILT",
+        "RC"
+      ]
+    ]
+  }
+]

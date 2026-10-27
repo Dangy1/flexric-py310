@@ -185,6 +185,10 @@ if(XAPP_TARGET_LANGUAGE STREQUAL "PYTHON_LANG")
      "${CMAKE_SOURCE_DIR}/examples/xApp/python3/evaluation"
      "${CMAKE_BINARY_DIR}/examples/xApp/python3/evaluation" )
 
+   add_custom_command(TARGET xapp_sdk POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
+     "${CMAKE_SOURCE_DIR}/examples/xApp/python3/rapps"
+     "${CMAKE_BINARY_DIR}/examples/xApp/python3/rapps" )
+
    add_custom_command(TARGET xapp_sdk POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
      "${CMAKE_SOURCE_DIR}/examples/xApp/python3/build_agent_portal_stack.sh"
      "${CMAKE_BINARY_DIR}/examples/xApp/python3/build_agent_portal_stack.sh" )
