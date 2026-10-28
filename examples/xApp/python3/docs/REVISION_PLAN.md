@@ -329,6 +329,12 @@ First tasks for the execution session:
   ack rate excludes lease-refused attempts. Known infrastructure limitation: 12/360 RC-control calls in seeded records
   unacknowledged because the RIC resent the xApp's E42 setup while the seed's xApp was connected (worker time budget
   expired); documented, not changed while Batch B runs.
+- **Batch B k=8 RIC degradation (2026-10-29 ~00:40):** the live RIC answered E42 SETUP only after 1-3 resend timeouts
+  (2-4 s) while the 8 s health probe still passed, so TC/RC control ACKs missed the 12 s window (28/71 calls in records
+  612-645; also elevated in records 72-143, 21:32-22:01). Probe limit lowered to 2.5 s (052ad713; healthy ~1 s); the
+  next check restarted the stack. TODO when B k=8 ends: identify records whose unacknowledged calls coincide with E42
+  resends in their xApp logs, re-run those intents x all methods for the affected repeat, merge with a manifest note
+  (same procedure as the seeded re-run).
 
 ## 4. Done criteria
 A fresh clone + the README's three commands reproduce every number and figure in the revised paper
