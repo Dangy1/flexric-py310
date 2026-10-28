@@ -300,6 +300,16 @@ First tasks for the execution session:
   under `stdbuf -oL`; nearRT-RIC rebuilt with the iApp fix (`eq_xapp_ric_gen_id` compared `m0->xapp_id` with
   itself); 35/35 tests pass in source and build tree. Smoke run on the live stack: all control steps acked by the
   real marker, no pre-emption. k=all prompts reach 68k chars → Batch B uses `--max-prompt-chars 80000`.
+- **Owner decision (2026-10-28 ~17:50): AppWeaver learning variants, AFTER the current final A/B/C runs.**
+  (1) `appweaver_tpl`: AppWeaver whose retrieval also indexes the operator's three workflow templates as
+  workflow cards (the same information the rule router and the catalog LLM already get; no labels).
+  (2) `appweaver_mem`: `appweaver_tpl` + experience memory: operator feedback on Batch A intents (accepted chain,
+  and why a proposed chain was rejected) stored as experience cards and retrieved by similarity at planning time;
+  trained on Batch A intents only and evaluated on held-out Batch C (blind-authored, disjoint intents). Not run on
+  Batch B (its first 50 intents are Batch A's, so memory would leak answers). Learning from the test labels of the
+  same intents is excluded (test-set leakage). Developed in a separate worktree/branch `appweaver-learning`
+  (~/flexric-learning) so the running batches and Batch B's build-tree sync are not affected; run as additional
+  batches after Batch C, with the same commands, planner and metrics.
 
 ## 4. Done criteria
 A fresh clone + the README's three commands reproduce every number and figure in the revised paper
