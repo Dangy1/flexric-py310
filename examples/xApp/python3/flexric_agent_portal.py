@@ -1207,6 +1207,12 @@ def _provider_statuses() -> List[Dict[str, Any]]:
     ollama_model = os.getenv("OLLAMA_MODEL", "").strip()
     openai_base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
     openai_model = os.getenv("OPENAI_MODEL", "").strip()
+    # vLLM (spark1): an OpenAI-compatible server with its own credentials, kept separate from the
+    # `openai` provider so both can stay configured. A key is only required when the server was
+    # started with `--api-key`; VLLM_API_KEY is sent as a bearer token either way.
+    vllm_base_url = os.getenv("VLLM_BASE_URL", "").strip().rstrip("/")
+    vllm_model = os.getenv("VLLM_MODEL", "").strip()
+    vllm_enabled = bool(vllm_base_url) and bool(vllm_model)
     # Claude provider (opt-in): set CLAUDE_CLI_PROVIDER=1 to route tasks through the local
     # `claude` CLI in headless mode. Listed first so provider="auto" prefers it when enabled.
     claude_opt_in = os.getenv("CLAUDE_CLI_PROVIDER", "").strip().lower() in {"1", "true", "yes", "on"}
@@ -1214,6 +1220,7 @@ def _provider_statuses() -> List[Dict[str, Any]]:
     claude_model = os.getenv("CLAUDE_CLI_MODEL", "").strip()
     return [
         {"id": "claude", "label": "Claude CLI", "enabled": claude_enabled, "endpoint": "claude -p (headless)", "model": claude_model or "cli-default", "notes": "Headless Claude Code CLI; uses the operator's configured default model unless CLAUDE_CLI_MODEL is set.", "supports_tasks": claude_enabled},
+        {"id": "vllm", "label": "vLLM (OpenAI-compatible)", "enabled": vllm_enabled, "endpoint": vllm_base_url or "not-configured", "model": vllm_model or "not-configured", "notes": "Self-hosted vLLM server (spark1). Set VLLM_BASE_URL=http://host:port/v1, VLLM_MODEL and VLLM_API_KEY; select it with LLM_PROVIDER=vllm.", "supports_tasks": vllm_enabled, "api_key_present": bool(os.getenv("VLLM_API_KEY", "").strip())},
         {"id": "ollama", "label": "Ollama", "enabled": bool(ollama_model), "endpoint": ollama_url, "model": ollama_model or "not-configured", "notes": "Best for private on-box automation loops and local model routing.", "supports_tasks": bool(ollama_model)},
         {"id": "openai", "label": "OpenAI API", "enabled": bool(os.getenv("OPENAI_API_KEY")) and bool(openai_model), "endpoint": openai_base_url, "model": openai_model or "not-configured", "notes": "Best for richer planning or cross-domain automation once API credentials are configured.", "supports_tasks": bool(os.getenv("OPENAI_API_KEY")) and bool(openai_model)},
     ]
@@ -2577,6 +2584,13 @@ def _agent_context(agent: AgentCard) -> str:
 
 def _enabled_provider(provider_hint: str) -> Dict[str, Any]:
     providers = _provider_statuses()
+    if provider_hint == "auto":
+        # LLM_PROVIDER pins "auto" to one provider (vllm | ollama | openai | claude) so several can
+        # stay configured at once (e.g. vLLM on spark1 for a batch, Ollama on spark2 kept for later).
+        # It is strict on purpose: a benchmark must fail, not silently plan with another model.
+        pinned = os.getenv("LLM_PROVIDER", "").strip().lower()
+        if pinned and pinned != "auto":
+            provider_hint = pinned
     if provider_hint != "auto":
         for provider in providers:
             if provider["id"] == provider_hint:
@@ -2588,7 +2602,7 @@ def _enabled_provider(provider_hint: str) -> Dict[str, Any]:
     for provider in providers:
         if provider["enabled"]:
             return provider
-    raise HTTPException(status_code=400, detail="No LLM provider is configured. Set Ollama or OpenAI env vars first.")
+    raise HTTPException(status_code=400, detail="No LLM provider is configured. Set vLLM, Ollama or OpenAI env vars first.")
 
 
 def _llm_sampling_options() -> Dict[str, Any]:
@@ -2621,10 +2635,19 @@ def llm_sampling_settings() -> Dict[str, Any]:
     """Public view of the planner inference settings for evaluation manifests."""
     think = _llm_think()
     return {
+        "provider": os.getenv("LLM_PROVIDER", "").strip().lower() or "auto",
         "timeout_s": int(os.getenv("FLEXRIC_AGENT_PROVIDER_TIMEOUT", "90")),
         "think": "model-default" if think is None else think,
+        "reasoning_effort": _llm_reasoning_effort() or "model-default",
         **_llm_sampling_options(),
     }
+
+
+def _llm_reasoning_effort() -> Optional[str]:
+    """gpt-oss reasoning level on OpenAI-compatible servers (FLEXRIC_LLM_REASONING_EFFORT=low|medium|high).
+    Ollama has no equivalent request field, so there it is left to the model default."""
+    value = os.getenv("FLEXRIC_LLM_REASONING_EFFORT", "").strip().lower()
+    return value if value in {"low", "medium", "high"} else None
 
 
 def _openai_chat_body(model: str, system: str, prompt: str) -> Dict[str, Any]:
@@ -2646,7 +2669,28 @@ def _openai_chat_body(model: str, system: str, prompt: str) -> Dict[str, Any]:
     if _llm_think() is not None:
         # vLLM: forwarded to the chat template of reasoning models (Qwen3, gpt-oss ignores it).
         body["chat_template_kwargs"] = {"enable_thinking": _llm_think()}
+    if _llm_reasoning_effort() is not None:
+        # vLLM gpt-oss (harmony): low/medium/high; ignored by models without the field.
+        body["reasoning_effort"] = _llm_reasoning_effort()
     return body
+
+
+def _openai_response_text(data: Dict[str, Any]) -> str:
+    """Content of the first choice. gpt-oss on vLLM returns its reasoning in `reasoning_content`
+    and an empty `content` when max_tokens was spent on reasoning; say so instead of 'empty'."""
+    choice = (data.get("choices") or [{}])[0]
+    message = choice.get("message") or {}
+    text = str(message.get("content") or "").strip()
+    if text:
+        return text
+    reasoning = str(message.get("reasoning_content") or message.get("reasoning") or "").strip()
+    if reasoning:
+        raise RuntimeError(
+            "OpenAI-compatible endpoint returned reasoning but no answer "
+            f"(finish_reason={choice.get('finish_reason')}); raise FLEXRIC_LLM_NUM_PREDICT or lower "
+            "FLEXRIC_LLM_REASONING_EFFORT"
+        )
+    raise RuntimeError("OpenAI-compatible endpoint returned an empty response")
 
 
 def _invoke_provider(provider: Dict[str, Any], agent: AgentCard, prompt: str) -> str:
@@ -2703,23 +2747,22 @@ def _invoke_provider(provider: Dict[str, Any], agent: AgentCard, prompt: str) ->
             raise RuntimeError("Ollama returned an empty response")
         return text
 
-    if provider["id"] == "openai":
-        api_key = os.getenv("OPENAI_API_KEY", "").strip()
+    if provider["id"] in {"openai", "vllm"}:
+        api_key = os.getenv("VLLM_API_KEY" if provider["id"] == "vllm" else "OPENAI_API_KEY", "").strip()
+        headers = {"Content-Type": "application/json"}
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
         response = requests.post(
             f"{provider['endpoint'].rstrip('/')}/chat/completions",
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            },
+            headers=headers,
             json=_openai_chat_body(provider["model"], system, full_prompt),
             timeout=timeout_s,
         )
-        response.raise_for_status()
-        data = response.json()
-        text = data["choices"][0]["message"]["content"].strip()
-        if not text:
-            raise RuntimeError("OpenAI-compatible endpoint returned an empty response")
-        return text
+        if response.status_code >= 400:
+            raise RuntimeError(
+                f"{provider['label']} returned HTTP {response.status_code}: {response.text.strip()[:400]}"
+            )
+        return _openai_response_text(response.json())
 
     raise RuntimeError(f"Unsupported provider: {provider['id']}")
 

@@ -16,8 +16,13 @@ cmake --build build --target xapp_sdk -j8
 cd build/examples/xApp/python3/evaluation
 
 # 2. planner settings (recorded in every batch manifest)
+#    Ollama host (spark2):
 export OLLAMA_BASE_URL=http://<gpu-host>:11434 OLLAMA_MODEL=qwen3.6:27b FLEXRIC_LLM_THINK=false
+#    or a vLLM host (spark1), with Ollama left configured for later; LLM_PROVIDER picks the one used:
+# export VLLM_BASE_URL=http://<vllm-host>:8000/v1 VLLM_MODEL=openai/gpt-oss-20b VLLM_API_KEY=<key>
+# export LLM_PROVIDER=vllm FLEXRIC_LLM_REASONING_EFFORT=medium
 export FLEXRIC_LLM_TEMPERATURE=0.2 FLEXRIC_LLM_SEED=7 LLM_SERVER_HARDWARE="<host, GPU model, VRAM>"
+../scripts/check_llm_provider.py     # one planner call; prints provider, model, latency, reply
 S=../scripts
 # after every record: probe E42 registration; on failure discard the record, restart the stack, re-run it
 HEALTH="--health-cmd $S/probe_e42.sh --maintenance-cmd $S/restart_agent_portal_stack.sh"
@@ -388,6 +393,22 @@ The portal can surface both local and hosted LLM backends:
 export OLLAMA_BASE_URL=http://127.0.0.1:11434
 export OLLAMA_MODEL=qwen2.5:14b
 ```
+
+### vLLM (self-hosted, OpenAI-compatible)
+
+```bash
+export VLLM_BASE_URL=http://spark1:8000/v1      # the server's /v1 root
+export VLLM_MODEL=openai/gpt-oss-20b            # served model id (`curl $VLLM_BASE_URL/models`)
+export VLLM_API_KEY=your_key_here               # only needed if the server runs with --api-key
+export LLM_PROVIDER=vllm                        # pin provider="auto" to vLLM
+export FLEXRIC_LLM_REASONING_EFFORT=medium      # gpt-oss: low | medium | high (optional)
+```
+
+`LLM_PROVIDER` (`vllm`, `ollama`, `openai`, `claude`) decides which configured provider serves
+`provider="auto"` requests, so Ollama and vLLM can both stay configured; without it the first enabled
+provider in the order claude, vllm, ollama, openai is used. If the pinned provider is not configured
+the request fails instead of falling back, so a benchmark never silently runs on another model.
+`scripts/check_llm_provider.py` makes one call and prints which provider and model answered.
 
 ### OpenAI API
 

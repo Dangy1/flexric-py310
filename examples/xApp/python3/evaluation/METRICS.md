@@ -51,6 +51,7 @@ Recorded per batch in `manifest.json → planner_inference_settings` (temperatur
 timeout) and per record in `planner_provider` / `planner_model`. Set them with
 `FLEXRIC_LLM_TEMPERATURE`, `FLEXRIC_LLM_SEED`, `FLEXRIC_LLM_NUM_PREDICT`, and `FLEXRIC_LLM_THINK`
 (true/false; unset = the model's default reasoning mode — Ollama `think`, vLLM
-`chat_template_kwargs.enable_thinking`). The OpenAI-compatible path (vLLM on spark1) sends the same
-temperature/seed/max_tokens. Hardware of the LLM host is
-recorded from `LLM_SERVER_HARDWARE`.
+`chat_template_kwargs.enable_thinking`). The vLLM path (`LLM_PROVIDER=vllm`, `VLLM_BASE_URL`,
+`VLLM_MODEL`, `VLLM_API_KEY`) sends the same temperature/seed/max_tokens plus
+`FLEXRIC_LLM_REASONING_EFFORT` (gpt-oss low/medium/high); the pinned provider and effort are part of
+`planner_inference_settings`. Hardware of the LLM host is recorded from `LLM_SERVER_HARDWARE`.

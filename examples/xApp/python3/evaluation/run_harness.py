@@ -1613,6 +1613,11 @@ def _is_provider_unavailable(detail: str) -> bool:
         "connectionerror",
         "name or service not known",
         "temporarily unavailable",
+        "is not configured",      # LLM_PROVIDER pinned to a provider without its env vars
+        "returned http 401",      # vLLM/OpenAI: wrong or missing API key
+        "returned http 403",
+        "returned http 404",      # wrong base URL or served model id
+        "returned http 503",
     ]
     return any(marker in text for marker in markers)
 
