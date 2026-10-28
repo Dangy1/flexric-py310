@@ -1858,6 +1858,7 @@ def run_record(method: str, intent: Dict[str, Any], repeat_index: int, duration_
     Recovery is now the in-method bounded lease wait (all methods) and AppWeaver's Recover node.
     """
     del enable_recovery
+    record_started_at = time.time()
     reset_runtime()
     _RECORD_STATE.update({"active": True, "notes": str(intent.get("notes") or ""), "own_run_ids": set(), "reset_calls": 0, "lease_wait_s": 0.0})
     try:
@@ -1907,6 +1908,10 @@ def run_record(method: str, intent: Dict[str, Any], repeat_index: int, duration_
             method_error=method_error,
         )
         assert record["preempted_other_workflow"] is False, "a method pre-empted another workflow"
+        # Wall-clock window of the whole record (seed, method, acknowledgement wait), so host resource
+        # samples (resource_monitor.py) can be attributed to the method that was running.
+        record["record_started_at"] = round(record_started_at, 3)
+        record["record_ended_at"] = round(time.time(), 3)
     finally:
         _RECORD_STATE["active"] = False
     reset_runtime()

@@ -669,6 +669,8 @@ class TaskState:
     response: str = ""
     error: str = ""
     ended_at: Optional[float] = None
+    # Token accounting reported by OpenAI-compatible servers (vLLM): prompt/completion/total tokens.
+    usage: Dict[str, Any] = field(default_factory=dict)
 
     def to_public(self) -> Dict[str, Any]:
         return {
@@ -681,6 +683,7 @@ class TaskState:
             "response": self.response,
             "error": self.error,
             "ended_at": self.ended_at,
+            "usage": dict(self.usage),
         }
 
 
@@ -847,6 +850,7 @@ MESSAGES: List[Dict[str, Any]] = []
 WORKFLOW_RUNS: List[Dict[str, Any]] = []
 MANAGED_SERVICE_PROCS: Dict[str, subprocess.Popen] = {}
 STATE_LOCK = threading.RLock()
+_LLM_USAGE = threading.local()  # usage of the last provider call on this thread
 
 
 class AgentBusyError(RuntimeError):
@@ -2762,7 +2766,9 @@ def _invoke_provider(provider: Dict[str, Any], agent: AgentCard, prompt: str) ->
             raise RuntimeError(
                 f"{provider['label']} returned HTTP {response.status_code}: {response.text.strip()[:400]}"
             )
-        return _openai_response_text(response.json())
+        data = response.json()
+        _LLM_USAGE.value = dict(data.get("usage") or {})
+        return _openai_response_text(data)
 
     raise RuntimeError(f"Unsupported provider: {provider['id']}")
 
@@ -2783,7 +2789,9 @@ def _run_task_locked(agent: AgentCard, provider_hint: str, prompt: str) -> TaskS
     agent.timeline.insert(0, _timeline(f"Started LLM task via {provider['id']}"))
 
     try:
+        _LLM_USAGE.value = {}
         task.response = _invoke_provider(provider, agent, prompt)
+        task.usage = dict(getattr(_LLM_USAGE, "value", {}) or {})
         task.status = "completed"
         agent.status = "ready"
         agent.activity = f"Completed LLM task via {provider['label']}."
