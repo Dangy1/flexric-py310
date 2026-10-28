@@ -9,7 +9,11 @@ import xapp_sdk as ric
 
 TC_SM_ID = 146
 _LOCK_FD = None
-_LOCK_PATH = "/tmp/flexric_python_tc_xapp.lock"
+# One TC xApp per RIC (two would collide in SCTP setup). The lock is per RIC target, so a dry-run on the
+# tier-1 twin (FLEXRIC_XAPP_CONF -> 127.0.0.2) does not collide with a TC xApp on the live RIC.
+_RIC_CONF = os.environ.get("FLEXRIC_XAPP_CONF", "").strip()
+_LOCK_PATH = "/tmp/flexric_python_tc_xapp.lock" if not _RIC_CONF else (
+    "/tmp/flexric_python_tc_xapp." + __import__("hashlib").sha1(_RIC_CONF.encode()).hexdigest()[:10] + ".lock")
 
 
 def _acquire_single_instance_lock() -> None:
