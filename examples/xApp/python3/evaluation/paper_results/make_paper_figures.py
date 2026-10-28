@@ -232,7 +232,8 @@ def method_metrics(records: List[Dict[str, Any]]) -> Dict[str, Any]:
         out[f"{split}_rule_accuracy"] = ratio_bootstrap(subset, flag("workflow_match_rule"), ONE)
         out[f"{split}_exact_accuracy"] = ratio_bootstrap(subset, flag("workflow_match"), ONE)
 
-    calls = lambda r: [c for c in (r.get("tool_calls") or []) if c.get("acknowledged") is not None]  # noqa: E731
+    # Lease-refused attempts (status "conflict") never launched anything, so they are not control calls.
+    calls = lambda r: [c for c in (r.get("tool_calls") or []) if c.get("acknowledged") is not None and c.get("status") != "conflict"]  # noqa: E731
     out["tool_calls"] = sum(len(r.get("tool_calls") or []) for r in records)
     out["ack_rate"] = ratio_bootstrap(records, lambda r: sum(1 for c in calls(r) if c.get("acknowledged") is True),
                                       lambda r: len(calls(r)))
@@ -245,6 +246,14 @@ def method_metrics(records: List[Dict[str, Any]]) -> Dict[str, Any]:
     out["conflict_recall"] = wilson(sum(1 for r in seeded if conflict_flagged(r)), len(seeded))
     out["conflict_fp_rate"] = wilson(sum(1 for r in unseeded if conflict_flagged(r)), len(unseeded))
     out["seeded_recovered"] = wilson(sum(1 for r in seeded if (r.get("execution_artifacts") or {}).get("internal_recovery_succeeded")), len(seeded))
+    # Owner decision O7 (2026-10-28): no pre-emption; every method gets the same bounded lease wait.
+    met = lambda r: bool(r.get("conflict_detected_before_control")) or any(  # noqa: E731
+        c.get("status") == "conflict" for c in (r.get("tool_calls") or []))
+    out["seeded_met_conflict"] = wilson(sum(1 for r in seeded if met(r)), len(seeded))
+    out["seeded_completed_after_wait"] = wilson(sum(1 for r in seeded if r.get("completed_after_wait")), len(seeded))
+    out["seeded_unresolved"] = wilson(sum(1 for r in seeded if r.get("lease_refusal_unresolved") or r.get("execution_status") in ("queued", "rejected")), len(seeded))
+    out["seeded_rule_accuracy"] = wilson(sum(1 for r in seeded if r.get("workflow_match_rule")), len(seeded))
+    out["seeded_preempted"] = sum(1 for r in seeded if r.get("preempted_other_workflow"))
 
     out["hallucinated_refs"] = sum(int(r.get("hallucinated_reference_count") or 0) for r in records)
     out["hallucinated_per_record"] = ratio_bootstrap(records, lambda r: float(r.get("hallucinated_reference_count") or 0), ONE)
@@ -362,11 +371,11 @@ def fig_accuracy(batch: Batch, metrics: Dict[str, Dict[str, Any]], out: Path) ->
 def fig_reliability(batch: Batch, metrics: Dict[str, Dict[str, Any]], out: Path) -> None:
     methods = batch.methods
     fig, ax = plt.subplots(figsize=(SINGLE_COL, 2.0))
-    # Seeded conflicts are refused by the portal lease for every method that reaches the busy agent;
-    # what differs is whether the method then reaches a clean execution (internal recovery).
-    grouped(ax, [[metrics[m]["ack_rate"] for m in methods], [metrics[m]["conflict_recall"] for m in methods],
-                 [metrics[m]["seeded_recovered"] for m in methods]],
-            ["Acknowledged tool calls", "Seeded conflict refused", "Seeded conflict recovered"],
+    # Seeded conflicts: no method may pre-empt the other workflow; all get the same bounded lease wait.
+    # Shown: completed after waiting, and whether the seeded record's chain is correct (label rule).
+    grouped(ax, [[metrics[m]["ack_rate"] for m in methods], [metrics[m]["seeded_completed_after_wait"] for m in methods],
+                 [metrics[m]["seeded_rule_accuracy"] for m in methods]],
+            ["Acknowledged tool calls", "Seeded: done after wait", "Seeded: correct chain"],
             [C_GREEN, C_VERM, C_SKY])
     _finish(ax, "Rate", methods)
     ax.legend(ncol=3, loc="upper left", bbox_to_anchor=(0, 1.16), handlelength=1.4, columnspacing=0.8)
@@ -518,7 +527,7 @@ CSV_METRICS = ["rule_accuracy", "rule_accuracy_sens", "known_rule_accuracy", "op
                "accuracy", "exact_accuracy", "set_accuracy", "known_accuracy", "open_world_accuracy",
                "unseen_capability_accuracy", "known_exact_accuracy", "open_world_exact_accuracy",
                "unseen_capability_exact_accuracy", "ack_rate", "launch_rate", "conflict_recall", "conflict_fp_rate",
-               "seeded_recovered", "hallucinated_per_record", "retrieval_hit_rate", "compat_ok_rate"]
+               "seeded_recovered", "seeded_met_conflict", "seeded_completed_after_wait", "seeded_unresolved", "seeded_rule_accuracy", "hallucinated_per_record", "retrieval_hit_rate", "compat_ok_rate"]
 CSV_SCALARS = ["records", "intents", "repeats", "known_records", "open_world_records", "unseen_capability_records",
                "tool_calls", "seeded_records", "hallucinated_refs", "records_with_hallucination", "latency_n",
                "latency_mean_ms", "latency_sd_ms", "latency_median_ms", "latency_p95_ms", "latency_max_ms",
@@ -557,8 +566,9 @@ def write_table_a(batch: Batch, metrics: Dict[str, Dict[str, Any]], out: Path) -
                f"{m0['open_world_intents']} open-world intents; {m0['repeats']} repeats; planner {batch.model}). "
                "Percent with 95\\% CI. Accuracy: pre-registered label rule (all required apps, observe before control "
                "before validation, no extra write-scope app; extra read-only apps allowed); exact: ordered match with "
-               "the labelled chain. Conflicts: seeded records refused by the lease before control (refused) and "
-               "brought to a clean execution by the method (recovered); no method flagged an unseeded record. "
+               "the labelled chain. Seeded conflicts (another workflow holds an application the intent needs; no method "
+               "may pre-empt it, all get the same bounded 45 s wait): share of seeded records completed after waiting, "
+               "and share with a correct chain; no method flagged an unseeded record. "
                "Latency is intent-to-plan wall clock, median / p95 in seconds.")
     if batch.preliminary:
         caption = "\\textbf{PRELIMINARY.} " + caption
@@ -567,7 +577,7 @@ def write_table_a(batch: Batch, metrics: Dict[str, Dict[str, Any]], out: Path) -
         "\\footnotesize", "\\setlength{\\tabcolsep}{3pt}", "\\begin{tabular}{@{}lcccccccc@{}}", "\\toprule",
         "\\textbf{Method} & \\makecell{\\textbf{Known}\\\\\\textbf{acc.}} & \\makecell{\\textbf{Open-world}\\\\\\textbf{acc.}} & "
         "\\makecell{\\textbf{Exact}\\\\\\textbf{match}} & \\makecell{\\textbf{Ack.}\\\\\\textbf{tool calls}} & "
-        "\\makecell{\\textbf{Conflict}\\\\\\textbf{refused}} & \\makecell{\\textbf{Conflict}\\\\\\textbf{recovered}} & "
+        "\\makecell{\\textbf{Seeded: done}\\\\\\textbf{after wait}} & \\makecell{\\textbf{Seeded:}\\\\\\textbf{correct}} & "
         "\\makecell{\\textbf{Halluc.}\\\\\\textbf{refs}} & "
         "\\makecell{\\textbf{Latency (s)}\\\\\\textbf{med. / p95}} \\\\",
         "\\midrule",
@@ -579,7 +589,7 @@ def write_table_a(batch: Batch, metrics: Dict[str, Dict[str, Any]], out: Path) -
             f"\\textbf{{{name}}}" if method == "langgraph_agentcard" else name,
             pct(m["known_rule_accuracy"]), pct(m["open_world_rule_accuracy"]), pct(m["exact_accuracy"]),
             pct(m["ack_rate"]) + f" {{\\scriptsize(n={m['tool_calls']})}}",
-            pct(m["conflict_recall"]), pct(m["seeded_recovered"]), str(m["hallucinated_refs"]),
+            pct(m["seeded_completed_after_wait"]), pct(m["seeded_rule_accuracy"]), str(m["hallucinated_refs"]),
             f"{secs(m['latency_median_ms'])} / {secs(m['latency_p95_ms'])}",
         ])
         lines.append(("\\rowcolor{gray!12}\n" if method == "langgraph_agentcard" else "") + row + " \\\\")
@@ -699,8 +709,8 @@ def write_readme(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[str
         if b.preliminary:
             lines += [f"> **Preliminary.** Planner `{b.model}` stands in for gpt-oss (broken on spark2 under Ollama 0.40).",
                       "> These numbers validate the pipeline; they are not the paper's results.", ""]
-        lines += ["| Method | Accuracy (rule) | Known | Open-world | Unseen cap. | Exact | Accepted | Set | Ack. calls | Conflict refused | Conflict recovered | Conflict FP | Halluc. refs | Retrieval hit | Latency med / p95 / max (s) |",
-                  "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+        lines += ["| Method | Accuracy (rule) | Known | Open-world | Unseen cap. | Exact | Accepted | Set | Ack. calls | Seeded: met conflict | Seeded: done after wait | Seeded: unresolved | Seeded: correct | Conflict FP | Halluc. refs | Retrieval hit | Latency med / p95 / max (s) |",
+                  "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
         for method in b.methods:
             m = metrics[method]
             lines.append("| " + " | ".join([
@@ -708,7 +718,8 @@ def write_readme(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[str
                 pct_md(m["open_world_rule_accuracy"]), pct_md(m["unseen_capability_rule_accuracy"]), pct_md(m["exact_accuracy"]),
                 pct_md(m["accuracy"]), pct_md(m["set_accuracy"]),
                 f"{pct_md(m['ack_rate'])} (n={m['tool_calls']})",
-                f"{pct_md(m['conflict_recall'])} (n={m['seeded_records']})", pct_md(m["seeded_recovered"]), pct_md(m["conflict_fp_rate"]),
+                f"{pct_md(m['seeded_met_conflict'])} (n={m['seeded_records']})", pct_md(m["seeded_completed_after_wait"]),
+                pct_md(m["seeded_unresolved"]), pct_md(m["seeded_rule_accuracy"]), pct_md(m["conflict_fp_rate"]),
                 f"{m['hallucinated_refs']} in {m['records_with_hallucination']} records", pct_md(m["retrieval_hit_rate"]),
                 " / ".join(secs(m[k], tex=False) for k in ("latency_median_ms", "latency_p95_ms", "latency_max_ms")),
             ]) + " |")

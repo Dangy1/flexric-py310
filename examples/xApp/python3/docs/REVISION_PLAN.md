@@ -319,6 +319,16 @@ First tasks for the execution session:
   LLM 7.6 s. Audit found two infrastructure bugs affecting only the 6 seeded-conflict intents (host-wide TC lock
   collided with the twin dry-run; slice xApp shutdown hang held the lease) — fixed (188395df, 21bc22f5); those 180
   records are re-run for all methods before Batch B and replace the originals in the conflict analysis.
+- **Seeded-conflict re-run (19:16–20:59) and final Batch A = `20261028T190000Z_A_final_gptoss120b_spark1_seededfix`:**
+  original Batch A with the 6 seeded intents x 6 methods x 5 repeats replaced by `…_A_seeded_rerun_…` (code e6998752,
+  fixes 188395df + 21bc22f5; manifest `merged_from`/`merge_note`). Fix verified: AppWeaver Validate rejections 6 -> 0,
+  no-repair 9 -> 0; every AppWeaver record that met the busy app waited and completed. Seeded results (n=30 each):
+  done after wait — rule router 97 %, catalog LLM 37 %, AppWeaver 37 % (it met the busy app in 11/30; in the others the
+  planner left TC out because the intent sentence says TC is busy); correct chain — AppWeaver 37 %, no-repair 50 %,
+  rule router 17 %, catalog LLM 13 %. Conflict metrics now follow O7 (met / done after wait / unresolved / correct),
+  ack rate excludes lease-refused attempts. Known infrastructure limitation: 12/360 RC-control calls in seeded records
+  unacknowledged because the RIC resent the xApp's E42 setup while the seed's xApp was connected (worker time budget
+  expired); documented, not changed while Batch B runs.
 
 ## 4. Done criteria
 A fresh clone + the README's three commands reproduce every number and figure in the revised paper

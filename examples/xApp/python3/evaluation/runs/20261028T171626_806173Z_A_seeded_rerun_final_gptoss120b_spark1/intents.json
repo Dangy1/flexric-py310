@@ -1,0 +1,592 @@
+[
+  {
+    "id": "tc_conflict_recovery",
+    "intent": "Queue a TC optimization request behind an already running transport control session and recover cleanly.",
+    "category": "transport",
+    "expected_workflow_id": "transport-qos",
+    "expected_workflow": [
+      "TC"
+    ],
+    "expects_conflict": true,
+    "conflict_seed": "transport-qos",
+    "open_world": false,
+    "tags": [
+      "transport",
+      "conflict",
+      "closed-world"
+    ],
+    "notes": "Deliberately introduces a TC resource conflict to test queueing or blocked launch handling.",
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "TC"
+      ],
+      "order": [],
+      "order_basis": {},
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.ANR",
+        "RAPP.ANR.NORTHWIND",
+        "RAPP.ANR.V0",
+        "RAPP.BEAMFORMING",
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENDC_STEERING",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MIMO_SLEEP",
+        "RAPP.MIMO_SLEEP.NORTHWIND",
+        "RAPP.MIMO_SLEEP.V0",
+        "RAPP.MOBILITY_LOAD_BALANCING",
+        "RAPP.MOBILITY_LOAD_BALANCING.NORTHWIND",
+        "RAPP.MOBILITY_LOAD_BALANCING.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.PCI_OPTIMIZATION",
+        "RAPP.PCI_OPTIMIZATION.NORTHWIND",
+        "RAPP.PCI_OPTIMIZATION.V0",
+        "RAPP.RACH_OPTIMIZATION",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SIGNALLING_STORM",
+        "RAPP.SLICE_ADMISSION",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECIAL_EVENTS",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "RAPP.UL_INTERFERENCE",
+        "SLICE"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "TC": "control"
+      }
+    }
+  },
+  {
+    "id": "latency_under_busy_tc",
+    "intent": "Protect latency while TC control is already busy with another workflow.",
+    "category": "latency",
+    "expected_workflow_id": "observe-diagnose-optimize",
+    "expected_workflow": [
+      "KPM",
+      "SLICE",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": true,
+    "conflict_seed": "transport-qos",
+    "open_world": false,
+    "tags": [
+      "latency",
+      "conflict",
+      "closed-world"
+    ],
+    "notes": "Tests whether a broader optimization workflow detects the busy TC resource and can recover on retry.",
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "SLICE",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "SLICE"
+        ],
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<SLICE": "role",
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.ANR",
+        "RAPP.ANR.NORTHWIND",
+        "RAPP.ANR.V0",
+        "RAPP.BEAMFORMING",
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENDC_STEERING",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MIMO_SLEEP",
+        "RAPP.MIMO_SLEEP.NORTHWIND",
+        "RAPP.MIMO_SLEEP.V0",
+        "RAPP.MOBILITY_LOAD_BALANCING",
+        "RAPP.MOBILITY_LOAD_BALANCING.NORTHWIND",
+        "RAPP.MOBILITY_LOAD_BALANCING.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.PCI_OPTIMIZATION",
+        "RAPP.PCI_OPTIMIZATION.NORTHWIND",
+        "RAPP.PCI_OPTIMIZATION.V0",
+        "RAPP.RACH_OPTIMIZATION",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SIGNALLING_STORM",
+        "RAPP.SLICE_ADMISSION",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECIAL_EVENTS",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "RAPP.UL_INTERFERENCE"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "SLICE": "control",
+        "TC": "control"
+      }
+    }
+  },
+  {
+    "id": "backhaul_queue_conflict_recovery",
+    "intent": "Recover from a backhaul queue mitigation request when TC is already busy with another control loop.",
+    "category": "transport",
+    "expected_workflow_id": "custom:kpm-tc-rc",
+    "expected_workflow": [
+      "KPM",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": true,
+    "conflict_seed": "transport-qos",
+    "open_world": true,
+    "tags": [
+      "backhaul",
+      "conflict",
+      "open-world"
+    ],
+    "notes": "Open-world conflict case for transport-heavy discovery.",
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.ANR",
+        "RAPP.ANR.NORTHWIND",
+        "RAPP.ANR.V0",
+        "RAPP.BEAMFORMING",
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENDC_STEERING",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MIMO_SLEEP",
+        "RAPP.MIMO_SLEEP.NORTHWIND",
+        "RAPP.MIMO_SLEEP.V0",
+        "RAPP.MOBILITY_LOAD_BALANCING",
+        "RAPP.MOBILITY_LOAD_BALANCING.NORTHWIND",
+        "RAPP.MOBILITY_LOAD_BALANCING.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.PCI_OPTIMIZATION",
+        "RAPP.PCI_OPTIMIZATION.NORTHWIND",
+        "RAPP.PCI_OPTIMIZATION.V0",
+        "RAPP.RACH_OPTIMIZATION",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SIGNALLING_STORM",
+        "RAPP.SLICE_ADMISSION",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECIAL_EVENTS",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "RAPP.UL_INTERFERENCE",
+        "SLICE"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "TC": "control"
+      }
+    }
+  },
+  {
+    "id": "slice_policy_race_recovery",
+    "intent": "Repair a slice-policy race when another slice workflow is already running.",
+    "category": "slice",
+    "expected_workflow_id": "custom:kpm-slice-rc",
+    "expected_workflow": [
+      "KPM",
+      "SLICE",
+      "RC"
+    ],
+    "expects_conflict": true,
+    "conflict_seed": "slice-assurance",
+    "open_world": true,
+    "tags": [
+      "slice",
+      "conflict",
+      "open-world"
+    ],
+    "notes": "Open-world conflict case for slice-control adaptation.",
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "SLICE"
+      ],
+      "order": [
+        [
+          "KPM",
+          "SLICE"
+        ]
+      ],
+      "order_basis": {
+        "KPM<SLICE": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.ANR",
+        "RAPP.ANR.NORTHWIND",
+        "RAPP.ANR.V0",
+        "RAPP.BEAMFORMING",
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENDC_STEERING",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MIMO_SLEEP",
+        "RAPP.MIMO_SLEEP.NORTHWIND",
+        "RAPP.MIMO_SLEEP.V0",
+        "RAPP.MOBILITY_LOAD_BALANCING",
+        "RAPP.MOBILITY_LOAD_BALANCING.NORTHWIND",
+        "RAPP.MOBILITY_LOAD_BALANCING.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.PCI_OPTIMIZATION",
+        "RAPP.PCI_OPTIMIZATION.NORTHWIND",
+        "RAPP.PCI_OPTIMIZATION.V0",
+        "RAPP.RACH_OPTIMIZATION",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SIGNALLING_STORM",
+        "RAPP.SLICE_ADMISSION",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECIAL_EVENTS",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "RAPP.UL_INTERFERENCE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "SLICE": "control"
+      }
+    }
+  },
+  {
+    "id": "enterprise_tunnel_busy_tc",
+    "intent": "Protect enterprise tunnel latency while TC is already busy with another workflow.",
+    "category": "enterprise",
+    "expected_workflow_id": "custom:kpm-tc-rc",
+    "expected_workflow": [
+      "KPM",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": true,
+    "conflict_seed": "transport-qos",
+    "open_world": true,
+    "tags": [
+      "enterprise",
+      "tunnel",
+      "conflict",
+      "open-world"
+    ],
+    "notes": "Transport conflict under an enterprise intent.",
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.ANR",
+        "RAPP.ANR.NORTHWIND",
+        "RAPP.ANR.V0",
+        "RAPP.BEAMFORMING",
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENDC_STEERING",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MIMO_SLEEP",
+        "RAPP.MIMO_SLEEP.NORTHWIND",
+        "RAPP.MIMO_SLEEP.V0",
+        "RAPP.MOBILITY_LOAD_BALANCING",
+        "RAPP.MOBILITY_LOAD_BALANCING.NORTHWIND",
+        "RAPP.MOBILITY_LOAD_BALANCING.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.PCI_OPTIMIZATION",
+        "RAPP.PCI_OPTIMIZATION.NORTHWIND",
+        "RAPP.PCI_OPTIMIZATION.V0",
+        "RAPP.RACH_OPTIMIZATION",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SIGNALLING_STORM",
+        "RAPP.SLICE_ADMISSION",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECIAL_EVENTS",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "RAPP.UL_INTERFERENCE",
+        "SLICE"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "TC": "control"
+      }
+    }
+  },
+  {
+    "id": "unknown_busy_runtime_recovery",
+    "intent": "Recover a safe adaptive workflow for an undefined service issue while TC is already busy.",
+    "category": "unknown",
+    "expected_workflow_id": "custom:kpm-tc-rc",
+    "expected_workflow": [
+      "KPM",
+      "TC",
+      "RC"
+    ],
+    "expects_conflict": true,
+    "conflict_seed": "transport-qos",
+    "open_world": true,
+    "tags": [
+      "unknown-task",
+      "conflict",
+      "open-world"
+    ],
+    "notes": "Open-ended conflict scenario for agent-card recovery planning.",
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.ANR",
+        "RAPP.ANR.NORTHWIND",
+        "RAPP.ANR.V0",
+        "RAPP.BEAMFORMING",
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENDC_STEERING",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MIMO_SLEEP",
+        "RAPP.MIMO_SLEEP.NORTHWIND",
+        "RAPP.MIMO_SLEEP.V0",
+        "RAPP.MOBILITY_LOAD_BALANCING",
+        "RAPP.MOBILITY_LOAD_BALANCING.NORTHWIND",
+        "RAPP.MOBILITY_LOAD_BALANCING.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.PCI_OPTIMIZATION",
+        "RAPP.PCI_OPTIMIZATION.NORTHWIND",
+        "RAPP.PCI_OPTIMIZATION.V0",
+        "RAPP.RACH_OPTIMIZATION",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SIGNALLING_STORM",
+        "RAPP.SLICE_ADMISSION",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECIAL_EVENTS",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "RAPP.UL_INTERFERENCE",
+        "SLICE"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "TC": "control"
+      }
+    }
+  }
+]

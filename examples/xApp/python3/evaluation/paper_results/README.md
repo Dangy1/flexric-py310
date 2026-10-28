@@ -11,18 +11,18 @@ No number from the May-2026 batches appears here.
 
 ## Batches
 
-- **Batch A (paper registry)**: `20261028T084337_250177Z_A_final_gptoss120b_spark1` - 50 intents x 6 methods x 5 repeats = 1500 records; planner `gpt-oss-120b`, settings {"provider": "vllm", "reasoning_effort": "medium", "seed": 7, "temperature": 0.2, "think": "model-default", "timeout_s": 180}, registry 9 cards, retrieval_k=0
+- **Batch A (paper registry)**: `20261028T190000Z_A_final_gptoss120b_spark1_seededfix` - 50 intents x 6 methods x 5 repeats = 1500 records; planner `gpt-oss-120b`, settings {"provider": "vllm", "reasoning_effort": "medium", "seed": 7, "temperature": 0.2, "think": "model-default", "timeout_s": 180}, registry 9 cards, retrieval_k=0
 
-## Batch A (paper registry) - `20261028T084337_250177Z_A_final_gptoss120b_spark1`
+## Batch A (paper registry) - `20261028T190000Z_A_final_gptoss120b_spark1_seededfix`
 
-| Method | Accuracy (rule) | Known | Open-world | Unseen cap. | Exact | Accepted | Set | Ack. calls | Conflict refused | Conflict recovered | Conflict FP | Halluc. refs | Retrieval hit | Latency med / p95 / max (s) |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Rule router | 36.0% [22, 50] | 81.8% [55, 100] | 23.1% [10, 38] | -- | 30.0% [18, 44] | 30.0% [18, 44] | 30.0% [18, 44] | 94.7% [91, 98] (n=780) | 100.0% [89, 100] (n=30) | 0.0% [0, 11] | 0.0% [0, 2] | 0 in 0 records | -- | <0.01 / 33.55 / 45.09 |
-| Single app | 24.0% [12, 36] | 27.3% [0, 55] | 23.1% [10, 36] | -- | 6.0% [0, 14] | 6.0% [0, 14] | 6.0% [0, 14] | 92.2% [86, 98] (n=270) | 66.7% [49, 81] (n=30) | 0.0% [0, 11] | 0.0% [0, 2] | 0 in 0 records | -- | <0.01 / 33.54 / 33.55 |
-| LLM (no catalog) | 0.0% [0, 0] | 0.0% [0, 0] | 0.0% [0, 0] | -- | 0.0% [0, 0] | 0.0% [0, 0] | 0.0% [0, 0] | 87.0% [62, 100] (n=23) | 6.7% [2, 21] (n=30) | 0.0% [0, 11] | 0.0% [0, 2] | 706 in 182 records | -- | 15.23 / 27.74 / 54.91 |
-| LLM (catalog) | 34.4% [22, 48] | 67.3% [42, 89] | 25.1% [13, 39] | -- | 28.8% [17, 42] | 28.8% [17, 42] | 29.2% [17, 42] | 97.5% [95, 99] (n=856) | 36.7% [22, 54] (n=30) | 0.0% [0, 11] | 0.0% [0, 2] | 0 in 0 records | -- | 7.56 / 18.71 / 57.22 |
-| AppWeaver (no repair) | 70.0% [58, 82] | 67.3% [40, 91] | 70.8% [58, 83] | -- | 12.4% [6, 20] | 12.4% [6, 20] | 12.4% [6, 20] | 97.1% [94, 99] (n=550) | 46.7% [30, 64] (n=30) | 0.0% [0, 11] | 0.0% [0, 2] | 0 in 0 records | 100.0% [100, 100] | 26.45 / 54.90 / 106.65 |
-| AppWeaver | 70.4% [59, 82] | 65.5% [36, 91] | 71.8% [58, 84] | -- | 13.6% [6, 22] | 13.6% [6, 22] | 14.0% [6, 23] | 98.7% [98, 100] (n=554) | 36.7% [22, 54] (n=30) | 6.7% [2, 21] | 0.0% [0, 2] | 0 in 0 records | 100.0% [100, 100] | 27.25 / 59.22 / 88.00 |
+| Method | Accuracy (rule) | Known | Open-world | Unseen cap. | Exact | Accepted | Set | Ack. calls | Seeded: met conflict | Seeded: done after wait | Seeded: unresolved | Seeded: correct | Conflict FP | Halluc. refs | Retrieval hit | Latency med / p95 / max (s) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Rule router | 36.0% [22, 50] | 81.8% [55, 100] | 23.1% [10, 38] | -- | 30.0% [18, 44] | 30.0% [18, 44] | 30.0% [18, 44] | 98.8% [98, 100] (n=780) | 100.0% [89, 100] (n=30) | 96.7% [83, 99] | 3.3% [1, 17] | 16.7% [7, 34] | 0.0% [0, 2] | 0 in 0 records | -- | <0.01 / 38.58 / 45.09 |
+| Single app | 24.0% [12, 36] | 27.3% [0, 55] | 23.1% [10, 36] | -- | 6.0% [0, 14] | 6.0% [0, 14] | 6.0% [0, 14] | 99.6% [99, 100] (n=270) | 66.7% [49, 81] (n=30) | 66.7% [49, 81] | 0.0% [0, 11] | 16.7% [7, 34] | 0.0% [0, 2] | 0 in 0 records | -- | <0.01 / 33.55 / 40.56 |
+| LLM (no catalog) | 0.0% [0, 0] | 0.0% [0, 0] | 0.0% [0, 0] | -- | 0.0% [0, 0] | 0.0% [0, 0] | 0.0% [0, 0] | 87.5% [68, 100] (n=17) | 3.3% [1, 17] (n=30) | 3.3% [1, 17] | 0.0% [0, 11] | 0.0% [0, 11] | 0.0% [0, 2] | 705 in 181 records | -- | 15.17 / 27.48 / 46.57 |
+| LLM (catalog) | 34.8% [22, 49] | 69.1% [45, 91] | 25.1% [13, 39] | -- | 29.2% [17, 42] | 29.2% [17, 42] | 29.6% [18, 42] | 99.0% [98, 100] (n=855) | 40.0% [25, 58] (n=30) | 36.7% [22, 54] | 3.3% [1, 17] | 13.3% [5, 30] | 0.0% [0, 2] | 0 in 0 records | -- | 7.56 / 19.48 / 55.64 |
+| AppWeaver (no repair) | 70.4% [59, 82] | 67.3% [40, 91] | 71.3% [58, 84] | -- | 12.0% [5, 20] | 12.0% [5, 20] | 12.0% [5, 20] | 96.8% [95, 99] (n=577) | 50.0% [33, 67] (n=30) | 40.0% [25, 58] | 3.3% [1, 17] | 50.0% [33, 67] | 0.0% [0, 2] | 0 in 0 records | 100.0% [100, 100] | 27.29 / 52.88 / 94.32 |
+| AppWeaver | 70.4% [59, 82] | 65.5% [36, 91] | 71.8% [58, 84] | -- | 13.6% [6, 22] | 13.6% [6, 22] | 14.0% [6, 23] | 97.2% [95, 99] (n=572) | 36.7% [22, 54] (n=30) | 36.7% [22, 54] | 0.0% [0, 11] | 36.7% [22, 54] | 0.0% [0, 2] | 0 in 0 records | 100.0% [100, 100] | 27.61 / 54.83 / 73.70 |
 
 Planner-cached records: 0 (must be 0 for headline latency).
 
