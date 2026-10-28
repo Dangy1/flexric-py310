@@ -1,0 +1,180 @@
+{
+  "act_sim_time_s": 2.0669,
+  "chain": [
+    "KPM",
+    "RAPP.QOE_PREDICTION",
+    "RAPP.TRAFFIC_STEERING",
+    "RC"
+  ],
+  "clock": "sim-time collectStartTime",
+  "commands": [
+    "HO 3 5"
+  ],
+  "commands_dispatched_sim_s": [
+    [
+      2.0669,
+      "HO 3 5"
+    ]
+  ],
+  "first_report_sim_s": 0.1669,
+  "indications_per_gnb": {
+    "2": 79,
+    "3": 79,
+    "4": 0,
+    "5": 79
+  },
+  "kpi": {
+    "dl_buffer_kbytes": 3576.2747222222224,
+    "dl_delay_ms": 4.350493996205102,
+    "dl_throughput_mbps": 28.168121904761904,
+    "energy_j_per_s": 6127.996296296296,
+    "prb_used_dl": 142.14282967291666
+  },
+  "kpi_e2": {
+    "dl_buffer_kbytes": 3546.0891666666666,
+    "dl_throughput_mbps": 16.069425925925927,
+    "energy_j_per_s": 6127.996296296296,
+    "prb_used_dl": 141.61111111111111
+  },
+  "kpi_per_cell": {
+    "2": {
+      "dl_buffer_kbytes": 0.0009629629629629629,
+      "energy_j_per_s": 2006.496296296296,
+      "prb_used_dl": 54.775041172106484
+    },
+    "3": {
+      "dl_buffer_kbytes": 2116.44937037037,
+      "energy_j_per_s": 1794.896296296296,
+      "prb_used_dl": 46.52463394942128
+    },
+    "4": {
+      "dl_buffer_kbytes": 0.0,
+      "energy_j_per_s": 665.7351851851852,
+      "prb_used_dl": 0.0
+    },
+    "5": {
+      "dl_buffer_kbytes": 1459.824388888889,
+      "energy_j_per_s": 1660.8685185185186,
+      "prb_used_dl": 40.84315455138889
+    }
+  },
+  "kpi_per_cell_e2": {
+    "2": {
+      "dl_buffer_kbytes": 0.11657407407407408,
+      "dl_throughput_mbps": 8.53675925925926,
+      "energy_j_per_s": 2006.496296296296,
+      "prb_used_dl": 54.129629629629626
+    },
+    "3": {
+      "dl_buffer_kbytes": 2101.280388888889,
+      "dl_throughput_mbps": 3.731537037037037,
+      "energy_j_per_s": 1794.896296296296,
+      "prb_used_dl": 46.611111111111114
+    },
+    "4": {
+      "dl_buffer_kbytes": 0.0,
+      "dl_throughput_mbps": 0.0,
+      "energy_j_per_s": 665.7351851851852,
+      "prb_used_dl": 0.0
+    },
+    "5": {
+      "dl_buffer_kbytes": 1444.6922037037036,
+      "dl_throughput_mbps": 3.8011296296296297,
+      "energy_j_per_s": 1660.8685185185186,
+      "prb_used_dl": 40.870370370370374
+    }
+  },
+  "kpi_source": {
+    "version": "ns3-trace-v2"
+  },
+  "kpi_trace_window": {
+    "du_logger_writes": 54,
+    "pdcp_epochs_s": [
+      2.5,
+      7.75
+    ],
+    "prb_method": "e2+logger, phi=66.875 ms"
+  },
+  "kpi_window_bins": [
+    54,
+    54
+  ],
+  "kpi_window_sim_s": [
+    2.5,
+    7.9
+  ],
+  "kpm_history_at_act_s": 1.9,
+  "last_report_sim_s": 7.9669,
+  "load_avg_end": 2.11181640625,
+  "load_avg_start": 2.4501953125,
+  "n_ues": 10,
+  "novalue_rows": 0,
+  "ns3_returncode": 0,
+  "ok": true,
+  "policy": {
+    "shed": [
+      {
+        "avoid": [
+          3
+        ],
+        "from": 3,
+        "share": 0.2,
+        "to": 5
+      }
+    ],
+    "sleep_cells": [],
+    "trace": {
+      "kpm_snapshot": {
+        "2": {
+          "DRB.UEThpDl": 2.0498000000000003,
+          "RRU.PrbTotDl": 1.0
+        },
+        "3": {
+          "DRB.UEThpDl": 1.41285,
+          "RRU.PrbTotDl": 0.989
+        },
+        "5": {
+          "DRB.UEThpDl": 2.0227,
+          "RRU.PrbTotDl": 0.533
+        }
+      },
+      "steps": [
+        {
+          "decision": {
+            "at_risk_cells": [
+              "5",
+              "3",
+              "2"
+            ],
+            "model": "linear(thp, delay) emulation",
+            "mos_forecast": {
+              "2": 2.03,
+              "3": 1.65,
+              "5": 2.01
+            }
+          },
+          "rapp": "qoe_prediction"
+        },
+        {
+          "decision": {
+            "from_cell": "2",
+            "to_cell": "5",
+            "ue_share_pct": 20
+          },
+          "rapp": "traffic_steering"
+        }
+      ]
+    },
+    "workflow": "qoe_steering"
+  },
+  "rc_acks": [
+    "1793201842476395 HO 3 5 sent"
+  ],
+  "role": "twin",
+  "seed": 6,
+  "sim_time_s": 8.0,
+  "t_act_s": 2.0,
+  "ue_position_file": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261028T085338Z_T6v2_twin_vs_live_positions/ue_positions/pair6_live_s106_t2.csv",
+  "wall_s": 272.3,
+  "workflow": "qoe_steering"
+}

@@ -1,0 +1,194 @@
+{
+  "act_sim_time_s": 2.0793,
+  "chain": [
+    "KPM",
+    "RAPP.ENERGY_SAVING",
+    "RC"
+  ],
+  "clock": "sim-time collectStartTime",
+  "commands": [
+    "HO 7 2",
+    "OFF 5",
+    "HO 10 2",
+    "HO 1 2",
+    "HO 3 4",
+    "OFF 3"
+  ],
+  "commands_dispatched_sim_s": [
+    [
+      2.0793,
+      "HO 7 2"
+    ],
+    [
+      2.0793,
+      "HO 10 2"
+    ],
+    [
+      2.0793,
+      "HO 1 2"
+    ],
+    [
+      2.0793,
+      "HO 3 4"
+    ],
+    [
+      2.3793,
+      "OFF 5"
+    ],
+    [
+      2.3793,
+      "OFF 3"
+    ]
+  ],
+  "first_report_sim_s": 0.1793,
+  "indications_per_gnb": {
+    "2": 79,
+    "3": 20,
+    "4": 79,
+    "5": 20
+  },
+  "kpi": {
+    "dl_buffer_kbytes": 2071.747685185185,
+    "dl_delay_ms": 13.19963395533691,
+    "dl_throughput_mbps": 28.92444952380952,
+    "energy_j_per_s": 5610.862962962962,
+    "prb_used_dl": 176.9232717387004
+  },
+  "kpi_e2": {
+    "dl_buffer_kbytes": 2054.792611111111,
+    "dl_throughput_mbps": 14.703074074074074,
+    "energy_j_per_s": 5610.862962962962,
+    "prb_used_dl": 176.03703703703704
+  },
+  "kpi_per_cell": {
+    "2": {
+      "dl_buffer_kbytes": 2020.0999444444444,
+      "energy_j_per_s": 2612.374074074074,
+      "prb_used_dl": 79.86326189916002
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.0,
+      "energy_j_per_s": 0.0,
+      "prb_used_dl": 0.0
+    },
+    "4": {
+      "dl_buffer_kbytes": 51.64774074074074,
+      "energy_j_per_s": 2998.4888888888886,
+      "prb_used_dl": 97.06000983954038
+    },
+    "5": {
+      "dl_buffer_kbytes": 0.0,
+      "energy_j_per_s": 0.0,
+      "prb_used_dl": 0.0
+    }
+  },
+  "kpi_per_cell_e2": {
+    "2": {
+      "dl_buffer_kbytes": 2004.5555185185185,
+      "dl_throughput_mbps": 9.350388888888888,
+      "energy_j_per_s": 2612.374074074074,
+      "prb_used_dl": 79.11111111111111
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.0,
+      "dl_throughput_mbps": 0.0,
+      "energy_j_per_s": 0.0,
+      "prb_used_dl": 0.0
+    },
+    "4": {
+      "dl_buffer_kbytes": 50.23709259259259,
+      "dl_throughput_mbps": 5.3526851851851855,
+      "energy_j_per_s": 2998.4888888888886,
+      "prb_used_dl": 96.92592592592592
+    },
+    "5": {
+      "dl_buffer_kbytes": 0.0,
+      "dl_throughput_mbps": 0.0,
+      "energy_j_per_s": 0.0,
+      "prb_used_dl": 0.0
+    }
+  },
+  "kpi_source": {
+    "version": "ns3-trace-v2"
+  },
+  "kpi_trace_window": {
+    "du_logger_writes": 54,
+    "pdcp_epochs_s": [
+      2.5,
+      7.75
+    ],
+    "prb_method": "e2+logger, phi=79.339 ms"
+  },
+  "kpi_window_bins": [
+    54,
+    54
+  ],
+  "kpi_window_sim_s": [
+    2.5,
+    7.9
+  ],
+  "kpm_history_at_act_s": 1.9,
+  "last_report_sim_s": 7.9793,
+  "load_avg_end": 2.59716796875,
+  "load_avg_start": 1.8408203125,
+  "n_ues": 10,
+  "novalue_rows": 0,
+  "ns3_returncode": 0,
+  "ok": true,
+  "policy": {
+    "shed": [],
+    "sleep_cells": [
+      5,
+      3
+    ],
+    "trace": {
+      "kpm_snapshot": {
+        "2": {
+          "DRB.UEThpDl": 2.10712,
+          "RRU.PrbTotDl": 1.0
+        },
+        "3": {
+          "DRB.UEThpDl": 2.0644,
+          "RRU.PrbTotDl": 0.0
+        },
+        "4": {
+          "DRB.UEThpDl": 2.3374,
+          "RRU.PrbTotDl": 0.443
+        },
+        "5": {
+          "DRB.UEThpDl": 2.1244,
+          "RRU.PrbTotDl": 0.0
+        }
+      },
+      "steps": [
+        {
+          "decision": {
+            "cells_to_sleep": [
+              "5",
+              "3"
+            ],
+            "estimated_energy_saving_pct": 24.0,
+            "threshold_prb": 0.15
+          },
+          "rapp": "energy_saving"
+        }
+      ]
+    },
+    "workflow": "energy_saving"
+  },
+  "policy_from": "twin",
+  "rc_acks": [
+    "1793177923004689 HO 7 2 sent",
+    "1793177923005538 HO 10 2 sent",
+    "1793177923006344 HO 1 2 sent",
+    "1793177923007102 HO 3 4 sent",
+    "1793177935923574 OFF 5 sent",
+    "1793177935923877 OFF 3 sent"
+  ],
+  "role": "live",
+  "seed": 101,
+  "sim_time_s": 8.0,
+  "t_act_s": 2.0,
+  "wall_s": 308.9,
+  "workflow": "energy_saving"
+}

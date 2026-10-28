@@ -1,0 +1,170 @@
+{
+  "act_sim_time_s": 2.0763,
+  "chain": [
+    "KPM",
+    "RAPP.TRAFFIC_STEERING",
+    "RC"
+  ],
+  "clock": "sim-time collectStartTime",
+  "commands": [
+    "HO 9 5",
+    "HO 1 5"
+  ],
+  "commands_dispatched_sim_s": [
+    [
+      2.0763,
+      "HO 9 5"
+    ],
+    [
+      2.0763,
+      "HO 1 5"
+    ]
+  ],
+  "first_report_sim_s": 0.1763,
+  "indications_per_gnb": {
+    "2": 79,
+    "3": 79,
+    "4": 79,
+    "5": 79
+  },
+  "kpi": {
+    "dl_buffer_kbytes": 1814.5266851851852,
+    "dl_delay_ms": 195.40444064084025,
+    "dl_throughput_mbps": 29.565470476190477,
+    "energy_j_per_s": 9057.55,
+    "prb_used_dl": 264.9794789853443
+  },
+  "kpi_e2": {
+    "dl_buffer_kbytes": 1800.0464444444447,
+    "dl_throughput_mbps": 17.64127777777778,
+    "energy_j_per_s": 9057.55,
+    "prb_used_dl": 261.9259259259259
+  },
+  "kpi_per_cell": {
+    "2": {
+      "dl_buffer_kbytes": 36.393722222222216,
+      "energy_j_per_s": 2072.733333333333,
+      "prb_used_dl": 57.51950481721928
+    },
+    "3": {
+      "dl_buffer_kbytes": 544.5016296296296,
+      "energy_j_per_s": 2132.816666666666,
+      "prb_used_dl": 61.23519106036946
+    },
+    "4": {
+      "dl_buffer_kbytes": 7.0115740740740735,
+      "energy_j_per_s": 2254.761111111111,
+      "prb_used_dl": 66.30550042158059
+    },
+    "5": {
+      "dl_buffer_kbytes": 1226.6197592592594,
+      "energy_j_per_s": 2597.238888888889,
+      "prb_used_dl": 79.919282686175
+    }
+  },
+  "kpi_per_cell_e2": {
+    "2": {
+      "dl_buffer_kbytes": 33.86009259259259,
+      "dl_throughput_mbps": 8.212092592592594,
+      "energy_j_per_s": 2072.733333333333,
+      "prb_used_dl": 57.425925925925924
+    },
+    "3": {
+      "dl_buffer_kbytes": 544.5433148148148,
+      "dl_throughput_mbps": 1.8019444444444443,
+      "energy_j_per_s": 2132.816666666666,
+      "prb_used_dl": 58.77777777777778
+    },
+    "4": {
+      "dl_buffer_kbytes": 6.523462962962963,
+      "dl_throughput_mbps": 1.8173703703703705,
+      "energy_j_per_s": 2254.761111111111,
+      "prb_used_dl": 65.72222222222223
+    },
+    "5": {
+      "dl_buffer_kbytes": 1215.119574074074,
+      "dl_throughput_mbps": 5.80987037037037,
+      "energy_j_per_s": 2597.238888888889,
+      "prb_used_dl": 80.0
+    }
+  },
+  "kpi_source": {
+    "version": "ns3-trace-v2"
+  },
+  "kpi_trace_window": {
+    "du_logger_writes": 54,
+    "pdcp_epochs_s": [
+      2.5,
+      7.75
+    ],
+    "prb_method": "e2+logger, phi=76.303 ms"
+  },
+  "kpi_window_bins": [
+    54,
+    54
+  ],
+  "kpi_window_sim_s": [
+    2.5,
+    7.9
+  ],
+  "kpm_history_at_act_s": 1.9,
+  "last_report_sim_s": 7.9763,
+  "load_avg_end": 2.234375,
+  "load_avg_start": 2.7158203125,
+  "n_ues": 10,
+  "novalue_rows": 0,
+  "ns3_returncode": 0,
+  "ok": true,
+  "policy": {
+    "shed": [
+      {
+        "from": 2,
+        "share": 0.2,
+        "to": 5
+      }
+    ],
+    "sleep_cells": [],
+    "trace": {
+      "kpm_snapshot": {
+        "2": {
+          "DRB.UEThpDl": 1.951366666666667,
+          "RRU.PrbTotDl": 1.0
+        },
+        "3": {
+          "DRB.UEThpDl": 1.4992,
+          "RRU.PrbTotDl": 0.794
+        },
+        "4": {
+          "DRB.UEThpDl": 1.4304000000000001,
+          "RRU.PrbTotDl": 0.832
+        },
+        "5": {
+          "DRB.UEThpDl": 2.1628000000000003,
+          "RRU.PrbTotDl": 0.425
+        }
+      },
+      "steps": [
+        {
+          "decision": {
+            "from_cell": "2",
+            "to_cell": "5",
+            "ue_share_pct": 20
+          },
+          "rapp": "traffic_steering"
+        }
+      ]
+    },
+    "workflow": "traffic_steering"
+  },
+  "rc_acks": [
+    "1793198130004440 HO 9 5 sent",
+    "1793198130005171 HO 1 5 sent"
+  ],
+  "role": "twin",
+  "seed": 2,
+  "sim_time_s": 8.0,
+  "t_act_s": 2.0,
+  "ue_position_file": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261028T085338Z_T6v2_twin_vs_live_positions/ue_positions/pair2_live_s102_t2.csv",
+  "wall_s": 274.1,
+  "workflow": "traffic_steering"
+}

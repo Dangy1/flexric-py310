@@ -1,0 +1,180 @@
+{
+  "act_sim_time_s": 2.0702,
+  "chain": [
+    "KPM",
+    "RAPP.QOE_PREDICTION",
+    "RAPP.TRAFFIC_STEERING",
+    "RC"
+  ],
+  "clock": "sim-time collectStartTime",
+  "commands": [
+    "HO 5 4"
+  ],
+  "commands_dispatched_sim_s": [
+    [
+      2.0702,
+      "HO 5 4"
+    ]
+  ],
+  "first_report_sim_s": 0.1702,
+  "indications_per_gnb": {
+    "2": 79,
+    "3": 79,
+    "4": 79,
+    "5": 0
+  },
+  "kpi": {
+    "dl_buffer_kbytes": 124.09033333333333,
+    "dl_delay_ms": 22.684479689574623,
+    "dl_throughput_mbps": 34.05121523809524,
+    "energy_j_per_s": 8013.916666666666,
+    "prb_used_dl": 221.52345068092148
+  },
+  "kpi_e2": {
+    "dl_buffer_kbytes": 125.70668518518518,
+    "dl_throughput_mbps": 17.820703703703703,
+    "energy_j_per_s": 8013.916666666666,
+    "prb_used_dl": 219.0925925925926
+  },
+  "kpi_per_cell": {
+    "2": {
+      "dl_buffer_kbytes": 0.34068518518518515,
+      "energy_j_per_s": 2373.0296296296297,
+      "prb_used_dl": 70.3122184705541
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.12785185185185186,
+      "energy_j_per_s": 2009.5481481481477,
+      "prb_used_dl": 55.27573566249929
+    },
+    "4": {
+      "dl_buffer_kbytes": 123.6217962962963,
+      "energy_j_per_s": 2965.603703703704,
+      "prb_used_dl": 95.93549654786811
+    },
+    "5": {
+      "dl_buffer_kbytes": 0.0,
+      "energy_j_per_s": 665.7351851851852,
+      "prb_used_dl": 0.0
+    }
+  },
+  "kpi_per_cell_e2": {
+    "2": {
+      "dl_buffer_kbytes": 0.9283148148148148,
+      "dl_throughput_mbps": 7.170425925925926,
+      "energy_j_per_s": 2373.0296296296297,
+      "prb_used_dl": 69.96296296296296
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.8611296296296297,
+      "dl_throughput_mbps": 5.5087222222222225,
+      "energy_j_per_s": 2009.5481481481477,
+      "prb_used_dl": 54.51851851851852
+    },
+    "4": {
+      "dl_buffer_kbytes": 123.91724074074074,
+      "dl_throughput_mbps": 5.141555555555556,
+      "energy_j_per_s": 2965.603703703704,
+      "prb_used_dl": 94.61111111111111
+    },
+    "5": {
+      "dl_buffer_kbytes": 0.0,
+      "dl_throughput_mbps": 0.0,
+      "energy_j_per_s": 665.7351851851852,
+      "prb_used_dl": 0.0
+    }
+  },
+  "kpi_source": {
+    "version": "ns3-trace-v2"
+  },
+  "kpi_trace_window": {
+    "du_logger_writes": 54,
+    "pdcp_epochs_s": [
+      2.5,
+      7.75
+    ],
+    "prb_method": "e2+logger, phi=70.232 ms"
+  },
+  "kpi_window_bins": [
+    54,
+    54
+  ],
+  "kpi_window_sim_s": [
+    2.5,
+    7.9
+  ],
+  "kpm_history_at_act_s": 1.9,
+  "last_report_sim_s": 7.9702,
+  "load_avg_end": 1.38330078125,
+  "load_avg_start": 1.99951171875,
+  "n_ues": 10,
+  "novalue_rows": 0,
+  "ns3_returncode": 0,
+  "ok": true,
+  "policy": {
+    "shed": [
+      {
+        "avoid": [
+          3
+        ],
+        "from": 3,
+        "share": 0.2,
+        "to": 4
+      }
+    ],
+    "sleep_cells": [],
+    "trace": {
+      "kpm_snapshot": {
+        "2": {
+          "DRB.UEThpDl": 1.8019,
+          "RRU.PrbTotDl": 0.989
+        },
+        "3": {
+          "DRB.UEThpDl": 1.7838,
+          "RRU.PrbTotDl": 1.0
+        },
+        "4": {
+          "DRB.UEThpDl": 1.8792,
+          "RRU.PrbTotDl": 0.616
+        }
+      },
+      "steps": [
+        {
+          "decision": {
+            "at_risk_cells": [
+              "4",
+              "2",
+              "3"
+            ],
+            "model": "linear(thp, delay) emulation",
+            "mos_forecast": {
+              "2": 1.88,
+              "3": 1.87,
+              "4": 1.93
+            }
+          },
+          "rapp": "qoe_prediction"
+        },
+        {
+          "decision": {
+            "from_cell": "3",
+            "to_cell": "4",
+            "ue_share_pct": 20
+          },
+          "rapp": "traffic_steering"
+        }
+      ]
+    },
+    "workflow": "qoe_steering"
+  },
+  "policy_from": "twin",
+  "rc_acks": [
+    "1793204804164382 HO 5 4 sent"
+  ],
+  "role": "live",
+  "seed": 109,
+  "sim_time_s": 8.0,
+  "t_act_s": 2.0,
+  "wall_s": 322.3,
+  "workflow": "qoe_steering"
+}

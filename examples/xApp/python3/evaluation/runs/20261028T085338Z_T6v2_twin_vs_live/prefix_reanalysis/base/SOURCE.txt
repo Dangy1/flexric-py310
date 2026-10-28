@@ -1,0 +1,1 @@
+Re-analysis of the pre-fix batch /home/dang/flexric/build/examples/xApp/python3/evaluation/runs/20261027T171217Z_T6_twin_vs_live (archived copy unchanged) by evaluation/twin/prefix_gate.py: T6v2 gate thresholds and KPI sources applied post hoc.
