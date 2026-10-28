@@ -17,6 +17,8 @@ paper says). This file is the working roadmap; tick items off and record decisio
   bearer key; portal provider `vllm`. Keys: `~/.config/appweaver/spark{1,2}.env` (mode 600). The keyless
   Ollama at `130.233.158.22:11434` (tlt022.hut.fi) that ran the preliminary qwen batches is **not**
   spark2; its manifests say "spark2 130.233.158.22", which is wrong about the name (the address is right).
+  spark1 serves `gpt-oss-120b` (vLLM, 131k context); env: `~/.config/appweaver/spark1.env` sets VLLM_*,
+  `LLM_PROVIDER=vllm`, reasoning effort medium, provider timeout 180 s.
 - **gpt-oss fails on tlt022 (130.233.158.22, earlier mislabelled spark2):** Ollama 0.40 fails to load `gpt-oss:latest`
   (`key not found in model: gpt-oss.expert_feed_forward_length`, HTTP 500). Other models load
   (`qwen3.6:27b` answers in ~20 s, `gemma3:1b` in 2 s). Fix on the server: `ollama pull gpt-oss:20b`
@@ -199,7 +201,7 @@ First tasks for the execution session:
 | # | Question | Blocks | Status |
 |---|---|---|---|
 | O1 | gpt-oss for the final batches. tlt022 (130.233.158.22) cannot load `gpt-oss:latest` under Ollama 0.40; the real spark2 (`spark2.dice.aalto.fi/v1`, key) serves `gpt-oss:120b` | Final batches A and B (paper model) | **endpoint works (2026-10-28)**: harness smoke test 6/6 records with `gpt-oss:120b` via provider `openai`; owner: spark2 is busy with other work, use spark1 for batches. qwen batches stay the working results until a gpt-oss batch exists |
-| O2 | spark1 vLLM endpoint | Batch B second model / final batches | **endpoint and key known** (`spark1.dice.aalto.fi/v1`, provider `vllm`); 2026-10-28 09:10 nginx returns 502 for every request (vLLM backend down), served model id not yet seen |
+| O2 | spark1 vLLM endpoint | final batches (paper model) | **works (2026-10-28 09:21)**: `spark1.dice.aalto.fi/v1`, provider `vllm`, model `gpt-oss-120b` (vLLM, max_model_len 131072). Direct call 1.8 s, deterministic at seed 7; harness smoke test 18/18 records, 6 methods, no errors, LLM planner 7–20 s per record at reasoning effort medium. Owner: run batches on spark1 (spark2 busy) |
 | O3 | GPU line for spark2 (and spark1): `nvidia-smi --query-gpu=name,memory.total --format=csv` → `LLM_SERVER_HARDWARE` and `evaluation/HARDWARE.md` | manifests, paper hardware sentence | **open** (preliminary manifests say "GPU model pending owner") |
 | O4 | Live side of the twin experiment: OAI rfsim gNB, or ns-3 seed B + traffic perturbation | T6 | **open** — default ns-3 seed B unless the owner says OAI |
 | O5 | Reasoning mode for the final batch: gpt-oss reasons by default (keep `FLEXRIC_LLM_THINK` unset). Preliminary qwen batches use `FLEXRIC_LLM_THINK=false` (24 s → 1.4 s per call); confirm that is acceptable for any qwen numbers shown | labelling of qwen results | **open** |

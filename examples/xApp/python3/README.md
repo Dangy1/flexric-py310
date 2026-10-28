@@ -20,7 +20,8 @@ cd build/examples/xApp/python3/evaluation
 #    a) keyless Ollama (130.233.158.22 = tlt022.hut.fi; ran the preliminary qwen batches; not spark2):
 export OLLAMA_BASE_URL=http://<ollama-host>:11434 OLLAMA_MODEL=qwen3.6:27b FLEXRIC_LLM_THINK=false LLM_PROVIDER=ollama
 #    b) spark1 = spark1.dice.aalto.fi, vLLM (OpenAI-compatible, bearer key):
-# export VLLM_BASE_URL=https://spark1.dice.aalto.fi/v1 VLLM_MODEL=<served model id> VLLM_API_KEY=<spark1 key>
+# export VLLM_BASE_URL=https://spark1.dice.aalto.fi/v1 VLLM_MODEL=gpt-oss-120b VLLM_API_KEY=<spark1 key>
+# export FLEXRIC_AGENT_PROVIDER_TIMEOUT=180   # gpt-oss-120b planner calls take ~7-20 s at reasoning effort medium
 # export LLM_PROVIDER=vllm FLEXRIC_LLM_REASONING_EFFORT=medium
 #    c) spark2 = spark2.dice.aalto.fi, Ollama behind an authenticating OpenAI-compatible /v1:
 # export OPENAI_BASE_URL=https://spark2.dice.aalto.fi/v1 OPENAI_MODEL=gpt-oss:120b OPENAI_API_KEY=<spark2 key>
