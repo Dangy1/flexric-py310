@@ -2,7 +2,7 @@
 """Sample host and per-component resource use while evaluation batches run.
 
 Every --interval-s seconds one CSV row per component: wall time, CPU% (sum over the component's
-processes, 100 = one core), RSS MiB, process count, plus host CPU%, used memory and load average.
+processes of CPU time used since the previous sample, 100 = one core), RSS MiB, process count, plus host CPU%, used memory and load average.
 Components are recognised from the process command line, so the monitor needs no hooks in the
 harness and does not change what is measured. Rows are later joined to evaluation records by time
 (`summarize_resources.py`) to attribute consumption to batches and methods.
@@ -60,6 +60,7 @@ def main() -> int:
     out = Path(args.out)
     new = not out.exists()
     procs: dict[int, psutil.Process] = {}
+    cpu_seen: dict[int, float] = {}  # cumulative user+system CPU seconds at the previous sample
     with out.open("a", newline="") as handle:
         writer = csv.writer(handle)
         if new:
@@ -77,7 +78,12 @@ def main() -> int:
                     pid = proc.info["pid"]
                     seen.add(pid)
                     tracked = procs.setdefault(pid, proc)
-                    cpu = tracked.cpu_percent(None)  # since the previous sample of this process
+                    times = tracked.cpu_times()
+                    used = float(times.user + times.system)
+                    # CPU since the previous sample; a process seen for the first time contributes all
+                    # CPU it used since it started (short-lived xApps would otherwise read as zero).
+                    cpu = (used - cpu_seen.get(pid, 0.0)) / args.interval_s * 100.0
+                    cpu_seen[pid] = used
                     rss = tracked.memory_info().rss / 2**20
                     agg = totals.setdefault(name, [0.0, 0.0, 0])
                     agg[0] += cpu
@@ -88,6 +94,7 @@ def main() -> int:
             for pid in list(procs):
                 if pid not in seen:
                     procs.pop(pid, None)
+                    cpu_seen.pop(pid, None)
             now = time.time()
             host_cpu = psutil.cpu_percent(None)
             mem = psutil.virtual_memory().used / 2**20
