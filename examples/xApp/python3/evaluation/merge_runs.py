@@ -3,10 +3,13 @@
 
 Used when part of a batch is invalid (e.g. the nearRT-RIC wedged after ~700 records and every later
 control call went unacknowledged): keep the clean repeats of the first run and add the repeats that
-were re-run. The merged `manifest.json` lists every source run, its repeats and why it was cut.
+were re-run. A source may also be limited to some methods (`RUN:1-3:m1,m2`) when only those methods
+were re-run. The merged `manifest.json` lists every source run, its repeats, methods and why it was cut.
 
   python merge_runs.py --out runs/<id>_merged \
       --source runs/<A1>:1-2 --source runs/<A2>:3-5 --note "RIC wedged from record ~700 in <A1>"
+  python merge_runs.py --out runs/<id>_merged \
+      --source runs/<B1>:1-3:manual_rule,llm_only --source runs/<B2>:1-3 --note "..."
 """
 from __future__ import annotations
 
@@ -28,7 +31,7 @@ def load_records(run: Path) -> List[Dict[str, Any]]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--out", required=True)
-    parser.add_argument("--source", action="append", required=True, help="RUN_DIR:FIRST-LAST repeats to keep")
+    parser.add_argument("--source", action="append", required=True, help="RUN_DIR:FIRST-LAST[:METHOD,...] repeats (and methods) to keep")
     parser.add_argument("--note", default="")
     args = parser.parse_args()
 
@@ -38,14 +41,16 @@ def main() -> int:
     sources = []
     manifest: Dict[str, Any] = {}
     for spec in args.source:
-        run_str, repeats = spec.rsplit(":", 1)
+        run_str, repeats, *method_spec = spec.split(":")
+        methods = method_spec[0].split(",") if method_spec else None
         run = Path(run_str).resolve()
         first, last = (int(x) for x in repeats.split("-"))
-        kept = [r for r in load_records(run) if first <= int(r.get("repeat_index") or 0) <= last]
+        kept = [r for r in load_records(run) if first <= int(r.get("repeat_index") or 0) <= last
+                and (methods is None or r.get("method") in methods)]
         records.extend(kept)
         source_manifest = json.loads((run / "manifest.json").read_text(encoding="utf-8"))
         manifest = manifest or dict(source_manifest)
-        sources.append({"run": run.name, "repeats": [first, last], "records": len(kept),
+        sources.append({"run": run.name, "repeats": [first, last], "methods": methods, "records": len(kept),
                         "complete": (run / "records.jsonl").exists(), "manifest": source_manifest})
     seen = set()
     for record in records:
@@ -56,7 +61,7 @@ def main() -> int:
     manifest.update({"merged_from": sources, "merge_note": args.note, "repeat_count": len({r.get("repeat_index") for r in records})})
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
     (out / "records.jsonl").write_text("\n".join(json.dumps(r, sort_keys=True) for r in records) + "\n", encoding="utf-8")
-    first_intents = sources and (Path(args.source[0].rsplit(":", 1)[0]) / "intents.json")
+    first_intents = sources and (Path(args.source[0].split(":")[0]) / "intents.json")
     if first_intents and first_intents.exists():
         (out / "intents.json").write_text(first_intents.read_text(encoding="utf-8"), encoding="utf-8")
     summary = build_summary(records)

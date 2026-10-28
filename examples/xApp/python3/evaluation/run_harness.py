@@ -25,6 +25,7 @@ if str(ROOT) not in sys.path:
 from evaluation.analyze_results import build_markdown, build_summary, is_lease_refusal
 from backend.orchestration.compat import check_chain  # type: ignore
 from backend.orchestration.discovery import discover  # type: ignore
+import flexric_agent_portal  # type: ignore
 from flexric_agent_portal import (  # type: ignore
     AGENTS,
     WORKFLOW_ACTIONS,
@@ -919,7 +920,9 @@ def validate_or_repair_agentcard_plan(intent: Dict[str, Any], generated_workflow
 
 def plan_with_agent_cards(intent: Dict[str, Any], repair: bool = True) -> Dict[str, Any]:
     _, retrieval = discover_cards(intent)
-    task_payload = api_run_task("orchestrator", AgentTaskRequest(prompt=agentcard_prompt(intent), provider="auto"))
+    prompt = agentcard_prompt(intent)
+    retrieval["prompt_chars"] = len(prompt)
+    task_payload = api_run_task("orchestrator", AgentTaskRequest(prompt=prompt, provider="auto"))
     task = dict(task_payload.get("task") or {})
     response_text = str(task.get("response") or task.get("error") or "")
     if task.get("status") != "completed":
@@ -1988,6 +1991,7 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     parser.add_argument("--maintenance-every", type=int, default=0)
     parser.add_argument("--health-cmd", default="", help="Shell command run after every record (e.g. scripts/probe_e42.sh); on failure the record is discarded, --maintenance-cmd runs and the record is re-run.")
     parser.add_argument("--health-retries", type=int, default=2)
+    parser.add_argument("--max-prompt-chars", type=int, default=0, help="Raise the portal's task-prompt cap (a UI input guard, 8000 chars) for in-process planner calls; 0 keeps the portal value. Needed when every directory card is in the prompt (--retrieval-k 0 with FLEXRIC_RAPP_DIRECTORY=1).")
     return parser.parse_args(argv)
 
 
@@ -2004,9 +2008,12 @@ def main(argv: List[str]) -> int:
             "tool_ack_timeout_s": float(args.tool_ack_timeout_s),
             "retrieval_k": int(args.retrieval_k),
             "retrieval_include_deprecated": bool(args.retrieval_include_deprecated),
+            "max_prompt_chars": int(args.max_prompt_chars) or flexric_agent_portal.MAX_PROMPT_CHARS,
             "rapp_directory_enabled": os.getenv("FLEXRIC_RAPP_DIRECTORY", "").strip().lower() in {"1", "true", "yes", "on"},
         }
     )
+    if args.max_prompt_chars > 0:
+        flexric_agent_portal.MAX_PROMPT_CHARS = int(args.max_prompt_chars)
     intent_path = Path(args.intents).resolve()
     output_root = Path(args.output_root).resolve()
     output_root.mkdir(parents=True, exist_ok=True)

@@ -238,6 +238,16 @@ First tasks for the execution session:
   fixed while generating Table II: conflict detection was read from the final execution only (AppWeaver's
   internal recovery hid its own lease refusal) and lease refusals in template workflows were not counted.
   Unified rule in `analyze_results.conflict_flagged`; see O6/O7.
+- **Batch B prompt cap (2026-10-28 05:25):** the first B run (k=8 `20261027T224100_103232Z_…`, k=0
+  `20261028T013448_885562Z_…`) is healthy (4 and 6 wedges re-run, acks 93–99 %) but the portal's
+  8000-character task-prompt guard (`MAX_PROMPT_CHARS`, a UI input check) rejected every k=0 agent-card
+  planner prompt (median 16.0k chars, max 26.9k: all 40 directory cards) and 13 k=8 AppWeaver
+  recovery prompts. Batch A had none. The harness calls `api_run_task` in-process, so the guard applied to
+  planner calls too. Added `--max-prompt-chars` (recorded in the manifest) and the planner prompt length
+  (`retrieval.prompt_chars`); the model context (Ollama, 64k tokens loaded) is not the limit. The two
+  agent-card methods are re-run at k=8 and k=0 with a 64k cap
+  (`/tmp/appweaver_batches/chain_B_agentcard_rerun.sh`); the other four methods never reach the cap and
+  are kept from the first run (`merge_runs.py` now takes a per-source method filter).
 
 ## 4. Done criteria
 A fresh clone + the README's three commands reproduce every number and figure in the revised paper
