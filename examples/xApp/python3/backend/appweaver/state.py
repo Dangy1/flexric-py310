@@ -7,6 +7,8 @@ from typing import Annotated, Any, Callable, Dict, List, Optional, Tuple, TypedD
 
 from backend.common.models import AgentCard
 
+from .learning import MEMORY_K, MEMORY_MIN_SCORE, TEMPLATE_K
+
 
 class InvokeResult(TypedDict, total=False):
     """What the injected `invoke` returns for one step (the harness applies the shared lease wait)."""
@@ -19,13 +21,19 @@ class InvokeResult(TypedDict, total=False):
 
 @dataclass
 class AppWeaverConfig:
-    variant: str = "appweaver"            # appweaver | no_repair
+    variant: str = "appweaver"            # appweaver | no_repair | appweaver_tpl | appweaver_mem
     repair: bool = True                   # Compose: repair-by-insertion with fixpoint re-check
     recover: bool = True                  # Recover node: wait or re-plan around busy apps
     validate_mode: str = "checks"         # checks | dryrun
     lease_wait_s: float = 45.0            # same budget as every other method
     max_recoveries: int = 1
     dryrun_duration_s: int = 5
+    # Learning variants (workstream F); defaults = AppWeaver.
+    workflow_templates: bool = False      # Discover retrieves operator workflow-template cards for Compose
+    template_k: int = TEMPLATE_K
+    memory_path: Optional[str] = None     # experience memory (JSONL) retrieved by Discover for Compose
+    memory_k: int = MEMORY_K
+    memory_min_score: float = MEMORY_MIN_SCORE
 
 
 @dataclass
@@ -50,6 +58,10 @@ class AppWeaverDeps:
     dryrun_fn: Optional[Callable[[str, str, int], Any]] = None
     dryrun_reason: str = ""
     clock: Callable[[], float] = time.perf_counter
+    # Learning variants: intent_text -> (workflow cards, report) / (memory entries, report).
+    # None -> built from backend.orchestration.config / cfg.memory_path (backend.appweaver.learning).
+    retrieve_templates: Optional[Callable[[str], Tuple[List[Dict[str, Any]], Dict[str, Any]]]] = None
+    recall_memory: Optional[Callable[[str], Tuple[List[Dict[str, Any]], Dict[str, Any]]]] = None
 
 
 class AppWeaverState(TypedDict, total=False):
@@ -60,6 +72,10 @@ class AppWeaverState(TypedDict, total=False):
     retrieval: Dict[str, Any]
     card_ids: List[str]
     excluded_agents: List[str]
+    workflow_cards: List[Dict[str, Any]]
+    template_retrieval: Dict[str, Any]
+    memory_entries: List[Dict[str, Any]]
+    memory_retrieval: Dict[str, Any]
     # Compose
     prompts: Annotated[List[Dict[str, Any]], operator.add]
     planner_task: Dict[str, Any]

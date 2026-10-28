@@ -27,7 +27,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List
 
-METHODS = ["manual_rule", "single_xapp", "llm_blind", "llm_only", "agentcard_no_repair", "langgraph_agentcard"]
+METHODS = ["manual_rule", "single_xapp", "llm_blind", "llm_only", "agentcard_no_repair", "langgraph_agentcard", "appweaver_tpl", "appweaver_mem"]
 STAGES = ["planner", "validate", "dryrun", "lease_wait", "deploy", "ack", "total"]
 
 

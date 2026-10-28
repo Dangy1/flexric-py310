@@ -13,6 +13,7 @@ from typing import Any, Callable, Dict, List
 
 from backend.orchestration.compat import check_chain, lifecycle_findings, repair_chain
 
+from ..learning_prompts import compose_prompt_with_context
 from ..prompts import compose_prompt, serialize_cards
 from ..state import AppWeaverConfig, AppWeaverDeps, AppWeaverState
 from ..util import event, normalize_steps, parse_plan, plan_chain
@@ -32,10 +33,18 @@ def build_compose_node(deps: AppWeaverDeps, cfg: AppWeaverConfig) -> Callable[[A
             updates["pending_plan"] = None
         else:
             cards = [registry[i] for i in (state.get("card_ids") or []) if i in registry]
-            prompt = compose_prompt(intent_text, serialize_cards(cards))
+            prompt_meta: Dict[str, Any] = {}
+            if cfg.workflow_templates or cfg.memory_path:
+                workflow_cards = list(state.get("workflow_cards") or []) if cfg.workflow_templates else []
+                memory_entries = list(state.get("memory_entries") or []) if cfg.memory_path else []
+                prompt = compose_prompt_with_context(intent_text, serialize_cards(cards), workflow_cards, memory_entries)
+                prompt_meta = {"workflow_cards": [c.get("workflow_id") for c in workflow_cards],
+                               "memory_entries": [e.get("id") for e in memory_entries]}
+            else:
+                prompt = compose_prompt(intent_text, serialize_cards(cards))
             task = dict(deps.planner(prompt) or {})
             updates["planner_task"] = task
-            updates["prompts"] = [{"node": "compose", "chars": len(prompt)}]
+            updates["prompts"] = [{"node": "compose", "chars": len(prompt), **prompt_meta}]
             if task.get("status") != "completed":
                 text = str(task.get("response") or task.get("error") or "")
                 unavailable = bool(deps.is_unavailable(text))

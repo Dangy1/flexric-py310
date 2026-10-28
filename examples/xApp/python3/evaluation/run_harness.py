@@ -30,11 +30,17 @@ from backend.orchestration.validate import writes as step_writes  # type: ignore
 from backend.appweaver import (  # type: ignore
     AppWeaverConfig,
     AppWeaverDeps,
+    ExperienceMemory,
     compose_prompt,
+    compose_prompt_with_context,
+    default_workflow_cards,
     recovery_prompt,
+    retrieve_workflow_cards,
     run_appweaver,
     serialize_cards,
 )
+from backend.appweaver import learning as appweaver_learning  # type: ignore
+from backend.appweaver import learning_prompts as appweaver_learning_prompts  # type: ignore
 from backend.appweaver import prompts as appweaver_prompts  # type: ignore
 import flexric_agent_portal  # type: ignore
 from flexric_agent_portal import (  # type: ignore
@@ -70,7 +76,18 @@ METHODS = [
     "langgraph_llm",
     "agentcard_no_repair",
     "langgraph_agentcard",
+    "appweaver_tpl",
+    "appweaver_mem",
 ]
+
+# Learning variants (workstream F): AppWeaver + operator workflow-template cards, and additionally an
+# experience memory built from a training batch (evaluation/build_experience_memory.py).
+DEFAULT_MEMORY_PATH = Path(__file__).resolve().parent / "memory" / "experience_A.jsonl"
+LEARNING_MIN_PROMPT_CHARS = 16000
+LEARNING_METHODS = {
+    "appweaver_tpl": {"workflow_templates": True, "memory": False},
+    "appweaver_mem": {"workflow_templates": True, "memory": True},
+}
 
 # Paper-facing names. `llm_only` keeps its historical id but is the
 # catalog-aware LLM baseline (its prompt lists the workflow templates and its
@@ -85,6 +102,8 @@ METHOD_LABELS = {
     "langgraph_llm": "LangGraph + LLM recovery",
     "agentcard_no_repair": "AppWeaver (no repair)",
     "langgraph_agentcard": "AppWeaver",
+    "appweaver_tpl": "AppWeaver + templates",
+    "appweaver_mem": "AppWeaver + templates + memory",
 }
 
 # A launched action only counts as a successful tool call once its log shows
@@ -923,6 +942,9 @@ def assert_prompt_label_free(prompt: str) -> None:
         raise AssertionError("Planner prompt contains the intent's `notes` annotation (label leakage).")
     if "\nNotes: " in prompt or "\nCategory: " in prompt:
         raise AssertionError("Planner prompt carries a Notes:/Category: line (label leakage).")
+    # Workflow-template cards and experience-memory entries are embedded as JSON: no annotation field.
+    if '"notes":' in prompt or '"category":' in prompt or '"label_rule":' in prompt:
+        raise AssertionError("Planner prompt embeds a notes/category/label_rule field (label leakage).")
 
 
 def planner_task(prompt: str) -> Dict[str, Any]:
@@ -1067,6 +1089,36 @@ def agentcard_prompt(intent: Dict[str, Any]) -> str:
     return compose_prompt(str(intent.get("intent") or ""), executable_agent_cards(intent))
 
 
+def memory_path_for_run() -> Path:
+    return Path(str(EVAL_RUNTIME_CONFIG.get("memory_path") or DEFAULT_MEMORY_PATH)).expanduser().resolve()
+
+
+_HARNESS_MEMORY: Dict[str, ExperienceMemory] = {}
+
+
+def experience_memory() -> ExperienceMemory:
+    path = memory_path_for_run()
+    key = f"{path}:{path.stat().st_mtime_ns}"
+    if key not in _HARNESS_MEMORY:
+        _HARNESS_MEMORY[key] = ExperienceMemory.load(path)
+    return _HARNESS_MEMORY[key]
+
+
+def appweaver_tpl_prompt(intent: Dict[str, Any]) -> str:
+    """`appweaver_tpl` Compose prompt for an intent record (the graph builds the same prompt)."""
+    text = str(intent.get("intent") or "")
+    templates, _ = retrieve_workflow_cards(default_workflow_cards(AGENTS), text)
+    return compose_prompt_with_context(text, executable_agent_cards(intent), templates, None)
+
+
+def appweaver_mem_prompt(intent: Dict[str, Any]) -> str:
+    """`appweaver_mem` Compose prompt for an intent record (the graph builds the same prompt)."""
+    text = str(intent.get("intent") or "")
+    templates, _ = retrieve_workflow_cards(default_workflow_cards(AGENTS), text)
+    entries, _ = experience_memory().retrieve(text)
+    return compose_prompt_with_context(text, executable_agent_cards(intent), templates, entries)
+
+
 def prompt_builders_sha256() -> Dict[str, str]:
     """Hash of each planner prompt builder's source, so a batch pins the exact prompts it used."""
     builders = [
@@ -1076,6 +1128,18 @@ def prompt_builders_sha256() -> Dict[str, str]:
     ]
     hashes = {f"{fn.__module__.split('.')[-1]}.{fn.__name__}": hashlib.sha256(inspect.getsource(fn).encode("utf-8")).hexdigest()[:16] for fn in builders}
     hashes["appweaver.prompts_module"] = hashlib.sha256(inspect.getsource(appweaver_prompts).encode("utf-8")).hexdigest()[:16]
+    # Learning variants (appweaver_tpl / appweaver_mem): new sections and their retrieval; the AppWeaver
+    # hashes above are unchanged by them (compose_prompt is reused byte for byte).
+    learning_builders = [
+        appweaver_tpl_prompt, appweaver_mem_prompt,
+        appweaver_learning_prompts.compose_prompt_with_context, appweaver_learning_prompts.template_section,
+        appweaver_learning_prompts.memory_section, appweaver_learning_prompts.serialize_workflow_cards,
+        appweaver_learning_prompts.serialize_memory, appweaver_learning.workflow_cards,
+        appweaver_learning.retrieve_workflow_cards, appweaver_learning.ExperienceMemory,
+    ]
+    hashes.update({f"{fn.__module__.split('.')[-1]}.{fn.__name__}": hashlib.sha256(inspect.getsource(fn).encode("utf-8")).hexdigest()[:16] for fn in learning_builders})
+    hashes["appweaver.learning_prompts_module"] = hashlib.sha256(inspect.getsource(appweaver_learning_prompts).encode("utf-8")).hexdigest()[:16]
+    hashes["appweaver.learning_module"] = hashlib.sha256(inspect.getsource(appweaver_learning).encode("utf-8")).hexdigest()[:16]
     return hashes
 
 
@@ -1399,20 +1463,25 @@ def _appweaver_deps() -> AppWeaverDeps:
     )
 
 
-def execute_langgraph_agentcard(intent: Dict[str, Any], duration_s: int, repair: bool = True, recover: bool = True) -> Dict[str, Any]:
-    """AppWeaver (repair=recover=True) or its ablation agentcard_no_repair (both False).
+def execute_langgraph_agentcard(intent: Dict[str, Any], duration_s: int, repair: bool = True, recover: bool = True,
+                                variant: Optional[str] = None) -> Dict[str, Any]:
+    """AppWeaver (repair=recover=True), its ablation agentcard_no_repair (both False), or a learning
+    variant (`variant` = appweaver_tpl | appweaver_mem: AppWeaver + workflow-template cards [+ memory]).
 
     Runs the LangGraph StateGraph in backend/appweaver: Discover -> Compose -> Validate ->
     Deploy (-> Recover) -> Finish. The graph only sees the intent sentence.
     """
     del duration_s
+    learning = LEARNING_METHODS.get(str(variant or ""), {})
     cfg = AppWeaverConfig(
-        variant="appweaver" if (repair and recover) else ("no_repair" if not (repair or recover) else f"repair={repair},recover={recover}"),
+        variant=str(variant) if learning else ("appweaver" if (repair and recover) else ("no_repair" if not (repair or recover) else f"repair={repair},recover={recover}")),
         repair=repair,
         recover=recover,
         validate_mode=str(EVAL_RUNTIME_CONFIG.get("validate_mode") or "checks"),
         lease_wait_s=float(EVAL_RUNTIME_CONFIG.get("lease_wait_s") or 0.0),
         dryrun_duration_s=int(EVAL_RUNTIME_CONFIG.get("dryrun_duration_s") or 5),
+        workflow_templates=bool(learning.get("workflow_templates")),
+        memory_path=str(memory_path_for_run()) if learning.get("memory") else None,
     )
     final = run_appweaver(str(intent.get("intent") or ""), _appweaver_deps(), cfg)
     chain = list(final.get("generated_workflow") or [])
@@ -1466,6 +1535,13 @@ def execute_langgraph_agentcard(intent: Dict[str, Any], duration_s: int, repair:
         "recovery_planner_task": recovery.get("planner_task"),
         "recovery_planner_plan": recovery.get("planner_plan"),
         "recovery_reset_runtime": False,
+        "workflow_templates_enabled": cfg.workflow_templates,
+        "workflow_template_retrieval": final.get("template_retrieval"),
+        "workflow_templates_retrieved": list((final.get("template_retrieval") or {}).get("retrieved") or []) if cfg.workflow_templates else None,
+        "memory_path": cfg.memory_path,
+        "memory_retrieval": final.get("memory_retrieval"),
+        "memory_retrieved": list((final.get("memory_retrieval") or {}).get("memory_retrieved") or []) if cfg.memory_path else None,
+        "memory_excluded_identical": list((final.get("memory_retrieval") or {}).get("excluded_identical") or []) if cfg.memory_path else None,
     }
 
 
@@ -1622,6 +1698,8 @@ def execute_method(method: str, intent: Dict[str, Any], duration_s: int) -> Dict
         return execute_langgraph_llm(intent, duration_s)
     if method == "langgraph_agentcard":
         return execute_langgraph_agentcard(intent, duration_s)
+    if method in LEARNING_METHODS:
+        return execute_langgraph_agentcard(intent, duration_s, variant=method)
     if method == "llm_only":
         return execute_llm_only(intent, duration_s)
     raise ValueError(f"Unsupported method: {method}")
@@ -1790,6 +1868,12 @@ def build_record(
         "retrieval_hit": (retrieval or {}).get("expected_retrieved") if retrieval else None,
         "retrieval_hit_unpinned": (retrieval or {}).get("expected_retrieved_unpinned") if retrieval else None,
         "graph_backend": execution.get("graph_backend"),
+        "graph_variant": execution.get("graph_variant"),
+        # Learning variants only (None for every other method): which template cards / memory entries
+        # Discover handed to Compose (ids + BM25 scores; identical-sentence exclusions logged).
+        "workflow_templates_retrieved": execution.get("workflow_templates_retrieved"),
+        "memory_retrieved": execution.get("memory_retrieved"),
+        "memory_excluded_identical": execution.get("memory_excluded_identical"),
         "validate_mode": execution.get("validate_mode"),
         "validation_report": execution.get("validation_report"),
         **conflict_fields,
@@ -2007,6 +2091,7 @@ def manifest(methods: List[str], intents: List[Dict[str, Any]], repeats: int, du
         "providers": _provider_statuses(),
         "workflow_templates": WORKFLOW_TEMPLATES,
         "workflow_actions": WORKFLOW_ACTIONS,
+        "appweaver_learning": learning_manifest(methods),
         "notes": [
             "This manifest captures the platform state observed by the harness at batch start.",
             "The current environment may not expose live RPC, MCP, or KPM services. Those limits are recorded in the result files rather than hidden.",
@@ -2014,6 +2099,24 @@ def manifest(methods: List[str], intents: List[Dict[str, Any]], repeats: int, du
             "Agent-card discovery methods can generate custom workflow chains when an intent does not align with the predefined workflow catalog.",
         ],
     }
+
+
+def learning_manifest(methods: List[str]) -> Dict[str, Any]:
+    """Configuration of the learning variants in this batch (workflow templates, memory file)."""
+    selected = [m for m in methods if m in LEARNING_METHODS]
+    out: Dict[str, Any] = {
+        "methods": {m: {"workflow_templates": bool(LEARNING_METHODS[m]["workflow_templates"]),
+                        "memory_path": str(memory_path_for_run()) if LEARNING_METHODS[m]["memory"] else None} for m in selected},
+        "workflow_template_cards": default_workflow_cards(AGENTS) if selected else None,
+        "template_k": AppWeaverConfig().template_k,
+        "memory_path": None, "memory_sha256": None, "memory_entry_count": None,
+    }
+    if any(LEARNING_METHODS[m]["memory"] for m in selected):
+        memory = experience_memory()
+        out.update({"memory_path": memory.path, "memory_sha256": memory.sha256, "memory_entry_count": len(memory.entries),
+                    "memory_k": memory.k, "memory_min_score": memory.min_score,
+                    "memory_sources": sorted({str((e.get("provenance") or {}).get("run")) for e in memory.entries})})
+    return out
 
 
 def write_artifacts(output_dir: Path, intents: List[Dict[str, Any]], records: List[Dict[str, Any]], batch_manifest: Dict[str, Any]) -> None:
@@ -2067,6 +2170,7 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     parser.add_argument("--maintenance-every", type=int, default=0)
     parser.add_argument("--health-cmd", default="", help="Shell command run after every record (e.g. scripts/probe_e42.sh); on failure the record is discarded, --maintenance-cmd runs and the record is re-run.")
     parser.add_argument("--health-retries", type=int, default=2)
+    parser.add_argument("--memory-path", default=str(DEFAULT_MEMORY_PATH), help="Experience memory (JSONL, evaluation/build_experience_memory.py) for appweaver_mem; built from a training batch only.")
     parser.add_argument("--max-prompt-chars", type=int, default=0, help="Raise the portal's task-prompt cap (a UI input guard, 8000 chars) for in-process planner calls; 0 keeps the portal value. Needed when every directory card is in the prompt (--retrieval-k 0 with FLEXRIC_RAPP_DIRECTORY=1).")
     return parser.parse_args(argv)
 
@@ -2090,6 +2194,7 @@ def main(argv: List[str]) -> int:
             "dryrun_duration_s": int(args.dryrun_duration_s),
             "max_prompt_chars": int(args.max_prompt_chars) or flexric_agent_portal.MAX_PROMPT_CHARS,
             "rapp_directory_enabled": os.getenv("FLEXRIC_RAPP_DIRECTORY", "").strip().lower() in {"1", "true", "yes", "on"},
+            "memory_path": str(Path(args.memory_path).expanduser().resolve()),
         }
     )
     if args.max_prompt_chars > 0:
@@ -2101,6 +2206,14 @@ def main(argv: List[str]) -> int:
     methods = [method for method in args.methods if method in METHODS]
     if not methods:
         raise SystemExit("No supported methods were selected.")
+    if any(LEARNING_METHODS[m]["memory"] for m in methods if m in LEARNING_METHODS) and not memory_path_for_run().exists():
+        raise SystemExit(f"appweaver_mem needs an experience memory: {memory_path_for_run()} not found (evaluation/build_experience_memory.py).")
+    # The template (+ memory) sections add ~1.3k (~2.3k) characters to AppWeaver's Compose prompt; with the
+    # Batch A registry appweaver_mem prompts reach ~8.3k, over the portal's 8000-character UI input guard.
+    # The guard only rejects; lifting it changes no method's prompt.
+    if any(m in LEARNING_METHODS for m in methods) and int(EVAL_RUNTIME_CONFIG["max_prompt_chars"]) < LEARNING_MIN_PROMPT_CHARS:
+        raise SystemExit(f"appweaver_tpl/appweaver_mem need --max-prompt-chars >= {LEARNING_MIN_PROMPT_CHARS} "
+                         f"(portal guard is {EVAL_RUNTIME_CONFIG['max_prompt_chars']}).")
 
     if args.validate_mode == "dryrun":
         dryrun_fn, dryrun_reason = resolve_dryrun()

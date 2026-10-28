@@ -17,6 +17,10 @@
 
 `no_repair` (agentcard_no_repair): identical graph without Compose's repair and without the
 recover node (busy apps then meet the shared lease wait in deploy, like every baseline).
+
+`appweaver_tpl` / `appweaver_mem` (learning variants): identical graph; Discover additionally
+retrieves the operator's workflow-template cards (and, for `appweaver_mem`, similar past intents
+from the experience memory) and Compose shows them in extra prompt sections (learning.py).
 """
 from __future__ import annotations
 

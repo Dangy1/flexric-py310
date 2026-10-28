@@ -142,3 +142,30 @@ rule accuracy under the committed labels (primary) and under "committed OR alter
 |---|---|---|
 | `ecn_policy_validation`, `codel_rollback_verification`, `qos_policy_sanity_check` | TC (→ RC) — requires a TC write although the intent asks to validate/verify | read-only verification: KPM required, RC optional after any control, no control-role write |
 | `priority_for_emergency_ues` | KPM → QoE prediction → UE QoS control (QoE required only by the card dependency) | same chain without RAPP.QOE_PREDICTION |
+
+## Learning variants (`appweaver_tpl`, `appweaver_mem`; workstream F)
+
+Both are the AppWeaver graph with identical repair, validation (incl. the twin dry run) and recovery;
+only Discover/Compose see more context. AppWeaver's own prompt builders are byte-identical (the
+`prompt_builders_sha256` entries `prompts.*` and `appweaver.prompts_module` match Batch A).
+
+* `appweaver_tpl` ("AppWeaver + templates"): Discover also ranks the operator's three workflow
+  templates (`backend/orchestration/config.py`, the same catalog the rule router and `llm_only` use) as
+  workflow cards (id, name, description, ordered executable steps with actions) by BM25; k = 3 shows the
+  whole catalog, best match first. Compose appends one prompt section ("Operator workflow templates:
+  reuse one unchanged when the intent asks for that operator procedure; otherwise compose").
+* `appweaver_mem` ("AppWeaver + templates + memory"): additionally an experience memory
+  (`evaluation/memory/experience_A.jsonl`, built by `evaluation/build_experience_memory.py` from a
+  Batch A run and `intents_50.json` only): per training intent, its sentence, the labelled accepted
+  chain(s) (operator feedback) and up to 2 AppWeaver proposals that failed the label rule, with the
+  rule's reasons. Discover retrieves the top 3 past intents by BM25 over the sentences (floor 4.0, chosen
+  leave-one-out on intents_50); an entry whose sentence equals the query (case/whitespace-insensitive)
+  is never returned and is logged (`memory_excluded_identical`). Records carry `memory_retrieved`
+  (ids + scores) and `workflow_templates_retrieved`; the manifest's `appweaver_learning` block records
+  the memory path, sha256 and entry count.
+* Train/test separation: the memory holds Batch A intents only; the variants are evaluated on
+  Batch C (`intents_c.json`, 60 held-out intents, no sentence in common with the memory; tested in
+  `evaluation/tests/test_appweaver_learning.py`). Nothing is tuned on Batch C.
+* Prompt guard: the extra sections add ~1.3k (templates) / ~2.3k (templates + memory) characters, so
+  `appweaver_mem` prompts exceed the portal's 8000-character UI input guard; the harness refuses to
+  start these methods without `--max-prompt-chars >= 16000` (the guard only rejects; no prompt changes).

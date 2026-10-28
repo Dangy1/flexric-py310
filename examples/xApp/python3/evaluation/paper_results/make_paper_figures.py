@@ -88,6 +88,9 @@ METHODS: List[Tuple[str, str]] = [
     ("llm_only", "LLM\n(catalog)"),
     ("agentcard_no_repair", "AppWeaver\n(no repair)"),
     ("langgraph_agentcard", "AppWeaver"),
+    # learning variants (workstream F); only present in the batches that ran them
+    ("appweaver_tpl", "AppWeaver\n+ templates"),
+    ("appweaver_mem", "AppWeaver\n+ tpl + memory"),
 ]
 LABEL = dict(METHODS)
 SPLITS = [("known", "Known"), ("open_world", "Open-world"), ("unseen_capability", "Unseen capability")]
