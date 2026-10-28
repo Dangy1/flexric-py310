@@ -268,6 +268,11 @@ First tasks for the execution session:
   of the three templates; it has no router fallback — `validate_or_repair_plan` only serves the
   `langgraph_*` methods, which are not in the paper batches), reproduction commands in `README.md`
   match the commands of the preliminary batches (health probe, `--max-prompt-chars 64000`, merge).
+- **Final gpt-oss-120b batch started and stopped (2026-10-28 09:26–09:46):** `…_A_final_gptoss120b_spark1`
+  ran 70/1500 records cleanly on spark1, then was stopped on the owner's decision: an independent review
+  (Fable) of reviewer coverage, ARD, app inventory, intents and the digital twin comes first, and the final
+  A/B batches and the twin test run once, together, on the revised code. The 70 partial records are not
+  used. Review output: `docs/FABLE_REVIEW_AND_PLAN.md`.
 
 ## 4. Done criteria
 A fresh clone + the README's three commands reproduce every number and figure in the revised paper
