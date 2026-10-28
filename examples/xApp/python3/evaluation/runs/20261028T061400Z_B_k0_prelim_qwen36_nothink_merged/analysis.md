@@ -1,0 +1,105 @@
+# Evaluation Analysis
+
+- records: 1440
+- methods: 6
+- intents: 80
+
+## Method Summary
+
+Metric definitions: `evaluation/METRICS.md`. Accuracies are exact ordered matches with ±95% CI half-widths; latency is intent→validated plan, excluding the tool-acknowledgement wait.
+
+| Method | Records (intents×repeats) | Workflow acc. | Known acc. | Open-world acc. | Set acc. | Tool calls | Launched | Acknowledged | Halluc. refs | Conflict recall (TP/seeded) | Conflict FP rate | Seeded recovered | Latency mean±sd / median / p95 / max (ms) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| agentcard_no_repair | 240 (80×3) | 31.2% ±5.9% | 0.0% ±0.0% | 36.2% ±6.5% | 36.2% | 765 | 99.2% | 98.4% | 0 | 33.3% (6/18) | 0.0% | 0.0% | 7009.8±843.7 / 6851.5 / 8488.2 / 12708.3 |
+| langgraph_agentcard | 240 (80×3) | 29.6% ±5.8% | 0.0% ±0.0% | 34.3% ±6.5% | 35.0% | 725 | 100.0% | 99.2% | 0 | 33.3% (6/18) | 0.0% | 33.3% | 7238.7±1740.0 / 6961.1 / 9008.1 / 18237.2 |
+| llm_blind | 240 (80×3) | 5.8% ±3.0% | 15.2% ±12.2% | 4.3% ±2.8% | 6.7% | 499 | 96.4% | 93.6% | 134 | 100.0% (18/18) | 0.0% | 0.0% | 2950.2±441.4 / 2915.0 / 3656.1 / 4038.2 |
+| llm_only | 240 (80×3) | 20.0% ±5.1% | 81.8% ±13.2% | 10.1% ±4.1% | 22.5% | 836 | 98.3% | 98.3% | 0 | 77.8% (14/18) | 0.0% | 0.0% | 2990.7±351.2 / 2946.3 / 3604.1 / 4711.4 |
+| manual_rule | 240 (80×3) | 20.0% ±5.1% | 100.0% ±0.0% | 7.2% ±3.5% | 23.8% | 747 | 97.6% | 97.2% | 0 | 100.0% (18/18) | 0.0% | 0.0% | 1.7±0.8 / 2.1 / 2.5 / 2.8 |
+| single_xapp | 240 (80×3) | 3.8% ±2.4% | 27.3% ±15.2% | 0.0% ±0.0% | 3.8% | 240 | 95.0% | 94.2% | 0 | 66.7% (12/18) | 0.0% | 0.0% | 0.7±0.2 / 0.8 / 0.9 / 0.9 |
+
+Legacy columns (kept for comparison with the May-2026 batch): `conflict_detection_accuracy` counts true negatives and recoveries; `tool_call_success_rate` is launch success. Do not quote them in the paper.
+
+## Intent Summary
+
+| Intent ID | Runs | Workflow match | Failure rate | Conflict rate |
+| --- | ---: | ---: | ---: | ---: |
+| anomaly_containment_degraded_service | 18 | 0.0% | 0.0% | 0.0% |
+| anomaly_to_transport_fix | 18 | 22.2% | 0.0% | 0.0% |
+| backhaul_delay_mitigation | 18 | 0.0% | 0.0% | 0.0% |
+| backhaul_policy_advice | 18 | 33.3% | 0.0% | 0.0% |
+| backhaul_queue_conflict_recovery | 18 | 0.0% | 66.7% | 66.7% |
+| bearer_stall_triage | 18 | 0.0% | 0.0% | 0.0% |
+| campus_slice_drift_detection | 18 | 0.0% | 0.0% | 0.0% |
+| capacity_headroom_forecast | 18 | 27.8% | 0.0% | 0.0% |
+| cell_edge_fairness_protection | 18 | 0.0% | 0.0% | 0.0% |
+| cell_edge_qoe_protection | 18 | 33.3% | 0.0% | 0.0% |
+| codel_rollback_verification | 18 | 0.0% | 0.0% | 0.0% |
+| config_rollout_window | 18 | 0.0% | 0.0% | 0.0% |
+| congestion_relief | 18 | 33.3% | 0.0% | 0.0% |
+| coverage_hole_tilt | 18 | 33.3% | 0.0% | 0.0% |
+| cross_slice_resource_rebalance | 18 | 16.7% | 0.0% | 0.0% |
+| deprecated_card_trap | 18 | 33.3% | 0.0% | 0.0% |
+| downlink_jitter_containment | 18 | 0.0% | 0.0% | 0.0% |
+| drb_delay_hotspot | 18 | 0.0% | 0.0% | 0.0% |
+| ecn_policy_validation | 18 | 16.7% | 0.0% | 0.0% |
+| edge_gaming_jitter_protection | 18 | 33.3% | 0.0% | 0.0% |
+| emergency_traffic_preemption | 18 | 50.0% | 0.0% | 0.0% |
+| energy_saving_wakeup_guard | 18 | 0.0% | 0.0% | 0.0% |
+| energy_vs_capacity_conflict | 18 | 33.3% | 0.0% | 0.0% |
+| enterprise_slice_audit | 18 | 44.4% | 0.0% | 0.0% |
+| enterprise_tunnel_busy_tc | 18 | 0.0% | 66.7% | 66.7% |
+| gtp_tunnel_health_validation | 18 | 0.0% | 0.0% | 0.0% |
+| handover_ping_pong_detection | 18 | 0.0% | 0.0% | 0.0% |
+| handover_resilience_triage | 18 | 33.3% | 0.0% | 0.0% |
+| handover_route_risk_screening | 18 | 0.0% | 0.0% | 0.0% |
+| healing_full_chain | 18 | 33.3% | 0.0% | 0.0% |
+| interference_hotspot | 18 | 33.3% | 0.0% | 0.0% |
+| kpi_anomaly_sweep | 18 | 33.3% | 0.0% | 0.0% |
+| latency_regression_root_cause | 18 | 0.0% | 0.0% | 0.0% |
+| latency_under_busy_tc | 18 | 16.7% | 33.3% | 33.3% |
+| load_balance_hotspot | 18 | 33.3% | 0.0% | 0.0% |
+| low_priority_traffic_shaping_guard | 18 | 0.0% | 0.0% | 0.0% |
+| mmtc_capacity_preservation | 18 | 0.0% | 0.0% | 0.0% |
+| mobility_hotspot_stabilization | 18 | 27.8% | 0.0% | 0.0% |
+| mobility_root_cause | 18 | 0.0% | 0.0% | 0.0% |
+| night_energy_saving | 18 | 33.3% | 0.0% | 0.0% |
+| pdcp_reorder_investigation | 18 | 0.0% | 0.0% | 0.0% |
+| ping_pong_handover_fix | 18 | 33.3% | 0.0% | 0.0% |
+| pm_report_daily | 18 | 33.3% | 0.0% | 0.0% |
+| prb_imbalance_correction | 18 | 0.0% | 0.0% | 0.0% |
+| premium_qos_isolation | 18 | 16.7% | 0.0% | 0.0% |
+| priority_for_emergency_ues | 18 | 0.0% | 0.0% | 0.0% |
+| qoe_driven_steering | 18 | 33.3% | 0.0% | 0.0% |
+| qoe_without_observation | 18 | 33.3% | 0.0% | 0.0% |
+| qos_policy_sanity_check | 18 | 0.0% | 0.0% | 0.0% |
+| radio_capacity_headroom | 18 | 33.3% | 0.0% | 0.0% |
+| report_then_tilt | 18 | 33.3% | 0.0% | 0.0% |
+| rlc_queue_anomaly_detection | 18 | 0.0% | 0.0% | 0.0% |
+| rollout_blocked_by_energy | 18 | 0.0% | 0.0% | 0.0% |
+| slice_admission_control | 18 | 27.8% | 0.0% | 0.0% |
+| slice_drift_correction | 18 | 0.0% | 0.0% | 0.0% |
+| slice_fairness_assurance | 18 | 16.7% | 0.0% | 0.0% |
+| slice_isolation_validation | 18 | 33.3% | 0.0% | 0.0% |
+| slice_oversubscription_repair | 18 | 0.0% | 0.0% | 0.0% |
+| slice_policy_race_recovery | 18 | 27.8% | 83.3% | 100.0% |
+| slice_sla_breach | 18 | 0.0% | 0.0% | 0.0% |
+| slice_sla_report | 18 | 0.0% | 0.0% | 0.0% |
+| spectrum_resplit | 18 | 16.7% | 0.0% | 0.0% |
+| stadium_congestion_surge | 18 | 33.3% | 0.0% | 0.0% |
+| steering_then_energy | 18 | 33.3% | 0.0% | 0.0% |
+| tc_conflict_recovery | 18 | 50.0% | 83.3% | 100.0% |
+| tilt_after_outage | 18 | 33.3% | 0.0% | 0.0% |
+| transport_bufferbloat_mitigation | 18 | 50.0% | 0.0% | 0.0% |
+| transport_queue_partition_tuning | 18 | 16.7% | 0.0% | 0.0% |
+| transport_tunnel_stability | 18 | 50.0% | 0.0% | 0.0% |
+| tunnel_retransmission_diagnosis | 18 | 0.0% | 0.0% | 0.0% |
+| unknown_busy_runtime_recovery | 18 | 0.0% | 44.4% | 44.4% |
+| unknown_enterprise_xr_slowdown | 18 | 33.3% | 0.0% | 0.0% |
+| unknown_vertical_request | 18 | 33.3% | 0.0% | 0.0% |
+| uplink_queue_stability | 18 | 27.8% | 0.0% | 0.0% |
+| urllc_reliability_safeguard | 18 | 33.3% | 0.0% | 0.0% |
+| vendor_variant_trap | 18 | 0.0% | 0.0% | 0.0% |
+| video_qoe_forecast | 18 | 33.3% | 0.0% | 0.0% |
+| video_throughput_smoothing | 18 | 0.0% | 0.0% | 0.0% |
+| volte_latency_safeguard | 18 | 0.0% | 0.0% | 0.0% |
+| xr_latency_guard | 18 | 50.0% | 0.0% | 0.0% |

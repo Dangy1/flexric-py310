@@ -1,0 +1,849 @@
+{
+  "created_at": "2026-10-27T22:41:00.103305Z",
+  "duration_s": 45,
+  "evaluation_runtime_config": {
+    "metrics_min_interval_s": 15.0,
+    "metrics_mode": "live",
+    "observation_cache_ttl_s": 0.0,
+    "planner_cache_ttl_s": 0.0,
+    "rapp_directory_enabled": true,
+    "retrieval_include_deprecated": false,
+    "retrieval_k": 8,
+    "tool_ack_timeout_s": 12.0,
+    "workflow_poll_interval_s": 0.05,
+    "workflow_poll_timeout_s": 2.0
+  },
+  "hardware": {
+    "llm_server": "spark2 130.233.158.22 Ollama 0.40.0 (GPU model pending owner)",
+    "orchestration_cpu": "x86_64",
+    "orchestration_host": "comlab-srs",
+    "orchestration_platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+    "orchestration_python": "3.10.20"
+  },
+  "intent_count": 80,
+  "maintenance": {
+    "cmd": "/home/dang/flexric/build/examples/xApp/python3/scripts/restart_agent_portal_stack.sh",
+    "every": 0,
+    "health_cmd": "/home/dang/flexric/build/examples/xApp/python3/scripts/probe_e42.sh",
+    "health_failures": [
+      {
+        "after_record": 2,
+        "attempt": 1,
+        "intent_id": "xr_latency_guard",
+        "method": "llm_blind",
+        "repeat_index": 1,
+        "restart_returncode": 0
+      },
+      {
+        "after_record": 700,
+        "attempt": 1,
+        "intent_id": "campus_slice_drift_detection",
+        "method": "agentcard_no_repair",
+        "repeat_index": 2,
+        "restart_returncode": 0
+      },
+      {
+        "after_record": 865,
+        "attempt": 1,
+        "intent_id": "slice_sla_report",
+        "method": "single_xapp",
+        "repeat_index": 2,
+        "restart_returncode": 0
+      },
+      {
+        "after_record": 922,
+        "attempt": 1,
+        "intent_id": "deprecated_card_trap",
+        "method": "agentcard_no_repair",
+        "repeat_index": 2,
+        "restart_returncode": 0
+      }
+    ],
+    "health_retries": 2,
+    "runs": []
+  },
+  "merge_note": "Agent-card methods re-run with --max-prompt-chars 64000: the portal's 8000-char task-prompt input guard rejected 13 AppWeaver recovery prompts in the first run. Other methods never reached the cap and are kept from the first run.",
+  "merged_from": [
+    {
+      "complete": true,
+      "manifest": {
+        "created_at": "2026-10-27T22:41:00.103305Z",
+        "duration_s": 45,
+        "evaluation_runtime_config": {
+          "metrics_min_interval_s": 15.0,
+          "metrics_mode": "live",
+          "observation_cache_ttl_s": 0.0,
+          "planner_cache_ttl_s": 0.0,
+          "rapp_directory_enabled": true,
+          "retrieval_include_deprecated": false,
+          "retrieval_k": 8,
+          "tool_ack_timeout_s": 12.0,
+          "workflow_poll_interval_s": 0.05,
+          "workflow_poll_timeout_s": 2.0
+        },
+        "hardware": {
+          "llm_server": "spark2 130.233.158.22 Ollama 0.40.0 (GPU model pending owner)",
+          "orchestration_cpu": "x86_64",
+          "orchestration_host": "comlab-srs",
+          "orchestration_platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+          "orchestration_python": "3.10.20"
+        },
+        "intent_count": 80,
+        "maintenance": {
+          "cmd": "/home/dang/flexric/build/examples/xApp/python3/scripts/restart_agent_portal_stack.sh",
+          "every": 0,
+          "health_cmd": "/home/dang/flexric/build/examples/xApp/python3/scripts/probe_e42.sh",
+          "health_failures": [
+            {
+              "after_record": 2,
+              "attempt": 1,
+              "intent_id": "xr_latency_guard",
+              "method": "llm_blind",
+              "repeat_index": 1,
+              "restart_returncode": 0
+            },
+            {
+              "after_record": 700,
+              "attempt": 1,
+              "intent_id": "campus_slice_drift_detection",
+              "method": "agentcard_no_repair",
+              "repeat_index": 2,
+              "restart_returncode": 0
+            },
+            {
+              "after_record": 865,
+              "attempt": 1,
+              "intent_id": "slice_sla_report",
+              "method": "single_xapp",
+              "repeat_index": 2,
+              "restart_returncode": 0
+            },
+            {
+              "after_record": 922,
+              "attempt": 1,
+              "intent_id": "deprecated_card_trap",
+              "method": "agentcard_no_repair",
+              "repeat_index": 2,
+              "restart_returncode": 0
+            }
+          ],
+          "health_retries": 2,
+          "runs": []
+        },
+        "method_labels": {
+          "agentcard_no_repair": "AppWeaver (no repair)",
+          "langgraph_agentcard": "AppWeaver",
+          "llm_blind": "LLM (no catalog)",
+          "llm_only": "LLM (catalog-aware)",
+          "manual_rule": "Rule router",
+          "single_xapp": "Single app"
+        },
+        "methods": [
+          "manual_rule",
+          "single_xapp",
+          "llm_blind",
+          "llm_only",
+          "agentcard_no_repair",
+          "langgraph_agentcard"
+        ],
+        "notes": [
+          "This manifest captures the platform state observed by the harness at batch start.",
+          "The current environment may not expose live RPC, MCP, or KPM services. Those limits are recorded in the result files rather than hidden.",
+          "Metrics snapshots and KPM observation actions can be cached by the harness to reduce platform load and avoid punishing planners for telemetry polling frequency.",
+          "Agent-card discovery methods can generate custom workflow chains when an intent does not align with the predefined workflow catalog."
+        ],
+        "planner_inference_settings": {
+          "seed": 7,
+          "temperature": 0.2,
+          "think": false,
+          "timeout_s": 90
+        },
+        "planner_prompt_sha256": {
+          "agentcard_prompt": "6c31508c2b6cc8ca",
+          "agentcard_recovery_prompt": "21c198227c425e99",
+          "llm_blind_prompt": "dcb808b29c97a6ff",
+          "llm_prompt": "59ce9a5535ea8890",
+          "llm_recovery_prompt": "55a82e7720298140"
+        },
+        "providers": [
+          {
+            "enabled": false,
+            "endpoint": "claude -p (headless)",
+            "id": "claude",
+            "label": "Claude CLI",
+            "model": "cli-default",
+            "notes": "Headless Claude Code CLI; uses the operator's configured default model unless CLAUDE_CLI_MODEL is set.",
+            "supports_tasks": false
+          },
+          {
+            "enabled": true,
+            "endpoint": "http://130.233.158.22:11434",
+            "id": "ollama",
+            "label": "Ollama",
+            "model": "qwen3.6:27b",
+            "notes": "Best for private on-box automation loops and local model routing.",
+            "supports_tasks": true
+          },
+          {
+            "enabled": false,
+            "endpoint": "https://api.openai.com/v1",
+            "id": "openai",
+            "label": "OpenAI API",
+            "model": "not-configured",
+            "notes": "Best for richer planning or cross-domain automation once API credentials are configured.",
+            "supports_tasks": false
+          }
+        ],
+        "registry": {
+          "action_count": 113,
+          "agent_count": 55,
+          "agent_ids": [
+            "gtp",
+            "kpm",
+            "mac",
+            "orchestrator",
+            "pdcp",
+            "rapp.anomaly_detection",
+            "rapp.anomaly_detection.kestrel",
+            "rapp.anomaly_detection.northwind",
+            "rapp.anomaly_detection.v0",
+            "rapp.capacity_mgmt",
+            "rapp.capacity_mgmt.northwind",
+            "rapp.capacity_mgmt.v0",
+            "rapp.energy_saving",
+            "rapp.energy_saving.kestrel",
+            "rapp.energy_saving.northwind",
+            "rapp.energy_saving.v0",
+            "rapp.interference",
+            "rapp.interference.northwind",
+            "rapp.interference.v0",
+            "rapp.mobility_optimization",
+            "rapp.mobility_optimization.northwind",
+            "rapp.mobility_optimization.v0",
+            "rapp.pm_kpi",
+            "rapp.pm_kpi.northwind",
+            "rapp.pm_kpi.v0",
+            "rapp.qoe_prediction",
+            "rapp.qoe_prediction.kestrel",
+            "rapp.qoe_prediction.northwind",
+            "rapp.qoe_prediction.v0",
+            "rapp.ran_lifecycle",
+            "rapp.ret_tilt",
+            "rapp.ret_tilt.northwind",
+            "rapp.ret_tilt.v0",
+            "rapp.root_cause",
+            "rapp.root_cause.northwind",
+            "rapp.root_cause.v0",
+            "rapp.self_healing",
+            "rapp.slice_sla",
+            "rapp.slice_sla.northwind",
+            "rapp.slice_sla.v0",
+            "rapp.spectrum_sharing",
+            "rapp.traffic_steering",
+            "rapp.traffic_steering.kestrel",
+            "rapp.traffic_steering.northwind",
+            "rapp.traffic_steering.v0",
+            "rapp.transport_qos",
+            "rapp.transport_qos.northwind",
+            "rapp.transport_qos.v0",
+            "rapp.ue_qos_control",
+            "rapp.ue_qos_control.northwind",
+            "rapp.ue_qos_control.v0",
+            "rc",
+            "rlc",
+            "slice",
+            "tc"
+          ],
+          "executable_agent_count": 50
+        },
+        "repeat_count": 3,
+        "repeat_start": 1,
+        "service_health": [
+          {
+            "detail": "Local portal process is serving this request.",
+            "id": "portal",
+            "label": "Agent Portal",
+            "latency_ms": 0,
+            "ok": true,
+            "public_url": "http://127.0.0.1:8088/",
+            "status": "ready",
+            "url": "http://127.0.0.1:8088/api/overview"
+          },
+          {
+            "detail": "RPC process is alive. Use /ready or a functional endpoint to force xApp initialization.",
+            "id": "rpc",
+            "label": "xApp RPC",
+            "latency_ms": 2,
+            "ok": true,
+            "public_url": "http://127.0.0.1:8090/health",
+            "status": "ready",
+            "url": "http://127.0.0.1:8090/health"
+          },
+          {
+            "detail": "Live FlexRIC collector is disabled by default for stability. Set FLEXRIC_MCP_ENABLE_COLLECTOR=1 to opt in.",
+            "id": "mcp",
+            "label": "MCP Metrics",
+            "latency_ms": 1,
+            "ok": true,
+            "public_url": "http://127.0.0.1:8000/healthz",
+            "status": "ready",
+            "url": "http://127.0.0.1:8000/healthz"
+          },
+          {
+            "detail": "Shared KPM bus supervises a single collector subprocess. Agents should read from this bus instead of opening new KPM monitors.",
+            "id": "kpm_bus",
+            "label": "KPM Bus",
+            "latency_ms": 1,
+            "ok": true,
+            "public_url": "http://127.0.0.1:8091/healthz",
+            "status": "ready",
+            "url": "http://127.0.0.1:8091/healthz"
+          }
+        ],
+        "workflow_actions": {
+          "observe-diagnose-optimize": {
+            "kpm": "observe-rru",
+            "rc": "rc-scaffold",
+            "slice": "monitor",
+            "tc": "apply-codel"
+          },
+          "slice-assurance": {
+            "kpm": "observe-rru",
+            "rc": "rc-scaffold",
+            "slice": "monitor"
+          },
+          "transport-qos": {
+            "tc": "apply-codel"
+          }
+        },
+        "workflow_templates": {
+          "observe-diagnose-optimize": {
+            "description": "Collect KPIs, correlate MAC/slice pressure, enforce policy, then validate with RC.",
+            "label": "Observe, Diagnose, Optimize",
+            "steps": [
+              "orchestrator",
+              "kpm",
+              "mac",
+              "slice",
+              "tc",
+              "rc"
+            ]
+          },
+          "slice-assurance": {
+            "description": "Apply or monitor slice policy, measure impact, then review control readiness.",
+            "label": "Slice Assurance Loop",
+            "steps": [
+              "orchestrator",
+              "slice",
+              "kpm",
+              "rc"
+            ]
+          },
+          "transport-qos": {
+            "description": "Use TC actions and downstream bearer/tunnel observers for transport-aware feedback.",
+            "label": "Transport QoS Chain",
+            "steps": [
+              "orchestrator",
+              "tc",
+              "rlc",
+              "pdcp",
+              "gtp"
+            ]
+          }
+        }
+      },
+      "methods": [
+        "manual_rule",
+        "single_xapp",
+        "llm_blind",
+        "llm_only"
+      ],
+      "records": 960,
+      "repeats": [
+        1,
+        3
+      ],
+      "run": "20261027T224100_103232Z_B_k8_prelim_qwen36_nothink"
+    },
+    {
+      "complete": true,
+      "manifest": {
+        "created_at": "2026-10-28T03:26:39.300492Z",
+        "duration_s": 45,
+        "evaluation_runtime_config": {
+          "max_prompt_chars": 64000,
+          "metrics_min_interval_s": 15.0,
+          "metrics_mode": "live",
+          "observation_cache_ttl_s": 0.0,
+          "planner_cache_ttl_s": 0.0,
+          "rapp_directory_enabled": true,
+          "retrieval_include_deprecated": false,
+          "retrieval_k": 8,
+          "tool_ack_timeout_s": 12.0,
+          "workflow_poll_interval_s": 0.05,
+          "workflow_poll_timeout_s": 2.0
+        },
+        "hardware": {
+          "llm_server": "spark2 130.233.158.22 Ollama 0.40.0 (GPU model pending owner)",
+          "orchestration_cpu": "x86_64",
+          "orchestration_host": "comlab-srs",
+          "orchestration_platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+          "orchestration_python": "3.10.20"
+        },
+        "intent_count": 80,
+        "maintenance": {
+          "cmd": "/home/dang/flexric/build/examples/xApp/python3/scripts/restart_agent_portal_stack.sh",
+          "every": 0,
+          "health_cmd": "/home/dang/flexric/build/examples/xApp/python3/scripts/probe_e42.sh",
+          "health_failures": [],
+          "health_retries": 2,
+          "runs": []
+        },
+        "method_labels": {
+          "agentcard_no_repair": "AppWeaver (no repair)",
+          "langgraph_agentcard": "AppWeaver"
+        },
+        "methods": [
+          "agentcard_no_repair",
+          "langgraph_agentcard"
+        ],
+        "notes": [
+          "This manifest captures the platform state observed by the harness at batch start.",
+          "The current environment may not expose live RPC, MCP, or KPM services. Those limits are recorded in the result files rather than hidden.",
+          "Metrics snapshots and KPM observation actions can be cached by the harness to reduce platform load and avoid punishing planners for telemetry polling frequency.",
+          "Agent-card discovery methods can generate custom workflow chains when an intent does not align with the predefined workflow catalog."
+        ],
+        "planner_inference_settings": {
+          "seed": 7,
+          "temperature": 0.2,
+          "think": false,
+          "timeout_s": 90
+        },
+        "planner_prompt_sha256": {
+          "agentcard_prompt": "6c31508c2b6cc8ca",
+          "agentcard_recovery_prompt": "21c198227c425e99",
+          "llm_blind_prompt": "dcb808b29c97a6ff",
+          "llm_prompt": "59ce9a5535ea8890",
+          "llm_recovery_prompt": "55a82e7720298140"
+        },
+        "providers": [
+          {
+            "enabled": false,
+            "endpoint": "claude -p (headless)",
+            "id": "claude",
+            "label": "Claude CLI",
+            "model": "cli-default",
+            "notes": "Headless Claude Code CLI; uses the operator's configured default model unless CLAUDE_CLI_MODEL is set.",
+            "supports_tasks": false
+          },
+          {
+            "enabled": true,
+            "endpoint": "http://130.233.158.22:11434",
+            "id": "ollama",
+            "label": "Ollama",
+            "model": "qwen3.6:27b",
+            "notes": "Best for private on-box automation loops and local model routing.",
+            "supports_tasks": true
+          },
+          {
+            "enabled": false,
+            "endpoint": "https://api.openai.com/v1",
+            "id": "openai",
+            "label": "OpenAI API",
+            "model": "not-configured",
+            "notes": "Best for richer planning or cross-domain automation once API credentials are configured.",
+            "supports_tasks": false
+          }
+        ],
+        "registry": {
+          "action_count": 113,
+          "agent_count": 55,
+          "agent_ids": [
+            "gtp",
+            "kpm",
+            "mac",
+            "orchestrator",
+            "pdcp",
+            "rapp.anomaly_detection",
+            "rapp.anomaly_detection.kestrel",
+            "rapp.anomaly_detection.northwind",
+            "rapp.anomaly_detection.v0",
+            "rapp.capacity_mgmt",
+            "rapp.capacity_mgmt.northwind",
+            "rapp.capacity_mgmt.v0",
+            "rapp.energy_saving",
+            "rapp.energy_saving.kestrel",
+            "rapp.energy_saving.northwind",
+            "rapp.energy_saving.v0",
+            "rapp.interference",
+            "rapp.interference.northwind",
+            "rapp.interference.v0",
+            "rapp.mobility_optimization",
+            "rapp.mobility_optimization.northwind",
+            "rapp.mobility_optimization.v0",
+            "rapp.pm_kpi",
+            "rapp.pm_kpi.northwind",
+            "rapp.pm_kpi.v0",
+            "rapp.qoe_prediction",
+            "rapp.qoe_prediction.kestrel",
+            "rapp.qoe_prediction.northwind",
+            "rapp.qoe_prediction.v0",
+            "rapp.ran_lifecycle",
+            "rapp.ret_tilt",
+            "rapp.ret_tilt.northwind",
+            "rapp.ret_tilt.v0",
+            "rapp.root_cause",
+            "rapp.root_cause.northwind",
+            "rapp.root_cause.v0",
+            "rapp.self_healing",
+            "rapp.slice_sla",
+            "rapp.slice_sla.northwind",
+            "rapp.slice_sla.v0",
+            "rapp.spectrum_sharing",
+            "rapp.traffic_steering",
+            "rapp.traffic_steering.kestrel",
+            "rapp.traffic_steering.northwind",
+            "rapp.traffic_steering.v0",
+            "rapp.transport_qos",
+            "rapp.transport_qos.northwind",
+            "rapp.transport_qos.v0",
+            "rapp.ue_qos_control",
+            "rapp.ue_qos_control.northwind",
+            "rapp.ue_qos_control.v0",
+            "rc",
+            "rlc",
+            "slice",
+            "tc"
+          ],
+          "executable_agent_count": 50
+        },
+        "repeat_count": 3,
+        "repeat_start": 1,
+        "service_health": [
+          {
+            "detail": "Local portal process is serving this request.",
+            "id": "portal",
+            "label": "Agent Portal",
+            "latency_ms": 0,
+            "ok": true,
+            "public_url": "http://127.0.0.1:8088/",
+            "status": "ready",
+            "url": "http://127.0.0.1:8088/api/overview"
+          },
+          {
+            "detail": "RPC process is alive. Use /ready or a functional endpoint to force xApp initialization.",
+            "id": "rpc",
+            "label": "xApp RPC",
+            "latency_ms": 2,
+            "ok": true,
+            "public_url": "http://127.0.0.1:8090/health",
+            "status": "ready",
+            "url": "http://127.0.0.1:8090/health"
+          },
+          {
+            "detail": "Live FlexRIC collector is disabled by default for stability. Set FLEXRIC_MCP_ENABLE_COLLECTOR=1 to opt in.",
+            "id": "mcp",
+            "label": "MCP Metrics",
+            "latency_ms": 1,
+            "ok": true,
+            "public_url": "http://127.0.0.1:8000/healthz",
+            "status": "ready",
+            "url": "http://127.0.0.1:8000/healthz"
+          },
+          {
+            "detail": "Collector is starting but no KPM indications have been seen yet.",
+            "id": "kpm_bus",
+            "label": "KPM Bus",
+            "latency_ms": 1,
+            "ok": false,
+            "public_url": "http://127.0.0.1:8091/healthz",
+            "status": "warning",
+            "url": "http://127.0.0.1:8091/healthz"
+          }
+        ],
+        "workflow_actions": {
+          "observe-diagnose-optimize": {
+            "kpm": "observe-rru",
+            "rc": "rc-scaffold",
+            "slice": "monitor",
+            "tc": "apply-codel"
+          },
+          "slice-assurance": {
+            "kpm": "observe-rru",
+            "rc": "rc-scaffold",
+            "slice": "monitor"
+          },
+          "transport-qos": {
+            "tc": "apply-codel"
+          }
+        },
+        "workflow_templates": {
+          "observe-diagnose-optimize": {
+            "description": "Collect KPIs, correlate MAC/slice pressure, enforce policy, then validate with RC.",
+            "label": "Observe, Diagnose, Optimize",
+            "steps": [
+              "orchestrator",
+              "kpm",
+              "mac",
+              "slice",
+              "tc",
+              "rc"
+            ]
+          },
+          "slice-assurance": {
+            "description": "Apply or monitor slice policy, measure impact, then review control readiness.",
+            "label": "Slice Assurance Loop",
+            "steps": [
+              "orchestrator",
+              "slice",
+              "kpm",
+              "rc"
+            ]
+          },
+          "transport-qos": {
+            "description": "Use TC actions and downstream bearer/tunnel observers for transport-aware feedback.",
+            "label": "Transport QoS Chain",
+            "steps": [
+              "orchestrator",
+              "tc",
+              "rlc",
+              "pdcp",
+              "gtp"
+            ]
+          }
+        }
+      },
+      "methods": [
+        "agentcard_no_repair",
+        "langgraph_agentcard"
+      ],
+      "records": 480,
+      "repeats": [
+        1,
+        3
+      ],
+      "run": "20261028T032639_300423Z_B_k8_prelim_qwen36_nothink_agentcard_cap64k"
+    }
+  ],
+  "method_labels": {
+    "agentcard_no_repair": "AppWeaver (no repair)",
+    "langgraph_agentcard": "AppWeaver",
+    "llm_blind": "LLM (no catalog)",
+    "llm_only": "LLM (catalog-aware)",
+    "manual_rule": "Rule router",
+    "single_xapp": "Single app"
+  },
+  "methods": [
+    "manual_rule",
+    "single_xapp",
+    "llm_blind",
+    "llm_only",
+    "agentcard_no_repair",
+    "langgraph_agentcard"
+  ],
+  "notes": [
+    "This manifest captures the platform state observed by the harness at batch start.",
+    "The current environment may not expose live RPC, MCP, or KPM services. Those limits are recorded in the result files rather than hidden.",
+    "Metrics snapshots and KPM observation actions can be cached by the harness to reduce platform load and avoid punishing planners for telemetry polling frequency.",
+    "Agent-card discovery methods can generate custom workflow chains when an intent does not align with the predefined workflow catalog."
+  ],
+  "planner_inference_settings": {
+    "seed": 7,
+    "temperature": 0.2,
+    "think": false,
+    "timeout_s": 90
+  },
+  "planner_prompt_sha256": {
+    "agentcard_prompt": "6c31508c2b6cc8ca",
+    "agentcard_recovery_prompt": "21c198227c425e99",
+    "llm_blind_prompt": "dcb808b29c97a6ff",
+    "llm_prompt": "59ce9a5535ea8890",
+    "llm_recovery_prompt": "55a82e7720298140"
+  },
+  "providers": [
+    {
+      "enabled": false,
+      "endpoint": "claude -p (headless)",
+      "id": "claude",
+      "label": "Claude CLI",
+      "model": "cli-default",
+      "notes": "Headless Claude Code CLI; uses the operator's configured default model unless CLAUDE_CLI_MODEL is set.",
+      "supports_tasks": false
+    },
+    {
+      "enabled": true,
+      "endpoint": "http://130.233.158.22:11434",
+      "id": "ollama",
+      "label": "Ollama",
+      "model": "qwen3.6:27b",
+      "notes": "Best for private on-box automation loops and local model routing.",
+      "supports_tasks": true
+    },
+    {
+      "enabled": false,
+      "endpoint": "https://api.openai.com/v1",
+      "id": "openai",
+      "label": "OpenAI API",
+      "model": "not-configured",
+      "notes": "Best for richer planning or cross-domain automation once API credentials are configured.",
+      "supports_tasks": false
+    }
+  ],
+  "registry": {
+    "action_count": 113,
+    "agent_count": 55,
+    "agent_ids": [
+      "gtp",
+      "kpm",
+      "mac",
+      "orchestrator",
+      "pdcp",
+      "rapp.anomaly_detection",
+      "rapp.anomaly_detection.kestrel",
+      "rapp.anomaly_detection.northwind",
+      "rapp.anomaly_detection.v0",
+      "rapp.capacity_mgmt",
+      "rapp.capacity_mgmt.northwind",
+      "rapp.capacity_mgmt.v0",
+      "rapp.energy_saving",
+      "rapp.energy_saving.kestrel",
+      "rapp.energy_saving.northwind",
+      "rapp.energy_saving.v0",
+      "rapp.interference",
+      "rapp.interference.northwind",
+      "rapp.interference.v0",
+      "rapp.mobility_optimization",
+      "rapp.mobility_optimization.northwind",
+      "rapp.mobility_optimization.v0",
+      "rapp.pm_kpi",
+      "rapp.pm_kpi.northwind",
+      "rapp.pm_kpi.v0",
+      "rapp.qoe_prediction",
+      "rapp.qoe_prediction.kestrel",
+      "rapp.qoe_prediction.northwind",
+      "rapp.qoe_prediction.v0",
+      "rapp.ran_lifecycle",
+      "rapp.ret_tilt",
+      "rapp.ret_tilt.northwind",
+      "rapp.ret_tilt.v0",
+      "rapp.root_cause",
+      "rapp.root_cause.northwind",
+      "rapp.root_cause.v0",
+      "rapp.self_healing",
+      "rapp.slice_sla",
+      "rapp.slice_sla.northwind",
+      "rapp.slice_sla.v0",
+      "rapp.spectrum_sharing",
+      "rapp.traffic_steering",
+      "rapp.traffic_steering.kestrel",
+      "rapp.traffic_steering.northwind",
+      "rapp.traffic_steering.v0",
+      "rapp.transport_qos",
+      "rapp.transport_qos.northwind",
+      "rapp.transport_qos.v0",
+      "rapp.ue_qos_control",
+      "rapp.ue_qos_control.northwind",
+      "rapp.ue_qos_control.v0",
+      "rc",
+      "rlc",
+      "slice",
+      "tc"
+    ],
+    "executable_agent_count": 50
+  },
+  "repeat_count": 3,
+  "repeat_start": 1,
+  "service_health": [
+    {
+      "detail": "Local portal process is serving this request.",
+      "id": "portal",
+      "label": "Agent Portal",
+      "latency_ms": 0,
+      "ok": true,
+      "public_url": "http://127.0.0.1:8088/",
+      "status": "ready",
+      "url": "http://127.0.0.1:8088/api/overview"
+    },
+    {
+      "detail": "RPC process is alive. Use /ready or a functional endpoint to force xApp initialization.",
+      "id": "rpc",
+      "label": "xApp RPC",
+      "latency_ms": 2,
+      "ok": true,
+      "public_url": "http://127.0.0.1:8090/health",
+      "status": "ready",
+      "url": "http://127.0.0.1:8090/health"
+    },
+    {
+      "detail": "Live FlexRIC collector is disabled by default for stability. Set FLEXRIC_MCP_ENABLE_COLLECTOR=1 to opt in.",
+      "id": "mcp",
+      "label": "MCP Metrics",
+      "latency_ms": 1,
+      "ok": true,
+      "public_url": "http://127.0.0.1:8000/healthz",
+      "status": "ready",
+      "url": "http://127.0.0.1:8000/healthz"
+    },
+    {
+      "detail": "Shared KPM bus supervises a single collector subprocess. Agents should read from this bus instead of opening new KPM monitors.",
+      "id": "kpm_bus",
+      "label": "KPM Bus",
+      "latency_ms": 1,
+      "ok": true,
+      "public_url": "http://127.0.0.1:8091/healthz",
+      "status": "ready",
+      "url": "http://127.0.0.1:8091/healthz"
+    }
+  ],
+  "workflow_actions": {
+    "observe-diagnose-optimize": {
+      "kpm": "observe-rru",
+      "rc": "rc-scaffold",
+      "slice": "monitor",
+      "tc": "apply-codel"
+    },
+    "slice-assurance": {
+      "kpm": "observe-rru",
+      "rc": "rc-scaffold",
+      "slice": "monitor"
+    },
+    "transport-qos": {
+      "tc": "apply-codel"
+    }
+  },
+  "workflow_templates": {
+    "observe-diagnose-optimize": {
+      "description": "Collect KPIs, correlate MAC/slice pressure, enforce policy, then validate with RC.",
+      "label": "Observe, Diagnose, Optimize",
+      "steps": [
+        "orchestrator",
+        "kpm",
+        "mac",
+        "slice",
+        "tc",
+        "rc"
+      ]
+    },
+    "slice-assurance": {
+      "description": "Apply or monitor slice policy, measure impact, then review control readiness.",
+      "label": "Slice Assurance Loop",
+      "steps": [
+        "orchestrator",
+        "slice",
+        "kpm",
+        "rc"
+      ]
+    },
+    "transport-qos": {
+      "description": "Use TC actions and downstream bearer/tunnel observers for transport-aware feedback.",
+      "label": "Transport QoS Chain",
+      "steps": [
+        "orchestrator",
+        "tc",
+        "rlc",
+        "pdcp",
+        "gtp"
+      ]
+    }
+  }
+}

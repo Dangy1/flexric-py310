@@ -237,6 +237,14 @@ def method_metrics(records: List[Dict[str, Any]]) -> Dict[str, Any]:
     compat = [r for r in records if r.get("compat_ok") is not None]
     out["compat_ok_rate"] = wilson(sum(1 for r in compat if r.get("compat_ok") is True), len(compat)) if compat else (None, None, None)
 
+    chars = [int((r.get("retrieval") or {}).get("prompt_chars") or 0) for r in records]
+    chars = [c for c in chars if c > 0]
+    out["prompt_chars_median"] = percentile(chars, 0.5) if chars else None
+    # Open-world labels use base-registry apps only; this share shows how often a directory rApp entered the chain.
+    ow = [r for r in records if r.get("intent_split") == "open_world"]
+    out["open_world_rapp_rate"] = (sum(1 for r in ow if any(str(x).upper().startswith("RAPP.") for x in (r.get("generated_workflow") or [])))
+                                   / len(ow)) if ow else None
+
     lat = [float(r["orchestration_latency_ms"]) for r in records if r.get("orchestration_latency_ms") is not None]
     out["latency_values_ms"] = lat
     out["latency_n"] = len(lat)
@@ -634,6 +642,10 @@ def write_macros(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[str
             for key in ("latency_median_ms", "latency_p95_ms", "latency_max_ms", "latency_mean_ms", "latency_sd_ms"):
                 if m.get(key) is not None:
                     put(role, method, key.replace("_ms", "_s"), f"{m[key] / 1000:.2f}")
+            if m.get("prompt_chars_median") is not None:
+                put(role, method, "prompt_kchars_median", f"{m['prompt_chars_median'] / 1000:.1f}")
+            if m.get("open_world_rapp_rate") is not None:
+                put(role, method, "open_world_rapp_rate", f"{100 * m['open_world_rapp_rate']:.1f}")
             for key in ("records", "tool_calls", "seeded_records", "hallucinated_refs", "records_with_hallucination",
                         "known_intents", "open_world_intents", "unseen_capability_intents", "planner_cached_records"):
                 put(role, method, key, str(m.get(key, "")))

@@ -10,6 +10,8 @@ No number from the May-2026 batches appears here.
 ## Batches
 
 - **Batch A (paper registry)**: `20261028T004100Z_A_prelim_qwen36_nothink_merged` - 50 intents x 6 methods x 5 repeats = 1500 records; planner `qwen3.6:27b`, settings {"seed": 7, "temperature": 0.2, "think": false, "timeout_s": 90}, registry 9 cards, retrieval_k=0 **PRELIMINARY (not the paper's model)**
+- **Batch B (directory, k=all)**: `20261028T061400Z_B_k0_prelim_qwen36_nothink_merged` - 80 intents x 6 methods x 3 repeats = 1440 records; planner `qwen3.6:27b`, settings {"seed": 7, "temperature": 0.2, "think": false, "timeout_s": 90}, registry 55 cards, retrieval_k=0 **PRELIMINARY (not the paper's model)**
+- **Batch B (directory, k=8)**: `20261028T061400Z_B_k8_prelim_qwen36_nothink_merged` - 80 intents x 6 methods x 3 repeats = 1439 records; planner `qwen3.6:27b`, settings {"seed": 7, "temperature": 0.2, "think": false, "timeout_s": 90}, registry 55 cards, retrieval_k=8 **PRELIMINARY (not the paper's model)**
 
 ## Batch A (paper registry) - `20261028T004100Z_A_prelim_qwen36_nothink_merged`
 
@@ -24,6 +26,38 @@ No number from the May-2026 batches appears here.
 | LLM (catalog) | 32.0% [20, 46] | 81.8% [55, 100] | 17.9% [8, 31] | -- | 32.0% [20, 46] | 36.0% [22, 50] | 96.5% [93, 99] (n=807) | 73.3% [56, 86] (n=30) | 0.0% [0, 11] | 0.0% [0, 2] | 0 in 0 records | -- | 2.90 / 3.45 / 3.83 |
 | AppWeaver (no repair) | 58.4% [45, 72] | 9.1% [0, 27] | 72.3% [59, 85] | -- | 58.4% [45, 72] | 64.4% [51, 78] | 95.4% [92, 98] (n=699) | 53.3% [36, 70] (n=30) | 0.0% [0, 11] | 0.0% [0, 2] | 0 in 0 records | 100.0% [100, 100] | 4.90 / 5.73 / 6.37 |
 | AppWeaver | 57.6% [44, 71] | 9.1% [0, 27] | 71.3% [58, 84] | -- | 57.6% [44, 71] | 63.6% [50, 76] | 97.9% [96, 99] (n=721) | 80.0% [63, 90] (n=30) | 80.0% [63, 90] | 0.0% [0, 2] | 0 in 0 records | 100.0% [100, 100] | 5.10 / 10.34 / 11.87 |
+
+Planner-cached records: 0 (must be 0 for headline latency).
+
+## Batch B (directory, k=all) - `20261028T061400Z_B_k0_prelim_qwen36_nothink_merged`
+
+> **Preliminary.** Planner `qwen3.6:27b` stands in for gpt-oss (broken on spark2 under Ollama 0.40).
+> These numbers validate the pipeline; they are not the paper's results.
+
+| Method | Accuracy | Known | Open-world | Unseen cap. | Exact | Set | Ack. calls | Conflict refused | Conflict recovered | Conflict FP | Halluc. refs | Retrieval hit | Latency med / p95 / max (s) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Rule router | 20.0% [11, 29] | 100.0% [100, 100] | 12.8% [3, 26] | 0.0% [0, 0] | 20.0% [11, 29] | 23.8% [15, 34] | 97.2% [95, 99] (n=747) | 100.0% [82, 100] (n=18) | 0.0% [0, 18] | 0.0% [0, 2] | 0 in 0 records | -- | <0.01 / <0.01 / <0.01 |
+| Single app | 3.8% [0, 9] | 27.3% [0, 55] | 0.0% [0, 0] | 0.0% [0, 0] | 3.8% [0, 9] | 3.8% [0, 9] | 94.2% [89, 98] (n=240) | 66.7% [44, 84] (n=18) | 0.0% [0, 18] | 0.0% [0, 2] | 0 in 0 records | -- | <0.01 / <0.01 / <0.01 |
+| LLM (no catalog) | 5.8% [1, 11] | 15.2% [0, 36] | 7.7% [0, 15] | 0.0% [0, 0] | 5.8% [1, 11] | 6.7% [2, 12] | 93.6% [90, 97] (n=499) | 100.0% [82, 100] (n=18) | 0.0% [0, 18] | 0.0% [0, 2] | 134 in 52 records | -- | 2.91 / 3.66 / 4.04 |
+| LLM (catalog) | 20.0% [11, 30] | 81.8% [55, 100] | 17.9% [8, 31] | 0.0% [0, 0] | 20.0% [11, 30] | 22.5% [14, 32] | 98.3% [97, 100] (n=836) | 77.8% [55, 91] (n=18) | 0.0% [0, 18] | 0.0% [0, 2] | 0 in 0 records | -- | 2.94 / 3.60 / 4.71 |
+| AppWeaver (no repair) | 36.2% [26, 47] | 0.0% [0, 0] | 16.2% [7, 27] | 75.6% [60, 89] | 31.2% [21, 42] | 36.2% [26, 47] | 98.4% [97, 100] (n=765) | 33.3% [16, 56] (n=18) | 0.0% [0, 18] | 0.0% [0, 2] | 0 in 0 records | 100.0% [100, 100] | 6.84 / 8.49 / 12.71 |
+| AppWeaver | 35.0% [25, 46] | 0.0% [0, 0] | 17.1% [7, 29] | 71.1% [56, 86] | 29.6% [20, 40] | 35.0% [25, 46] | 99.2% [98, 100] (n=725) | 33.3% [16, 56] (n=18) | 33.3% [16, 56] | 0.0% [0, 2] | 0 in 0 records | 100.0% [100, 100] | 6.96 / 9.01 / 18.24 |
+
+Planner-cached records: 0 (must be 0 for headline latency).
+
+## Batch B (directory, k=8) - `20261028T061400Z_B_k8_prelim_qwen36_nothink_merged`
+
+> **Preliminary.** Planner `qwen3.6:27b` stands in for gpt-oss (broken on spark2 under Ollama 0.40).
+> These numbers validate the pipeline; they are not the paper's results.
+
+| Method | Accuracy | Known | Open-world | Unseen cap. | Exact | Set | Ack. calls | Conflict refused | Conflict recovered | Conflict FP | Halluc. refs | Retrieval hit | Latency med / p95 / max (s) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Rule router | 20.0% [11, 29] | 100.0% [100, 100] | 12.8% [3, 26] | 0.0% [0, 0] | 20.0% [11, 29] | 23.8% [15, 34] | 97.3% [95, 99] (n=747) | 100.0% [82, 100] (n=18) | 0.0% [0, 18] | 0.0% [0, 2] | 0 in 0 records | -- | <0.01 / <0.01 / <0.01 |
+| Single app | 3.8% [0, 9] | 27.3% [0, 55] | 0.0% [0, 0] | 0.0% [0, 0] | 3.8% [0, 9] | 3.8% [0, 9] | 93.8% [88, 98] (n=240) | 66.7% [44, 84] (n=18) | 0.0% [0, 18] | 0.0% [0, 2] | 0 in 0 records | -- | <0.01 / <0.01 / <0.01 |
+| LLM (no catalog) | 4.6% [1, 10] | 9.1% [0, 27] | 6.9% [0, 15] | 0.0% [0, 0] | 4.6% [1, 10] | 5.4% [1, 11] | 92.7% [89, 96] (n=493) | 100.0% [82, 100] (n=18) | 0.0% [0, 18] | 0.0% [0, 2] | 136 in 52 records | -- | 2.99 / 3.81 / 4.16 |
+| LLM (catalog) | 20.0% [11, 30] | 81.8% [55, 100] | 17.9% [8, 31] | 0.0% [0, 0] | 20.0% [11, 30] | 22.5% [14, 32] | 98.1% [96, 100] (n=834) | 83.3% [61, 94] (n=18) | 0.0% [0, 18] | 0.0% [0, 2] | 0 in 0 records | -- | 2.97 / 3.64 / 4.16 |
+| AppWeaver (no repair) | 27.9% [19, 38] | 0.0% [0, 0] | 6.8% [0, 15] | 65.6% [49, 82] | 26.7% [18, 37] | 27.9% [19, 38] | 99.1% [98, 100] (n=759) | 16.7% [6, 39] (n=18) | 0.0% [0, 18] | 0.0% [0, 2] | 0 in 0 records | 83.8% [76, 91] | 5.88 / 7.77 / 28.42 |
+| AppWeaver | 29.2% [20, 39] | 0.0% [0, 0] | 12.0% [3, 22] | 62.2% [46, 78] | 27.9% [19, 38] | 30.8% [22, 41] | 99.0% [98, 100] (n=718) | 61.1% [39, 80] (n=18) | 61.1% [39, 80] | 0.0% [0, 2] | 0 in 0 records | 83.0% [74, 91] | 6.03 / 9.46 / 31.94 |
 
 Planner-cached records: 0 (must be 0 for headline latency).
 

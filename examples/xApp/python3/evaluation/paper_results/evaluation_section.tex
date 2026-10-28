@@ -148,16 +148,52 @@ host, which the manifest records. [CHECK with gpt-oss]
 \label{fig:registry}
 \end{figure}}{}
 
-With the rApp Directory the registry holds \awres{B8}{batch}{cards} cards, too many for a compact
-prompt. AppWeaver retrieves the top-8 cards per intent (BM25 over card text, one card per family,
-deprecated releases excluded); all needed cards were retrieved for
-\awres{B8}{langgraph_agentcard}{retrieval_hit_rate}\% of records. On unseen-capability intents, which
-no template or fallback rule covers, AppWeaver reaches
-\awres{B8}{langgraph_agentcard}{unseen_capability_accuracy}\% with top-8 retrieval and
-\awres{Ball}{langgraph_agentcard}{unseen_capability_accuracy}\% with all cards in the prompt; the
-catalog-aware LLM reaches \awres{B8}{llm_only}{unseen_capability_accuracy}\% (Fig.~\ref{fig:registry}).
-Hallucinated references stay at \awres{B8}{langgraph_agentcard}{hallucinated_refs} for AppWeaver
-against \awres{B8}{llm_blind}{hallucinated_refs} for the LLM without catalog. [WRITE after Batch B]
+With the rApp Directory the registry holds \awres{B8}{batch}{cards} cards. Placing every executable
+card in the planner prompt takes a median of \awres{Ball}{langgraph_agentcard}{prompt_kchars_median}k
+characters per intent; top-8 retrieval (BM25 over card text, one card per family, deprecated
+releases excluded) cuts this to \awres{B8}{langgraph_agentcard}{prompt_kchars_median}k characters,
+and all cards an intent needs were retrieved in \awres{B8}{langgraph_agentcard}{retrieval_hit_rate}\%
+of records [\awres{B8}{langgraph_agentcard}{retrieval_hit_rate_lo},
+\awres{B8}{langgraph_agentcard}{retrieval_hit_rate_hi}].
+
+\textbf{Unseen capabilities.} The \awres{B8}{langgraph_agentcard}{unseen_capability_intents}
+unseen-capability intents need an rApp that no template or fallback rule contains, so every baseline
+scores 0\% on them by construction: the rule router and the catalog-aware LLM can only return one of
+the three templates. AppWeaver composes a correct chain for
+\awres{Ball}{langgraph_agentcard}{unseen_capability_accuracy}\%
+[\awres{Ball}{langgraph_agentcard}{unseen_capability_accuracy_lo},
+\awres{Ball}{langgraph_agentcard}{unseen_capability_accuracy_hi}] of them with all cards in the
+prompt and \awres{B8}{langgraph_agentcard}{unseen_capability_accuracy}\%
+[\awres{B8}{langgraph_agentcard}{unseen_capability_accuracy_lo},
+\awres{B8}{langgraph_agentcard}{unseen_capability_accuracy_hi}] with top-8 retrieval
+(Fig.~\ref{fig:registry}); the overlapping intervals do not separate the two depths. Retrieval trades a
+smaller prompt and a lower median planning latency (\awres{B8}{langgraph_agentcard}{latency_median_s}\,s
+vs.\ \awres{Ball}{langgraph_agentcard}{latency_median_s}\,s) for the cards it misses. No catalog-based
+method referenced a card outside the registry, while the LLM without catalog produced
+\awres{B8}{llm_blind}{hallucinated_refs} invented references in
+\awres{B8}{llm_blind}{records_with_hallucination} of \awres{B8}{llm_blind}{records} records.
+
+\textbf{Distractors.} A larger registry also hurts. On the same \awres{A}{langgraph_agentcard}{open_world_intents} open-world intents, AppWeaver's
+accuracy falls from \awres{A}{langgraph_agentcard}{open_world_accuracy}\% with the \awres{A}{batch}{cards}-card registry
+(Batch~A) to \awres{Ball}{langgraph_agentcard}{open_world_accuracy}\% (all cards) and
+\awres{B8}{langgraph_agentcard}{open_world_accuracy}\% (top-8) with the directory. The planner inserts
+directory analytics rApps (anomaly detection, root cause, transport QoS) into
+\awres{Ball}{langgraph_agentcard}{open_world_rapp_rate}\% of these chains and often lets them replace
+the control step the intent needs (e.g.\ KPM$\rightarrow$root-cause$\rightarrow$RC where
+KPM$\rightarrow$SLICE$\rightarrow$TC$\rightarrow$RC is required). The repair step reduces this
+(\awres{Ball}{agentcard_no_repair}{open_world_rapp_rate}\% without it) but does not remove it. The
+labels for these intents were written against the base registry before Batch~B was run and are not
+changed after the fact; some inserted analytics steps may be acceptable to an operator, but chains that
+drop a required control step are not. Card descriptions that state when an rApp is \emph{not} needed,
+and a compatibility rule that a chain must keep the intent's control target, are the next step.
+[CHECK with gpt-oss]
+
+Under the directory, \awres{Ball}{langgraph_agentcard}{compat_ok_rate}\% of AppWeaver chains pass the
+Agent-Card compatibility check, and seeded conflicts are recovered in
+\awres{Ball}{langgraph_agentcard}{seeded_recovered}\% (all cards) and
+\awres{B8}{langgraph_agentcard}{seeded_recovered}\% (top-8) of
+\awres{B8}{langgraph_agentcard}{seeded_records} seeded records, below Batch~A's
+\awres{A}{langgraph_agentcard}{seeded_recovered}\%.
 
 \subsection{Twin Fidelity}
 \label{sec:eval-twin}

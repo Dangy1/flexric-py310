@@ -202,6 +202,7 @@ First tasks for the execution session:
 | O5 | Reasoning mode for the final batch: gpt-oss reasons by default (keep `FLEXRIC_LLM_THINK` unset). Preliminary qwen batches use `FLEXRIC_LLM_THINK=false` (24 s → 1.4 s per call); confirm that is acceptable for any qwen numbers shown | labelling of qwen results | **open** |
 | O6 | Labelling: should an observe-first reordering of a known template (e.g. `KPM→SLICE→RC` for the `SLICE→KPM→RC` slice-assurance template) be an accepted chain? AppWeaver composes observe-first and scores 9 % on known intents vs 100 % for the template router; set accuracy (any order) is reported alongside. Changing `accepted_workflows` after seeing results must be a rule decided independently of which method gains, and applied to all methods | known-split accuracy in Table II | **open** — labels unchanged until decided |
 | O7 | Paper claim on conflicts: with one rule for all methods the per-agent lease refuses seeded conflicts for every method whose chain reaches the busy app (rule router 100 %, AppWeaver 80 %); only AppWeaver recovers (80 % vs 0 %). Proposed framing: AppWeaver's contribution is recovery, not detection | §IV text, response R1.6/R3.5 | **open** — drafted that way |
+| O8 | Labelling at directory scale: in Batch B AppWeaver inserts a directory analytics rApp (anomaly detection, root cause, transport QoS) into 62 % (all cards) / 59 % (top-8) of open-world chains, and open-world accuracy drops from 71 % (Batch A) to 17 % / 12 %. Most misses also drop a required control step (wrong under any rule), but some only add an analytics step. Should "required chain as an ordered subsequence, extra steps only from rApps with read-only control scope" be an accepted-chain rule? Decide before the gpt-oss batch | open-world accuracy in Table III, §IV-B | **open** — labels unchanged; §IV-B reports the drop as a limitation |
 
 ## 3d. Execution log
 - Ack path: pilot TC call unacknowledged because the TC suite prints ~30 setup lines before `Applied`
@@ -248,6 +249,13 @@ First tasks for the execution session:
   agent-card methods are re-run at k=8 and k=0 with a 64k cap
   (`/tmp/appweaver_batches/chain_B_agentcard_rerun.sh`); the other four methods never reach the cap and
   are kept from the first run (`merge_runs.py` now takes a per-source method filter).
+- **Batch B preliminary merged (2026-10-28 08:20):** re-run clean (0 wedges, acks 98–99 %, no prompt
+  errors; prompt median 6.7k chars at k=8, 16.0k at k=all). `20261028T061400Z_B_k8_…_merged` and
+  `…_B_k0_…_merged` (4 methods from the first run + 2 agent-card methods from `…_agentcard_cap64k`).
+  Unseen-capability accuracy: AppWeaver 71 % (all) / 62 % (top-8), every baseline 0 % by construction;
+  retrieval hit 83 % at k=8. Open-world drops to 17 % / 12 % (directory distractors, see O8); seeded
+  recovered 33 % / 61 % (n=18). One k=8 record of the no-catalog LLM is planner-unavailable (excluded).
+  Table III, Fig. 6, §IV-B written; added macros `prompt_kchars_median` and `open_world_rapp_rate`.
 
 ## 4. Done criteria
 A fresh clone + the README's three commands reproduce every number and figure in the revised paper

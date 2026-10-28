@@ -194,7 +194,12 @@ is off (`planner_cached_records = 0` in every headline batch).
 retrieval problem: BM25 over card text with family de-duplication, top-*k* in the prompt. We report
 retrieval hit rate (all needed cards retrieved) and accuracy at *k* = 8 vs. all cards. Energy saving,
 RET tilt, root-cause analysis and QoE prediction are new capabilities that discovery picks up without
-code changes (unseen-capability split). Hardware of the LLM host and the orchestration host is in the
+code changes (unseen-capability split): every baseline is limited to the templates and scores zero there,
+while AppWeaver composes most of these chains at either depth. We also report the cost of scale that the
+reviewer's question implies: with directory distractors in the registry, AppWeaver's accuracy on the
+open-world intents drops well below its Batch A value, because the planner inserts analytics rApps and
+sometimes lets them replace the required control step. §IV-B states this as a limitation; labels were
+not changed after the run. Hardware of the LLM host and the orchestration host is in the
 manifest and §IV-A. Reliability detail: see R1.6.
 
 ---
@@ -221,7 +226,7 @@ State on 2026-10-28; this section is removed before submission.
 | Evidence | Batch | State |
 |---|---|---|
 | Table II, Figs. 4–5 (composition, reliability, latency) | `evaluation/runs/20261028T004100Z_A_prelim_qwen36_nothink_merged` (1500 records) | **preliminary**: planner qwen3.6:27b with reasoning off; gpt-oss does not load on the LLM host (plan O1). Final batch re-runs the same command with gpt-oss |
-| Table III, Fig. 6 (registry scale, retrieval top-8 vs all) | Batch B (`intents_v2.json`, rApp Directory on) | running (preliminary, same planner); numbers enter through `make_paper_figures.py --batch-b` |
+| Table III, Fig. 6 (registry scale, retrieval top-8 vs all) | `evaluation/runs/20261028T061400Z_B_k8_prelim_qwen36_nothink_merged`, `…_B_k0_…_merged` (1440 records each) | **preliminary** (same planner as Batch A). The two agent-card methods were re-run with the portal's 8000-character prompt guard raised for in-process planner calls (it rejected every all-cards prompt); the other methods never reach it and are kept from the first run (manifest `merged_from`) |
 | Fig. 7, §IV-C (twin vs live) | `evaluation/runs/20261027T171217Z_T6_twin_vs_live{,_loadcal}` | final (independent of the planner model) |
 
 Open decisions for the authors (plan §3c): O1 gpt-oss on the LLM host; O2 second model endpoint;
@@ -230,7 +235,8 @@ O6 whether observe-first reorderings of a template count as accepted (AppWeaver 
 intents because it composes rather than copies templates); O7 the conflict claim — with one rule for all
 methods the shared lease refuses seeded conflicts for every method, and AppWeaver's distinct
 contribution is recovery (80 % vs 0 % in the preliminary batch). The text above already uses the O7
-framing.
+framing. O8: whether open-world chains that add a directory analytics rApp but keep every
+required step should be accepted (decided before the gpt-oss batch, not after seeing which method gains).
 
 All §IV numbers are `\awres{…}` macros from `evaluation/paper_results/results_macros.tex`; a number not
 yet computed renders as **??**.
