@@ -195,8 +195,8 @@ First tasks for the execution session:
 
 | # | Question | Blocks | Status |
 |---|---|---|---|
-| O1 | Re-pull gpt-oss on spark2 (`ollama pull gpt-oss:20b` or a build that loads under Ollama 0.40); check: `curl http://130.233.158.22:11434/api/generate -d '{"model":"gpt-oss:latest","prompt":"hi","stream":false}'` returns no `error` | Final batches A and B (paper model) | **open** — still HTTP 500 `gpt-oss.expert_feed_forward_length` at 18:15 |
-| O2 | spark1 vLLM endpoint: `OPENAI_BASE_URL`, served model id, API key if any | Batch B second model | **open** |
+| O1 | Re-pull gpt-oss on spark2 (`ollama pull gpt-oss:20b` or a build that loads under Ollama 0.40); check: `curl http://130.233.158.22:11434/api/generate -d '{"model":"gpt-oss:latest","prompt":"hi","stream":false}'` returns no `error` | Final batches A and B (paper model) | **deferred by owner (2026-10-28)**: "Keep running with qwen3.6:27b for now; I will sort out gpt-oss and spark1 later." The qwen batches (reasoning off) are the working results; [CHECK] markers stay in §IV for the swap |
+| O2 | spark1 vLLM endpoint: `OPENAI_BASE_URL`, served model id, API key if any | Batch B second model | **deferred by owner (2026-10-28)**, with O1 |
 | O3 | GPU line for spark2 (and spark1): `nvidia-smi --query-gpu=name,memory.total --format=csv` → `LLM_SERVER_HARDWARE` and `evaluation/HARDWARE.md` | manifests, paper hardware sentence | **open** (preliminary manifests say "GPU model pending owner") |
 | O4 | Live side of the twin experiment: OAI rfsim gNB, or ns-3 seed B + traffic perturbation | T6 | **open** — default ns-3 seed B unless the owner says OAI |
 | O5 | Reasoning mode for the final batch: gpt-oss reasons by default (keep `FLEXRIC_LLM_THINK` unset). Preliminary qwen batches use `FLEXRIC_LLM_THINK=false` (24 s → 1.4 s per call); confirm that is acceptable for any qwen numbers shown | labelling of qwen results | **open** |
@@ -256,6 +256,13 @@ First tasks for the execution session:
   retrieval hit 83 % at k=8. Open-world drops to 17 % / 12 % (directory distractors, see O8); seeded
   recovered 33 % / 61 % (n=18). One k=8 record of the no-catalog LLM is planner-unavailable (excluded).
   Table III, Fig. 6, §IV-B written; added macros `prompt_kchars_median` and `open_world_rapp_rate`.
+
+- **Owner decision (2026-10-28, relayed by the planning session):** O1/O2 deferred, qwen3.6:27b batches
+  are the working results; O3, O4, O5–O8 still open. Done since: §IV-A literals replaced by macros
+  (`seeded_intents`, `rapp_cards`, `rapp_families`), *LLM (catalog)* described as what it is (chooses one
+  of the three templates; it has no router fallback — `validate_or_repair_plan` only serves the
+  `langgraph_*` methods, which are not in the paper batches), reproduction commands in `README.md`
+  match the commands of the preliminary batches (health probe, `--max-prompt-chars 64000`, merge).
 
 ## 4. Done criteria
 A fresh clone + the README's three commands reproduce every number and figure in the revised paper

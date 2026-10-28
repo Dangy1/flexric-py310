@@ -25,29 +25,31 @@ GTP monitors complete the paper registry of \awres{A}{batch}{cards} Agent Cards
 (\awres{A}{batch}{executable} executable). The emulated E2 node returns synthetic KPM values, so this
 part of the evaluation measures composition and execution, not network effect; the network effect is
 measured separately on ns-3 (Sec.~\ref{sec:eval-twin}). For the registry-scale experiment the rApp
-Directory adds 46 emulated rApp cards (16 families, three fictional vendors, deprecated releases and
-distractor cards) served by one process that reads live KPM from the KPM bus.
+Directory adds \awres{B8}{batch}{rapp_cards} emulated rApp cards (\awres{B8}{batch}{rapp_families}
+families, with fictional vendor variants, deprecated releases and distractor cards) served by one process that reads live KPM from the KPM bus.
 
 \textbf{Planner.} The planner model, sampling settings (temperature 0.2, seed 7), reasoning mode,
 prompt hashes and LLM-host hardware are recorded in every batch manifest. This draft uses
-\texttt{\awres{A}{batch}{model}} as the planner. Planner and observation caches are off
+\texttt{\awres{A}{batch}{model}} with reasoning disabled as the planner. [CHECK: final model; LLM-host
+GPU line, plan O3] Planner and observation caches are off
 (\awres{A}{langgraph_agentcard}{planner_cached_records} cached planner calls).
 
 \textbf{Benchmark.} Batch~A uses 50 operator intents: \awres{A}{langgraph_agentcard}{known_intents}
 match one of the portal's three workflow templates (\emph{known}) and
-\awres{A}{langgraph_agentcard}{open_world_intents} have no template (\emph{open-world}); 6 carry a
+\awres{A}{langgraph_agentcard}{open_world_intents} have no template (\emph{open-world}); \awres{A}{batch}{seeded_intents} carry a
 seeded conflict (another workflow holds the application the intent needs). Batch~B extends the set to
-80 intents and adds \awres{B8}{langgraph_agentcard}{unseen_capability_intents} \emph{unseen-capability}
+\awres{B8}{batch}{intents} intents and adds \awres{B8}{langgraph_agentcard}{unseen_capability_intents} \emph{unseen-capability}
 intents that need an rApp capability absent from every template and fallback rule. Each intent carries
 its labelled chain and, where a written rule allows it, accepted alternatives; labels and rules are
 released with the code.
 
 \textbf{Methods.} \emph{Rule router} (keyword rules to the three templates); \emph{Single app} (the
 best-matching application only); \emph{LLM (no catalog)} (the planner without the registry; names
-that match no card are counted as hallucinated references); \emph{LLM (catalog)} (the planner given
-the full catalog and the templates); \emph{AppWeaver (no repair)} (Agent-Card discovery and
+that match no card are counted as hallucinated references); \emph{LLM (catalog)} (the planner choosing one
+of the three templates, given each template's description and application chain); \emph{AppWeaver (no repair)} (Agent-Card discovery and
 composition with compatibility checks, without the repair/recovery step); and \emph{AppWeaver}.
-Every (intent, method) pair is run \awres{A}{batch}{repeats} times.
+Every (intent, method) pair is run \awres{A}{batch}{repeats} times in Batch~A and
+\awres{B8}{batch}{repeats} times in Batch~B.
 
 \textbf{Metrics.} \emph{Accuracy}: the generated chain equals an accepted chain in order;
 \emph{set accuracy} ignores order. A \emph{tool call} counts only if the RAN or rApp

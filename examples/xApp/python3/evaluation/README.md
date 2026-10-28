@@ -51,3 +51,8 @@ To re-run analysis for an existing `records.jsonl`:
 ```bash
 python evaluation/analyze_results.py evaluation/runs/<timestamp>/records.jsonl
 ```
+
+The paper batches (Batch A, Batch B at top-8 and all cards, T6) are run with the exact commands in
+the top-level `README.md` ("AppWeaver reproduction"): health probe after every record, 12 s
+acknowledgement timeout, `--max-prompt-chars 64000` for Batch B, and `paper_results/make_paper_figures.py`
+for every table, figure and macro.

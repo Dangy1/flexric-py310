@@ -108,7 +108,9 @@ variants, deprecated releases and cards with conflicting control scopes as distr
 *Change.* The first submission's "LLM-only" baseline was in fact catalog-grounded and rule-repaired
 (we state this). It is now *LLM (catalog-aware)*. We add *LLM (no catalog)* — the prompt has no
 registry; plans are executed only where they name a real application, and hallucinated references are
-counted — and *AppWeaver (no repair)*, which isolates the repair step.
+counted — and *AppWeaver (no repair)*, which isolates the repair step. The catalog the
+catalog-aware LLM sees is the portal's three workflow templates (description and application chain);
+it picks one and its choice is executed as returned, without a rule-based fallback.
 
 *Where.* §IV-A, Table II, Fig. 4.
 
@@ -148,7 +150,8 @@ during that batch); the revised batches verify that RPC, MCP and KPM-bus service
 
 *Change.* Every manifest records the planner provider, model, temperature, seed, token limit, reasoning
 mode, timeout, a SHA-256 of each prompt builder (from Batch B on; Batch A's builders are byte-identical)
-and LLM host hardware; the paper states them in §IV-A.
+and LLM host hardware; the paper states them in §IV-A. The batches currently in the paper use
+qwen3.6:27b (Ollama) with reasoning disabled, temperature 0.2, seed 7.
 
 ---
 
@@ -225,12 +228,12 @@ State on 2026-10-28; this section is removed before submission.
 
 | Evidence | Batch | State |
 |---|---|---|
-| Table II, Figs. 4–5 (composition, reliability, latency) | `evaluation/runs/20261028T004100Z_A_prelim_qwen36_nothink_merged` (1500 records) | **preliminary**: planner qwen3.6:27b with reasoning off; gpt-oss does not load on the LLM host (plan O1). Final batch re-runs the same command with gpt-oss |
-| Table III, Fig. 6 (registry scale, retrieval top-8 vs all) | `evaluation/runs/20261028T061400Z_B_k8_prelim_qwen36_nothink_merged`, `…_B_k0_…_merged` (1440 records each) | **preliminary** (same planner as Batch A). The two agent-card methods were re-run with the portal's 8000-character prompt guard raised for in-process planner calls (it rejected every all-cards prompt); the other methods never reach it and are kept from the first run (manifest `merged_from`) |
+| Table II, Figs. 4–5 (composition, reliability, latency) | `evaluation/runs/20261028T004100Z_A_prelim_qwen36_nothink_merged` (1500 records) | **working results** (owner, 2026-10-28): planner qwen3.6:27b with reasoning off; gpt-oss is deferred (plan O1). A later gpt-oss batch re-runs the same command (`README.md`) |
+| Table III, Fig. 6 (registry scale, retrieval top-8 vs all) | `evaluation/runs/20261028T061400Z_B_k8_prelim_qwen36_nothink_merged`, `…_B_k0_…_merged` (1440 records each) | **working results** (same planner as Batch A). The two agent-card methods were re-run with the portal's 8000-character prompt guard raised for in-process planner calls (it rejected every all-cards prompt); the other methods never reach it and are kept from the first run (manifest `merged_from`) |
 | Fig. 7, §IV-C (twin vs live) | `evaluation/runs/20261027T171217Z_T6_twin_vs_live{,_loadcal}` | final (independent of the planner model) |
 
-Open decisions for the authors (plan §3c): O1 gpt-oss on the LLM host; O2 second model endpoint;
-O3 GPU line for the hardware sentence; O4 OAI instead of ns-3 for the live side; O5 reasoning mode;
+Open decisions for the authors (plan §3c): O1 gpt-oss and O2 the second model endpoint are deferred
+by the owner (qwen results are the working set); O3 GPU line for the hardware sentence; O4 OAI instead of ns-3 for the live side; O5 reasoning mode;
 O6 whether observe-first reorderings of a template count as accepted (AppWeaver scores low on known
 intents because it composes rather than copies templates); O7 the conflict claim — with one rule for all
 methods the shared lease refuses seeded conflicts for every method, and AppWeaver's distinct

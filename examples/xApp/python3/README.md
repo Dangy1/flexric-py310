@@ -4,22 +4,61 @@ AppWeaver (agentic discovery and composition of O-RAN apps) is the agent portal 
 the evaluation harness in `evaluation/`. See `docs/REVISION_PLAN.md` for the roadmap and
 `docs/REVIEW_ASSESSMENT_2026-10-27.md` for the audit of the first submission.
 
+Every number in `evaluation/paper_results/` (Tables II–III, Figs. 4–7, `results_macros.tex`) is
+recomputed from the batches in `evaluation/runs/` by the commands below. The current batches use
+`qwen3.6:27b` with reasoning off (`FLEXRIC_LLM_THINK=false`) and are labelled **preliminary**; the
+final batches repeat the same commands with `OLLAMA_MODEL=gpt-oss:latest` and `FLEXRIC_LLM_THINK` unset.
+
 ```bash
 # 1. build the Python SDK and copy the portal, rApp directory and harness into the build tree
 cmake -S . -B build -DXAPP_TARGET_LANGUAGE=PYTHON_LANG -DPython3_EXECUTABLE="${CONDA_PREFIX}/bin/python"
 cmake --build build --target xapp_sdk -j8
+cd build/examples/xApp/python3/evaluation
 
-# 2. start nearRT-RIC, E2 agent (emulator or ns-3), portal, RPC, MCP and the KPM bus
-cd build/examples/xApp/python3
-export OLLAMA_BASE_URL=http://<gpu-host>:11434 OLLAMA_MODEL=gpt-oss:latest
-export FLEXRIC_LLM_TEMPERATURE=0.2 FLEXRIC_LLM_SEED=7 LLM_SERVER_HARDWARE="<gpu model, VRAM>"
-export FLEXRIC_RAPP_DIRECTORY=1     # 55-card registry (4 xApps + 46 emulated rApps); unset for the 9-card portal
-./scripts/run_agent_portal_stack.sh
+# 2. planner settings (recorded in every batch manifest)
+export OLLAMA_BASE_URL=http://<gpu-host>:11434 OLLAMA_MODEL=qwen3.6:27b FLEXRIC_LLM_THINK=false
+export FLEXRIC_LLM_TEMPERATURE=0.2 FLEXRIC_LLM_SEED=7 LLM_SERVER_HARDWARE="<host, GPU model, VRAM>"
+S=../scripts
+# after every record: probe E42 registration; on failure discard the record, restart the stack, re-run it
+HEALTH="--health-cmd $S/probe_e42.sh --maintenance-cmd $S/restart_agent_portal_stack.sh"
+METHODS="manual_rule single_xapp llm_blind llm_only agentcard_no_repair langgraph_agentcard"
 
-# 3. run a batch (5 repeats, no planner cache, acknowledged tool calls) and analyse it
-python evaluation/run_harness.py --intents evaluation/intents_v2.json --retrieval-k 8 --label v2_gptoss
-python evaluation/analyze_results.py evaluation/runs/<batch>/records.jsonl
+# 3. Batch A: 9-card portal registry, 50 intents x 6 methods x 5 repeats (Table II, Figs. 4-5)
+$S/restart_agent_portal_stack.sh
+python run_harness.py --intents intents_50.json --methods $METHODS --repeat 5 \
+    --tool-ack-timeout-s 12 $HEALTH --label A
+
+# 4. Batch B: rApp Directory (55 cards), 80 intents x 6 methods x 3 repeats, top-8 and all cards (Table III, Fig. 6).
+#    With every card in the prompt the planner prompt is ~16k characters; --max-prompt-chars lifts the
+#    portal's 8000-character input guard for these in-process planner calls.
+export FLEXRIC_RAPP_DIRECTORY=1
+$S/restart_agent_portal_stack.sh
+for k in 8 0; do
+  python run_harness.py --intents intents_v2.json --methods $METHODS --repeat 3 \
+      --tool-ack-timeout-s 12 $HEALTH --max-prompt-chars 64000 --retrieval-k $k --label B_k$k
+done
+unset FLEXRIC_RAPP_DIRECTORY
+
+# 5. T6 twin vs live on ns-O-RAN-flexric (Fig. 7, evaluation/TWIN_VALIDATION.md); needs the ns-3 build
+#    and the FlexRIC instance on port 36423 described there; the script runs from the source tree and
+#    uses the actuator xApp built under build/.../evaluation/twin/build. Independent of the planner model.
+#    (Pair 3 aborts inside ns-3 with 10 UEs and is excluded; see the load-calibrated manifest.)
+T=<flexric>/examples/xApp/python3/evaluation/twin
+python $T/run_twin_validation.py --out runs/<id>_T6_twin_vs_live --pairs 8 --parallel 4
+python $T/run_twin_validation.py --out runs/<id>_T6_twin_vs_live_loadcal --pairs 9 --parallel 4 --twin-ues 10
+
+# 6. tables, figures, macros, combined_results.csv and paper_results/README.md
+cd paper_results
+python make_paper_figures.py --batch-a ../runs/<A> --batch-b ../runs/<B_k8> ../runs/<B_k0> \
+    --twin ../runs/<T6> ../runs/<T6_loadcal>
+python plot_final.py
 ```
+
+If part of a batch has to be re-run (a RIC wedge before the health probe existed, the prompt guard in
+the first preliminary Batch B), `evaluation/merge_runs.py` joins the valid repeats or methods of each
+run and lists every source and the reason in the merged `manifest.json`
+(`--source runs/<run>:FIRST-LAST[:method,...]`). The preliminary batches in `evaluation/runs/` were
+built this way; their manifests say which records come from which run.
 
 - Metric definitions: `evaluation/METRICS.md`; seeded conflicts: `evaluation/CONFLICTS.md`.
 - Methods: `manual_rule`, `single_xapp`, `llm_blind`, `llm_only` (catalog-aware), `langgraph_*`,

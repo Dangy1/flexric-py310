@@ -630,6 +630,10 @@ def write_macros(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[str
         put(role, "batch", "repeats", str(len({r.get("repeat_index") for r in batch.records})))
         put(role, "batch", "cards", str(reg.get("agent_count", "")))
         put(role, "batch", "executable", str(reg.get("executable_agent_count", "")))
+        put(role, "batch", "seeded_intents", str(len({r.get("intent_id") for r in batch.records if r.get("conflict_label") is True})))
+        rapps = [a for a in reg.get("agent_ids") or [] if str(a).startswith("rapp.")]
+        put(role, "batch", "rapp_cards", str(len(rapps)))
+        put(role, "batch", "rapp_families", str(len({str(a).split(".")[1] for a in rapps})))
         for method, m in all_metrics[batch.id].items():
             for key in CSV_METRICS:
                 v, lo, hi = m[key]
