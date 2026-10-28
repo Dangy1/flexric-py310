@@ -29,6 +29,7 @@ FILES = {
     # file -> JSON layout of the hand-written file (compact: scalar lists on one line)
     "intents_50.json": "compact",
     "intents_v2.json": "indent2",
+    "intents_c.json": "compact",  # Batch C: held-out intents, written blind to results
 }
 
 
