@@ -175,7 +175,10 @@ def test_alternatives_dependencies_and_conflicts():
 
 def test_invalid_steps():
     assert not _ok("deprecated_card_trap", "KPM->RAPP.ENERGY_SAVING.V0->RC")
-    assert not _ok("uplink_queue_stability", "KPM->TC->MAC->RC")  # descriptive card, not executable
+    # descriptive card, not executable (MAC was the example until 2026-10-28, when the L2 monitor
+    # cards became executable read-only xApps; the orchestrator card is still action-less)
+    assert not _ok("uplink_queue_stability", "KPM->TC->ORCHESTRATOR->RC")
+    assert _ok("uplink_queue_stability", "KPM->TC->MAC->RC")  # MAC is now an allowed read-only extra
     assert not _ok("uplink_queue_stability", "KPM->TC_XAPP->RC")  # hallucinated
     assert not _ok("uplink_queue_stability", "")
     # Batch A had no rApp Directory: an rApp id there is a hallucination

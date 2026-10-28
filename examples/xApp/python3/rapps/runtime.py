@@ -146,12 +146,127 @@ def decide(rapp: Dict[str, Any], tool_id: str, kpm: Dict[str, Any]) -> Dict[str,
         return {**base, "decision": {"change_plan": ["freeze", "stage", "apply", "verify"], "maintenance_window": "02:00-04:00"}}
     if family == "ue_qos_control":
         return {**base, "decision": {"priority_ues": sorted(delay, key=lambda c: -delay[c])[:4], "weight": "high"}}
+    extended = decide_extended(family, cells, prb, thp, delay)
+    if extended is not None:
+        return {**base, "decision": extended}
     return {**base, "decision": {}}
+
+
+# ---------------------------------------------------------------------------
+# Decision rules of the families added on 2026-10-28 (docs/RAPP_USE_CASES.md).
+# Same contract as above: deterministic, documented one-line estimators over
+# the latest KPM snapshot (PRB fractions normalised to [0, 1], throughput in
+# Mbps, delay in ms). Inputs a family would read from O1 PM/CM/FM in a real
+# deployment (handover counters, RACH and RRC setup counters, PCIs, alarms,
+# power) are not on the KPM bus; the rules then fall back to the KPM proxies
+# named in each comment and say so in the output (`proxy`).
+# ---------------------------------------------------------------------------
+
+def _pseudo_pci(cell: str) -> int:
+    """Stable emulated PCI (0..1007) per reporting entity; the emulator exposes no PCI."""
+    return sum((i + 1) * ord(ch) for i, ch in enumerate(str(cell))) % 1008
+
+
+def _median(values: List[float]) -> float:
+    ordered = sorted(values)
+    if not ordered:
+        return 0.0
+    mid = len(ordered) // 2
+    return ordered[mid] if len(ordered) % 2 else (ordered[mid - 1] + ordered[mid]) / 2.0
+
+
+def decide_extended(family: str, cells: Dict[str, Dict[str, float]], prb: Dict[str, float],
+                    thp: Dict[str, float], delay: Dict[str, float]) -> Optional[Dict[str, Any]]:
+    prb_ul = _metric(cells, "RRU.PrbTotUl")
+    thp_ul = _metric(cells, "DRB.UEThpUl")
+    if family == "anr":
+        # Candidate relations: every cell pair whose loads differ by < 0.3 (comparable footprint proxy),
+        # at most three per cell; nothing is removed in emulation.
+        ids = sorted(prb)
+        add = [[a, b] for i, a in enumerate(ids) for b in ids[i + 1:] if abs(prb[a] - prb[b]) < 0.3][: 3 * max(1, len(ids))]
+        return {"add_relations": add, "remove_relations": [], "proxy": "PRB similarity (no UE measurement reports on the KPM bus)"}
+    if family == "pci_optimization":
+        # Collision/confusion proxy: emulated PCIs that share the same PCI mod 3 (DL reference-signal shift).
+        groups: Dict[int, List[str]] = {}
+        for cell in sorted(cells):
+            groups.setdefault(_pseudo_pci(cell) % 3, []).append(cell)
+        clashes = [members for members in groups.values() if len(members) > 1]
+        reassign = {cell: (_pseudo_pci(cell) + 1 + k) % 1008 for k, members in enumerate(clashes) for cell in members[1:]}
+        return {"pci_mod3_clashes": clashes, "pci_reassignment": reassign, "proxy": "emulated PCIs"}
+    if family == "sleeping_cell":
+        # Sleeping: PRB < 0.02 and throughput < 0.01 Mbps while the median cell has PRB > 0.3.
+        busy = _median(list(prb.values())) > 0.3
+        sleeping = sorted(c for c, v in prb.items() if busy and v < 0.02 and thp.get(c, 0.0) < 0.01)
+        return {"sleeping_cells": sleeping, "rule": "PRB<0.02 and thp<0.01 Mbps while median PRB>0.3"}
+    if family == "mobility_load_balancing":
+        # CIO: -2 dB on cells 0.2 above the mean PRB (shrink), +2 dB on cells 0.2 below (grow).
+        mean = sum(prb.values()) / len(prb) if prb else 0.0
+        cio = {c: (-2 if v > mean + 0.2 else 2 if v < mean - 0.2 else 0) for c, v in prb.items()}
+        return {"cio_delta_db": cio, "mean_prb": round(mean, 3)}
+    if family == "rach_optimization":
+        # Access-load proxy: UL PRB > 0.8 -> larger PRACH occasion density and ZCZ step +1.
+        hot = sorted(c for c, v in prb_ul.items() if v > 0.8)
+        return {"cells": hot, "parameter_delta": {"prach_config_index_step": 1, "zero_correlation_zone_step": 1} if hot else {},
+                "proxy": "RRU.PrbTotUl (no RACH/RRC setup counters on the KPM bus)"}
+    if family == "beamforming":
+        # GoB pattern per cell: PRB > 0.7 -> narrow high-gain beams, < 0.3 -> wide coverage beams, else default.
+        return {"beam_pattern": {c: ("narrow_high_gain" if v > 0.7 else "wide_coverage" if v < 0.3 else "default") for c, v in prb.items()}}
+    if family == "mimo_sleep":
+        # Medium load keeps the cell on: 0.15 <= PRB < 0.25 -> 16T16R, 0.25 <= PRB < 0.4 -> 32T32R, else 64T64R.
+        def channels(v: float) -> str:
+            return "16T16R" if 0.15 <= v < 0.25 else "32T32R" if 0.25 <= v < 0.4 else "64T64R"
+        config = {c: channels(v) for c, v in prb.items()}
+        return {"rf_channels": config, "muted_cells": sorted(c for c, v in config.items() if v != "64T64R"),
+                "estimated_energy_saving_pct": round(6.0 * sum(1 for v in config.values() if v != "64T64R"), 1)}
+    if family == "traffic_forecast":
+        # Persistence forecast with 10 % growth headroom (single snapshot; no seasonal model in emulation).
+        return {"horizon_min": 60, "prb_forecast": {c: round(min(1.0, 1.1 * v), 3) for c, v in prb.items()},
+                "peak_cells": sorted(c for c, v in prb.items() if 1.1 * v > 0.8), "model": "persistence x1.1 emulation"}
+    if family == "fault_prediction":
+        # Risk = 0.5 [delay > 50 ms] + 0.5 [thp < 0.1 Mbps]; PEE power/temperature are not on the KPM bus.
+        risk = {c: round(0.5 * (delay.get(c, 0.0) > 50.0) + 0.5 * (thp.get(c, 1.0) < 0.1), 2) for c in cells}
+        return {"fault_risk": risk, "maintenance": sorted(c for c, r in risk.items() if r >= 0.5), "proxy": "delay/throughput"}
+    if family == "slice_admission":
+        # Mean PRB > 0.85 -> admit only the guaranteed slice; > 0.7 -> cap best-effort at 50 % of its quota.
+        mean = sum(prb.values()) / len(prb) if prb else 0.0
+        policy = ({"slice-1": "admit", "slice-2": "reject_new"} if mean > 0.85 else
+                  {"slice-1": "admit", "slice-2": "cap_50pct"} if mean > 0.7 else {"slice-1": "admit", "slice-2": "admit"})
+        return {"admission_policy": policy, "mean_prb": round(mean, 3)}
+    if family == "signalling_storm":
+        # Storm if more than 64 UE entities report in the window (proxy for a connection-attempt burst).
+        storm = len(cells) > 64
+        return {"storm_detected": storm, "reporting_ues": len(cells), "throttle_ratio": 0.5 if storm else 0.0,
+                "proxy": "reporting-UE count (no RRC setup counters on the KPM bus)"}
+    if family == "ul_interference":
+        # UL interference suspected: UL PRB > 0.6 with UL throughput < 1 Mbps -> P0 -3 dB, alpha 0.8.
+        cells_hit = sorted(c for c, v in prb_ul.items() if v > 0.6 and thp_ul.get(c, 0.0) < 1.0)
+        return {"interfered_cells": cells_hit, "parameter_delta": {"p0_nominal_pusch_db": -3, "alpha": 0.8} if cells_hit else {}}
+    if family == "endc_steering":
+        # NR leg load: PRB > 0.8 -> keep more traffic on the LTE anchor; < 0.3 -> prefer the NR leg.
+        return {"dc_profile": {c: ("lte_anchor_heavy" if v > 0.8 else "nr_preferred" if v < 0.3 else "balanced") for c, v in prb.items()}}
+    if family == "config_audit":
+        # No CM source in emulation: lists the audited entities and reports no deviation.
+        return {"audited": sorted(cells), "deviations": [], "note": "CM not available in emulation"}
+    if family == "crossed_feeder":
+        # Swap symptom proxy: two entities with identical (PRB, thp) pairs.
+        seen: Dict[Any, str] = {}
+        suspects = []
+        for c in sorted(cells):
+            key = (prb.get(c), thp.get(c))
+            if None not in key and key in seen:
+                suspects.append([seen[key], c])
+            seen.setdefault(key, c)
+        return {"suspect_pairs": suspects}
+    if family == "special_events":
+        # Event profile on cells with PRB > 0.5: +1 carrier activation flag, CIO +2 dB, revert after 4 h.
+        return {"event_cells": sorted(c for c, v in prb.items() if v > 0.5),
+                "profile": {"carrier_boost": True, "cio_delta_db": 2}, "revert_after_h": 4}
+    return None
 
 
 def is_apply_tool(tool_id: str) -> bool:
     stem = tool_id.split("_", 1)[-1] if "_" in tool_id and tool_id.split("_", 1)[0] in {"northwind", "kestrel", "orion", "helix", "vtt", "aalto"} else tool_id
-    return stem.split("_")[0] in {"apply", "set", "execute", "tune", "wake", "rollback", "clear"}
+    return stem.split("_")[0] in {"apply", "set", "execute", "tune", "wake", "rollback", "clear", "restore", "revert"}
 
 
 def write_policy(rapp: Dict[str, Any], tool_id: str, result: Dict[str, Any]) -> Path:

@@ -101,6 +101,11 @@ TOOL_ACK_MARKERS = {
     "tc": [E2_CONTROL_ACK],
     # RC xApp (xapp_rc_ctrl.py): rc-control -> E2 RC CONTROL-ACK, rc-report -> RC REPORT indication.
     "rc": ["RC CONTROL-ACK received", "RC indication received"],
+    # L2 monitor xApps (xapp_l2_monitor.py): acknowledged by the E2 indication they subscribe to.
+    "mac": ["MAC ind tstamp="],
+    "rlc": ["RLC ind tstamp="],
+    "pdcp": ["PDCP ind tstamp="],
+    "gtp": ["GTP ind tstamp="],
 }
 # Read-only actions are acknowledged by the E2 indication they subscribe to, not by a control ack.
 TOOL_ACK_MARKERS_BY_ACTION = {
@@ -119,9 +124,9 @@ def _ack_markers(agent_id: str, action_id: Optional[str] = None) -> List[str]:
         return TOOL_ACK_MARKERS_BY_ACTION[(agent_id, action_id)]
     return TOOL_ACK_MARKERS.get(agent_id) or (["rApp ack:"] if agent_id.startswith("rapp.") else [])
 
-OBSERVATION_AGENTS = {"kpm"}
+OBSERVATION_AGENTS = {"kpm", "mac", "rlc", "pdcp", "gtp"}
 VALIDATION_AGENTS = {"rc"}
-CONTROL_AGENTS = {"slice", "tc", "mac"}
+CONTROL_AGENTS = {"slice", "tc"}
 WORKFLOW_TRANSITIONAL_STATUSES = {"pending", "starting", "launching", "admitted", "running"}
 
 EVAL_RUNTIME_CONFIG: Dict[str, Any] = {
