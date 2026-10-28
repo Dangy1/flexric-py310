@@ -310,6 +310,15 @@ First tasks for the execution session:
   same intents is excluded (test-set leakage). Developed in a separate worktree/branch `appweaver-learning`
   (~/flexric-learning) so the running batches and Batch B's build-tree sync are not affected; run as additional
   batches after Batch C, with the same commands, planner and metrics.
+- **Final Batch A done (2026-10-28 10:43–19:12):** `20261028T084337_250177Z_A_final_gptoss120b_spark1`, gpt-oss-120b on
+  spark1, code d128dbbe, 1500/1500 records, 6 health-check re-runs, 0 method errors, 0 label hints in 1005 planner
+  prompts, 0 pre-emptions. Rule accuracy: AppWeaver 70.4 % (known 65.5, open-world 71.8), no-repair 70.0, rule router
+  36.0 (known 81.8, open-world 23.1), catalog LLM 34.4, single app 24.0, no-catalog LLM 0 (706 hallucinated refs). On the
+  27 open-world intents no template satisfies (template-solvable 12 excluded, computed from labels): AppWeaver 67.4 %,
+  rule router 0 %, catalog LLM 0 %. Median latency AppWeaver 27.3 s (planner 19.3 s + twin dry-run 8.2 s), catalog
+  LLM 7.6 s. Audit found two infrastructure bugs affecting only the 6 seeded-conflict intents (host-wide TC lock
+  collided with the twin dry-run; slice xApp shutdown hang held the lease) — fixed (188395df, 21bc22f5); those 180
+  records are re-run for all methods before Batch B and replace the originals in the conflict analysis.
 
 ## 4. Done criteria
 A fresh clone + the README's three commands reproduce every number and figure in the revised paper

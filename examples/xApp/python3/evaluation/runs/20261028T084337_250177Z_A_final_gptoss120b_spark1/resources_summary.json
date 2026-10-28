@@ -1,0 +1,363 @@
+{
+  "run": "20261028T084337_250177Z_A_final_gptoss120b_spark1",
+  "records": 1500,
+  "methods": {
+    "manual_rule": {
+      "records": 250,
+      "time": {
+        "planner": {
+          "mean_s": 0.0,
+          "median_s": 0.0,
+          "p95_s": 0.0
+        },
+        "validate": {
+          "mean_s": 0.0,
+          "median_s": 0.0,
+          "p95_s": 0.0
+        },
+        "dryrun": {
+          "mean_s": 0.0,
+          "median_s": 0.0,
+          "p95_s": 0.0
+        },
+        "lease_wait": {
+          "mean_s": 4.087,
+          "median_s": 0.0,
+          "p95_s": 33.545
+        },
+        "deploy": {
+          "mean_s": 0.001,
+          "median_s": 0.001,
+          "p95_s": 0.001
+        },
+        "ack": {
+          "mean_s": 4.78,
+          "median_s": 6.009,
+          "p95_s": 6.011
+        },
+        "total": {
+          "mean_s": 4.087,
+          "median_s": 0.001,
+          "p95_s": 33.545
+        }
+      },
+      "llm_tokens": {
+        "records_with_usage": 0,
+        "prompt_tokens_mean": null,
+        "completion_tokens_mean": null,
+        "total_tokens_sum": 0
+      }
+    },
+    "single_xapp": {
+      "records": 250,
+      "time": {
+        "planner": {
+          "mean_s": 0.0,
+          "median_s": 0.0,
+          "p95_s": 0.0
+        },
+        "validate": {
+          "mean_s": 0.0,
+          "median_s": 0.0,
+          "p95_s": 0.0
+        },
+        "dryrun": {
+          "mean_s": 0.0,
+          "median_s": 0.0,
+          "p95_s": 0.0
+        },
+        "lease_wait": {
+          "mean_s": 2.659,
+          "median_s": 0.0,
+          "p95_s": 33.538
+        },
+        "deploy": {
+          "mean_s": 0.0,
+          "median_s": 0.0,
+          "p95_s": 0.0
+        },
+        "ack": {
+          "mean_s": 1.172,
+          "median_s": 0.501,
+          "p95_s": 2.504
+        },
+        "total": {
+          "mean_s": 2.66,
+          "median_s": 0.0,
+          "p95_s": 33.539
+        }
+      },
+      "llm_tokens": {
+        "records_with_usage": 0,
+        "prompt_tokens_mean": null,
+        "completion_tokens_mean": null,
+        "total_tokens_sum": 0
+      }
+    },
+    "llm_blind": {
+      "records": 250,
+      "time": {
+        "planner": {
+          "mean_s": 16.403,
+          "median_s": 15.139,
+          "p95_s": 26.883
+        },
+        "validate": {
+          "mean_s": 0.0,
+          "median_s": 0.0,
+          "p95_s": 0.0
+        },
+        "dryrun": {
+          "mean_s": 0.0,
+          "median_s": 0.0,
+          "p95_s": 0.0
+        },
+        "lease_wait": {
+          "mean_s": 0.289,
+          "median_s": 0.0,
+          "p95_s": 0.0
+        },
+        "deploy": {
+          "mean_s": 0.0,
+          "median_s": 0.0,
+          "p95_s": 0.0
+        },
+        "ack": {
+          "mean_s": 0.104,
+          "median_s": 0.0,
+          "p95_s": 0.501
+        },
+        "total": {
+          "mean_s": 16.691,
+          "median_s": 15.308,
+          "p95_s": 27.68
+        }
+      },
+      "llm_tokens": {
+        "records_with_usage": 0,
+        "prompt_tokens_mean": null,
+        "completion_tokens_mean": null,
+        "total_tokens_sum": 0
+      }
+    },
+    "llm_only": {
+      "records": 250,
+      "time": {
+        "planner": {
+          "mean_s": 8.39,
+          "median_s": 7.553,
+          "p95_s": 13.479
+        },
+        "validate": {
+          "mean_s": 0.0,
+          "median_s": 0.0,
+          "p95_s": 0.0
+        },
+        "dryrun": {
+          "mean_s": 0.0,
+          "median_s": 0.0,
+          "p95_s": 0.0
+        },
+        "lease_wait": {
+          "mean_s": 1.194,
+          "median_s": 0.0,
+          "p95_s": 0.0
+        },
+        "deploy": {
+          "mean_s": 0.001,
+          "median_s": 0.001,
+          "p95_s": 0.001
+        },
+        "ack": {
+          "mean_s": 5.285,
+          "median_s": 6.01,
+          "p95_s": 6.013
+        },
+        "total": {
+          "mean_s": 9.585,
+          "median_s": 7.57,
+          "p95_s": 18.592
+        }
+      },
+      "llm_tokens": {
+        "records_with_usage": 0,
+        "prompt_tokens_mean": null,
+        "completion_tokens_mean": null,
+        "total_tokens_sum": 0
+      }
+    },
+    "agentcard_no_repair": {
+      "records": 250,
+      "time": {
+        "planner": {
+          "mean_s": 20.026,
+          "median_s": 18.867,
+          "p95_s": 28.622
+        },
+        "validate": {
+          "mean_s": 9.627,
+          "median_s": 8.179,
+          "p95_s": 30.067
+        },
+        "dryrun": {
+          "mean_s": 9.627,
+          "median_s": 8.179,
+          "p95_s": 30.066
+        },
+        "lease_wait": {
+          "mean_s": 0.722,
+          "median_s": 0.0,
+          "p95_s": 0.0
+        },
+        "deploy": {
+          "mean_s": 0.001,
+          "median_s": 0.001,
+          "p95_s": 0.001
+        },
+        "ack": {
+          "mean_s": 2.821,
+          "median_s": 3.004,
+          "p95_s": 6.01
+        },
+        "total": {
+          "mean_s": 30.403,
+          "median_s": 26.546,
+          "p95_s": 53.355
+        }
+      },
+      "llm_tokens": {
+        "records_with_usage": 0,
+        "prompt_tokens_mean": null,
+        "completion_tokens_mean": null,
+        "total_tokens_sum": 0
+      }
+    },
+    "langgraph_agentcard": {
+      "records": 250,
+      "time": {
+        "planner": {
+          "mean_s": 20.61,
+          "median_s": 19.289,
+          "p95_s": 30.986
+        },
+        "validate": {
+          "mean_s": 9.83,
+          "median_s": 8.179,
+          "p95_s": 30.117
+        },
+        "dryrun": {
+          "mean_s": 9.83,
+          "median_s": 8.179,
+          "p95_s": 30.117
+        },
+        "lease_wait": {
+          "mean_s": 0.541,
+          "median_s": 0.0,
+          "p95_s": 0.0
+        },
+        "deploy": {
+          "mean_s": 0.001,
+          "median_s": 0.001,
+          "p95_s": 0.001
+        },
+        "ack": {
+          "mean_s": 2.939,
+          "median_s": 3.004,
+          "p95_s": 6.01
+        },
+        "total": {
+          "mean_s": 31.012,
+          "median_s": 27.28,
+          "p95_s": 58.692
+        }
+      },
+      "llm_tokens": {
+        "records_with_usage": 0,
+        "prompt_tokens_mean": null,
+        "completion_tokens_mean": null,
+        "total_tokens_sum": 0
+      }
+    }
+  },
+  "batch_resources": {
+    "window": [
+      1793199480.6,
+      1793207538.4
+    ],
+    "samples": 21442,
+    "components": {
+      "harness": {
+        "cpu_core_seconds": 57.4,
+        "mean_rss_mib": 123.6
+      },
+      "health_probe": {
+        "cpu_core_seconds": 6.2,
+        "mean_rss_mib": 37.4
+      },
+      "kpm_bus": {
+        "cpu_core_seconds": 74.8,
+        "mean_rss_mib": 64.7
+      },
+      "live_emulator": {
+        "cpu_core_seconds": 89.2,
+        "mean_rss_mib": 4.1
+      },
+      "live_ric": {
+        "cpu_core_seconds": 408.0,
+        "mean_rss_mib": 82.2
+      },
+      "mcp_rpc": {
+        "cpu_core_seconds": 16.3,
+        "mean_rss_mib": 94.1
+      },
+      "ns3": {
+        "cpu_core_seconds": 12733.3,
+        "mean_rss_mib": 246.4
+      },
+      "portal_server": {
+        "cpu_core_seconds": 14.4,
+        "mean_rss_mib": 91.3
+      },
+      "sim_ric": {
+        "cpu_core_seconds": 7.7,
+        "mean_rss_mib": 12.6
+      },
+      "twin_emulator": {
+        "cpu_core_seconds": 3.4,
+        "mean_rss_mib": 3.8
+      },
+      "twin_ric": {
+        "cpu_core_seconds": 8.6,
+        "mean_rss_mib": 4.6
+      },
+      "twin_validation": {
+        "cpu_core_seconds": 134.9,
+        "mean_rss_mib": 74.4
+      },
+      "xapp:appweaver_actuator": {
+        "cpu_core_seconds": 35.7,
+        "mean_rss_mib": 21.0
+      },
+      "xapp:kpm_rc_suite": {
+        "cpu_core_seconds": 6.9,
+        "mean_rss_mib": 32.1
+      },
+      "xapp:l2_monitor": {
+        "cpu_core_seconds": 0.1,
+        "mean_rss_mib": 22.6
+      },
+      "xapp:rc_ctrl": {
+        "cpu_core_seconds": 5.5,
+        "mean_rss_mib": 44.2
+      },
+      "xapp:slice_suite": {
+        "cpu_core_seconds": 43.8,
+        "mean_rss_mib": 33.6
+      },
+      "xapp:tc_suite": {
+        "cpu_core_seconds": 11.7,
+        "mean_rss_mib": 31.6
+      }
+    }
+  }
+}

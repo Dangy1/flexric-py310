@@ -1,0 +1,48 @@
+{
+  "template_solvable_open_world": [
+    "codel_rollback_verification",
+    "cross_slice_resource_rebalance",
+    "ecn_policy_validation",
+    "edge_gaming_jitter_protection",
+    "emergency_traffic_preemption",
+    "low_priority_traffic_shaping_guard",
+    "premium_qos_isolation",
+    "qos_policy_sanity_check",
+    "stadium_congestion_surge",
+    "transport_queue_partition_tuning",
+    "unknown_enterprise_xr_slowdown",
+    "urllc_reliability_safeguard"
+  ],
+  "open_world_rule_accuracy": {
+    "manual_rule": {
+      "all": 23.1,
+      "excl_template_solvable": 0.0,
+      "intents": 27
+    },
+    "single_xapp": {
+      "all": 23.1,
+      "excl_template_solvable": 22.2,
+      "intents": 27
+    },
+    "llm_blind": {
+      "all": 0.0,
+      "excl_template_solvable": 0.0,
+      "intents": 27
+    },
+    "llm_only": {
+      "all": 25.1,
+      "excl_template_solvable": 0.0,
+      "intents": 27
+    },
+    "agentcard_no_repair": {
+      "all": 70.8,
+      "excl_template_solvable": 68.9,
+      "intents": 27
+    },
+    "langgraph_agentcard": {
+      "all": 71.8,
+      "excl_template_solvable": 67.4,
+      "intents": 27
+    }
+  }
+}
