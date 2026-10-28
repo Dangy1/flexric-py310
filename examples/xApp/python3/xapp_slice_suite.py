@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import os
 import time
 
 import xapp_sdk as ric
@@ -279,9 +280,16 @@ def _assoc_msg(dl_slice_id):
     return {"num_ues": 1, "ues": [{"assoc_dl_slice_id": dl_slice_id}]}
 
 
-def _safe_stop():
+def _safe_stop(timeout_s: float = 5.0) -> bool:
+    # ric.try_stop() can stay False forever after the SLICE subscription delete; without a bound the
+    # process never exits and keeps its portal lease (seen in Batch A: 2412/2421 slice-monitor runs never
+    # reached "Slice suite finished"). Bounded wait; main() then exits the process.
+    deadline = time.monotonic() + timeout_s
     while ric.try_stop() is False:
+        if time.monotonic() > deadline:
+            return False
         time.sleep(0.1)
+    return True
 
 
 def main():
@@ -352,8 +360,10 @@ def main():
             ric.rm_report_slice_sm(hnd)
         except Exception:
             pass
-        _safe_stop()
-        print("Slice suite finished")
+        stopped = _safe_stop()
+        print("Slice suite finished" + ("" if stopped else " (xApp stop timed out; exiting)"), flush=True)
+        if not stopped:
+            os._exit(0)
 
 
 if __name__ == "__main__":
