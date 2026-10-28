@@ -113,7 +113,13 @@ class Batch:
         self.records = [r for r in self.records if r.get("method_available") is not False]
         # Pre-registered label rule, scored from the raw chain (records written by the harness may
         # already carry workflow_match_rule; recompute anyway so every batch uses the same rule/cards).
-        attach_rule_matches(self.records, load_run_intents(path, self.records), run_registry(path), force=True)
+        intents, registry = load_run_intents(path, self.records), run_registry(path)
+        attach_rule_matches(self.records, intents, registry, force=True)
+        # Pre-registered sensitivity reading of four questioned labels (evaluation/label_sensitivity.py).
+        from evaluation.label_sensitivity import sensitivity_match
+        for record in self.records:
+            intent = intents.get(str(record.get("intent_id")))
+            record["workflow_match_rule_sens"] = bool(intent) and sensitivity_match(record.get("generated_workflow") or [], intent, registry)[0]
         self.methods = [m for m, _ in METHODS if any(r.get("method") == m for r in self.records)]
 
     @property
@@ -214,6 +220,7 @@ def method_metrics(records: List[Dict[str, Any]]) -> Dict[str, Any]:
     out: Dict[str, Any] = {"records": len(records), "intents": len({r.get("intent_id") for r in records}),
                            "repeats": len({r.get("repeat_index") for r in records})}
     out["rule_accuracy"] = ratio_bootstrap(records, flag("workflow_match_rule"), ONE)
+    out["rule_accuracy_sens"] = ratio_bootstrap(records, flag("workflow_match_rule_sens"), ONE)
     out["accuracy"] = ratio_bootstrap(records, flag("workflow_match_any_accepted"), ONE)
     out["exact_accuracy"] = ratio_bootstrap(records, flag("workflow_match"), ONE)
     out["set_accuracy"] = ratio_bootstrap(records, flag("workflow_set_match"), ONE)
@@ -507,7 +514,7 @@ def batch_label(batch: Batch) -> str:
 
 
 # ---------------------------------------------------------------- tables / CSV
-CSV_METRICS = ["rule_accuracy", "known_rule_accuracy", "open_world_rule_accuracy", "unseen_capability_rule_accuracy",
+CSV_METRICS = ["rule_accuracy", "rule_accuracy_sens", "known_rule_accuracy", "open_world_rule_accuracy", "unseen_capability_rule_accuracy",
                "accuracy", "exact_accuracy", "set_accuracy", "known_accuracy", "open_world_accuracy",
                "unseen_capability_accuracy", "known_exact_accuracy", "open_world_exact_accuracy",
                "unseen_capability_exact_accuracy", "ack_rate", "launch_rate", "conflict_recall", "conflict_fp_rate",

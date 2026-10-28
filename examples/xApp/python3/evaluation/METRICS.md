@@ -130,3 +130,15 @@ timeout) and per record in `planner_provider` / `planner_model`. Set them with
 `VLLM_MODEL`, `VLLM_API_KEY`) sends the same temperature/seed/max_tokens plus
 `FLEXRIC_LLM_REASONING_EFFORT` (gpt-oss low/medium/high); the pinned provider and effort are part of
 `planner_inference_settings`. Hardware of the LLM host is recorded from `LLM_SERVER_HARDWARE`.
+
+### Label sensitivity (pre-registered 2026-10-28, before any final-batch result for these intents)
+
+Four committed labels were questioned from the intent wording alone (label review, workstream B). They are
+not changed. `evaluation/label_sensitivity.py` fixes one alternative reading for each, and the paper reports
+rule accuracy under the committed labels (primary) and under "committed OR alternative"
+(`rule_accuracy_sens`, sensitivity row). The sensitivity score can only be equal or higher, for every method.
+
+| Intent(s) | Committed label | Alternative |
+|---|---|---|
+| `ecn_policy_validation`, `codel_rollback_verification`, `qos_policy_sanity_check` | TC (→ RC) — requires a TC write although the intent asks to validate/verify | read-only verification: KPM required, RC optional after any control, no control-role write |
+| `priority_for_emergency_ues` | KPM → QoE prediction → UE QoS control (QoE required only by the card dependency) | same chain without RAPP.QOE_PREDICTION |
