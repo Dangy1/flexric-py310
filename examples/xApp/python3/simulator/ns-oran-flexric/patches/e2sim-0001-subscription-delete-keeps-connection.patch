@@ -1,0 +1,106 @@
+diff --git a/e2sim/src/SCTP/e2sim_sctp.cpp b/e2sim/src/SCTP/e2sim_sctp.cpp
+index 7be6ce4..c4a5d7b 100644
+--- a/e2sim/src/SCTP/e2sim_sctp.cpp
++++ b/e2sim/src/SCTP/e2sim_sctp.cpp
+@@ -233,12 +233,14 @@ int sctp_send_data(int &socket_fd, sctp_buffer_t &data)
+ {
+   LOG_D("in sctp send data func\n");
+   LOG_D("data.len is %d", data.len);
+-  int sent_len = send(socket_fd, data.buffer, data.len, 0);
++  // MSG_NOSIGNAL: a peer that went away must not SIGPIPE the host process (ns-3)
++  int sent_len = send(socket_fd, data.buffer, data.len, MSG_NOSIGNAL);
+   LOG_D("after getting sent_len\n");
+ 
+   if(sent_len == -1) {
++    // Never terminate the host process from the library; the caller drops the PDU
+     LOG_E("[SCTP] sctp_send_data, error message: %s", strerror(errno));
+-    exit(EXIT_FAILURE);
++    return -1;
+   }
+ 
+   return sent_len;
+@@ -286,6 +288,7 @@ int sctp_receive_data(int &socket_fd, sctp_buffer_t &data)
+     {
+       LOG_E("[SCTP] close, error message: %s", strerror(errno));
+     }
++    socket_fd = -1;   // later sends are dropped instead of writing to a stale fd
+     return -1;
+   }
+ 
+diff --git a/e2sim/src/base/e2sim.cpp b/e2sim/src/base/e2sim.cpp
+index 853d845..3cc8667 100644
+--- a/e2sim/src/base/e2sim.cpp
++++ b/e2sim/src/base/e2sim.cpp
+@@ -103,6 +103,11 @@ void E2Sim::encode_and_send_sctp_data(E2AP_PDU_t* pdu)
+   uint8_t       *buf;
+   sctp_buffer_t data;
+ 
++  if (client_fd <= 0) {
++    LOG_E("E2 connection closed, dropping PDU");
++    return;
++  }
++
+   data.len = e2ap_asn1c_encode_pdu(pdu, &buf);
+   memcpy(data.buffer, buf, min(data.len, MAX_SCTP_BUFFER));
+ 
+@@ -214,6 +219,7 @@ int E2Sim::run_loop(std::string server_ip, uint16_t server_port, uint16_t local_
+               if(sctp_close_clinet_connection(client_fd)) {
+                 LOG_D("[SCTP] Connection Terminated");
+               }
++              client_fd = -1;
+               // TODO: Mostafa, need to terminate detached thread, 
+               // and indication message thread.
+               break;
+diff --git a/e2sim/src/base/e2sim.hpp b/e2sim/src/base/e2sim.hpp
+index bffd246..6f400fd 100644
+--- a/e2sim/src/base/e2sim.hpp
++++ b/e2sim/src/base/e2sim.hpp
+@@ -54,6 +54,11 @@ public:
+   void register_callback(long cb_id, CallbackFunction cb);
+   CallbackFunction get_callback(long cb_id);
+ 
++  // RIC Request ID of the RIC-SUBSCRIPTION-DELETE being handled; set before the delete
++  // callback (cb_id 1) runs, so the host can tell which subscription is deleted
++  long deleting_requestor_id {-1};
++  long deleting_instance_id {-1};
++
+   void encode_and_send_sctp_data(E2AP_PDU_t* pdu);
+ 
+   int run_loop(int argc, char* argv[]);
+diff --git a/e2sim/src/messagerouting/e2ap_message_handler.cpp b/e2sim/src/messagerouting/e2ap_message_handler.cpp
+index 8e65253..ac0a738 100644
+--- a/e2sim/src/messagerouting/e2ap_message_handler.cpp
++++ b/e2sim/src/messagerouting/e2ap_message_handler.cpp
+@@ -221,6 +221,20 @@ bool e2ap_handle_sctp_data(int &socket_fd, sctp_buffer_t &data, E2Sim *e2sim) {
+                         func_exists = false;
+                     }
+ 
++                    e2sim->deleting_requestor_id = -1;
++                    e2sim->deleting_instance_id = -1;
++                    {
++                        RICsubscriptionDeleteRequest_t const &del =
++                            pdu->choice.initiatingMessage->value.choice.RICsubscriptionDeleteRequest;
++                        for (int i = 0; i < del.protocolIEs.list.count; i++) {
++                            RICsubscriptionDeleteRequest_IEs_t *ie = del.protocolIEs.list.array[i];
++                            if (ie->value.present == RICsubscriptionDeleteRequest_IEs__value_PR_RICrequestID) {
++                                e2sim->deleting_requestor_id = ie->value.choice.RICrequestID.ricRequestorID;
++                                e2sim->deleting_instance_id = ie->value.choice.RICrequestID.ricInstanceID;
++                            }
++                        }
++                    }
++
+                     if (func_exists) {
+                         LOG_D("Calling Delete callback function");
+                         cb();
+@@ -230,7 +244,10 @@ bool e2ap_handle_sctp_data(int &socket_fd, sctp_buffer_t &data, E2Sim *e2sim) {
+ 
+                     e2ap_handle_RICSubscriptionDeleteRequest(pdu, socket_fd, e2sim);
+ 
+-                    return true;
++                    // A subscription delete ends that subscription, not the E2 connection:
++                    // returning true made the run loop close the socket, and the next
++                    // indication from the host (ns-3) then hit a closed fd.
++                    return false;
+                     }
+ 
+ 

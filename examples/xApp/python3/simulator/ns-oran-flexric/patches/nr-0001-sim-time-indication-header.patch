@@ -1,0 +1,14 @@
+diff --git a/model/nr-gnb-net-device.cc b/model/nr-gnb-net-device.cc
+index 5c82b384..10a6e3c8 100644
+--- a/model/nr-gnb-net-device.cc
++++ b/model/nr-gnb-net-device.cc
+@@ -524,7 +524,8 @@ NrGnbNetDevice::BuildRicIndicationHeader (std::string plmId, std::string gnbId,
+       headerValues.m_gnbId = gnbId;
+       headerValues.m_nrCellId = nrCellId;
+       auto time = Simulator::Now ();
+-      uint64_t timestamp = m_startTime + (uint64_t) time.GetMilliSeconds ();
++      // Simulated time in microseconds; encoded as the KPM header's colletStartTime
++      uint64_t timestamp = (uint64_t) time.GetMicroSeconds ();
+       NS_LOG_DEBUG ("NR plmid " << plmId << " gnbId " << gnbId << " nrCellId " << nrCellId);
+       NS_LOG_DEBUG ("Timestamp " << timestamp);
+       headerValues.m_timestamp = timestamp;

@@ -1,0 +1,478 @@
+diff --git a/src/lte/model/lte-enb-net-device.cc b/src/lte/model/lte-enb-net-device.cc
+index 0e458c41..deadb827 100644
+--- a/src/lte/model/lte-enb-net-device.cc
++++ b/src/lte/model/lte-enb-net-device.cc
+@@ -89,17 +89,62 @@ LteEnbNetDevice::KpmSubscriptionCallback (E2AP_PDU_t *sub_req_pdu)
+                                << ", ranFuncionId " << +params.ranFuncionId << ", actionId "
+                                << +params.actionId);
+ 
+-  if (!m_stopSendingMessages && !m_isReportingEnabled && !m_forceE2FileLogging)
++  // Runs on the e2sim thread; (re)arm reporting on the simulator thread. A new subscription
++  // re-arms reporting, also after a RIC-SUBSCRIPTION-DELETE. One subscription is served at a time.
++  if (m_hasServedSubscription)
+     {
+-      BuildAndSendReportMessage (params);
+-      m_isReportingEnabled = true;
++      NS_LOG_UNCOND ("Cell " << m_cellId << ": KPM subscription " << params.requestorId << "/"
++                     << params.instanceId << " not served, node already reports to "
++                     << m_servedSubscription.requestorId << "/"
++                     << m_servedSubscription.instanceId);
++      return;
++    }
++  if (!m_forceE2FileLogging)
++    {
++      m_hasServedSubscription = true;
++      m_servedSubscription = params;
++      Simulator::ScheduleWithContext (1, Seconds (0), &LteEnbNetDevice::ArmKpmReporting, this,
++                                      params);
+     }
+ }
+ 
++void
++LteEnbNetDevice::ArmKpmReporting (E2Termination::RicSubscriptionRequest_rval_s params)
++{
++  // Only one subscription per node is served: drop the chain of the previous one
++  m_reportEvent.Cancel ();
++  m_stopSendingMessages = false;
++  m_isReportingEnabled = true;
++  BuildAndSendReportMessage (params);
++}
++
++void
++LteEnbNetDevice::DisarmKpmReporting ()
++{
++  m_reportEvent.Cancel ();
++  m_isReportingEnabled = false;
++}
++
+ void
+ LteEnbNetDevice::stopSendingAndCancelSchedule ()
+ {
++  // RIC-SUBSCRIPTION-DELETE (e2sim thread): ignore deletes of subscriptions this node does not
++  // serve; otherwise stop at once and cancel the chain on the simulator thread
++  long requestorId, instanceId;
++  m_e2term->GetDeletingRequestId (requestorId, instanceId);
++  if (!m_hasServedSubscription ||
++      (requestorId >= 0 && (requestorId != m_servedSubscription.requestorId ||
++                            instanceId != m_servedSubscription.instanceId)))
++    {
++      NS_LOG_UNCOND ("Cell " << m_cellId << ": RIC-SUBSCRIPTION-DELETE " << requestorId << "/"
++                     << instanceId << " is not the served subscription, reporting continues");
++      return;
++    }
++  m_hasServedSubscription = false;
++  NS_LOG_UNCOND ("Cell " << m_cellId << ": KPM subscription " << requestorId << "/" << instanceId
++                 << " deleted, reporting stopped");
+   m_stopSendingMessages = true;
++  Simulator::ScheduleWithContext (1, Seconds (0), &LteEnbNetDevice::DisarmKpmReporting, this);
+ }
+ 
+ void
+@@ -346,6 +391,7 @@ LteEnbNetDevice::LteEnbNetDevice ()
+       m_anr (0),
+       m_componentCarrierManager (0),
+       m_isReportingEnabled (false),
++      m_hasServedSubscription (false),
+       m_reducedPmValues (false),
+       m_forceE2FileLogging (false),
+       m_e2andlog (false),
+@@ -775,7 +821,8 @@ LteEnbNetDevice::BuildRicIndicationHeader (std::string plmId, std::string gnbId,
+       headerValues.m_gnbId = gnbId;
+       headerValues.m_nrCellId = nrCellId;
+       auto time = Simulator::Now ();
+-      uint64_t timestamp = m_startTime + (uint64_t) time.GetMilliSeconds ();
++      // Simulated time in microseconds; encoded as the KPM header's colletStartTime
++      uint64_t timestamp = (uint64_t) time.GetMicroSeconds ();
+       NS_LOG_DEBUG ("NR plmid " << plmId << " gnbId " << gnbId << " nrCellId " << nrCellId);
+       NS_LOG_DEBUG ("Timestamp " << timestamp);
+       headerValues.m_timestamp = timestamp;
+@@ -1170,12 +1217,8 @@ LteEnbNetDevice::BuildAndSendReportMessage (E2Termination::RicSubscriptionReques
+ 
+   if (!m_stopSendingMessages)
+     {
+-      if (!m_forceE2FileLogging)
+-        Simulator::ScheduleWithContext (1, Seconds (m_e2Periodicity),
+-                                        &LteEnbNetDevice::BuildAndSendReportMessage, this, params);
+-      else
+-        Simulator::Schedule (Seconds (m_e2Periodicity), &LteEnbNetDevice::BuildAndSendReportMessage,
+-                             this, params);
++      m_reportEvent = Simulator::Schedule (Seconds (m_e2Periodicity),
++                                           &LteEnbNetDevice::BuildAndSendReportMessage, this, params);
+     }
+ }
+ 
+diff --git a/src/lte/model/lte-enb-net-device.h b/src/lte/model/lte-enb-net-device.h
+index a385d598..d397c965 100644
+--- a/src/lte/model/lte-enb-net-device.h
++++ b/src/lte/model/lte-enb-net-device.h
+@@ -309,6 +309,12 @@ namespace ns3
+         bool m_sendCuCp;
+         uint64_t m_startTime;
+         bool m_isReportingEnabled; //! true is KPM reporting cycle is active, false otherwise
++        EventId m_reportEvent; //!< pending BuildAndSendReportMessage
++        void ArmKpmReporting (E2Termination::RicSubscriptionRequest_rval_s params);
++        void DisarmKpmReporting ();
++        // Subscription whose ids the report chain uses; e2sim thread only
++        bool m_hasServedSubscription;
++        E2Termination::RicSubscriptionRequest_rval_s m_servedSubscription;
+ 
+         double rc_e2_func_id;
+         double e2_func_id;
+diff --git a/src/mmwave/model/mmwave-enb-net-device.cc b/src/mmwave/model/mmwave-enb-net-device.cc
+index 3d949a75..552de692 100644
+--- a/src/mmwave/model/mmwave-enb-net-device.cc
++++ b/src/mmwave/model/mmwave-enb-net-device.cc
+@@ -138,17 +138,17 @@ MmWaveEnbNetDevice::CalculatePrbAverage()
+   m_prbHistory.push_back(currentPrbValue);
+   
+   NS_LOG_DEBUG("Current PRB Value: " << currentPrbValue << 
+-               " History Size: " << m_prbHistory.size() << "/" << MAX_PRB_HISTORY);
++               " History Size: " << m_prbHistory.size() << "/" << m_prbHistoryLen);
+ 
+-  // Only return average when we have exactly MAX_PRB_HISTORY points
+-  if (m_prbHistory.size() == MAX_PRB_HISTORY)
++  // Only return average when we have exactly m_prbHistoryLen points
++  if (m_prbHistory.size() >= m_prbHistoryLen)
+   {
+     double sum = 0;
+     for (auto prb : m_prbHistory)
+     {
+       sum += prb;
+     }
+-    double average = sum / MAX_PRB_HISTORY;
++    double average = sum / m_prbHistory.size();
+     
+     // Remove oldest value to maintain window
+     m_prbHistory.erase(m_prbHistory.begin());
+@@ -198,6 +198,8 @@ MmWaveEnbNetDevice::CheckReportingFlag()
+               m_is_reported = true;
+               m_isReportingEnabled = true;
+               BuildAndSendReportMessage(m_lastSubscriptionParams);
++              // Reporting is latched on: the gate is no longer needed
++              return;
+             }
+           }
+           else
+@@ -216,8 +218,7 @@ MmWaveEnbNetDevice::CheckReportingFlag()
+       }
+     }
+     // Schedule next check
+-    Simulator::ScheduleWithContext(1, m_checkPeriod,
+-        &MmWaveEnbNetDevice::CheckReportingFlag, this);
++    m_checkEvent = Simulator::Schedule(m_checkPeriod, &MmWaveEnbNetDevice::CheckReportingFlag, this);
+   }
+ }
+ 
+@@ -227,76 +228,127 @@ MmWaveEnbNetDevice::KpmSubscriptionCallback(E2AP_PDU_t *sub_req_pdu)
+ {
+   NS_LOG_DEBUG("\nReceived RIC Subscription Request, cellId= " << m_cellId << "\n");
+ 
+-  // Store subscription parameters
+-  m_lastSubscriptionParams = m_e2term->ProcessRicSubscriptionRequest(sub_req_pdu);
+-  m_hasValidSubscription = true;
++  // Runs on the e2sim thread: parse here, change the reporting state on the simulator thread
++  E2Termination::RicSubscriptionRequest_rval_s params =
++      m_e2term->ProcessRicSubscriptionRequest(sub_req_pdu);
+ 
+-  NS_LOG_DEBUG("requestorId " << +m_lastSubscriptionParams.requestorId << 
+-               ", instanceId " << +m_lastSubscriptionParams.instanceId <<
+-               ", ranFuncionId " << +m_lastSubscriptionParams.ranFuncionId <<
+-               ", actionId " << +m_lastSubscriptionParams.actionId);
++  NS_LOG_DEBUG("requestorId " << +params.requestorId <<
++               ", instanceId " << +params.instanceId <<
++               ", ranFuncionId " << +params.ranFuncionId <<
++               ", actionId " << +params.actionId);
+ 
++  // One subscription per node is served (the report chain carries one set of ids). Further
++  // subscriptions are acknowledged but get no indications until the served one is deleted.
++  if (m_hasServedSubscription)
++  {
++    NS_LOG_UNCOND("Cell " << m_cellId << ": KPM subscription " << params.requestorId << "/"
++                  << params.instanceId << " not served, node already reports to "
++                  << m_servedSubscription.requestorId << "/" << m_servedSubscription.instanceId);
++    return;
++  }
++  m_hasServedSubscription = true;
++  m_servedSubscription = params;
++
++  // Format 4 with a real PRB condition is gated by CheckReportingFlag. A condition that is always
++  // true (IsStat < N with N >= 100, IsStat > N with N < 0) or any other action-definition format
++  // starts a plain periodic report at once (it used to wait >= 1 s for the PRB window, or never
++  // started for formats 1/2/3/5).
++  bool startNow = true;
+   const auto &sub_map = m_e2term->SubscriptionMapRef();
+-  if (!sub_map.empty())
++  try
+   {
+-    try 
++    auto fmt = sub_map.find("Action Definition Format");
++    auto expr = sub_map.find("Test Condition Expression");
++    auto value = sub_map.find("Test Condition Value");
++    if (fmt != sub_map.end() && expr != sub_map.end() && value != sub_map.end() &&
++        std::any_cast<int>(fmt->second) ==
++            E2SM_KPM_ActionDefinition__actionDefinition_formats_PR_actionDefinition_Format4)
+     {
+-      // Check if keys exist
+-      if (sub_map.find("Test Condition Expression") == sub_map.end() ||
+-          sub_map.find("Action Definition Format") == sub_map.end() ||
+-          sub_map.find("Test Condition Value") == sub_map.end())
+-      {
+-        NS_LOG_ERROR("Required keys not found in sub_map");
+-        return;
+-      }
+-
+-      const auto& expr = sub_map.at("Test Condition Expression");
+-      const auto& action = sub_map.at("Action Definition Format");
+-
+-      int index = std::any_cast<int>(expr);
+-      int action_def = std::any_cast<int>(action);
+-
++      int index = std::any_cast<int>(expr->second);
++      int threshold = std::any_cast<int>(value->second);
+       if (index < 0 || index >= static_cast<int>(MATH_CALL_BACKS.size()))
+       {
+-        NS_LOG_ERROR("Invalid index: " << index);
+-        return;
++        NS_LOG_ERROR("Invalid test condition index " << index << ", reporting periodically");
+       }
+-
+-      switch (action_def)
++      else
+       {
+-        case E2SM_KPM_ActionDefinition__actionDefinition_formats_PR_actionDefinition_Format4:
+-          {
+-            // Clear PRB history at subscription start
+-            m_prbHistory.clear();
+-            
+-            // Start periodic PRB checking
+-            if (!m_stopSendingMessages)
+-            {
+-              Simulator::ScheduleWithContext(1, m_checkPeriod,
+-                  &MmWaveEnbNetDevice::CheckReportingFlag, this);
+-              
+-              NS_LOG_DEBUG("Started PRB monitoring with period " << 
+-                          m_checkPeriod.GetMilliSeconds() << "ms");
+-            }
+-          }
+-          break;
+-
+-        default:
+-          NS_LOG_ERROR("Action Definition NOT supported");
+-          break;
++        bool const trivial = (index == TestCond_Expression_lessthan && threshold >= 100) ||
++                             (index == TestCond_Expression_greaterthan && threshold < 0);
++        startNow = trivial;
+       }
+     }
+-    catch (const std::exception& e)
+-    {
+-      NS_LOG_ERROR("Error in KpmSubscriptionCallback: " << e.what());
+-    }
+   }
++  catch (const std::exception& e)
++  {
++    NS_LOG_ERROR("Error in KpmSubscriptionCallback: " << e.what() << ", reporting periodically");
++  }
++
++  // A new subscription re-arms reporting, also after a RIC-SUBSCRIPTION-DELETE
++  Simulator::ScheduleWithContext(1, Seconds(0), &MmWaveEnbNetDevice::ArmKpmReporting, this,
++                                 params, startNow);
++}
++
++void
++MmWaveEnbNetDevice::ArmKpmReporting(E2Termination::RicSubscriptionRequest_rval_s params,
++                                    bool startNow)
++{
++  NS_LOG_FUNCTION(this << startNow);
++  // Drop the chains of a previous subscription (only one subscription per node is served)
++  m_checkEvent.Cancel();
++  m_reportEvent.Cancel();
++  m_lastSubscriptionParams = params;
++  m_hasValidSubscription = true;
++  m_stopSendingMessages = false;
++  m_isReportingEnabled = false;
++  m_is_reported = false;
++  m_prbHistory.clear();
++
++  if (startNow)
++  {
++    NS_LOG_DEBUG("Cell " << m_cellId << ": KPM reporting starts now");
++    m_is_reported = true;
++    m_isReportingEnabled = true;
++    BuildAndSendReportMessage(m_lastSubscriptionParams);
++  }
++  else
++  {
++    m_checkEvent = Simulator::Schedule(m_checkPeriod, &MmWaveEnbNetDevice::CheckReportingFlag, this);
++    NS_LOG_DEBUG("Started PRB monitoring with period " << m_checkPeriod.GetMilliSeconds() << "ms");
++  }
++}
++
++void
++MmWaveEnbNetDevice::DisarmKpmReporting()
++{
++  NS_LOG_FUNCTION(this);
++  m_checkEvent.Cancel();
++  m_reportEvent.Cancel();
++  m_isReportingEnabled = false;
++  m_is_reported = false;
++  m_hasValidSubscription = false;
+ }
+ 
+ void
+ MmWaveEnbNetDevice::stopSendingAndCancelSchedule ()
+ {
++  // RIC-SUBSCRIPTION-DELETE (e2sim thread). A delete of a subscription this node does not serve
++  // is only acknowledged. Otherwise stop at once and cancel the event chains on the simulator
++  // thread; a later subscription re-arms reporting (ArmKpmReporting).
++  long requestorId, instanceId;
++  m_e2term->GetDeletingRequestId (requestorId, instanceId);
++  if (!m_hasServedSubscription ||
++      (requestorId >= 0 && (requestorId != m_servedSubscription.requestorId ||
++                            instanceId != m_servedSubscription.instanceId)))
++    {
++      NS_LOG_UNCOND ("Cell " << m_cellId << ": RIC-SUBSCRIPTION-DELETE " << requestorId << "/"
++                     << instanceId << " is not the served subscription, reporting continues");
++      return;
++    }
++  m_hasServedSubscription = false;
++  NS_LOG_UNCOND ("Cell " << m_cellId << ": KPM subscription " << requestorId << "/" << instanceId
++                 << " deleted, reporting stopped");
+   m_stopSendingMessages = true;
++  Simulator::ScheduleWithContext(1, Seconds(0), &MmWaveEnbNetDevice::DisarmKpmReporting, this);
+ }
+ 
+ TypeId
+@@ -363,7 +415,16 @@ MmWaveEnbNetDevice::GetTypeId ()
+                          MakeDoubleChecker<double> ())
+           .AddAttribute ("RC_E2functionID", "Function ID to subscribe", DoubleValue (3),
+                          MakeDoubleAccessor (&MmWaveEnbNetDevice::rc_e2_func_id),
+-                         MakeDoubleChecker<double> ());
++                         MakeDoubleChecker<double> ())
++          .AddAttribute ("E2PrbHistoryLen",
++                         "Samples in the PRB moving average that gates KPM format-4 reporting",
++                         UintegerValue (10),
++                         MakeUintegerAccessor (&MmWaveEnbNetDevice::m_prbHistoryLen),
++                         MakeUintegerChecker<uint32_t> (1))
++          .AddAttribute ("E2PrbCheckPeriod", "Period of the PRB check that gates KPM format-4 reporting",
++                         TimeValue (MilliSeconds (100)),
++                         MakeTimeAccessor (&MmWaveEnbNetDevice::m_checkPeriod),
++                         MakeTimeChecker ());
+   return tid;
+ }
+ 
+@@ -381,8 +442,10 @@ MmWaveEnbNetDevice::MmWaveEnbNetDevice ()
+       m_cuCpFileName (),
+       m_duFileName (),
+       m_prbHistory(),
++      m_prbHistoryLen(10),
+       m_checkPeriod(MilliSeconds(100)),
+-      m_hasValidSubscription(false)
++      m_hasValidSubscription(false),
++      m_hasServedSubscription(false)
+ 
+ 
+ {
+@@ -722,20 +785,33 @@ MmWaveEnbNetDevice::GetE2Termination () const
+   return m_e2term;
+ }
+ 
++// Cell switch-off/on for the RC energy-state control (style 300). "Off" is TX power 0 dBm with a
++// 100 dB noise figure, not a radio power-down; "on" restores the TX power saved at switch-off
++// (noise figure 5 dB).
+ void
+-SetBSTX (Ptr<MmWaveEnbPhy> phy, int val, uint16_t cellid, bool m_esON)
++SetBSTX (Ptr<MmWaveEnbPhy> phy, bool on, uint16_t cellid)
+ {
+-  printf ("in function");
+-  if (val == 0)
++  static std::map<uint16_t, double> savedTxPower; // dBm before switch-off, per cell
++  double val;
++  if (!on)
+     {
+-      NS_LOG_UNCOND ("Cell turned off " << cellid << " ,current ES state:" << m_esON);
++      if (phy->GetTxPower () > 0)
++        {
++          savedTxPower[cellid] = phy->GetTxPower ();
++        }
++      val = 0;
++      NS_LOG_UNCOND ("Cell turned off " << cellid << " at " << Simulator::Now ().GetSeconds ()
++                                        << " s");
+     }
+   else
+     {
+-      NS_LOG_UNCOND ("Cell turned on " << cellid << " ,current ES state:" << m_esON);
++      auto it = savedTxPower.find (cellid);
++      val = it != savedTxPower.end () ? it->second : phy->GetTxPower ();
++      NS_LOG_UNCOND ("Cell turned on " << cellid << " txPower " << val << " at "
++                                       << Simulator::Now ().GetSeconds () << " s");
+     }
+   phy->SetTxPower (val); //set Cell TX power
+-  if (val == 0)
++  if (!on)
+     {
+       phy->SetNoiseFigure (100); //high noise
+     }
+@@ -849,6 +925,9 @@ MmWaveEnbNetDevice::ControlMessageReceivedCallback (E2AP_PDU_t *sub_req_pdu)
+         // Simulator::ScheduleWithContext (1, MilliSeconds (15), &SetBSTX, enbPhy, 0, flexric_cell_id,
+         //  mmWaveEnbNodes.Get
+         uint16_t targetCellId = controlMessage->GetTargetCell ();
++        // Control action '1' (or 1) = CELL_ON; anything else (CELL_OFF = '0') switches the cell off
++        long const action = controlMessage->m_e2SmRcControlHeaderFormat1->ric_ControlAction_ID;
++        bool const on = (action == '1' || action == 1);
+         for (uint32_t i = 0; i < mmWaveEnbNodes.GetN (); i++)
+           {
+             Ptr<MmWaveEnbPhy> enbPhy =
+@@ -859,8 +938,7 @@ MmWaveEnbNetDevice::ControlMessageReceivedCallback (E2AP_PDU_t *sub_req_pdu)
+              if (cell_id == targetCellId)
+                {
+             printf ("Cell Id %u ", cell_id);
+-            Simulator::ScheduleWithContext (1, MilliSeconds (15), &SetBSTX, enbPhy, 0, cell_id,
+-                                            true);
++            Simulator::ScheduleWithContext (1, MilliSeconds (15), &SetBSTX, enbPhy, on, cell_id);
+             //Simulator::ScheduleWithContext (1,Seconds (tim+5), &SetBSTX, enbPhy, 30, cell_id, false);
+             }
+           }
+@@ -931,7 +1009,8 @@ MmWaveEnbNetDevice::BuildRicIndicationHeader (std::string plmId, std::string gnb
+       headerValues.m_gnbId = gnbId;
+       headerValues.m_nrCellId = nrCellId;
+       auto time = Simulator::Now ();
+-      uint64_t timestamp = m_startTime + (uint64_t) time.GetMilliSeconds ();
++      // Simulated time in microseconds; encoded as the KPM header's colletStartTime
++      uint64_t timestamp = (uint64_t) time.GetMicroSeconds ();
+       NS_LOG_DEBUG ("NR plmid " << plmId << " gnbId " << gnbId << " nrCellId " << nrCellId);
+       NS_LOG_DEBUG ("Timestamp " << timestamp);
+       headerValues.m_timestamp = timestamp;
+@@ -1736,8 +1815,9 @@ MmWaveEnbNetDevice::BuildAndSendReportMessage (E2Termination::RicSubscriptionReq
+       //                               m_e2term->SubscriptionMapRef ().end ()
+       //                           ? m_e2term->SubscriptionMapRef ()["Granularity Period"]
+       //                           : m_e2Periodicity;
+-      Simulator::ScheduleWithContext (1, Seconds (m_e2Periodicity),
+-                                      &MmWaveEnbNetDevice::BuildAndSendReportMessage, this, params);
++      m_reportEvent = Simulator::Schedule (Seconds (m_e2Periodicity),
++                                           &MmWaveEnbNetDevice::BuildAndSendReportMessage, this,
++                                           params);
+     }
+ }
+ 
+diff --git a/src/mmwave/model/mmwave-enb-net-device.h b/src/mmwave/model/mmwave-enb-net-device.h
+index f136addb..fd24ac38 100644
+--- a/src/mmwave/model/mmwave-enb-net-device.h
++++ b/src/mmwave/model/mmwave-enb-net-device.h
+@@ -225,8 +225,15 @@ namespace ns3 {
+             void NewFunction (bool m_is_reported);
+ 
+             std::vector<double> m_prbHistory;
+-            static const size_t MAX_PRB_HISTORY = 10;
++            uint32_t m_prbHistoryLen; //!< samples in the PRB average (attribute E2PrbHistoryLen)
+             Time m_checkPeriod;
++            EventId m_checkEvent;  //!< pending CheckReportingFlag
++            EventId m_reportEvent; //!< pending BuildAndSendReportMessage
++            void ArmKpmReporting (E2Termination::RicSubscriptionRequest_rval_s params, bool startNow);
++            void DisarmKpmReporting (void);
++            // Subscription whose ids the report chain uses; e2sim thread only
++            bool m_hasServedSubscription;
++            E2Termination::RicSubscriptionRequest_rval_s m_servedSubscription;
+             E2Termination::RicSubscriptionRequest_rval_s m_lastSubscriptionParams;
+             bool m_hasValidSubscription;
+        

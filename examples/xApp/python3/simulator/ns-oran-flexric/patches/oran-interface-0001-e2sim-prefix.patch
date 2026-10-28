@@ -1,0 +1,14 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 43a7452..20a5c75 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,7 +1,7 @@
+ # Include directories for e2sim
+-include_directories(/usr/local/include/e2sim)
++include_directories(${E2SIM_PREFIX}/include/e2sim)
+ # Linker flags and libraries
+-link_directories(/usr/local/lib)
++link_directories(${E2SIM_PREFIX}/lib)
+ link_libraries(e2sim)
+ 
+ # Add ns3 include directory from build folder

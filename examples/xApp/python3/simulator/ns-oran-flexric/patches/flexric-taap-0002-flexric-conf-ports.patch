@@ -1,0 +1,13 @@
+diff --git a/flexric.conf b/flexric.conf
+index 543c8158..be104a1d 100644
+--- a/flexric.conf
++++ b/flexric.conf
+@@ -5,3 +5,8 @@ NEAR_RIC_IP = 127.0.0.1
+ 
+ [XAPP]
+ DB_DIR = /tmp/
++
++# AppWeaver: run alongside ~/flexric (36421/36422) without port clashes
++[PORTS]
++NEAR_RIC_PORT = 36423
++E42_PORT = 36424

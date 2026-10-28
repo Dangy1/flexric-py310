@@ -1,0 +1,13 @@
+diff --git a/src/ric/iApp/xapp_ric_id.c b/src/ric/iApp/xapp_ric_id.c
+index c814432b..4ac1bbba 100644
+--- a/src/ric/iApp/xapp_ric_id.c
++++ b/src/ric/iApp/xapp_ric_id.c
+@@ -30,7 +30,7 @@ bool eq_xapp_ric_gen_id(xapp_ric_id_t const* m0, xapp_ric_id_t const* m1)
+   assert(m0 != NULL);
+   assert(m1 != NULL);
+ 
+-  if(eq_xapp_id(m0->xapp_id, m0->xapp_id) == false)
++  if(eq_xapp_id(m0->xapp_id, m1->xapp_id) == false)
+     return false;
+ 
+   return eq_ric_gen_id(&m0->ric_id, &m1->ric_id);

@@ -1,0 +1,115 @@
+diff --git a/model/kpm-indication.cc b/model/kpm-indication.cc
+index f0a5b12..076e640 100644
+--- a/model/kpm-indication.cc
++++ b/model/kpm-indication.cc
+@@ -239,15 +239,11 @@ KpmIndicationHeader::FillAndEncodeKpmRicIndicationHeader (E2SM_KPM_IndicationHea
+ 
+   Ptr<OctetString> plmnid = Create<OctetString> (values.m_plmId, 3);
+   Ptr<BitString> cellId_bstring;
+-  TimeStamp_t colstartTime;
+ 
+-  colstartTime = get_time_now_us ();
+-  // Convert from OCTET STRING to uint64
+-  uint64_t original_time;
+-  memcpy (&original_time, colstartTime.buf, sizeof (uint64_t));
+-
+-  // Convert to network byte order
+-  uint64_t network_order_time = ntohll (original_time);
++  // colletStartTime carries values.m_timestamp, the simulated time in microseconds set by the
++  // E2 node. It used to be the host's CLOCK_REALTIME at encoding (get_time_now_us ()), which has
++  // no fixed relation to simulated time because the simulation runs many times slower than real time.
++  uint64_t network_order_time = ntohll (values.m_timestamp);
+ 
+   // Assign network_order_time back to colletStartTime as an OCTET_STRING
+   ind_header->colletStartTime.buf = (uint8_t *) calloc (8, sizeof (uint8_t));
+@@ -871,6 +867,16 @@ KpmIndicationMessage::getMesDataItem (const MeasResultListNR *_measResultListNR,
+       ASN_SEQUENCE_ADD (&measure_record->list, measure_record_item2);
+     }
+ 
++  if (measure_record->list.count == 0)
++    {
++      // KPM v3 requires >= 1 record. The list held only the serving-cell marker (e.g. 2 gNBs):
++      // send an explicit "no value" instead of an empty record list.
++      MeasurementRecordItem_t *no_value =
++          (MeasurementRecordItem_t *) calloc (1, sizeof (MeasurementRecordItem_t));
++      no_value->present = MeasurementRecordItem_PR_noValue;
++      ASN_SEQUENCE_ADD (&measure_record->list, no_value);
++    }
++
+   measure_data_item->measRecord = *measure_record;
+ 
+   return measure_data_item;
+@@ -1005,6 +1011,16 @@ KpmIndicationMessage::FillKpmIndicationMessageFormat1 (
+ 
+       MeasurementInfoItem_t *infoItem = _pairInfo.first;
+       MeasurementDataItem_t *measureDataItem = _pairInfo.second;
++      if (measureDataItem == nullptr)
++        {
++          // No RRC measurement for this item: keep data[i] aligned with info[i] with one
++          // "no value" record instead of adding a null item
++          measureDataItem = (MeasurementDataItem_t *) calloc (1, sizeof (MeasurementDataItem_t));
++          MeasurementRecordItem_t *no_value =
++              (MeasurementRecordItem_t *) calloc (1, sizeof (MeasurementRecordItem_t));
++          no_value->present = MeasurementRecordItem_PR_noValue;
++          ASN_SEQUENCE_ADD (&measureDataItem->measRecord.list, no_value);
++        }
+ 
+       ASN_SEQUENCE_ADD (&measurementDataList->list, measureDataItem);
+       ASN_SEQUENCE_ADD (&infoList->list, infoItem);
+diff --git a/model/oran-interface.cc b/model/oran-interface.cc
+index 5facd04..3710129 100644
+--- a/model/oran-interface.cc
++++ b/model/oran-interface.cc
+@@ -399,6 +399,13 @@ E2Termination::RegisterCallbackFunctionToE2Sm (long functionId,CallbackFunction
+   m_e2sim->register_callback (functionId, CbFun);
+ }
+ 
++void
++E2Termination::GetDeletingRequestId (long &requestorId, long &instanceId) const
++{
++  requestorId = m_e2sim->deleting_requestor_id;
++  instanceId = m_e2sim->deleting_instance_id;
++}
++
+ void E2Termination::Start ()
+ {
+   NS_LOG_FUNCTION (this);
+diff --git a/model/oran-interface.h b/model/oran-interface.h
+index bfe38a1..e5cc5c0 100644
+--- a/model/oran-interface.h
++++ b/model/oran-interface.h
+@@ -116,6 +116,12 @@ namespace ns3 {
+       */
+       void RegisterCallbackFunctionToE2Sm (long functionId,CallbackFunction CbFun);
+ 
++      /**
++      * RIC Request ID (requestor, instance) of the RIC-SUBSCRIPTION-DELETE being handled.
++      * Valid inside the delete callback (functionId 1); -1 when unknown.
++      */
++      void GetDeletingRequestId (long &requestorId, long &instanceId) const;
++
+       /**
+       * Struct holding the values returned by ProcessRicSubscriptionRequest
+       */
+diff --git a/model/ric-control-message.cc b/model/ric-control-message.cc
+index d13a7d8..32b05ef 100644
+--- a/model/ric-control-message.cc
++++ b/model/ric-control-message.cc
+@@ -286,9 +286,14 @@ uint16_t RicControlMessage::GetTargetCell() const
+ 
+               BIT_STRING_t NR_CGI = pram1_item4_NR_CGI.ranParameter_valueType->choice.ranP_Choice_ElementFalse->ranParameter_value->choice.valueBitS;
+                
+-            uint8_t nr_cgi_value;
+-            memcpy(&nr_cgi_value, NR_CGI.buf,NR_CGI.size);          
+-            uint16_t targetCellId = nr_cgi_value - 48 ;  //convert from string to decimal
++            // ns-O-RAN convention: the "NR CGI" carries the cell id as a decimal ASCII string
++            // ("2", "12"). It used to be read as one ASCII digit (cells 1-9 only), and a longer
++            // string overflowed the 1-byte variable it was copied into.
++            uint16_t targetCellId = 0;
++            for (size_t i = 0; i < NR_CGI.size && NR_CGI.buf[i] >= '0' && NR_CGI.buf[i] <= '9'; i++)
++              {
++                targetCellId = targetCellId * 10 + (NR_CGI.buf[i] - '0');
++              }
+             return targetCellId ;
+         }    
+ 

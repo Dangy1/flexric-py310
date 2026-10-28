@@ -1,0 +1,194 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index cf583724..33090a16 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -242,6 +242,7 @@ target_compile_options(e2ap_ran_func_obj PRIVATE -fPIC -fvisibility=hidden)
+ #######
+ 
+ add_definitions(-DSERVICE_MODEL_DIR_PATH="${SM_DIR_PATH}/")
++add_definitions(-DFLEXRIC_INSTALL_PREFIX="${CMAKE_INSTALL_PREFIX}")
+ 
+ # KPM SM
+ set(SM_ENCODING_KPM "ASN" CACHE STRING "The KPM SM encoding to use")
+diff --git a/examples/xApp/c/CMakeLists.txt b/examples/xApp/c/CMakeLists.txt
+index 20504bdb..d68dfcaa 100644
+--- a/examples/xApp/c/CMakeLists.txt
++++ b/examples/xApp/c/CMakeLists.txt
+@@ -8,4 +8,5 @@ add_subdirectory(slice)
+ add_subdirectory(tc)
+ add_subdirectory(kpm_rc)
+ add_subdirectory(orange)
++add_subdirectory(appweaver)
+ 
+diff --git a/src/ric/iApp/e42_iapp.c b/src/ric/iApp/e42_iapp.c
+index a6ccaaa4..6a8b11fb 100644
+--- a/src/ric/iApp/e42_iapp.c
++++ b/src/ric/iApp/e42_iapp.c
+@@ -23,7 +23,7 @@
+ #include <stdio.h>
+ #include <pthread.h>
+ 
+-e42_iapp_t* init_e42_iapp(const char* addr, near_ric_if_t ric_if)
++e42_iapp_t* init_e42_iapp(const char* addr, near_ric_if_t ric_if, int port_conf)
+ {
+   assert(addr != NULL);
+ //  assert(ric != NULL);
+@@ -38,7 +38,7 @@ e42_iapp_t* init_e42_iapp(const char* addr, near_ric_if_t ric_if)
+   // Emulator
+   start_near_ric_iapp_gen(iapp->ric_if.type);
+ 
+-  uint32_t const port = 36422;
++  uint32_t const port = port_conf;
+   printf("[iApp]: nearRT-RIC IP Address = %s, PORT = %d\n", addr, port);
+   e2ap_init_ep_iapp(&iapp->ep, addr, port);
+ 
+diff --git a/src/ric/iApp/e42_iapp.h b/src/ric/iApp/e42_iapp.h
+index 5b8ae290..71d84bc1 100644
+--- a/src/ric/iApp/e42_iapp.h
++++ b/src/ric/iApp/e42_iapp.h
+@@ -65,7 +65,7 @@ typedef struct e42_iapp_s
+   atomic_bool stopped;
+ } e42_iapp_t;
+ 
+-e42_iapp_t* init_e42_iapp(const char* addr, near_ric_if_t ric_if); //, int port);
++e42_iapp_t* init_e42_iapp(const char* addr, near_ric_if_t ric_if, int port);
+ 
+ // Blocking call
+ void start_e42_iapp(e42_iapp_t* iapp);
+diff --git a/src/ric/iApp/e42_iapp_api.c b/src/ric/iApp/e42_iapp_api.c
+index fc5b40f6..19135b1c 100644
+--- a/src/ric/iApp/e42_iapp_api.c
++++ b/src/ric/iApp/e42_iapp_api.c
+@@ -31,11 +31,11 @@ void* static_start_iapp(void* a)
+   return NULL;
+ }
+ 
+-void init_iapp_api(const char* addr, near_ric_if_t ric_if)
++void init_iapp_api(const char* addr, near_ric_if_t ric_if, int port)
+ {
+   assert(iapp == NULL);
+ 
+-  iapp = init_e42_iapp(addr, ric_if);
++  iapp = init_e42_iapp(addr, ric_if, port);
+   assert(iapp->io.efd < 1024);
+ 
+   // Spawn a new thread for the iapp
+diff --git a/src/ric/iApp/e42_iapp_api.h b/src/ric/iApp/e42_iapp_api.h
+index e11002ea..81af659f 100644
+--- a/src/ric/iApp/e42_iapp_api.h
++++ b/src/ric/iApp/e42_iapp_api.h
+@@ -16,7 +16,7 @@
+ 
+ typedef struct near_ric_s near_ric_t;
+ 
+-void init_iapp_api(const char* addr, near_ric_if_t ric);
++void init_iapp_api(const char* addr, near_ric_if_t ric, int port);
+   
+ void stop_iapp_api(void);     
+ 
+diff --git a/src/ric/near_ric.c b/src/ric/near_ric.c
+index 81bb8306..bcf9e146 100644
+--- a/src/ric/near_ric.c
++++ b/src/ric/near_ric.c
+@@ -188,7 +188,7 @@ near_ric_t* init_near_ric(fr_args_t const* args)
+   char* addr = get_near_ric_ip(args);
+   defer({ free(addr); } );
+ 
+-  const int port = 36421;
++  const int port = get_conf_port(args, "NEAR_RIC_PORT", 36421);
+   printf("[NEAR-RIC]: nearRT-RIC IP Address = %s, PORT = %d\n", addr, port);
+   e2ap_init_ep_ric(&ric->ep, addr, port);
+ 
+@@ -212,7 +212,7 @@ near_ric_t* init_near_ric(fr_args_t const* args)
+   init_pending_events(ric);
+ 
+   near_ric_if_t ric_if = {.type = ric};
+-  init_iapp_api(addr, ric_if);
++  init_iapp_api(addr, ric_if, get_conf_port(args, "E42_PORT", 36422));
+ 
+   uint32_t const num_threads = TASK_MAN_NUMBER_THREADS;
+   printf("[NEAR-RIC]: Initializing Task Manager with %u threads \n", num_threads);
+diff --git a/src/util/conf_file.c b/src/util/conf_file.c
+index 3a930e9a..48404fdc 100644
+--- a/src/util/conf_file.c
++++ b/src/util/conf_file.c
+@@ -18,11 +18,15 @@
+ 
+ #include "alg_ds/alg/defer.h"
+ 
++#ifndef FLEXRIC_INSTALL_PREFIX
++#define FLEXRIC_INSTALL_PREFIX "/usr/local"
++#endif
++
+ static
+-const char* default_conf_file = "/usr/local/etc/flexric/flexric.conf";
++const char* default_conf_file = FLEXRIC_INSTALL_PREFIX "/etc/flexric/flexric.conf";
+ 
+ static
+-const char* default_libs_dir = "/usr/local/lib/flexric/";
++const char* default_libs_dir = FLEXRIC_INSTALL_PREFIX "/lib/flexric/";
+ 
+ /*
+ #include <assert.h>
+@@ -561,3 +565,35 @@ char* get_conf_db_name(fr_args_t const* args)
+ 
+   return strdup(db_name);
+ }
++
++int get_conf_port(fr_args_t const* args, const char* key, int def)
++{
++  assert(args != NULL);
++  assert(key != NULL);
++
++  FILE* fp = fopen(args->conf_file, "r");
++  if(fp == NULL)
++    return def;
++
++  char* line = NULL;
++  size_t len = 0;
++  int port = def;
++  while(getline(&line, &len, fp) != -1){
++    char* ans = ltrim(line);
++    if(strncmp(ans, key, strlen(key)) != 0)
++      continue;
++    ans += strlen(key);
++    ans = ltrim(ans);
++    if(*ans != '=')
++      continue;
++    ans = rtrim(ltrim(ans + 1));
++    int const p = atoi(ans);
++    if(p > 0 && p < 65536)
++      port = p;
++    break;
++  }
++
++  free(line);
++  fclose(fp);
++  return port;
++}
+diff --git a/src/util/conf_file.h b/src/util/conf_file.h
+index 9a09c985..a7e814f9 100644
+--- a/src/util/conf_file.h
++++ b/src/util/conf_file.h
+@@ -28,5 +28,8 @@ char* get_conf_db_dir(fr_args_t const*);
+ 
+ char* get_conf_db_name(fr_args_t const*);
+ 
++// Reads "<key> = <port>" from the config file; returns def if absent
++int get_conf_port(fr_args_t const*, const char* key, int def);
++
+ #endif
+ 
+diff --git a/src/xApp/e42_xapp.c b/src/xApp/e42_xapp.c
+index 63e209a7..73e65d02 100644
+--- a/src/xApp/e42_xapp.c
++++ b/src/xApp/e42_xapp.c
+@@ -162,7 +162,7 @@ e42_xapp_t* init_e42_xapp(fr_args_t const* args)
+   e42_xapp_t* xapp = calloc(1, sizeof(*xapp));
+   assert(xapp != NULL && "Memory exhausted");
+ 
+-  uint32_t const port = 36422;
++  uint32_t const port = get_conf_port(args, "E42_PORT", 36422);
+ 
+   char* addr = get_near_ric_ip(args);
+   defer({ free(addr); } );

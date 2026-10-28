@@ -1,0 +1,349 @@
+diff --git a/examples/xApp/c/appweaver/CMakeLists.txt b/examples/xApp/c/appweaver/CMakeLists.txt
+new file mode 100644
+index 00000000..34e1f153
+--- /dev/null
++++ b/examples/xApp/c/appweaver/CMakeLists.txt
+@@ -0,0 +1,14 @@
++# SPDX-License-Identifier: LicenseRef-CSSL-1.0
++
++add_executable(xapp_kpm_capture
++  xapp_kpm_capture.c
++  ../../../../src/util/alg_ds/alg/defer.c
++  )
++
++target_link_libraries(xapp_kpm_capture
++                      PUBLIC
++                      e42_xapp
++                      -pthread
++                      -lsctp
++                      -ldl
++                      )
+diff --git a/examples/xApp/c/appweaver/xapp_kpm_capture.c b/examples/xApp/c/appweaver/xapp_kpm_capture.c
+new file mode 100644
+index 00000000..2aca131b
+--- /dev/null
++++ b/examples/xApp/c/appweaver/xapp_kpm_capture.c
+@@ -0,0 +1,323 @@
++/*
++ * SPDX-License-Identifier: LicenseRef-CSSL-1.0
++ *
++ * AppWeaver KPM capture xApp (KPM v3.00, E2AP v1.01).
++ *
++ * Subscribes to every REPORT style / measurement name that each connected
++ * E2 node advertises in its KPM RAN function definition and writes one CSV
++ * row per measurement record to $KPM_CSV if set, else to stdout (where the
++ * SDK's own log lines also go):
++ *
++ *   wall_us,collect_start_us,node_type,nb_id,ue_imsi,meas,idx,value
++ *
++ * ue_imsi is -1 for cell-level (format 1) reports; idx is the record index
++ * within a measurement (e.g. neighbour number for L3neighSINRListOf_*).
++ * Runs until SIGINT/SIGTERM,
++ * or for -t <seconds> if given as the LAST two arguments (after the usual
++ * FlexRIC -c/-p flags).
++ *
++ * The ns-O-RAN gNBs only start reporting once their average PRB utilisation
++ * satisfies the subscription's "IsStat < N" test condition; N is taken from
++ * env KPM_PRB_LT (default 101, i.e. always report; the ES xApp uses 40).
++ */
++
++#include "../../../../src/xApp/e42_xapp_api.h"
++#include "../../../../src/util/time_now_us.h"
++#include "../../../../src/util/alg_ds/ds/lock_guard/lock_guard.h"
++#include "../../../../src/util/e.h"
++
++#include <inttypes.h>
++#include <pthread.h>
++#include <signal.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <unistd.h>
++
++#define MAX_NODES 32
++
++static
++uint64_t const period_ms = 100;
++
++static
++pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
++
++static
++e2_node_arr_xapp_t nodes;
++
++static
++volatile sig_atomic_t stop = 0;
++
++// CSV sink: $KPM_CSV if set (the SDK also logs to stdout), else stdout
++static
++FILE* csv;
++
++static
++void on_signal(int sig)
++{
++  (void)sig;
++  stop = 1;
++}
++
++// ns-O-RAN packs the IMSI string ("00004") little-endian into amf_UE_NGAP_ID
++static
++int64_t ue_id_val(ue_id_e2sm_t const* id)
++{
++  if (id->type != GNB_UE_ID_E2SM)
++    return -2;
++  uint64_t const v = id->gnb.amf_ue_ngap_id;
++  int64_t imsi = 0;
++  int digits = 0;
++  for (int k = 0; k < 8; k++) {
++    char const c = (char)((v >> (8 * k)) & 0xff);
++    if (c == 0)
++      break;
++    if (c < '0' || c > '9')
++      return (int64_t)v;
++    imsi = imsi * 10 + (c - '0');
++    digits++;
++  }
++  return digits > 0 ? imsi : (int64_t)v;
++}
++
++static
++void print_rec(global_e2_node_id_t const* id, int64_t ue, uint64_t wall, uint64_t start,
++               meas_type_t const* type, size_t idx, meas_record_lst_t const* r)
++{
++  if (type->type != NAME_MEAS_TYPE || type->name.len == 0)
++    return;
++  char* name = cp_ba_to_str(type->name);
++  fprintf(csv, "%" PRIu64 ",%" PRIu64 ",%d,%u,%" PRId64 ",%s,%zu,", wall, start, id->type, id->nb_id.nb_id, ue, name, idx);
++  if (r->value == INTEGER_MEAS_VALUE)
++    fprintf(csv, "%u\n", r->int_val);
++  else if (r->value == REAL_MEAS_VALUE)
++    fprintf(csv, "%.6f\n", r->real_val);
++  else
++    fprintf(csv, "\n");
++  free(name);
++}
++
++static
++void print_frm_1(int node, int64_t ue, uint64_t wall, uint64_t start, kpm_ind_msg_format_1_t const* msg)
++{
++  global_e2_node_id_t const* id = &nodes.n[node].id;
++  if (getenv("KPM_DEBUG") != NULL) {
++    fprintf(stderr, "[DBG] nb %u ue %" PRId64 " meas_info %zu meas_data %zu |", id->nb_id.nb_id, ue, msg->meas_info_lst_len, msg->meas_data_lst_len);
++    for (size_t i = 0; i < msg->meas_info_lst_len; i++) {
++      char* n = msg->meas_info_lst[i].meas_type.name.len ? cp_ba_to_str(msg->meas_info_lst[i].meas_type.name) : strdup("?");
++      fprintf(stderr, " %s(lbl %zu)", n, msg->meas_info_lst[i].label_info_lst_len);
++      free(n);
++    }
++    fprintf(stderr, " | rec/data:");
++    for (size_t j = 0; j < msg->meas_data_lst_len; j++)
++      fprintf(stderr, " %zu", msg->meas_data_lst[j].meas_record_len);
++    fprintf(stderr, "\n");
++  }
++
++  if (msg->meas_info_lst_len == msg->meas_data_lst_len && msg->meas_info_lst_len > 1) {
++    // ns-O-RAN layout: meas_data[i] holds all records of meas_info[i]
++    // (e.g. one record per neighbour cell for L3neighSINRListOf_*)
++    for (size_t i = 0; i < msg->meas_info_lst_len; i++) {
++      meas_data_lst_t const* data = &msg->meas_data_lst[i];
++      for (size_t r = 0; r < data->meas_record_len; r++)
++        print_rec(id, ue, wall, start, &msg->meas_info_lst[i].meas_type, r, &data->meas_record_lst[r]);
++    }
++    return;
++  }
++
++  // Spec layout: each meas_data item is one granularity period with one record per (meas, label)
++  for (size_t j = 0; j < msg->meas_data_lst_len; j++) {
++    meas_data_lst_t const* data = &msg->meas_data_lst[j];
++    size_t rec = 0;
++    for (size_t i = 0; i < msg->meas_info_lst_len; i++) {
++      meas_info_format_1_lst_t const* info = &msg->meas_info_lst[i];
++      for (size_t z = 0; z < info->label_info_lst_len && rec < data->meas_record_len; z++, rec++)
++        print_rec(id, ue, wall, start, &info->meas_type, j, &data->meas_record_lst[rec]);
++    }
++  }
++}
++
++static
++void handle_ind(int node, sm_ag_if_rd_t const* rd)
++{
++  assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
++  assert(rd->ind.type == KPM_STATS_V3_0);
++  kpm_ind_data_t const* ind = &rd->ind.kpm.ind;
++  uint64_t const wall = time_now_us();
++  uint64_t const start = ind->hdr.kpm_ric_ind_hdr_format_1.collectStartTime;
++
++  lock_guard(&mtx);
++  if (ind->msg.type == FORMAT_1_INDICATION_MESSAGE) {
++    print_frm_1(node, -1, wall, start, &ind->msg.frm_1);
++  } else if (ind->msg.type == FORMAT_3_INDICATION_MESSAGE) {
++    kpm_ind_msg_format_3_t const* f3 = &ind->msg.frm_3;
++    for (size_t i = 0; i < f3->ue_meas_report_lst_len; i++)
++      print_frm_1(node, ue_id_val(&f3->meas_report_per_ue[i].ue_meas_report_lst), wall, start,
++                  &f3->meas_report_per_ue[i].ind_msg_format_1);
++  }
++  fflush(csv);
++}
++
++// The SDK callback carries no E2 node id, so give every node its own trampoline
++#define CB(N) static void cb_##N(sm_ag_if_rd_t const* rd) { handle_ind(N, rd); }
++CB(0) CB(1) CB(2) CB(3) CB(4) CB(5) CB(6) CB(7) CB(8) CB(9) CB(10) CB(11) CB(12) CB(13) CB(14) CB(15)
++CB(16) CB(17) CB(18) CB(19) CB(20) CB(21) CB(22) CB(23) CB(24) CB(25) CB(26) CB(27) CB(28) CB(29) CB(30) CB(31)
++#undef CB
++
++static
++sm_cb const node_cb[MAX_NODES] = {
++  cb_0, cb_1, cb_2, cb_3, cb_4, cb_5, cb_6, cb_7, cb_8, cb_9, cb_10, cb_11, cb_12, cb_13, cb_14, cb_15,
++  cb_16, cb_17, cb_18, cb_19, cb_20, cb_21, cb_22, cb_23, cb_24, cb_25, cb_26, cb_27, cb_28, cb_29, cb_30, cb_31,
++};
++
++static
++label_info_lst_t no_label(void)
++{
++  label_info_lst_t l = {0};
++  l.noLabel = ecalloc(1, sizeof(enum_value_e));
++  *l.noLabel = TRUE_ENUM_VALUE;
++  return l;
++}
++
++static
++kpm_act_def_format_1_t fill_frm_1(ric_report_style_item_t const* item)
++{
++  kpm_act_def_format_1_t f1 = {0};
++  f1.meas_info_lst_len = item->meas_info_for_action_lst_len;
++  f1.meas_info_lst = ecalloc(f1.meas_info_lst_len, sizeof(meas_info_format_1_lst_t));
++  for (size_t i = 0; i < f1.meas_info_lst_len; i++) {
++    meas_info_format_1_lst_t* m = &f1.meas_info_lst[i];
++    m->meas_type.type = NAME_MEAS_TYPE;
++    m->meas_type.name = copy_byte_array(item->meas_info_for_action_lst[i].name);
++    m->label_info_lst_len = 1;
++    m->label_info_lst = ecalloc(1, sizeof(label_info_lst_t));
++    m->label_info_lst[0] = no_label();
++  }
++  f1.gran_period_ms = period_ms;
++  f1.cell_global_id = NULL;
++  f1.meas_bin_range_info_lst_len = 0;
++  f1.meas_bin_info_lst = NULL;
++  return f1;
++}
++
++static
++bool gen_act_def(ric_report_style_item_t const* item, kpm_act_def_t* ad)
++{
++  switch (item->act_def_format_type) {
++    case FORMAT_1_ACTION_DEFINITION:
++      ad->type = FORMAT_1_ACTION_DEFINITION;
++      ad->frm_1 = fill_frm_1(item);
++      return true;
++    case FORMAT_4_ACTION_DEFINITION: {
++      // Same matching condition shape as the shipped xapp_es_with_cell_util (IsStat < N)
++      ad->type = FORMAT_4_ACTION_DEFINITION;
++      ad->frm_4.matching_cond_lst_len = 1;
++      ad->frm_4.matching_cond_lst = ecalloc(1, sizeof(matching_condition_format_4_lst_t));
++      test_info_lst_t* t = &ad->frm_4.matching_cond_lst[0].test_info_lst;
++      t->test_cond_type = IsStat_TEST_COND_TYPE;
++      t->IsStat = TRUE_TEST_COND_TYPE;
++      t->test_cond = ecalloc(1, sizeof(test_cond_e));
++      *t->test_cond = LESSTHAN_TEST_COND;
++      t->test_cond_value = ecalloc(1, sizeof(test_cond_value_t));
++      t->test_cond_value->type = INTEGER_TEST_COND_VALUE;
++      t->test_cond_value->int_value = ecalloc(1, sizeof(int64_t));
++      char const* lt = getenv("KPM_PRB_LT");
++      *t->test_cond_value->int_value = lt != NULL ? atoi(lt) : 101;
++      ad->frm_4.action_def_format_1 = fill_frm_1(item);
++      return true;
++    }
++    default:
++      return false;
++  }
++}
++
++int main(int argc, char* argv[])
++{
++  int duration_s = 0;
++  if (argc >= 3 && strcmp(argv[argc - 2], "-t") == 0) {
++    duration_s = atoi(argv[argc - 1]);
++    argc -= 2;
++  }
++
++  fr_args_t args = init_fr_args(argc, argv);
++  signal(SIGINT, on_signal);
++  signal(SIGTERM, on_signal);
++
++  init_xapp_api(&args);
++  sleep(1);
++
++  nodes = e2_nodes_xapp_api();
++  assert(nodes.len > 0);
++  assert(nodes.len <= MAX_NODES);
++  fprintf(stderr, "[KPM CAPTURE]: connected E2 nodes = %d\n", nodes.len);
++
++  int const KPM_ran_function = 2;
++  sm_ans_xapp_t* hndl[MAX_NODES] = {0};
++  size_t n_hndl[MAX_NODES] = {0};
++
++  char const* csv_path = getenv("KPM_CSV");
++  csv = csv_path != NULL ? fopen(csv_path, "w") : stdout;
++  assert(csv != NULL && "Cannot open $KPM_CSV");
++  fprintf(csv, "wall_us,collect_start_us,node_type,nb_id,ue_imsi,meas,idx,value\n");
++  fflush(csv);
++
++  for (size_t i = 0; i < nodes.len; i++) {
++    e2_node_connected_xapp_t* n = &nodes.n[i];
++    for (size_t k = 0; k < n->len_rf; k++) {
++      if (n->rf[k].id != KPM_ran_function || n->rf[k].defn.type != KPM_RAN_FUNC_DEF_E)
++        continue;
++      kpm_ran_function_def_t const* def = &n->rf[k].defn.kpm;
++      hndl[i] = ecalloc(def->sz_ric_report_style_list, sizeof(sm_ans_xapp_t));
++      n_hndl[i] = def->sz_ric_report_style_list;
++      for (size_t j = 0; j < def->sz_ric_report_style_list; j++) {
++        ric_report_style_item_t const* item = &def->ric_report_style_list[j];
++        fprintf(stderr, "[KPM CAPTURE]: node %zu type %d nb_id %u style %d format %d meas:",
++                i, n->id.type, n->id.nb_id.nb_id, item->report_style_type, item->act_def_format_type + 1);
++        size_t n_named = 0;
++        for (size_t m = 0; m < item->meas_info_for_action_lst_len; m++) {
++          if (item->meas_info_for_action_lst[m].name.len == 0)
++            continue;
++          char* s = cp_ba_to_str(item->meas_info_for_action_lst[m].name);
++          fprintf(stderr, " %s", s);
++          free(s);
++          n_named++;
++        }
++        // ns-O-RAN advertises unnamed items and reports its fixed KPI set regardless
++        fprintf(stderr, " (%zu items, %zu named)\n", item->meas_info_for_action_lst_len, n_named);
++
++        kpm_sub_data_t sub = {0};
++        sub.ev_trg_def.type = FORMAT_1_RIC_EVENT_TRIGGER;
++        sub.ev_trg_def.kpm_ric_event_trigger_format_1.report_period_ms = period_ms;
++        sub.sz_ad = 1;
++        sub.ad = ecalloc(1, sizeof(kpm_act_def_t));
++        if (!gen_act_def(item, sub.ad)) {
++          fprintf(stderr, "[KPM CAPTURE]: skipping unsupported action definition format\n");
++          free_kpm_sub_data(&sub);
++          continue;
++        }
++        hndl[i][j] = report_sm_xapp_api(&n->id, KPM_ran_function, &sub, node_cb[i]);
++        free_kpm_sub_data(&sub);
++      }
++    }
++  }
++
++  int64_t const t0 = time_now_us();
++  while (!stop && (duration_s == 0 || time_now_us() - t0 < (int64_t)duration_s * 1000000))
++    usleep(100000);
++
++  for (size_t i = 0; i < nodes.len; i++) {
++    for (size_t j = 0; j < n_hndl[i]; j++)
++      if (hndl[i][j].success)
++        rm_report_sm_xapp_api(hndl[i][j].u.handle);
++    free(hndl[i]);
++  }
++
++  while (try_stop_xapp_api() == false)
++    usleep(1000);
++
++  free_e2_node_arr_xapp(&nodes);
++  if (csv != stdout)
++    fclose(csv);
++  fprintf(stderr, "[KPM CAPTURE]: done\n");
++  return 0;
++}

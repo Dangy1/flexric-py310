@@ -1,0 +1,17 @@
+--- a/examples/xApp/c/appweaver/xapp_kpm_capture.c
++++ b/examples/xApp/c/appweaver/xapp_kpm_capture.c
+@@ -240,10 +240,12 @@
+   }
+ 
+   fr_args_t args = init_fr_args(argc, argv);
+-  signal(SIGINT, on_signal);
+-  signal(SIGTERM, on_signal);
+ 
+   init_xapp_api(&args);
++  // After init_xapp_api(): the SDK installs its own SIGINT/SIGTERM handler, which only prints
++  // and would keep this loop (and the subscription deletes at its end) from running
++  signal(SIGINT, on_signal);
++  signal(SIGTERM, on_signal);
+   sleep(1);
+ 
+   nodes = e2_nodes_xapp_api();

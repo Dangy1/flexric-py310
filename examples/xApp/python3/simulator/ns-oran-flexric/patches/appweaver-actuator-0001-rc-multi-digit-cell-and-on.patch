@@ -1,0 +1,140 @@
+--- a/evaluation/twin/xapp_appweaver_actuator.c
++++ b/evaluation/twin/xapp_appweaver_actuator.c
+@@ -9,6 +9,8 @@
+  *  - RC actuation: polls $RC_CMD_FILE every 100 ms; each new line is one command
+  *        HO <imsi> <target_cell>      E2SM-RC style 3 / action 1 (handover control)
+  *        OFF <cell>                   custom style 300 / CELL_OFF (cell switch-off)
++ *        ON <cell>                    custom style 300 / CELL_ON (switch-on, restores the saved TX power)
++ *    Cell ids are sent as decimal strings of any length (ns-O-RAN-flexric with oran-interface-0004).
+  *    and appends "<wall_us> <command> sent|failed" to $RC_ACK_FILE.
+  *
+  * The KPM capture is copied from ~/flexric-taap/examples/xApp/c/appweaver/xapp_kpm_capture.c and the RC
+@@ -95,11 +97,10 @@
+ }
+ 
+ static
+-void set_EUTRA_CGI(seq_ran_param_t* EUTRA_CGI, const char targetcell)
++void set_EUTRA_CGI(seq_ran_param_t* EUTRA_CGI, uint16_t targetcell)
+ {
+   // Input validation
+   assert(EUTRA_CGI != NULL);
+-  assert(targetcell >= '0' && targetcell <= '9');
+ 
+   // Validate flag_false is allocated
+   if (EUTRA_CGI->ran_param_val.flag_false == NULL) {
+@@ -109,19 +110,17 @@
+ 
+   EUTRA_CGI->ran_param_val.flag_false->type = BIT_STRING_RAN_PARAMETER_VALUE;
+ 
+-  // Convert target cell to byte array
+-  byte_array_t target_ba = {0};
+-  target_ba.len = 1;
+-  target_ba.buf = malloc(sizeof(uint8_t));
+-  assert(target_ba.buf != NULL && "Memory exhausted");
+-  target_ba.buf[0] = targetcell;
++  // Cell id as a decimal string ("2", "12")
++  char cell_str[8];
++  snprintf(cell_str, sizeof cell_str, "%u", (unsigned)targetcell);
++  byte_array_t target_ba = cp_str_to_ba(cell_str);
+ 
+   EUTRA_CGI->ran_param_val.flag_false->octet_str_ran.len = target_ba.len;
+   EUTRA_CGI->ran_param_val.flag_false->octet_str_ran.buf = target_ba.buf;
+ }
+ 
+ static
+-void gen_Target_Primary_Cell_ID(seq_ran_param_t* Target_Primary_Cell_ID, char targetcell)
++void gen_Target_Primary_Cell_ID(seq_ran_param_t* Target_Primary_Cell_ID, uint16_t targetcell)
+ {
+   // Target Primary Cell ID, STRUCTURE (len 1)
+ 
+@@ -160,7 +159,9 @@
+   assert(NR_CGI->ran_param_val.flag_false != NULL && "Memory exhausted");
+   NR_CGI->ran_param_val.flag_false->type = BIT_STRING_RAN_PARAMETER_VALUE;
+   // NR_CGI->ran_param_val.flag_false->int_ran=  TARGET_CELL;
+-  char nr_cgi_str[1] = {targetcell};
++  // Cell id as a decimal string ("2", "12"); was one ASCII digit (cells 1-9)
++  char nr_cgi_str[8];
++  snprintf(nr_cgi_str, sizeof nr_cgi_str, "%u", (unsigned)targetcell);
+ 
+   byte_array_t nr_cgi = cp_str_to_ba(nr_cgi_str);
+   NR_CGI->ran_param_val.flag_false->octet_str_ran.len = nr_cgi.len;
+@@ -363,7 +364,7 @@
+ }
+ 
+ static
+-e2sm_rc_ctrl_msg_frmt_1_t gen_rc_ctrl_msg_frmt_1_Handover_Control(char targetcell)
++e2sm_rc_ctrl_msg_frmt_1_t gen_rc_ctrl_msg_frmt_1_Handover_Control(uint16_t targetcell)
+ {
+   e2sm_rc_ctrl_msg_frmt_1_t dst = {0};
+   // 8.4.4.1
+@@ -406,7 +407,7 @@
+ }
+ 
+ static
+-e2sm_rc_ctrl_msg_frmt_1_t gen_rc_ctrl_msg_frmt_1_cell_trigger(char targetcell)
++e2sm_rc_ctrl_msg_frmt_1_t gen_rc_ctrl_msg_frmt_1_cell_trigger(uint16_t targetcell)
+ {
+   e2sm_rc_ctrl_msg_frmt_1_t dst = {0};
+   // 8.4.4.1
+@@ -426,7 +427,7 @@
+ }
+ 
+ static
+-e2sm_rc_ctrl_msg_t gen_handover_rc_ctrl_msg(e2sm_rc_ctrl_msg_e msg_frmt, uint8_t targetcell)
++e2sm_rc_ctrl_msg_t gen_handover_rc_ctrl_msg(e2sm_rc_ctrl_msg_e msg_frmt, uint16_t targetcell)
+ {
+   e2sm_rc_ctrl_msg_t dst = {0};
+ 
+@@ -442,7 +443,7 @@
+ }
+ 
+ static
+-e2sm_rc_ctrl_msg_t gen_cell_trigger_rc_ctrl_msg(e2sm_rc_ctrl_msg_e msg_frmt, char targetcell)
++e2sm_rc_ctrl_msg_t gen_cell_trigger_rc_ctrl_msg(e2sm_rc_ctrl_msg_e msg_frmt, uint16_t targetcell)
+ {
+   e2sm_rc_ctrl_msg_t dst = {0};
+ 
+@@ -676,21 +677,22 @@
+   rc_ctrl_req_data_t rc_ctrl = {0};
+   bool sent = false;
+   if (strcmp(verb, "HO") == 0) {
+-    if (b < 1 || b > 9)
++    if (b < 1 || b > 65535)
+       return false;
+     ue_id_e2sm_t ue = gen_rc_ue_id(GNB_UE_ID_E2SM, a);
+     rc_ctrl.hdr = gen_rc_ctrl_hdr(FORMAT_1_E2SM_RC_CTRL_HDR, ue, CONNECTED_MODE_MOBILITY, HANDOVER_CONTROL_7_6_4_1);
+-    rc_ctrl.msg = gen_handover_rc_ctrl_msg(FORMAT_1_E2SM_RC_CTRL_MSG, (uint8_t)('0' + b));
++    rc_ctrl.msg = gen_handover_rc_ctrl_msg(FORMAT_1_E2SM_RC_CTRL_MSG, (uint16_t)b);
+     free_ue_id_e2sm(&ue);
+     // As in the shipped ES xApp: every node receives it, the UE's serving cell executes it
+     for (size_t i = 0; i < arr->len; ++i)
+       sent |= control_sm_xapp_api(&arr->n[i].id, SM_RC_ID, &rc_ctrl).success;
+-  } else if (strcmp(verb, "OFF") == 0) {
+-    if (a < 1 || a > 9)
++  } else if (strcmp(verb, "OFF") == 0 || strcmp(verb, "ON") == 0) {
++    if (a < 1 || a > 65535)
+       return false;
+     ue_id_e2sm_t ue = gen_rc_ue_id(GNB_UE_ID_E2SM, 0);
+-    rc_ctrl.hdr = gen_rc_ctrl_hdr(FORMAT_1_E2SM_RC_CTRL_HDR, ue, ENERGY_STATE, CELL_OFF);
+-    rc_ctrl.msg = gen_cell_trigger_rc_ctrl_msg(FORMAT_1_E2SM_RC_CTRL_MSG, (char)('0' + a));
++    rc_ctrl.hdr = gen_rc_ctrl_hdr(FORMAT_1_E2SM_RC_CTRL_HDR, ue, ENERGY_STATE,
++                                  strcmp(verb, "ON") == 0 ? CELL_ON : CELL_OFF);
++    rc_ctrl.msg = gen_cell_trigger_rc_ctrl_msg(FORMAT_1_E2SM_RC_CTRL_MSG, (uint16_t)a);
+     free_ue_id_e2sm(&ue);
+     sent = control_sm_xapp_api(&arr->n[0].id, SM_RC_ID, &rc_ctrl).success;
+   } else {
+@@ -740,10 +742,12 @@
+   }
+ 
+   fr_args_t args = init_fr_args(argc, argv);
+-  signal(SIGINT, on_signal);
+-  signal(SIGTERM, on_signal);
+ 
+   init_xapp_api(&args);
++  // After init_xapp_api(): the SDK installs its own SIGINT/SIGTERM handler, which only prints
++  // and would keep this loop (and the subscription deletes at its end) from running
++  signal(SIGINT, on_signal);
++  signal(SIGTERM, on_signal);
+   sleep(1);
+ 
+   nodes = e2_nodes_xapp_api();

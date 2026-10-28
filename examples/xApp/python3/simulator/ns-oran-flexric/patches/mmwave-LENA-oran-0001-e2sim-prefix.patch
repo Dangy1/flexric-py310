@@ -1,0 +1,15 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 3cc00676..5ffc1fb0 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -111,7 +111,9 @@ set(NS3_FILTER_MODULE_EXAMPLES_AND_TESTS
+ 
+ # Include macros used below
+ include(build-support/macros-and-definitions.cmake)
+-include_directories(/usr/local/include/e2sim)
++set(E2SIM_PREFIX "/usr/local" CACHE PATH "Install prefix of e2sim (include/e2sim, lib/libe2sim.a)")
++include_directories(${E2SIM_PREFIX}/include/e2sim ${E2SIM_PREFIX}/include)
++link_directories(${E2SIM_PREFIX}/lib)
+ 
+ # Scan module libraries
+ subdirlist(libs_to_build ${CMAKE_CURRENT_SOURCE_DIR}/src)
