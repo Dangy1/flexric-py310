@@ -480,3 +480,15 @@ def test_ack_uses_full_log_not_tail(harness, tmp_path):
 
 if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(pytest.main([__file__, "-q"]))
+
+
+def test_dryrun_skips_rapp_write_steps():
+    """rApps act over A1/O1, which the E2 twin does not model: a write-scope rApp step is skipped, not rejected."""
+    calls: List[str] = []
+    registry = small_registry()
+    steps = [{"agent_id": "kpm", "action_id": "observe-rru"}, {"agent_id": "rapp.energy_saving", "action_id": "run"}]
+    report = validate_chain(registry, steps, mode="dryrun",
+                            dryrun_fn=lambda agent, action, duration: calls.append(agent) or {"ok": False, "verdict": "reject"})
+    assert calls == []
+    assert [step["agent_id"] for step in report["dryrun"]] == ["rapp.energy_saving"]
+    assert report["dryrun"][0]["ok"] and report["ok"]

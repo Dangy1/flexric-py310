@@ -196,6 +196,11 @@ def validate_chain(
                 agent_id = str(step.get("agent_id") or "").lower()
                 if not writes(registry.get(agent_id), str(step.get("action_id") or "") or None):
                     continue
+                if agent_id.startswith("rapp."):
+                    # The tier-1 twin emulates the E2 node only; rApps act over A1/O1, which it does not model.
+                    dryrun_steps.append({"agent_id": agent_id, "action_id": step.get("action_id"), "ok": True,
+                                         "skipped": "not an E2 application", "result": None, "error": "", "latency_ms": 0.0})
+                    continue
                 t0 = time.perf_counter()
                 try:
                     duration = max(5, int(dryrun_duration_s)) if agent_id == "kpm" else int(dryrun_duration_s)

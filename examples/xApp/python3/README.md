@@ -29,23 +29,30 @@ export OLLAMA_BASE_URL=http://<ollama-host>:11434 OLLAMA_MODEL=qwen3.6:27b FLEXR
 export FLEXRIC_LLM_TEMPERATURE=0.2 FLEXRIC_LLM_SEED=7 LLM_SERVER_HARDWARE="<host, GPU model, VRAM>"
 ../scripts/check_llm_provider.py     # one planner call; prints provider, model, latency, reply
 S=../scripts
-# after every record: probe E42 registration; on failure discard the record, restart the stack, re-run it
-HEALTH="--health-cmd $S/probe_e42.sh --maintenance-cmd $S/restart_agent_portal_stack.sh"
+# tier-1 twin for AppWeaver's Validate dry-run: a second RIC + E2 emulator on 127.0.0.2 (docs/RC_AND_EMU_TWIN.md)
+TWIN="FLEXRIC_XAPP_CONF=/tmp/flexric_twin_emu/flexric_twin.conf"
+$S/start_twin_emu_stack.sh
+# after every record: probe E42 registration on the live RIC and on the twin; on failure discard the record,
+# restart both stacks, re-run it
+HEALTH="--health-cmd '$S/probe_e42.sh && env $TWIN $S/probe_e42.sh'
+        --maintenance-cmd '$S/restart_agent_portal_stack.sh; $S/stop_twin_emu_stack.sh; $S/start_twin_emu_stack.sh'"
+# AppWeaver validates every chain (compat, E2 conformance, lease pre-check) and dry-runs each E2 control step
+# on the twin; every method gets the same 45 s lease wait on a busy app
+COMMON="--tool-ack-timeout-s 12 --validate-mode dryrun --lease-wait-s 45"
 METHODS="manual_rule single_xapp llm_blind llm_only agentcard_no_repair langgraph_agentcard"
 
 # 3. Batch A: 9-card portal registry, 50 intents x 6 methods x 5 repeats (Table II, Figs. 4-5)
 $S/restart_agent_portal_stack.sh
-python run_harness.py --intents intents_50.json --methods $METHODS --repeat 5 \
-    --tool-ack-timeout-s 12 $HEALTH --label A
+eval python run_harness.py --intents intents_50.json --methods $METHODS --repeat 5 $COMMON $HEALTH --label A
 
 # 4. Batch B: rApp Directory (55 cards), 80 intents x 6 methods x 3 repeats, top-8 and all cards (Table III, Fig. 6).
-#    With every card in the prompt the planner prompt is ~16k characters; --max-prompt-chars lifts the
+#    With every card in the prompt the planner prompt is up to ~68k characters; --max-prompt-chars lifts the
 #    portal's 8000-character input guard for these in-process planner calls.
 export FLEXRIC_RAPP_DIRECTORY=1
 $S/restart_agent_portal_stack.sh
 for k in 8 0; do
-  python run_harness.py --intents intents_v2.json --methods $METHODS --repeat 3 \
-      --tool-ack-timeout-s 12 $HEALTH --max-prompt-chars 64000 --retrieval-k $k --label B_k$k
+  eval python run_harness.py --intents intents_v2.json --methods $METHODS --repeat 3 $COMMON $HEALTH \
+      --max-prompt-chars 80000 --retrieval-k $k --label B_k$k
 done
 unset FLEXRIC_RAPP_DIRECTORY
 

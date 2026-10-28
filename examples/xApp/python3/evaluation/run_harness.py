@@ -1439,7 +1439,9 @@ def execute_langgraph_agentcard(intent: Dict[str, Any], duration_s: int, repair:
         "selected_steps": list(final.get("steps") or []),
         "compat_report": final.get("compat_report"),
         "repair_events": repair_events,
-        "retrieval": annotate_retrieval(final.get("retrieval") or {}, intent),
+        "retrieval": {**annotate_retrieval(final.get("retrieval") or {}, intent),
+                      # planner prompt size of the Compose call (registry-scale cost of k)
+                      "prompt_chars": next((p.get("chars") for p in final.get("prompts") or [] if p.get("node") == "compose"), None)},
         "validation_report": validation,
         "validation_history": list(final.get("validation_history") or []),
         "validate_mode": validation.get("mode") or cfg.validate_mode,

@@ -237,7 +237,8 @@ def dryrun_step(agent_id: str, action_id: str, duration_s: float = 4.0, timeout_
     }
     if agent_id.startswith("rapp."):
         result["detail"] = "rApps are not E2 applications; no tier-1 E2 dry-run (A1/O1 path not emulated)."
-        return _finish(result)
+        result.update(ok=True, verdict="not_applicable")  # nothing to dry-run, so nothing to reject
+        return result
     markers = ACK_MARKERS.get((agent_id, action_id))
     if markers is None:
         result["detail"] = f"No E2 dry-run defined for {agent_id}/{action_id} (descriptive card or unknown action)."
