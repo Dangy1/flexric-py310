@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 # Exit 0 if a new xApp can register with the nearRT-RIC (E42 setup completes and at least one E2 node
 # is visible) within PROBE_TIMEOUT_S, non-zero otherwise.
-# Used by run_harness.py --health-cmd after every record: the portal nearRT-RIC wedges after a few
+# Used by run_harness.py --health-cmd after every record. The limit is 2.5 s (2026-10-29, during Batch B k=8):
+# a healthy RIC registers an xApp in ~1 s; a degrading one answers E42 SETUP only after 1-3 'Resending Setup
+# Request' retries (2-4 s), late enough that TC/RC control ACKs miss the harness's 12 s window. Before: 8 s.
+# the portal nearRT-RIC wedges after a few
 # hundred xApp connect/disconnect cycles (E42 setup requests are no longer answered), which would
 # otherwise show up as unacknowledged tool calls.
 set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 cd "${SCRIPT_DIR}/.." || exit 3
-timeout "${PROBE_TIMEOUT_S:-8}" python -c "
+timeout "${PROBE_TIMEOUT_S:-2.5}" python -c "
 import os, xapp_sdk as ric
 ric.init()
 os._exit(0 if len(ric.conn_e2_nodes()) else 2)
