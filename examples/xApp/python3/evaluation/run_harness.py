@@ -23,8 +23,19 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from evaluation.analyze_results import build_markdown, build_summary, is_lease_refusal
-from backend.orchestration.compat import check_chain  # type: ignore
-from backend.orchestration.discovery import discover  # type: ignore
+from backend.orchestration.discovery import discover_with_report, pinned_xapp_ids  # type: ignore
+from backend.orchestration.validate import live_e2_ran_functions, resolve_dryrun  # type: ignore
+from backend.orchestration.validate import writes as step_writes  # type: ignore
+# AppWeaver runs on LangGraph; an import failure must stop the harness, not fall back silently.
+from backend.appweaver import (  # type: ignore
+    AppWeaverConfig,
+    AppWeaverDeps,
+    compose_prompt,
+    recovery_prompt,
+    run_appweaver,
+    serialize_cards,
+)
+from backend.appweaver import prompts as appweaver_prompts  # type: ignore
 import flexric_agent_portal  # type: ignore
 from flexric_agent_portal import (  # type: ignore
     AGENTS,
@@ -38,6 +49,8 @@ from flexric_agent_portal import (  # type: ignore
     api_run,
     api_run_action,
     api_run_task,
+    api_runs,
+    api_runtime_leases,
     api_runtime_reset,
     api_workflow_approve,
     api_workflow_run,
@@ -77,16 +90,34 @@ METHOD_LABELS = {
 # A launched action only counts as a successful tool call once its log shows
 # the xApp actually did its job (observation records or a control/subscription
 # acknowledgement). Until then it is merely a successful *launch*.
+# Acks must come from an E2 exchange, checked against the full run log (see _log_acknowledges_full).
+# In this Release build the E2 library prints "[xApp]: Successfully received CONTROL-ACK" even when
+# the 6 s wait times out or the RAN answers CONTROL FAILURE; "[xApp]: CONTROL ACK rx" is printed only
+# on a real CONTROL ACKNOWLEDGE, so it is the only control ack for SLICE and TC.
+E2_CONTROL_ACK = "[xApp]: CONTROL ACK rx"
 TOOL_ACK_MARKERS = {
     "kpm": ["RRU.", "DRB.", "\"meas\"", "indication"],
-    "slice": ["Slice monitor subscribed", "Applied STATIC", "Applied NVS", "Applied EDF", "Monitor-only mode", "SLICE ind tstamp=",
-              "Successfully received CONTROL-ACK"],
-    # The TC suite prints ~30 setup lines before "Applied"; the E2 CONTROL-ACK from the RAN is the
-    # actual control acknowledgement and arrives first (the portal only exposes a 20-line tail).
-    "tc": ["Applied TC profile", "Successfully received CONTROL-ACK"],
-    "rc": ["KPM/RC suite running", "RC profile selected", "RC indication received"],
+    "slice": [E2_CONTROL_ACK],
+    "tc": [E2_CONTROL_ACK],
+    # RC xApp (xapp_rc_ctrl.py): rc-control -> E2 RC CONTROL-ACK, rc-report -> RC REPORT indication.
+    "rc": ["RC CONTROL-ACK received", "RC indication received"],
 }
-TOOL_ACK_NEGATIVE_MARKERS = ["No KPM bus records were received", "Traceback", "Error", "refused"]
+# Read-only actions are acknowledged by the E2 indication they subscribe to, not by a control ack.
+TOOL_ACK_MARKERS_BY_ACTION = {
+    ("slice", "monitor"): ["SLICE ind tstamp="],
+}
+# Printed by the suites but not an E2 acknowledgement: recorded as `ack_hint`, never counted.
+TOOL_ACK_HINTS = {
+    "tc": ["Applied TC profile"],
+    "slice": ["Applied STATIC", "Applied NVS", "Applied EDF", "Successfully received CONTROL-ACK"],
+}
+TOOL_ACK_NEGATIVE_MARKERS = ["No KPM bus records were received", "Traceback", "Error", "refused", "RC CONTROL-FAILED", "RC REPORT-FAILED"]
+
+
+def _ack_markers(agent_id: str, action_id: Optional[str] = None) -> List[str]:
+    if action_id and (agent_id, action_id) in TOOL_ACK_MARKERS_BY_ACTION:
+        return TOOL_ACK_MARKERS_BY_ACTION[(agent_id, action_id)]
+    return TOOL_ACK_MARKERS.get(agent_id) or (["rApp ack:"] if agent_id.startswith("rapp.") else [])
 
 OBSERVATION_AGENTS = {"kpm"}
 VALIDATION_AGENTS = {"rc"}
@@ -101,7 +132,19 @@ EVAL_RUNTIME_CONFIG: Dict[str, Any] = {
     "workflow_poll_timeout_s": 0.6,
     "tool_ack_timeout_s": 10.0,
     "workflow_poll_interval_s": 0.05,
+    # Bounded lease wait every method gets when a step is refused because the agent is busy
+    # (seed actions run 30 s): poll until free for up to this long, then retry once.
+    "lease_wait_s": 45.0,
+    "lease_poll_interval_s": 0.5,
+    "validate_mode": "checks",
+    "dryrun_duration_s": 5,
+    "retrieval_pin_xapps": True,
+    "retrieval_include_deprecated": True,
 }
+
+# Per-record guard state (set by run_record). `reset_runtime` must never run while a
+# method executes: recovery is wait or re-plan, never pre-emption of another workflow.
+_RECORD_STATE: Dict[str, Any] = {"active": False, "notes": "", "own_run_ids": set(), "reset_calls": 0, "lease_wait_s": 0.0}
 
 _METRICS_SNAPSHOT_CACHE: Optional[Dict[str, Any]] = None
 _OBSERVATION_ACTION_CACHE: Dict[Tuple[str, str], Dict[str, Any]] = {}
@@ -125,19 +168,20 @@ def normalize_action_chain(workflow_id: str) -> List[str]:
 
 
 def actions_for_workflow(workflow_id: str) -> List[Tuple[str, str]]:
-    return [(str(agent_id), str(action_id)) for agent_id, action_id in WORKFLOW_ACTIONS.get(workflow_id, {}).items()]
+    pairs: List[Tuple[str, str]] = []
+    for agent_id, action_id in WORKFLOW_ACTIONS.get(workflow_id, {}).items():
+        agent = AGENTS.get(str(agent_id))
+        # A template may still name an action the card no longer has (e.g. rc-scaffold after the
+        # RC xApp got real rc-control/rc-report actions): use the card's default action instead.
+        if agent is not None and agent.actions and not any(action.id == str(action_id) for action in agent.actions):
+            action_id = default_action_for_agent(str(agent_id), {}) or agent.actions[0].id
+        pairs.append((str(agent_id), str(action_id)))
+    return pairs
 
 
 def route_intent(intent: Dict[str, Any]) -> str:
-    category = str(intent.get("category") or "").strip().lower()
-    if category == "slice":
-        return "slice-assurance"
-    if category == "transport":
-        return "transport-qos"
-    if category == "latency":
-        return "observe-diagnose-optimize"
-
-    text = f"{intent.get('intent', '')} {intent.get('category', '')}".lower()
+    """Keyword rule router over the intent sentence only (no category/notes labels)."""
+    text = _intent_text(intent)
     if any(token in text for token in ["slice fairness", "slice isolation", "slice assurance", "reserved prbs"]):
         return "slice-assurance"
     if any(token in text for token in ["transport", "bufferbloat", "tunnel", "backhaul", "tc control", "qos"]):
@@ -160,75 +204,83 @@ def custom_workflow_id_from_chain(chain: List[str]) -> str:
     return "custom:" + "-".join(normalized)
 
 
-def discover_cards(intent: Optional[Dict[str, Any]]) -> Tuple[List[Any], Dict[str, Any]]:
-    """Discover agent cards for an intent.
+def discover_for_text(intent_text: str, exclude: Optional[List[str]] = None) -> Tuple[List[Any], Dict[str, Any]]:
+    """Discover step over the Agent Registry for an intent *sentence* (no labels).
 
-    With retrieval_k == 0 (small registry) every executable card is returned.
-    Otherwise BM25 over the card text returns the top-k, and the retrieval
-    record (ranked ids, whether the ground-truth agents were retrieved) is
-    attached to the evaluation record so top-k recall can be reported.
+    BM25 over card text. The executable FlexRIC xApps (kpm, slice, tc, rc) are pinned into
+    every result (--retrieval-pin-xapps, default on); k bounds the rApp families only
+    (k == 0: every card). Deprecated cards stay visible, marked by status, and are rejected
+    at compose/validate time.
     """
     k = int(EVAL_RUNTIME_CONFIG.get("retrieval_k") or 0)
-    query = _intent_text(intent) if intent else ""
-    ranked = discover(AGENTS, query, k=k, executable_only=True, include_deprecated=bool(EVAL_RUNTIME_CONFIG.get("retrieval_include_deprecated")))
+    pin = pinned_xapp_ids(AGENTS) if EVAL_RUNTIME_CONFIG.get("retrieval_pin_xapps", True) else []
+    ranked, report = discover_with_report(
+        AGENTS,
+        intent_text,
+        k=k,
+        executable_only=True,
+        include_deprecated=bool(EVAL_RUNTIME_CONFIG.get("retrieval_include_deprecated", True)),
+        pin=pin,
+        exclude=exclude,
+    )
     cards = [card for card, _ in ranked]
-    expected = [str(item).lower() for item in list((intent or {}).get("expected_workflow") or [])]
-    retrieved_ids = [card.id for card in cards]
-    return cards, {
-        "k": k,
-        "registry_executable_count": sum(1 for card in AGENTS.values() if card.actions),
-        "retrieved": retrieved_ids,
-        "scores": {card.id: round(score, 3) for card, score in ranked[:20]},
-        "expected_agents": expected,
-        "expected_retrieved": all(agent in retrieved_ids for agent in expected) if expected else None,
-    }
+    report = dict(report)
+    report.update(
+        {
+            "registry_executable_count": sum(1 for card in AGENTS.values() if card.actions),
+            "retrieved": [card.id for card in cards],
+            "scores": {card.id: round(score, 3) for card, score in ranked[:30]},
+            "pin_enabled": bool(pin),
+        }
+    )
+    return cards, report
+
+
+def annotate_retrieval(report: Dict[str, Any], intent: Dict[str, Any]) -> Dict[str, Any]:
+    """Scoring only (after the method ran): did retrieval surface the labelled agents?"""
+    report = dict(report or {})
+    expected = [str(item).lower() for item in list(intent.get("expected_workflow") or [])]
+    retrieved = list(report.get("retrieved") or [])
+    report["expected_agents"] = expected
+    report["expected_retrieved"] = all(agent in retrieved for agent in expected) if expected else None
+    k = int(report.get("k") or 0)
+    if k > 0:
+        unpinned, _ = discover_with_report(
+            AGENTS, _intent_text(intent), k=k, executable_only=True,
+            include_deprecated=bool(EVAL_RUNTIME_CONFIG.get("retrieval_include_deprecated", True)), pin=[],
+        )
+        unpinned_ids = [card.id for card, _ in unpinned]
+    else:
+        unpinned_ids = retrieved
+    report["expected_retrieved_unpinned"] = all(agent in unpinned_ids for agent in expected) if expected else None
+    return report
+
+
+def discover_cards(intent: Optional[Dict[str, Any]]) -> Tuple[List[Any], Dict[str, Any]]:
+    """Backward-compatible wrapper: discovery for an intent record, annotated for scoring."""
+    cards, report = discover_for_text(_intent_text(intent) if intent else "")
+    return cards, annotate_retrieval(report, intent or {})
 
 
 def executable_agent_cards(intent: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
-    cards: List[Dict[str, Any]] = []
-    selected, _ = discover_cards(intent) if intent is not None else (list(AGENTS.values()), {})
-    for agent in selected:
-        agent_id = agent.id
-        actions = []
-        for action in agent.actions:
-            actions.append(
-                {
-                    "id": action.id,
-                    "label": action.label,
-                    "description": action.description,
-                    "kind": action.kind,
-                }
-            )
-        if not actions:
-            continue
-        cards.append(
-            {
-                "agent_id": agent_id,
-                "label": agent.name,
-                "app_type": getattr(agent, "app_type", "xapp"),
-                "description": getattr(agent, "description", ""),
-                "capabilities": list(getattr(agent, "capabilities", [])),
-                "requires": list(getattr(agent, "requires", [])),
-                "control_scopes": [{"target": s.target, "mode": s.mode, "resource": s.resource} for s in getattr(agent, "control_scopes", [])],
-                "status": agent.status,
-                "actions": actions,
-            }
-        )
-    return cards
+    selected = discover_for_text(_intent_text(intent))[0] if intent is not None else list(AGENTS.values())
+    return serialize_cards(selected)
 
 
 def _intent_text(intent: Dict[str, Any]) -> str:
-    parts = [
-        str(intent.get("intent") or ""),
-        str(intent.get("category") or ""),
-        str(intent.get("notes") or ""),
-    ]
-    return " ".join(parts).strip().lower()
+    # Methods see the operator's sentence only; `notes`/`category` are benchmark annotations.
+    return str((intent or {}).get("intent") or "").strip().lower()
 
 
 def _intent_has_any(intent: Dict[str, Any], tokens: List[str]) -> bool:
     text = _intent_text(intent)
     return any(token in text for token in tokens)
+
+
+# RC action choice from the intent sentence: a report subscription for observe-only intents, else control.
+RC_READ_ONLY_TOKENS = ["monitor", "observe", "audit", "report", "investigate", "diagnose", "triage", "inspect", "screen"]
+RC_CONTROL_TOKENS = ["reduce", "protect", "guarantee", "apply", "enforce", "mitigate", "improve", "optimize", "optimise",
+                     "recover", "repair", "rebalance", "prioritize", "prioritise", "limit", "switch", "steer", "boost", "fix"]
 
 
 def default_action_for_agent(agent_id: str, intent: Dict[str, Any]) -> Optional[str]:
@@ -246,53 +298,15 @@ def default_action_for_agent(agent_id: str, intent: Dict[str, Any]) -> Optional[
             return "apply-all"
         return "apply-codel"
     if agent_id == "rc":
-        return "rc-scaffold"
+        card = AGENTS.get("rc")
+        action_ids = [action.id for action in (card.actions if card is not None else [])]
+        read_only = any(token in text for token in RC_READ_ONLY_TOKENS) and not any(token in text for token in RC_CONTROL_TOKENS)
+        if read_only and "rc-report" in action_ids:
+            return "rc-report"
+        if "rc-control" in action_ids:
+            return "rc-control"
+        return action_ids[0] if action_ids else None
     return None
-
-
-def deterministic_discovery_chain(intent: Dict[str, Any]) -> List[str]:
-    text = _intent_text(intent)
-    if any(token in text for token in ["xr", "urllc", "premium qos", "premium traffic", "emergency", "stadium congestion", "composite"]):
-        return ["KPM", "SLICE", "TC", "RC"]
-    if any(token in text for token in ["slice", "fairness", "isolation", "enterprise", "admission", "reserved prb", "oversubscription", "rebalance", "drift"]):
-        if any(token in text for token in ["latency", "slowdown", "queue", "throughput", "congestion"]):
-            return ["KPM", "SLICE", "TC", "RC"]
-        if any(token in text for token in ["audit", "validate", "verify", "monitor", "check"]):
-            return ["SLICE", "KPM", "RC"]
-        return ["KPM", "SLICE", "RC"]
-    if any(token in text for token in ["transport", "backhaul", "bufferbloat", "qos", "tunnel", "bearer", "queue", "codel", "ecn", "shaping", "jitter"]):
-        if any(token in text for token in ["validate", "verify", "sanity check", "rollback"]):
-            return ["TC", "RC"]
-        return ["KPM", "TC", "RC"]
-    if any(token in text for token in ["mobility", "handover", "anomaly", "pdcp", "gtp", "rlc", "diagnose", "investigate", "triage", "root cause", "risk screening"]):
-        if any(token in text for token in ["protect", "mitigate", "recover", "optimize", "stabilize"]):
-            return ["KPM", "TC", "RC"]
-        return ["KPM", "RC"]
-    if any(token in text for token in ["capacity", "prb", "radio", "throughput", "latency"]):
-        return ["KPM", "SLICE", "RC"] if "slice" in text else ["KPM", "TC", "RC"]
-    return ["KPM", "TC", "RC"]
-
-
-def action_pairs_for_chain(chain: List[str], intent: Dict[str, Any], requested_steps: Optional[List[Dict[str, Any]]] = None) -> List[Tuple[str, str]]:
-    requested_by_agent: Dict[str, str] = {}
-    for step in list(requested_steps or []):
-        agent_id = str(step.get("agent_id") or "").strip().lower()
-        action_id = str(step.get("action_id") or "").strip()
-        if agent_id and action_id:
-            requested_by_agent[agent_id] = action_id
-
-    pairs: List[Tuple[str, str]] = []
-    for name in chain:
-        agent_id = str(name or "").strip().lower()
-        agent = AGENTS.get(agent_id)
-        if agent is None or not agent.actions:
-            continue
-        action_id = requested_by_agent.get(agent_id) or default_action_for_agent(agent_id, intent)
-        if action_id and any(action.id == action_id for action in agent.actions):
-            pairs.append((agent_id, action_id))
-            continue
-        pairs.append((agent_id, agent.actions[0].id))
-    return pairs
 
 
 def summarize_figure_payload(payload: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
@@ -450,7 +464,136 @@ def _metric_value(metrics: Dict[str, Dict[str, Any]], measurement: str) -> float
 
 
 def reset_runtime() -> Dict[str, Any]:
+    """Harness housekeeping between records only.
+
+    Resetting terminates every running action, i.e. it would pre-empt the other operator's
+    (seeded) workflow. No method may call it while a record runs (review P0-2).
+    """
+    if _RECORD_STATE.get("active"):
+        _RECORD_STATE["reset_calls"] = int(_RECORD_STATE.get("reset_calls") or 0) + 1
+        raise AssertionError("reset_runtime() called while a record is running: methods may wait or re-plan, never pre-empt.")
     return api_runtime_reset(RuntimeResetRequest(clear_saved_workflows=False))
+
+
+def _agent_writes(agent_id: str) -> bool:
+    """Card-level write scope = the agent holds an exclusive lease class (used for seeding)."""
+    card = AGENTS.get(str(agent_id or ""))
+    return card is not None and any(scope.mode == "write" for scope in card.control_scopes)
+
+
+def _step_writes(agent_id: str, action_id: Optional[str]) -> bool:
+    """Does this launched step issue control (per-action scope when the card declares one)?"""
+    return step_writes(AGENTS.get(str(agent_id or "")), action_id)
+
+
+def active_runs_by_agent(agent_ids: List[str]) -> Dict[str, Optional[Dict[str, Any]]]:
+    """Lease query: for each agent, the active run (or scheduler lease) that makes it busy, else None."""
+    wanted = [str(agent_id) for agent_id in agent_ids]
+    out: Dict[str, Optional[Dict[str, Any]]] = {agent_id: None for agent_id in wanted}
+    if not wanted:
+        return out
+    own = set(_RECORD_STATE.get("own_run_ids") or set())
+    for run in api_runs():
+        agent_id = str(run.get("agent_id") or "")
+        if agent_id in out and out[agent_id] is None and str(run.get("status") or "") in {"starting", "running"}:
+            card = AGENTS.get(agent_id)
+            out[agent_id] = {
+                "run_id": run.get("id"),
+                "action_id": run.get("action_id"),
+                "started_at": run.get("started_at"),
+                "resource": next((sc.resource for sc in (card.control_scopes if card else []) if sc.resource), ""),
+                "source": "agent_run",
+                "own": str(run.get("id") or "") in own,
+            }
+    try:
+        leases = list((api_runtime_leases() or {}).get("leases") or [])
+    except Exception:  # pragma: no cover - runtime dependent
+        leases = []
+    for lease in leases:
+        resource = str(lease.get("resource_id") or lease.get("id") or "")
+        for agent_id in wanted:
+            card = AGENTS.get(agent_id)
+            if out[agent_id] is None and card is not None and any(sc.resource == resource and sc.mode == "write" for sc in card.control_scopes):
+                out[agent_id] = {"run_id": lease.get("run_id"), "resource": resource, "workflow_id": lease.get("workflow_id"), "source": "scheduler_lease", "own": False}
+    return out
+
+
+def _foreign_busy(agent_ids: List[str]) -> Dict[str, Dict[str, Any]]:
+    return {agent_id: info for agent_id, info in active_runs_by_agent(agent_ids).items() if info and not info.get("own")}
+
+
+def wait_until_free(agent_ids: List[str], budget_s: float) -> Dict[str, Any]:
+    """Bounded lease wait: poll until no *other* workflow holds the agents, at most budget_s."""
+    started = time.perf_counter()
+    interval = max(0.05, float(EVAL_RUNTIME_CONFIG.get("lease_poll_interval_s") or 0.5))
+    busy = _foreign_busy(agent_ids)
+    while busy and (time.perf_counter() - started) < max(0.0, float(budget_s)):
+        time.sleep(interval)
+        busy = _foreign_busy(agent_ids)
+    waited = time.perf_counter() - started
+    return {"free": not busy, "waited_s": round(waited, 3), "still_busy": sorted(busy)}
+
+
+def invoke_with_lease_wait(agent_id: str, action_id: str) -> Dict[str, Any]:
+    """Launch one step with the lease wait every method gets.
+
+    If the portal refuses the launch because the agent is busy (409 "already has an active
+    action"), the refused attempt is kept as a tool call (status "conflict"), the harness waits
+    until the agent is free for up to --lease-wait-s and retries once.
+    """
+    tool_call, run_payload, error = invoke_action(agent_id, action_id)
+    calls = [tool_call]
+    payloads = [run_payload] if run_payload is not None else []
+    waited_s = 0.0
+    refused = False
+    if is_lease_refusal(tool_call):
+        tool_call["status"] = "conflict"
+        tool_call["lease_refusal"] = True
+        blocking = active_runs_by_agent([agent_id]).get(agent_id) or {}
+        self_conflict = bool(blocking.get("own"))
+        tool_call["blocking_run"] = blocking or None
+        budget = float(EVAL_RUNTIME_CONFIG.get("lease_wait_s") or 0.0)
+        if self_conflict or budget <= 0.0:
+            refused = True
+            tool_call["self_conflict"] = self_conflict
+        else:
+            waited = wait_until_free([agent_id], budget)
+            waited_s = float(waited.get("waited_s") or 0.0)
+            retry_call, retry_payload, error = invoke_action(agent_id, action_id)
+            retry_call["retry_after_lease_wait"] = True
+            retry_call["lease_wait_s"] = round(waited_s, 3)
+            if is_lease_refusal(retry_call):
+                retry_call["status"] = "conflict"
+                retry_call["lease_refusal"] = True
+                refused = True
+            calls.append(retry_call)
+            if retry_payload is not None:
+                payloads.append(retry_payload)
+    final = calls[-1]
+    if final.get("status") == "success" and final.get("run_id"):
+        _RECORD_STATE.setdefault("own_run_ids", set()).add(str(final["run_id"]))
+    _RECORD_STATE["lease_wait_s"] = float(_RECORD_STATE.get("lease_wait_s") or 0.0) + waited_s
+    return {"tool_calls": calls, "run_payloads": payloads, "error": error, "lease_wait_s": waited_s, "refused": refused}
+
+
+def run_action_pairs(pairs: List[Tuple[str, str]]) -> Dict[str, Any]:
+    """Baseline executor: launch every pair in order (with the shared lease wait)."""
+    tool_calls: List[Dict[str, Any]] = []
+    raw_runs: List[Dict[str, Any]] = []
+    refusals: List[str] = []
+    for agent_id, action_id in pairs:
+        result = invoke_with_lease_wait(agent_id, action_id)
+        tool_calls += list(result.get("tool_calls") or [])
+        raw_runs += list(result.get("run_payloads") or [])
+        if result.get("refused"):
+            refusals.append(str((result.get("tool_calls") or [{}])[-1].get("detail") or ""))
+    if any(call.get("status") == "failed" for call in tool_calls):
+        status = "completed_with_issues"
+    elif refusals:
+        status = "queued"
+    else:
+        status = "completed"
+    return {"tool_calls": tool_calls, "raw_runs": raw_runs, "status": status, "blocked_reason": "; ".join(refusals)}
 
 
 def classify_tool_status(raw_status: str) -> str:
@@ -514,10 +657,52 @@ def invoke_action(agent_id: str, action_id: str) -> Tuple[Dict[str, Any], Option
         return build_tool_call(agent_id, action_id, latency_ms, None, error=str(exc)), None, str(exc)
 
 
-def _log_acknowledges(agent_id: str, tail: List[str]) -> Optional[bool]:
+def _log_acknowledges(agent_id: str, tail: List[str], action_id: Optional[str] = None) -> Optional[bool]:
     text = "\n".join(str(line) for line in tail)
-    markers = TOOL_ACK_MARKERS.get(agent_id) or (["rApp ack:"] if agent_id.startswith("rapp.") else [])
+    markers = _ack_markers(agent_id, action_id)
     if any(marker in text for marker in markers):
+        return True
+    if agent_id.startswith("rapp.") and "rApp error:" in text:
+        return False
+    if any(marker in text for marker in TOOL_ACK_NEGATIVE_MARKERS):
+        return False
+    return None
+
+
+ACK_LOG_MAX_BYTES = 16 * 1024 * 1024
+
+
+def _log_ack_hint(agent_id: str, log_path: Optional[str]) -> Optional[str]:
+    hints = TOOL_ACK_HINTS.get(agent_id) or []
+    if not hints or not log_path:
+        return None
+    try:
+        with open(log_path, "rb") as handle:
+            text = handle.read(ACK_LOG_MAX_BYTES).decode("utf-8", errors="replace")
+    except OSError:
+        return None
+    return next((hint for hint in hints if hint in text), None)
+
+
+def _log_acknowledges_full(agent_id: str, log_path: Optional[str], action_id: Optional[str] = None) -> Optional[bool]:
+    """Ack verdict from the run's *full* log (the portal tail is only 20 lines).
+
+    `tc apply-all` subscribes RLC at 5 ms and floods `RLC len=...` lines, so the CONTROL-ACK /
+    `Applied TC profile` markers scroll out of the tail within a second. A positive marker anywhere
+    in the log acknowledges the call; negative markers count only in the text before the first
+    positive marker (a later line cannot flip it). `RLC len=` is not an ack: it precedes the control.
+    Returns None when the log is unreadable or shows neither.
+    """
+    if not log_path:
+        return None
+    try:
+        with open(log_path, "rb") as handle:
+            text = handle.read(ACK_LOG_MAX_BYTES).decode("utf-8", errors="replace")
+    except OSError:
+        return None
+    markers = _ack_markers(agent_id, action_id)
+    positions = [pos for pos in (text.find(marker) for marker in markers) if pos >= 0]
+    if positions:
         return True
     if agent_id.startswith("rapp.") and "rApp error:" in text:
         return False
@@ -551,7 +736,11 @@ def acknowledge_tool_calls(tool_calls: List[Dict[str, Any]], timeout_s: float) -
                 call["ack_detail"] = str(exc)
                 pending.remove(call)
                 continue
-            verdict = _log_acknowledges(str(call.get("agent_id")), list(run.get("tail") or []))
+            verdict = _log_acknowledges_full(str(call.get("agent_id")), run.get("log_path"), call.get("action_id"))
+            if verdict is None:
+                verdict = _log_acknowledges(str(call.get("agent_id")), list(run.get("tail") or []), call.get("action_id"))
+            call["ack_source"] = "full_log" if run.get("log_path") else "tail"
+            call["ack_hint"] = _log_ack_hint(str(call.get("agent_id")), run.get("log_path"))
             if verdict is False and str(run.get("status")) in WORKFLOW_TRANSITIONAL_STATUSES:
                 # A negative line while the xApp is still running is not final: keep polling for a
                 # positive marker until the deadline (the 20-line tail scrolls).
@@ -576,35 +765,32 @@ def acknowledge_tool_calls(tool_calls: List[Dict[str, Any]], timeout_s: float) -
 
 
 def seed_conflict_if_needed(intent: Dict[str, Any], method: str, duration_s: int) -> Dict[str, Any]:
+    """Start the seeded "other operator" workload, identically for every method (P1-8).
+
+    The seed is the lease-holding action of the seed workflow (its first write-scope action:
+    TC apply-codel for transport-qos, SLICE monitor for slice-assurance) launched as a plain
+    action, so the agent is busy for the action's 30 s run whatever method follows.
+    """
+    del method, duration_s
     seed_workflow = intent.get("conflict_seed")
     if not seed_workflow:
         return {"applied": False}
-
-    if method.startswith("langgraph"):
-        payload = api_workflow_run(
-            str(seed_workflow),
-            WorkflowRequest(goal=f"Conflict seed for {intent.get('id')}", mode="enforced", duration_s=duration_s),
-        )
-        run = dict(payload.get("run") or {})
-        return {
-            "applied": True,
-            "type": "workflow",
-            "workflow_id": seed_workflow,
-            "run_id": run.get("id"),
-            "status": run.get("status"),
-        }
-
     action_pairs = actions_for_workflow(str(seed_workflow))
-    if not action_pairs:
+    writers = [pair for pair in action_pairs if _agent_writes(pair[0])]
+    if not (writers or action_pairs):
         return {"applied": False}
-    tool_call, run_payload, error = invoke_action(*action_pairs[0])
+    agent_id, action_id = (writers or action_pairs)[0]
+    tool_call, run_payload, error = invoke_action(agent_id, action_id)
     return {
         "applied": True,
         "type": "action",
         "workflow_id": seed_workflow,
+        "agent_id": agent_id,
+        "action_id": action_id,
         "run_id": (run_payload or {}).get("id"),
         "status": tool_call.get("status"),
         "error": error,
+        "started_at": time.time(),
     }
 
 
@@ -708,8 +894,6 @@ def llm_prompt(intent: Dict[str, Any]) -> str:
         "- Do not invent new xApps or reorder the selected workflow.\n"
         "- If uncertain, choose the closest valid workflow instead of returning an empty plan.\n"
         f"Intent: {intent.get('intent')}\n"
-        f"Category: {intent.get('category')}\n"
-        f"Notes: {intent.get('notes', '')}\n"
         f"Available workflows: {json.dumps(workflows)}\n"
     )
 
@@ -724,14 +908,27 @@ def llm_blind_prompt(intent: Dict[str, Any]) -> str:
         "- generated_workflow is a list of application names in execution order (1 to 4 items).\n"
         "- Use short upper-case application identifiers.\n"
         f"Intent: {intent.get('intent')}\n"
-        f"Category: {intent.get('category')}\n"
-        f"Notes: {intent.get('notes', '')}\n"
     )
 
 
+def assert_prompt_label_free(prompt: str) -> None:
+    """P0-1: no planner prompt may carry the intent's `notes` annotation."""
+    notes = str(_RECORD_STATE.get("notes") or "").strip()
+    if notes and notes in prompt:
+        raise AssertionError("Planner prompt contains the intent's `notes` annotation (label leakage).")
+    if "\nNotes: " in prompt or "\nCategory: " in prompt:
+        raise AssertionError("Planner prompt carries a Notes:/Category: line (label leakage).")
+
+
+def planner_task(prompt: str) -> Dict[str, Any]:
+    """Every planner call of every method goes through here (label-leakage assert)."""
+    assert_prompt_label_free(prompt)
+    task_payload = api_run_task("orchestrator", AgentTaskRequest(prompt=prompt, provider="auto"))
+    return dict(task_payload.get("task") or {})
+
+
 def plan_blind(intent: Dict[str, Any]) -> Dict[str, Any]:
-    task_payload = api_run_task("orchestrator", AgentTaskRequest(prompt=llm_blind_prompt(intent), provider="auto"))
-    task = dict(task_payload.get("task") or {})
+    task = planner_task(llm_blind_prompt(intent))
     response_text = str(task.get("response") or task.get("error") or "")
     if task.get("status") != "completed":
         planner_unavailable = _is_provider_unavailable(response_text)
@@ -776,8 +973,7 @@ def plan_with_llm(intent: Dict[str, Any]) -> Dict[str, Any]:
             result["planner_cache_age_s"] = round(age_s, 3)
             return result
 
-    task_payload = api_run_task("orchestrator", AgentTaskRequest(prompt=llm_prompt(intent), provider="auto"))
-    task = dict(task_payload.get("task") or {})
+    task = planner_task(llm_prompt(intent))
     response_text = str(task.get("response") or task.get("error") or "")
     if task.get("status") != "completed":
         planner_unavailable = _is_provider_unavailable(response_text)
@@ -862,227 +1058,31 @@ def validate_or_repair_plan(intent: Dict[str, Any], planned_workflow_id: Any, ge
 
 
 def agentcard_prompt(intent: Dict[str, Any]) -> str:
-    return (
-        "You are planning an adaptive LangGraph-style workflow from executable agent cards for the FlexRIC portal.\n"
-        "Return only JSON with keys generated_workflow, steps, and rationale.\n"
-        "Rules:\n"
-        "- generated_workflow must be a list of executable agent ids in execution order.\n"
-        "- steps must be a list of objects with agent_id and optional action_id.\n"
-        "- Use only executable agents and actions from the provided agent cards.\n"
-        "- Prefer 1 to 4 steps.\n"
-        "- Use KPM first when the task requires observation, diagnosis, anomaly detection, or root-cause triage.\n"
-        "- Use RC last when the task applies or validates a control decision.\n"
-        "- You may produce a novel workflow chain instead of forcing a predefined template.\n"
-        f"Intent: {intent.get('intent')}\n"
-        f"Category: {intent.get('category')}\n"
-        f"Notes: {intent.get('notes', '')}\n"
-        f"Executable agent cards: {json.dumps(executable_agent_cards(intent))}\n"
-    )
-
-
-def validate_or_repair_agentcard_plan(intent: Dict[str, Any], generated_workflow: List[str], steps: List[Dict[str, str]]) -> Dict[str, Any]:
-    requested_chain = [str(item).strip().upper() for item in generated_workflow if str(item).strip()]
-    if not requested_chain and steps:
-        requested_chain = [str(step.get("agent_id") or "").strip().upper() for step in steps if str(step.get("agent_id") or "").strip()]
-
-    normalized_chain: List[str] = []
-    valid_agent_ids = {agent_id.upper() for agent_id, agent in AGENTS.items() if agent.actions}
-    for agent_name in requested_chain:
-        if agent_name not in valid_agent_ids:
-            continue
-        if normalized_chain and normalized_chain[-1] == agent_name:
-            continue
-        normalized_chain.append(agent_name)
-
-    # Repair may only consult the registry. Earlier revisions substituted the
-    # intent's ground-truth chain for closed-world intents here, which leaked
-    # the benchmark label into the method under test; that path is gone.
-    if not normalized_chain:
-        normalized_chain = deterministic_discovery_chain(intent)
-        planner_repaired = True
-        repair_reason = "Applied deterministic agent-card fallback because the adaptive plan was empty or invalid."
-    else:
-        planner_repaired = False
-        repair_reason = ""
-
-    resolved_pairs = action_pairs_for_chain(normalized_chain, intent, requested_steps=steps)
-    resolved_chain = [agent_id.upper() for agent_id, _ in resolved_pairs]
-    workflow_id = workflow_id_from_chain(resolved_chain) or custom_workflow_id_from_chain(resolved_chain)
-    resolved_steps = [{"agent_id": agent_id, "action_id": action_id} for agent_id, action_id in resolved_pairs]
-    return {
-        "workflow_id": workflow_id,
-        "generated_workflow": resolved_chain,
-        "resolved_steps": resolved_steps,
-        "planner_repaired": planner_repaired,
-        "repair_reason": repair_reason,
-    }
-
-
-def plan_with_agent_cards(intent: Dict[str, Any], repair: bool = True) -> Dict[str, Any]:
-    _, retrieval = discover_cards(intent)
-    prompt = agentcard_prompt(intent)
-    retrieval["prompt_chars"] = len(prompt)
-    task_payload = api_run_task("orchestrator", AgentTaskRequest(prompt=prompt, provider="auto"))
-    task = dict(task_payload.get("task") or {})
-    response_text = str(task.get("response") or task.get("error") or "")
-    if task.get("status") != "completed":
-        planner_unavailable = _is_provider_unavailable(response_text)
-        return {
-            "ok": False,
-            "retrieval": retrieval,
-            "planner_task": task,
-            "planner_error": response_text or "Provider task failed.",
-            "planner_unavailable": planner_unavailable,
-            "method_available": not planner_unavailable,
-            "workflow_id": None,
-            "generated_workflow": [],
-            "steps": [],
-            "rationale": "",
-        }
-
-    try:
-        plan = parse_llm_plan(response_text)
-    except Exception as exc:
-        plan = {"generated_workflow": [], "steps": [], "rationale": f"unparseable: {exc}"}
-    generated_workflow = normalize_generated_workflow(plan.get("generated_workflow"))
-    steps = normalize_discovery_steps(plan.get("steps"))
-    if not repair:
-        # Execute the raw plan: unknown agents stay in generated_workflow so
-        # they are counted as hallucinations, and only real ones are launched.
-        raw_pairs = action_pairs_for_chain(generated_workflow, intent, requested_steps=steps)
-        return {
-            "ok": True,
-            "planner_task": task,
-            "planner_plan": plan,
-            "planner_error": "",
-            "planner_unavailable": False,
-            "method_available": True,
-            "workflow_id": workflow_id_from_chain(generated_workflow) or custom_workflow_id_from_chain(generated_workflow),
-            "generated_workflow": generated_workflow,
-            "steps": [{"agent_id": agent_id, "action_id": action_id} for agent_id, action_id in raw_pairs],
-            "rationale": str(plan.get("rationale") or ""),
-            "planner_repaired": False,
-            "repair_reason": "",
-            "retrieval": retrieval,
-            "compat_report": check_chain(AGENTS, generated_workflow).to_dict(),
-        }
-    repaired = validate_or_repair_agentcard_plan(intent, generated_workflow, steps)
-    # Compose-time compatibility check over the Agent Cards (dependency,
-    # interface, control scope, timescale). Steps that fail with an error are
-    # dropped and the report travels with the record.
-    compat = check_chain(AGENTS, list(repaired.get("generated_workflow") or []))
-    if not compat.ok:
-        bad_indices = {f.step_index for f in compat.findings if f.severity == "error"}
-        kept_chain = [name for index, name in enumerate(repaired["generated_workflow"]) if index not in bad_indices]
-        kept_steps = [step for index, step in enumerate(repaired.get("resolved_steps") or []) if index not in bad_indices]
-        repaired = {
-            **repaired,
-            "generated_workflow": kept_chain,
-            "resolved_steps": kept_steps,
-            "workflow_id": workflow_id_from_chain(kept_chain) or custom_workflow_id_from_chain(kept_chain),
-            "planner_repaired": True,
-            "repair_reason": (repaired.get("repair_reason") or "") + " Compatibility check removed incompatible steps.",
-        }
-    return {
-        "retrieval": retrieval,
-        "compat_report": compat.to_dict(),
-        "ok": True,
-        "planner_task": task,
-        "planner_plan": plan,
-        "planner_error": "",
-        "planner_unavailable": False,
-        "method_available": True,
-        "workflow_id": repaired.get("workflow_id"),
-        "generated_workflow": repaired.get("generated_workflow"),
-        "steps": repaired.get("resolved_steps"),
-        "rationale": str(plan.get("rationale") or ""),
-        "planner_repaired": repaired.get("planner_repaired", False),
-        "repair_reason": repaired.get("repair_reason", ""),
-    }
+    """AppWeaver's Compose prompt for an intent record (the graph builds the same prompt)."""
+    return compose_prompt(str(intent.get("intent") or ""), executable_agent_cards(intent))
 
 
 def prompt_builders_sha256() -> Dict[str, str]:
     """Hash of each planner prompt builder's source, so a batch pins the exact prompts it used."""
-    builders = [llm_prompt, llm_blind_prompt, agentcard_prompt, agentcard_recovery_prompt, llm_recovery_prompt]
-    return {fn.__name__: hashlib.sha256(inspect.getsource(fn).encode("utf-8")).hexdigest()[:16] for fn in builders}
+    builders = [
+        llm_prompt, llm_blind_prompt, agentcard_prompt, agentcard_recovery_prompt, llm_recovery_prompt,
+        appweaver_prompts.compose_prompt, appweaver_prompts.recovery_prompt, appweaver_prompts.serialize_cards,
+        _intent_text, route_intent, default_action_for_agent,
+    ]
+    hashes = {f"{fn.__module__.split('.')[-1]}.{fn.__name__}": hashlib.sha256(inspect.getsource(fn).encode("utf-8")).hexdigest()[:16] for fn in builders}
+    hashes["appweaver.prompts_module"] = hashlib.sha256(inspect.getsource(appweaver_prompts).encode("utf-8")).hexdigest()[:16]
+    return hashes
 
 
-def agentcard_recovery_prompt(intent: Dict[str, Any], execution: Dict[str, Any]) -> str:
+def agentcard_recovery_prompt(intent: Dict[str, Any], execution: Dict[str, Any], busy_resources: Optional[List[Dict[str, Any]]] = None) -> str:
+    """AppWeaver's Recover prompt for an intent record (the graph builds the same prompt)."""
     failure_summary = {
-        "status": execution.get("status"),
-        "blocked_reason": execution.get("blocked_reason", ""),
-        "generated_workflow_id": execution.get("generated_workflow_id"),
-        "generated_workflow": execution.get("generated_workflow"),
-        "selected_steps": execution.get("selected_steps"),
-        "tool_calls": [
-            {
-                "xapp": call.get("xapp"),
-                "status": call.get("status"),
-                "detail": call.get("detail", ""),
-            }
-            for call in list(execution.get("tool_calls") or [])
-        ],
+        "trigger": execution.get("recover_trigger", "precheck_busy"),
+        "chain": execution.get("generated_workflow"),
+        "already_running": [],
+        "refusal": execution.get("blocked_reason") or None,
     }
-    return (
-        "You are repairing an adaptive LangGraph-style agent-card workflow for the FlexRIC portal.\n"
-        "Return only JSON with keys generated_workflow, steps, reset_runtime, and rationale.\n"
-        "Rules:\n"
-        "- Use only executable agents and actions from the provided agent cards.\n"
-        "- generated_workflow must match the step order.\n"
-        "- steps must be a list of objects with agent_id and optional action_id.\n"
-        "- reset_runtime should be true when a busy runtime or conflict should be cleared before retry.\n"
-        f"Intent: {intent.get('intent')}\n"
-        f"Category: {intent.get('category')}\n"
-        f"Failure summary: {json.dumps(failure_summary)}\n"
-        f"Executable agent cards: {json.dumps(executable_agent_cards())}\n"
-    )
-
-
-def plan_agentcard_recovery_with_llm(intent: Dict[str, Any], execution: Dict[str, Any]) -> Dict[str, Any]:
-    task_payload = api_run_task("orchestrator", AgentTaskRequest(prompt=agentcard_recovery_prompt(intent, execution), provider="auto"))
-    task = dict(task_payload.get("task") or {})
-    response_text = str(task.get("response") or task.get("error") or "")
-    if task.get("status") != "completed":
-        planner_unavailable = _is_provider_unavailable(response_text)
-        repaired = validate_or_repair_agentcard_plan(
-            intent,
-            list(execution.get("generated_workflow") or []),
-            list(execution.get("selected_steps") or []),
-        )
-        return {
-            "workflow_id": repaired.get("workflow_id"),
-            "generated_workflow": repaired.get("generated_workflow"),
-            "steps": repaired.get("resolved_steps"),
-            "reset_runtime": True,
-            "rationale": "Used deterministic agent-card recovery fallback because the LLM recovery planner was unavailable.",
-            "planner_repaired": True,
-            "repair_reason": "Deterministic fallback recovery plan.",
-            "planner_task": task,
-            "planner_error": response_text or "Provider task failed.",
-            "planner_unavailable": planner_unavailable,
-            "method_available": not planner_unavailable,
-        }
-
-    plan = parse_llm_plan(response_text)
-    repaired = validate_or_repair_agentcard_plan(
-        intent,
-        normalize_generated_workflow(plan.get("generated_workflow")),
-        normalize_discovery_steps(plan.get("steps")),
-    )
-    return {
-        "workflow_id": repaired.get("workflow_id"),
-        "generated_workflow": repaired.get("generated_workflow"),
-        "steps": repaired.get("resolved_steps"),
-        "reset_runtime": bool(plan.get("reset_runtime")),
-        "rationale": str(plan.get("rationale") or ""),
-        "planner_repaired": bool(repaired.get("planner_repaired")),
-        "repair_reason": str(repaired.get("repair_reason") or ""),
-        "planner_task": task,
-        "planner_plan": plan,
-        "planner_error": "",
-        "planner_unavailable": False,
-        "method_available": True,
-    }
+    return recovery_prompt(str(intent.get("intent") or ""), failure_summary, executable_agent_cards(intent), list(busy_resources or []))
 
 
 def llm_recovery_prompt(intent: Dict[str, Any], execution: Dict[str, Any]) -> str:
@@ -1111,16 +1111,15 @@ def llm_recovery_prompt(intent: Dict[str, Any], execution: Dict[str, Any]) -> st
         )
     return (
         "You are repairing a LangGraph orchestration attempt in the current FlexRIC portal.\n"
-        "Return only JSON with keys workflow_id, generated_workflow, mode, approve, reset_runtime, and rationale.\n"
+        "Return only JSON with keys workflow_id, generated_workflow, mode, approve, and rationale.\n"
         "Rules:\n"
         "- workflow_id must be one of the provided workflow_id values.\n"
         "- generated_workflow must exactly match that workflow's action_chain.\n"
         "- mode must be either 'enforced' or 'advisory'.\n"
         "- approve must be true only when advisory mode should be manually approved immediately.\n"
-        "- reset_runtime should be true when the safest repair requires clearing the current conflicting runtime state before retry.\n"
+        "- Never cancel or reset another workflow; busy applications are waited for, bounded.\n"
         "- Prefer the safest valid recovery that preserves the intent.\n"
         f"Intent: {intent.get('intent')}\n"
-        f"Category: {intent.get('category')}\n"
         f"Failure summary: {json.dumps(failure_summary)}\n"
         f"Available workflows: {json.dumps(workflows)}\n"
     )
@@ -1151,8 +1150,7 @@ def plan_recovery_with_llm(intent: Dict[str, Any], execution: Dict[str, Any]) ->
             result["planner_cache_age_s"] = round(age_s, 3)
             return result
 
-    task_payload = api_run_task("orchestrator", AgentTaskRequest(prompt=llm_recovery_prompt(intent, execution), provider="auto"))
-    task = dict(task_payload.get("task") or {})
+    task = planner_task(llm_recovery_prompt(intent, execution))
     response_text = str(task.get("response") or task.get("error") or "")
     if task.get("status") != "completed":
         planner_unavailable = _is_provider_unavailable(response_text)
@@ -1162,7 +1160,7 @@ def plan_recovery_with_llm(intent: Dict[str, Any], execution: Dict[str, Any]) ->
             "generated_workflow": list(execution.get("generated_workflow") or normalize_action_chain(str(execution.get("generated_workflow_id") or route_intent(intent)))),
             "mode": fallback_mode,
             "approve": fallback_mode == "advisory",
-            "reset_runtime": True,
+            "reset_runtime": False,
             "rationale": "Used deterministic recovery fallback because the LLM recovery planner was unavailable.",
             "planner_repaired": True,
             "repair_reason": "Deterministic fallback recovery plan.",
@@ -1185,7 +1183,7 @@ def plan_recovery_with_llm(intent: Dict[str, Any], execution: Dict[str, Any]) ->
         "generated_workflow": list(repaired.get("generated_workflow") or []),
         "mode": mode,
         "approve": bool(plan.get("approve")) or mode == "advisory",
-        "reset_runtime": bool(plan.get("reset_runtime")),
+        "reset_runtime": False,
         "rationale": str(plan.get("rationale") or ""),
         "planner_repaired": bool(repaired.get("planner_repaired")),
         "repair_reason": str(repaired.get("repair_reason") or ""),
@@ -1201,45 +1199,26 @@ def plan_recovery_with_llm(intent: Dict[str, Any], execution: Dict[str, Any]) ->
 
 
 def execute_manual_rule(intent: Dict[str, Any], duration_s: int) -> Dict[str, Any]:
+    del duration_s
     workflow_id = route_intent(intent)
-    tool_calls: List[Dict[str, Any]] = []
-    raw_runs: List[Dict[str, Any]] = []
-    for agent_id, action_id in actions_for_workflow(workflow_id):
-        tool_call, run_payload, _ = invoke_action(agent_id, action_id)
-        tool_calls.append(tool_call)
-        if run_payload is not None:
-            raw_runs.append(run_payload)
+    result = run_action_pairs(actions_for_workflow(workflow_id))
     return {
         "generated_workflow_id": workflow_id,
         "generated_workflow": normalize_action_chain(workflow_id),
-        "tool_calls": tool_calls,
-        "raw_runs": raw_runs,
-        "status": "completed_with_issues" if any(call["status"] == "failed" for call in tool_calls) else "completed",
-        "blocked_reason": "",
+        **result,
         "manual_override": False,
     }
 
 
 def execute_single_xapp(intent: Dict[str, Any], duration_s: int) -> Dict[str, Any]:
+    del duration_s
     workflow_id = route_intent(intent)
-    action_pairs = actions_for_workflow(workflow_id)
-    tool_calls: List[Dict[str, Any]] = []
-    raw_runs: List[Dict[str, Any]] = []
-    generated_workflow: List[str] = []
-    if action_pairs:
-        agent_id, action_id = action_pairs[0]
-        tool_call, run_payload, _ = invoke_action(agent_id, action_id)
-        tool_calls.append(tool_call)
-        generated_workflow = [agent_id.upper()]
-        if run_payload is not None:
-            raw_runs.append(run_payload)
+    action_pairs = actions_for_workflow(workflow_id)[:1]
+    result = run_action_pairs(action_pairs)
     return {
         "generated_workflow_id": workflow_id,
-        "generated_workflow": generated_workflow,
-        "tool_calls": tool_calls,
-        "raw_runs": raw_runs,
-        "status": "completed_with_issues" if any(call["status"] == "failed" for call in tool_calls) else "completed",
-        "blocked_reason": "",
+        "generated_workflow": [agent_id.upper() for agent_id, _ in action_pairs],
+        **result,
         "manual_override": False,
     }
 
@@ -1345,9 +1324,12 @@ def execute_langgraph_llm(intent: Dict[str, Any], duration_s: int) -> Dict[str, 
         initial["recovery_planner_error"] = recovery_plan.get("planner_error", "")
         return initial
 
-    recovery_reset_applied = bool(recovery_plan.get("reset_runtime")) or initial_conflict or initial_failure
-    if recovery_reset_applied:
-        reset_runtime()
+    # No runtime reset (that would pre-empt the other workflow): wait, bounded, for the agents the
+    # first attempt found busy, then run the recovery plan.
+    busy_agents = sorted({str(call.get("agent_id")) for call in tool_calls if is_lease_refusal(call) and call.get("agent_id")})
+    recovery_wait = wait_until_free(busy_agents, float(EVAL_RUNTIME_CONFIG.get("lease_wait_s") or 0.0)) if busy_agents else {"free": True, "waited_s": 0.0}
+    _RECORD_STATE["lease_wait_s"] = float(_RECORD_STATE.get("lease_wait_s") or 0.0) + float(recovery_wait.get("waited_s") or 0.0)
+    recovery_reset_applied = False
 
     recovery_execution = execute_langgraph_workflow(
         intent=intent,
@@ -1392,131 +1374,92 @@ def execute_langgraph_llm(intent: Dict[str, Any], duration_s: int) -> Dict[str, 
     return final_execution
 
 
-def execute_agentcard_sequence(intent: Dict[str, Any], workflow_id: str, generated_workflow: List[str], steps: List[Dict[str, str]], duration_s: int) -> Dict[str, Any]:
-    del duration_s
-    tool_calls: List[Dict[str, Any]] = []
-    raw_runs: List[Dict[str, Any]] = []
-    blocked_reason = ""
-    action_pairs = action_pairs_for_chain(generated_workflow, intent, requested_steps=steps)
-    selected_steps = [{"agent_id": agent_id, "action_id": action_id} for agent_id, action_id in action_pairs]
-    for agent_id, action_id in action_pairs:
-        tool_call, run_payload, error = invoke_action(agent_id, action_id)
-        tool_calls.append(tool_call)
-        if run_payload is not None:
-            raw_runs.append(run_payload)
-        if error or tool_call.get("status") in {"failed", "conflict", "queued"}:
-            blocked_reason = str(tool_call.get("detail") or error or "")
-            break
-
-    if any(call.get("status") in {"conflict", "queued"} for call in tool_calls):
-        status = "queued"
-    elif any(call.get("status") == "failed" for call in tool_calls):
-        status = "completed_with_issues"
-    else:
-        status = "completed"
-
-    return {
-        "generated_workflow_id": workflow_id,
-        "generated_workflow": generated_workflow,
-        "tool_calls": tool_calls,
-        "raw_runs": raw_runs,
-        "status": status,
-        "blocked_reason": blocked_reason,
-        "manual_override": False,
-        "method_available": True,
-        "selected_steps": selected_steps,
-    }
+def _appweaver_deps() -> AppWeaverDeps:
+    """Inject the harness side effects into the AppWeaver graph."""
+    dryrun_fn, dryrun_reason = (None, "")
+    if str(EVAL_RUNTIME_CONFIG.get("validate_mode") or "checks") == "dryrun":
+        dryrun_fn, dryrun_reason = resolve_dryrun()
+    return AppWeaverDeps(
+        registry=AGENTS,
+        discover=lambda text, exclude: discover_for_text(text, exclude),
+        planner=planner_task,
+        invoke=invoke_with_lease_wait,
+        lease_query=active_runs_by_agent,
+        wait_until_free=wait_until_free,
+        resolve_action=lambda agent_id, text: default_action_for_agent(agent_id, {"intent": text}),
+        is_unavailable=_is_provider_unavailable,
+        e2_functions=live_e2_ran_functions,
+        dryrun_fn=dryrun_fn,
+        dryrun_reason=dryrun_reason,
+    )
 
 
 def execute_langgraph_agentcard(intent: Dict[str, Any], duration_s: int, repair: bool = True, recover: bool = True) -> Dict[str, Any]:
-    planner = plan_with_agent_cards(intent, repair=repair)
-    if not planner.get("ok"):
-        return {
-            "generated_workflow_id": None,
-            "generated_workflow": [],
-            "tool_calls": [],
-            "raw_runs": [],
-            "workflow_run": None,
-            "status": "unavailable" if planner.get("planner_unavailable") else "failed",
-            "blocked_reason": "",
-            "manual_override": False,
-            "method_available": bool(planner.get("method_available", True)),
-            "planner_task": planner.get("planner_task"),
-            "planner_error": planner.get("planner_error", ""),
-            "planner_unavailable": planner.get("planner_unavailable", False),
-        }
+    """AppWeaver (repair=recover=True) or its ablation agentcard_no_repair (both False).
 
-    initial = execute_agentcard_sequence(
-        intent=intent,
-        workflow_id=str(planner.get("workflow_id") or custom_workflow_id_from_chain(list(planner.get("generated_workflow") or []))),
-        generated_workflow=list(planner.get("generated_workflow") or []),
-        steps=list(planner.get("steps") or []),
-        duration_s=duration_s,
+    Runs the LangGraph StateGraph in backend/appweaver: Discover -> Compose -> Validate ->
+    Deploy (-> Recover) -> Finish. The graph only sees the intent sentence.
+    """
+    del duration_s
+    cfg = AppWeaverConfig(
+        variant="appweaver" if (repair and recover) else ("no_repair" if not (repair or recover) else f"repair={repair},recover={recover}"),
+        repair=repair,
+        recover=recover,
+        validate_mode=str(EVAL_RUNTIME_CONFIG.get("validate_mode") or "checks"),
+        lease_wait_s=float(EVAL_RUNTIME_CONFIG.get("lease_wait_s") or 0.0),
+        dryrun_duration_s=int(EVAL_RUNTIME_CONFIG.get("dryrun_duration_s") or 5),
     )
-    initial.update(
-        {
-            "planner_task": planner.get("planner_task"),
-            "planner_plan": planner.get("planner_plan"),
-            "planner_repaired": planner.get("planner_repaired", False),
-            "planner_repair_reason": planner.get("repair_reason", ""),
-            "selected_steps": list(planner.get("steps") or []),
-            "compat_report": planner.get("compat_report"),
-            "retrieval": planner.get("retrieval"),
-        }
-    )
-
-    tool_calls = list(initial.get("tool_calls") or [])
-    initial_conflict = detect_conflict(initial, tool_calls)
-    initial_failure = detect_failure(initial, tool_calls)
-    if not recover or not (initial_conflict or initial_failure):
-        initial["internal_recovery_attempted"] = False
-        initial["internal_recovery_succeeded"] = False
-        return initial
-
-    recovery_plan = plan_agentcard_recovery_with_llm(intent, initial)
-    if recovery_plan.get("method_available") is False:
-        initial["internal_recovery_attempted"] = True
-        initial["internal_recovery_succeeded"] = False
-        initial["recovery_planner_task"] = recovery_plan.get("planner_task")
-        initial["recovery_planner_error"] = recovery_plan.get("planner_error", "")
-        return initial
-
-    recovery_reset_applied = bool(recovery_plan.get("reset_runtime")) or initial_conflict or initial_failure
-    if recovery_reset_applied:
-        reset_runtime()
-
-    recovery_execution = execute_agentcard_sequence(
-        intent=intent,
-        workflow_id=str(recovery_plan.get("workflow_id") or custom_workflow_id_from_chain(list(recovery_plan.get("generated_workflow") or []))),
-        generated_workflow=list(recovery_plan.get("generated_workflow") or []),
-        steps=list(recovery_plan.get("steps") or []),
-        duration_s=duration_s,
-    )
-    recovery_tool_calls = list(recovery_execution.get("tool_calls") or [])
-    recovery_success = not detect_conflict(recovery_execution, recovery_tool_calls) and not detect_failure(recovery_execution, recovery_tool_calls)
-
-    initial_snapshot = copy.deepcopy(initial)
-    recovery_snapshot = copy.deepcopy(recovery_execution)
-    final_execution = copy.deepcopy(recovery_execution if recovery_success else initial)
-    final_execution.update(
-        {
-            "method_available": True,
-            "planner_task": initial.get("planner_task"),
-            "planner_plan": initial.get("planner_plan"),
-            "planner_repaired": initial.get("planner_repaired", False),
-            "planner_repair_reason": initial.get("planner_repair_reason", ""),
-            "internal_recovery_attempted": True,
-            "internal_recovery_succeeded": recovery_success,
-            "initial_execution": initial_snapshot,
-            "recovery_planner_task": recovery_plan.get("planner_task"),
-            "recovery_planner_plan": recovery_plan.get("planner_plan"),
-            "recovery_planner_repaired": recovery_plan.get("planner_repaired", False),
-            "recovery_planner_reason": recovery_plan.get("repair_reason", ""),
-            "recovery_reset_runtime": recovery_reset_applied,
-            "recovery_execution": recovery_snapshot,
-        }
-    )
-    return final_execution
+    final = run_appweaver(str(intent.get("intent") or ""), _appweaver_deps(), cfg)
+    chain = list(final.get("generated_workflow") or [])
+    task = final.get("planner_task") or {}
+    repair_events = list(final.get("repair_events") or [])
+    moves = [str(event.get("move")) for event in repair_events]
+    recovery = final.get("recovery") or {}
+    status = str(final.get("status") or "failed")
+    unavailable = bool(final.get("planner_unavailable"))
+    validation = final.get("validation_report") or {}
+    return {
+        "generated_workflow_id": (workflow_id_from_chain(chain) or custom_workflow_id_from_chain(chain)) if chain else None,
+        "generated_workflow": chain,
+        "tool_calls": list(final.get("tool_calls") or []),
+        "raw_runs": list(final.get("run_payloads") or []),
+        "workflow_run": None,
+        "status": status,
+        "blocked_reason": str(final.get("blocked_reason") or ""),
+        "manual_override": False,
+        "method_available": not unavailable,
+        "planner_task": task,
+        "planner_plan": final.get("planner_plan"),
+        "planner_error": "" if task.get("status") == "completed" else str(task.get("response") or task.get("error") or ""),
+        "planner_unavailable": unavailable,
+        "planner_repaired": bool(moves),
+        "planner_repair_reason": ", ".join(moves),
+        "failure_reason": final.get("failure_reason", ""),
+        "raw_chain": final.get("raw_chain"),
+        "selected_steps": list(final.get("steps") or []),
+        "compat_report": final.get("compat_report"),
+        "repair_events": repair_events,
+        "retrieval": annotate_retrieval(final.get("retrieval") or {}, intent),
+        "validation_report": validation,
+        "validation_history": list(final.get("validation_history") or []),
+        "validate_mode": validation.get("mode") or cfg.validate_mode,
+        "graph_backend": final.get("graph_backend"),
+        "graph_variant": final.get("graph_variant"),
+        "graph_nodes": final.get("graph_nodes"),
+        "workflow_events": list(final.get("events") or []),
+        "prompt_sizes": list(final.get("prompts") or []),
+        "conflict_detected_before_control": bool(final.get("conflict_detected_before_control")),
+        "partial_deployment": bool(final.get("partial_deployment")),
+        "replanned_around_resource": bool(final.get("replanned_around_resource")),
+        "waited_for_lease": bool(final.get("waited_for_lease")),
+        "graph_lease_wait_s": round(float(final.get("lease_wait_s") or 0.0), 3),
+        "internal_recovery_attempted": int(final.get("recoveries") or 0) > 0,
+        "internal_recovery_succeeded": int(final.get("recoveries") or 0) > 0 and status == "completed",
+        "recovery": recovery,
+        "recovery_planner_task": recovery.get("planner_task"),
+        "recovery_planner_plan": recovery.get("planner_plan"),
+        "recovery_reset_runtime": False,
+    }
 
 
 def poll_workflow_until_stable(run_id: str, initial_workflow: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -1564,9 +1507,6 @@ def execute_llm_only(intent: Dict[str, Any], duration_s: int) -> Dict[str, Any]:
         }
     workflow_id = planner.get("workflow_id")
     generated_workflow = list(planner.get("generated_workflow") or [])
-    tool_calls: List[Dict[str, Any]] = []
-    raw_runs: List[Dict[str, Any]] = []
-
     if workflow_id in WORKFLOW_TEMPLATES:
         action_pairs = actions_for_workflow(str(workflow_id))
     else:
@@ -1580,20 +1520,13 @@ def execute_llm_only(intent: Dict[str, Any], duration_s: int) -> Dict[str, Any]:
             if actions:
                 action_pairs.append((agent_id, actions[0].id))
 
-    for agent_id, action_id in action_pairs:
-        tool_call, run_payload, _ = invoke_action(agent_id, action_id)
-        tool_calls.append(tool_call)
-        if run_payload is not None:
-            raw_runs.append(run_payload)
+    result = run_action_pairs(action_pairs)
 
     return {
         "generated_workflow_id": workflow_id,
         "generated_workflow": generated_workflow,
-        "tool_calls": tool_calls,
-        "raw_runs": raw_runs,
+        **result,
         "workflow_run": None,
-        "status": "completed_with_issues" if any(call["status"] == "failed" for call in tool_calls) else "completed",
-        "blocked_reason": "",
         "manual_override": False,
         "planner_task": planner.get("planner_task"),
         "planner_plan": planner.get("planner_plan"),
@@ -1643,8 +1576,7 @@ def execute_llm_blind(intent: Dict[str, Any], duration_s: int) -> Dict[str, Any]
         }
     generated_workflow = list(planner.get("generated_workflow") or [])
     known_by_label = {agent_id.upper(): agent_id for agent_id in AGENTS.keys()}
-    tool_calls: List[Dict[str, Any]] = []
-    raw_runs: List[Dict[str, Any]] = []
+    action_pairs: List[Tuple[str, str]] = []
     for name in generated_workflow:
         agent_id = known_by_label.get(name)
         if not agent_id or not AGENTS[agent_id].actions:
@@ -1652,18 +1584,13 @@ def execute_llm_blind(intent: Dict[str, Any], duration_s: int) -> Dict[str, Any]
             # the hallucinated reference from generated_workflow.
             continue
         action_id = default_action_for_agent(agent_id, intent) or AGENTS[agent_id].actions[0].id
-        tool_call, run_payload, _ = invoke_action(agent_id, action_id)
-        tool_calls.append(tool_call)
-        if run_payload is not None:
-            raw_runs.append(run_payload)
+        action_pairs.append((agent_id, action_id))
+    result = run_action_pairs(action_pairs)
     return {
         "generated_workflow_id": workflow_id_from_chain(generated_workflow) or custom_workflow_id_from_chain(generated_workflow),
         "generated_workflow": generated_workflow,
-        "tool_calls": tool_calls,
-        "raw_runs": raw_runs,
+        **result,
         "workflow_run": None,
-        "status": "completed_with_issues" if any(call["status"] == "failed" for call in tool_calls) else "completed",
-        "blocked_reason": "",
         "manual_override": False,
         "planner_task": planner.get("planner_task"),
         "planner_plan": planner.get("planner_plan"),
@@ -1691,6 +1618,64 @@ def execute_method(method: str, intent: Dict[str, Any], duration_s: int) -> Dict
     if method == "llm_only":
         return execute_llm_only(intent, duration_s)
     raise ValueError(f"Unsupported method: {method}")
+
+
+def conflict_outcome(execution: Dict[str, Any], tool_calls: List[Dict[str, Any]], failure_detected: bool) -> Dict[str, Any]:
+    """Seeded-conflict fields, computed the same way for every method (P0-2).
+
+    conflict_detected_before_control: the busy application was noticed before a control to it
+      was issued -- AppWeaver's Validate lease pre-check, or a lease refusal (409) by the portal.
+    partial_deployment: some control (write-scope) step had already been launched when the first
+      refusal happened (the chain was half-deployed when the conflict surfaced).
+    completed_after_wait: the record ended with every step launched after a bounded lease wait.
+    replanned_around_resource: AppWeaver's Recover re-planned without the busy application.
+    preempted_other_workflow: a reset ran during the record (must never happen; asserted).
+    """
+    writes_done = 0
+    partial = False
+    refused_seen = False
+    for call in tool_calls:
+        if is_lease_refusal(call) or call.get("lease_refusal"):
+            partial = writes_done > 0
+            refused_seen = True
+            break
+        if call.get("status") == "success" and _step_writes(str(call.get("agent_id") or ""), call.get("action_id")):
+            writes_done += 1
+    if "partial_deployment" in execution:
+        partial = bool(execution.get("partial_deployment")) or partial
+    precheck = bool(execution.get("conflict_detected_before_control"))
+    # AppWeaver's graph accounts its own waits (Recover + Deploy); baselines' waits are in _RECORD_STATE.
+    lease_wait = round(float(execution["graph_lease_wait_s"] if "graph_lease_wait_s" in execution else (_RECORD_STATE.get("lease_wait_s") or 0.0)), 3)
+    unresolved = str(execution.get("status") or "") in {"queued", "blocked_by_conflict"} or any(
+        (call.get("lease_refusal") and not any(
+            later.get("retry_after_lease_wait") and later.get("agent_id") == call.get("agent_id") and later.get("status") == "success"
+            for later in tool_calls))
+        for call in tool_calls
+    )
+    waited = lease_wait > 0.0 or bool(execution.get("waited_for_lease"))
+    preempted = int(_RECORD_STATE.get("reset_calls") or 0) > 0
+    return {
+        "lease_wait_s": lease_wait,
+        "conflict_detected_before_control": precheck or refused_seen,
+        "partial_deployment": partial,
+        "completed_after_wait": waited and not unresolved and not failure_detected and str(execution.get("status") or "") == "completed",
+        "replanned_around_resource": bool(execution.get("replanned_around_resource")),
+        "lease_refusal_unresolved": unresolved,
+        "preempted_other_workflow": preempted,
+    }
+
+
+def score_with_label_rules(chain: List[str], intent: Dict[str, Any]) -> Tuple[Optional[bool], Optional[List[str]]]:
+    """Pre-registered partial-order label rule (evaluation/label_rules.py, separate workstream)."""
+    try:
+        from evaluation import label_rules  # type: ignore
+    except Exception:
+        return None, None
+    try:
+        matched, reasons = label_rules.rule_match(list(chain), intent, AGENTS)
+        return bool(matched), [str(reason) for reason in (reasons or [])]
+    except Exception as exc:  # scoring must never kill a record
+        return None, [f"label_rules error: {exc!r}"]
 
 
 def build_record(
@@ -1760,6 +1745,10 @@ def build_record(
 
     planner_task = (execution.get("planner_task") or {}) if isinstance(execution.get("planner_task"), dict) else {}
     providers = {item.get("id"): item for item in _provider_statuses()}
+    conflict_fields = conflict_outcome(execution, tool_calls, failure_detected)
+    conflict_detected = conflict_detected or conflict_fields["conflict_detected_before_control"]
+    rule_match, rule_reasons = score_with_label_rules(generated_workflow, intent)
+    retrieval = execution.get("retrieval") or None
     planner_provider = planner_task.get("provider_id")
     planner_model = (providers.get(planner_provider) or {}).get("model") if planner_provider else None
 
@@ -1780,6 +1769,9 @@ def build_record(
         "generated_workflow": generated_workflow,
         "workflow_match": generated_workflow == expected_workflow,
         "workflow_match_any_accepted": workflow_match_any,
+        "workflow_match_rule": rule_match,
+        "workflow_match_rule_reasons": rule_reasons,
+        "workflow_rule_reasons": rule_reasons,
         "workflow_set_match": workflow_set_match,
         "accepted_workflows": accepted,
         "planner_provider": planner_provider,
@@ -1787,8 +1779,13 @@ def build_record(
         "planner_cached": bool(execution.get("planner_cached", False)),
         "compat_ok": (execution.get("compat_report") or {}).get("ok") if execution.get("compat_report") else None,
         "compat_report": execution.get("compat_report"),
-        "retrieval": execution.get("retrieval"),
-        "retrieval_hit": (execution.get("retrieval") or {}).get("expected_retrieved") if execution.get("retrieval") else None,
+        "retrieval": retrieval,
+        "retrieval_hit": (retrieval or {}).get("expected_retrieved") if retrieval else None,
+        "retrieval_hit_unpinned": (retrieval or {}).get("expected_retrieved_unpinned") if retrieval else None,
+        "graph_backend": execution.get("graph_backend"),
+        "validate_mode": execution.get("validate_mode"),
+        "validation_report": execution.get("validation_report"),
+        **conflict_fields,
         "tool_calls": tool_calls,
         "tool_call_count": len(tool_calls),
         "tool_call_launch_success_count": tool_launch_success,
@@ -1827,7 +1824,7 @@ def build_record(
         "workflow_status": (workflow_run or {}).get("status"),
         "workflow_run_id": (workflow_run or {}).get("id"),
         "workflow_summary": (workflow_run or {}).get("summary"),
-        "workflow_events": list((workflow_run or {}).get("events") or []),
+        "workflow_events": list((workflow_run or {}).get("events") or execution.get("workflow_events") or []),
         "selected_actions": list((workflow_run or {}).get("selected_actions") or []),
         "blocked_reason": execution.get("blocked_reason", ""),
         "execution_artifacts": execution_artifacts,
@@ -1839,83 +1836,139 @@ def build_record(
             "Open-world intents may require agent-card planning and custom workflow chains that do not map to the portal's three predefined workflow templates.",
             "KPM before/after values are proxy metrics from the portal figure payload. SLA violation rate is currently unavailable and recorded as null.",
             "Observation-heavy paths may reuse cached KPM snapshots/results to reduce platform load during evaluation.",
-            "External recovery is defined as a clean rerun of the same method after a runtime reset, without the synthetic conflict seed used to create the stress case.",
-            "Internal recovery is counted separately when a method repairs its own plan before the record is finalized.",
+            "No method resets the runtime during a record: a busy application is waited for (bounded, same budget for every method) or re-planned around (AppWeaver Recover). recovered_from_failure = completed after such a wait/re-plan.",
+            "Internal recovery (AppWeaver Recover node) is reported in execution_artifacts.internal_recovery_*.",
         ],
     }
     return record
 
 
 def run_record(method: str, intent: Dict[str, Any], repeat_index: int, duration_s: int, enable_recovery: bool) -> Dict[str, Any]:
+    """One (intent, method, repeat). Runtime resets happen only before and after the record.
+
+    `enable_recovery` is kept for CLI compatibility and ignored: the old external recovery
+    (reset the runtime, re-run without the seed) pre-empted the seeded workflow and is gone.
+    Recovery is now the in-method bounded lease wait (all methods) and AppWeaver's Recover node.
+    """
+    del enable_recovery
     reset_runtime()
-    before_snapshot = capture_metrics_snapshot()
-    conflict_seed = seed_conflict_if_needed(intent, method, duration_s)
-    method_error: Optional[str] = None
-    recovery_result: Optional[Dict[str, Any]] = None
-    started = time.perf_counter()
+    _RECORD_STATE.update({"active": True, "notes": str(intent.get("notes") or ""), "own_run_ids": set(), "reset_calls": 0, "lease_wait_s": 0.0})
     try:
-        execution = execute_method(method, intent, duration_s)
-    except Exception as exc:
-        execution = {
-            "generated_workflow_id": None,
-            "generated_workflow": [],
-            "tool_calls": [],
-            "raw_runs": [],
-            "workflow_run": None,
-            "status": "failed",
-            "blocked_reason": "",
-            "manual_override": False,
-        }
-        method_error = str(exc)
-    orchestration_latency_ms = (time.perf_counter() - started) * 1000.0
-    acknowledge_tool_calls(list(execution.get("tool_calls") or []), float(EVAL_RUNTIME_CONFIG.get("tool_ack_timeout_s") or 0.0))
-    after_snapshot = capture_metrics_snapshot()
-
-    conflict_detected = detect_conflict(execution, list(execution.get("tool_calls") or []))
-    failure_detected = bool(method_error) or detect_failure(execution, list(execution.get("tool_calls") or []))
-    recovery_attempted = False
-    recovered_from_failure = False
-
-    if enable_recovery and (failure_detected or conflict_detected):
-        recovery_attempted = True
-        reset_runtime()
+        before_snapshot = capture_metrics_snapshot()
+        conflict_seed = seed_conflict_if_needed(intent, method, duration_s)
+        method_error: Optional[str] = None
+        started = time.perf_counter()
         try:
-            retry_started = time.perf_counter()
-            recovery_execution = execute_method(method, {**intent, "conflict_seed": None, "expects_conflict": False}, duration_s)
-            retry_latency_ms = (time.perf_counter() - retry_started) * 1000.0
-            recovery_result = {
-                "status": recovery_execution.get("status"),
-                "tool_calls": recovery_execution.get("tool_calls"),
-                "generated_workflow": recovery_execution.get("generated_workflow"),
-                "latency_ms": round(retry_latency_ms, 3),
+            execution = execute_method(method, intent, duration_s)
+        except AssertionError:
+            raise  # label leakage or a pre-emptive reset: stop the batch loudly
+        except Exception as exc:
+            execution = {
+                "generated_workflow_id": None,
+                "generated_workflow": [],
+                "tool_calls": [],
+                "raw_runs": [],
+                "workflow_run": None,
+                "status": "failed",
+                "blocked_reason": "",
+                "manual_override": False,
             }
-            recovered_from_failure = not detect_failure(recovery_execution, list(recovery_execution.get("tool_calls") or [])) and not detect_conflict(recovery_execution, list(recovery_execution.get("tool_calls") or []))
-        except Exception as exc:  # pragma: no cover - runtime dependent
-            recovery_result = {"status": "failed", "error": str(exc)}
-            recovered_from_failure = False
+            method_error = str(exc)
+        orchestration_latency_ms = (time.perf_counter() - started) * 1000.0
+        acknowledge_tool_calls(list(execution.get("tool_calls") or []), float(EVAL_RUNTIME_CONFIG.get("tool_ack_timeout_s") or 0.0))
+        after_snapshot = capture_metrics_snapshot()
 
-    record = build_record(
-        intent=intent,
-        method=method,
-        repeat_index=repeat_index,
-        duration_s=duration_s,
-        before_snapshot=before_snapshot,
-        after_snapshot=after_snapshot,
-        execution=execution,
-        orchestration_latency_ms=orchestration_latency_ms,
-        recovery_attempted=recovery_attempted,
-        recovered_from_failure=recovered_from_failure,
-        recovery_result=recovery_result,
-        conflict_seed=conflict_seed,
-        method_error=method_error,
-    )
+        tool_calls = list(execution.get("tool_calls") or [])
+        failure_detected = bool(method_error) or detect_failure(execution, tool_calls)
+        waited = float(_RECORD_STATE.get("lease_wait_s") or 0.0) > 0.0 or bool(execution.get("waited_for_lease"))
+        recovery_attempted = waited or bool(execution.get("replanned_around_resource"))
+        recovered_from_failure = recovery_attempted and not failure_detected and str(execution.get("status") or "") == "completed"
+
+        record = build_record(
+            intent=intent,
+            method=method,
+            repeat_index=repeat_index,
+            duration_s=duration_s,
+            before_snapshot=before_snapshot,
+            after_snapshot=after_snapshot,
+            execution=execution,
+            orchestration_latency_ms=orchestration_latency_ms,
+            recovery_attempted=recovery_attempted,
+            recovered_from_failure=recovered_from_failure,
+            recovery_result=None,
+            conflict_seed=conflict_seed,
+            method_error=method_error,
+        )
+        assert record["preempted_other_workflow"] is False, "a method pre-empted another workflow"
+    finally:
+        _RECORD_STATE["active"] = False
     reset_runtime()
     return record
 
 
-def manifest(methods: List[str], intents: List[Dict[str, Any]], repeats: int, duration_s: int) -> Dict[str, Any]:
+def _sha256_file(path: Path) -> Optional[str]:
+    try:
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+    except OSError:
+        return None
+
+
+def _git(*args: str) -> Optional[str]:
+    try:
+        out = subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, text=True, timeout=10)
+        return out.stdout.strip() if out.returncode == 0 else None
+    except Exception:
+        return None
+
+
+def code_provenance() -> Dict[str, Any]:
+    """Git commit of the repo plus sha256 of the files this batch actually executed.
+
+    The harness usually runs from the (git-ignored) build tree, so the commit alone does not
+    pin the code: the per-file hashes do.
+    """
+    files = [
+        Path(__file__).resolve(),
+        ROOT / "backend" / "orchestration" / "discovery.py",
+        ROOT / "backend" / "orchestration" / "compat.py",
+        ROOT / "backend" / "orchestration" / "validate.py",
+        ROOT / "evaluation" / "label_rules.py",
+        ROOT / "flexric_agent_portal.py",
+    ] + sorted((ROOT / "backend" / "appweaver").rglob("*.py")) + sorted((ROOT / "backend" / "agents").glob("*.py"))
+    source_dir = Path.home() / "flexric" / "examples" / "xApp" / "python3"
+    dirty = None
+    if source_dir.exists():
+        try:
+            out = subprocess.run(["git", "-C", str(source_dir), "status", "--porcelain", "--", "."], capture_output=True, text=True, timeout=10)
+            dirty = bool(out.stdout.strip()) if out.returncode == 0 else None
+        except Exception:
+            dirty = None
+    return {
+        "git_commit": _git("rev-parse", "HEAD"),
+        "git_branch": _git("rev-parse", "--abbrev-ref", "HEAD"),
+        "git_source_dirty": dirty,
+        "harness_root": str(ROOT),
+        "code_sha256": {str(path.relative_to(ROOT)) if str(path).startswith(str(ROOT)) else str(path): _sha256_file(path) for path in files if path.exists()},
+    }
+
+
+def manifest(methods: List[str], intents: List[Dict[str, Any]], repeats: int, duration_s: int, intents_path: Optional[Path] = None) -> Dict[str, Any]:
+    prompt_hashes = prompt_builders_sha256()
+    provenance = code_provenance()
     return {
         "created_at": datetime.utcnow().isoformat() + "Z",
+        "intents_file": str(intents_path) if intents_path else None,
+        "intents_sha256": _sha256_file(intents_path) if intents_path else None,
+        "git_commit": provenance.get("git_commit"),
+        "code_provenance": provenance,
+        "prompt_builders_sha256": prompt_hashes,
+        "LLM_SERVER_HARDWARE": os.getenv("LLM_SERVER_HARDWARE", "unrecorded"),
+        "max_prompt_chars": EVAL_RUNTIME_CONFIG.get("max_prompt_chars"),
+        "lease_wait_s": EVAL_RUNTIME_CONFIG.get("lease_wait_s"),
+        "validate_mode": EVAL_RUNTIME_CONFIG.get("validate_mode"),
+        "validate_mode_effective": EVAL_RUNTIME_CONFIG.get("validate_mode_effective"),
+        "graph_backend": "langgraph",
+        "external_recovery": "removed (no runtime reset during a record)",
         "methods": methods,
         "intent_count": len(intents),
         "repeat_count": repeats,
@@ -1923,7 +1976,7 @@ def manifest(methods: List[str], intents: List[Dict[str, Any]], repeats: int, du
         "evaluation_runtime_config": copy.deepcopy(EVAL_RUNTIME_CONFIG),
         "method_labels": {method: METHOD_LABELS.get(method, method) for method in methods},
         "planner_inference_settings": llm_sampling_settings(),
-        "planner_prompt_sha256": prompt_builders_sha256(),
+        "planner_prompt_sha256": prompt_hashes,
         "hardware": {
             "orchestration_host": platform.node(),
             "orchestration_platform": platform.platform(),
@@ -1980,7 +2033,11 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     parser.add_argument("--repeat", type=int, default=5)
     parser.add_argument("--duration-s", type=int, default=45)
     parser.add_argument("--max-intents", type=int, default=0)
-    parser.add_argument("--disable-recovery", action="store_true")
+    parser.add_argument("--disable-recovery", action="store_true", help="Deprecated no-op: the external reset-and-rerun recovery was removed (it pre-empted the seeded workflow).")
+    parser.add_argument("--lease-wait-s", type=float, default=45.0, help="Bounded wait every method gets when a step is refused because the agent is busy (then one retry); seed actions run 30 s. 0 disables waiting.")
+    parser.add_argument("--validate-mode", choices=["checks", "dryrun"], default="checks", help="AppWeaver Validate: tier-1 checks only, or checks + dry run of each control step on the E2 emulator twin (backend.orchestration.emu_twin; degrades to checks if unavailable).")
+    parser.add_argument("--dryrun-duration-s", type=int, default=5)
+    parser.add_argument("--only-intents", default="", help="Comma-separated intent ids to run (applied before --max-intents).")
     parser.add_argument("--metrics-mode", choices=["off", "cached", "live"], default="live")
     parser.add_argument("--metrics-min-interval-s", type=float, default=15.0)
     parser.add_argument("--observation-cache-ttl-s", type=float, default=0.0)
@@ -1989,7 +2046,9 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     parser.add_argument("--workflow-poll-interval-s", type=float, default=0.05)
     parser.add_argument("--tool-ack-timeout-s", type=float, default=10.0, help="How long to wait for launched xApps to show real work in their logs before marking the tool call unacknowledged.")
     parser.add_argument("--retrieval-k", type=int, default=0, help="Agent-card retrieval depth for the planner prompt; 0 = include every executable card (small-registry mode).")
-    parser.add_argument("--retrieval-include-deprecated", action="store_true", help="Let deprecated directory cards be retrieved (harder discovery).")
+    parser.add_argument("--retrieval-include-deprecated", action="store_true", help="Deprecated: deprecated cards are now visible by default (see --retrieval-hide-deprecated).")
+    parser.add_argument("--retrieval-hide-deprecated", action="store_true", help="Filter deprecated cards out before the prompt (old behaviour; the deprecated-card trap is then untested).")
+    parser.add_argument("--no-retrieval-pin-xapps", action="store_true", help="Ablation: do not pin the executable FlexRIC xApps into the retrieval result (k then bounds every card).")
     parser.add_argument("--label", default="", help="Optional suffix for the run directory name.")
     parser.add_argument("--repeat-start", type=int, default=1, help="First repeat index (continue a batch whose later repeats were invalid).")
     parser.add_argument("--maintenance-cmd", default="", help="Shell command run between records every --maintenance-every records (e.g. scripts/restart_agent_portal_stack.sh); outside every timed path, logged in the manifest.")
@@ -2012,7 +2071,11 @@ def main(argv: List[str]) -> int:
             "workflow_poll_interval_s": float(args.workflow_poll_interval_s),
             "tool_ack_timeout_s": float(args.tool_ack_timeout_s),
             "retrieval_k": int(args.retrieval_k),
-            "retrieval_include_deprecated": bool(args.retrieval_include_deprecated),
+            "retrieval_include_deprecated": not bool(args.retrieval_hide_deprecated),
+            "retrieval_pin_xapps": not bool(args.no_retrieval_pin_xapps),
+            "lease_wait_s": float(args.lease_wait_s),
+            "validate_mode": str(args.validate_mode),
+            "dryrun_duration_s": int(args.dryrun_duration_s),
             "max_prompt_chars": int(args.max_prompt_chars) or flexric_agent_portal.MAX_PROMPT_CHARS,
             "rapp_directory_enabled": os.getenv("FLEXRIC_RAPP_DIRECTORY", "").strip().lower() in {"1", "true", "yes", "on"},
         }
@@ -2027,7 +2090,20 @@ def main(argv: List[str]) -> int:
     if not methods:
         raise SystemExit("No supported methods were selected.")
 
+    if args.validate_mode == "dryrun":
+        dryrun_fn, dryrun_reason = resolve_dryrun()
+        EVAL_RUNTIME_CONFIG["validate_mode_effective"] = "dryrun" if dryrun_fn is not None else "checks"
+        EVAL_RUNTIME_CONFIG["validate_mode_degraded_reason"] = dryrun_reason
+    else:
+        EVAL_RUNTIME_CONFIG["validate_mode_effective"] = "checks"
     intents = load_intents(intent_path)
+    if args.only_intents.strip():
+        wanted = [item.strip() for item in args.only_intents.split(",") if item.strip()]
+        by_id = {str(intent.get("id")): intent for intent in intents}
+        missing = [item for item in wanted if item not in by_id]
+        if missing:
+            raise SystemExit(f"Unknown intent ids: {missing}")
+        intents = [by_id[item] for item in wanted]
     if args.max_intents > 0:
         intents = intents[: args.max_intents]
 
@@ -2037,7 +2113,8 @@ def main(argv: List[str]) -> int:
         shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    batch_manifest = manifest(methods, intents, args.repeat, args.duration_s)
+    batch_manifest = manifest(methods, intents, args.repeat, args.duration_s, intents_path=intent_path)
+    batch_manifest["only_intents"] = args.only_intents or None
     (output_dir / "manifest.json").write_text(json.dumps(batch_manifest, indent=2, sort_keys=True), encoding="utf-8")
     # Records are appended as they finish so a long batch can be watched and survives a crash.
     partial_path = output_dir / "records.partial.jsonl"

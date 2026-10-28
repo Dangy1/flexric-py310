@@ -32,10 +32,13 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 from pathlib import Path
 from typing import Any, Dict, List
 
 HERE = Path(__file__).resolve().parent
+if str(HERE.parent) not in sys.path:
+    sys.path.insert(0, str(HERE.parent))
 
 NEW_INTENTS: List[Dict[str, Any]] = [
     {"id": "night_energy_saving", "intent": "Reduce RAN energy consumption between 01:00 and 05:00 by switching off lightly loaded cells without breaking coverage.", "category": "energy", "expected_workflow": ["KPM", "RAPP.ENERGY_SAVING", "RC"], "accepted_workflows": [["KPM", "RAPP.ENERGY_SAVING", "RC"], ["RAPP.PM_KPI", "RAPP.ENERGY_SAVING", "RC"]], "tags": ["energy", "uc21"], "notes": "Observe PRB load, pick sleep cells, validate the RC control."},
@@ -95,7 +98,7 @@ def main() -> int:
     base = json.loads((HERE / "intents_50.json").read_text(encoding="utf-8"))
     out: List[Dict[str, Any]] = []
     for item in base:
-        entry = dict(item)
+        entry = {k: v for k, v in item.items() if k != "label_rule"}  # re-derived below for the v2 labels
         entry["split"] = "open_world" if item.get("open_world") else "known"
         entry.setdefault("accepted_workflows", [list(item["expected_workflow"])])
         entry["accepted_workflows"] += [alt for alt in rapp_alternatives(item) if alt not in entry["accepted_workflows"]]
@@ -108,8 +111,13 @@ def main() -> int:
         entry["expects_conflict"] = False
         entry.setdefault("accepted_workflows", [list(entry["expected_workflow"])])
         out.append(entry)
+    # Pre-registered label rule (evaluation/label_rules.py), derived from the labels + Agent Cards.
+    from evaluation.build_label_rules import annotate, dump
+    from evaluation.label_rules import build_registry
+
+    out = annotate(out, build_registry(rapp_directory=True))
     path = HERE / "intents_v2.json"
-    path.write_text(json.dumps(out, indent=2), encoding="utf-8")
+    path.write_text(dump(out, "indent2"), encoding="utf-8")
     splits: Dict[str, int] = {}
     for entry in out:
         splits[entry["split"]] = splits.get(entry["split"], 0) + 1

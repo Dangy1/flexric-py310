@@ -244,4 +244,29 @@ void rm_report_rc_sm(int);
 
 void control_rc_sm(global_e2_node_id_t* id, rc_ctrl_req_data_t* ctrl);
 
+// AppWeaver helpers: build E2SM-RC messages from the node-advertised RC RAN
+// function definition (same idea as report_kpm_sm_auto above).
+
+// Human-readable list of the RC REPORT and CONTROL styles the node advertised;
+// empty string when the node does not advertise E2SM-RC.
+std::string rc_ran_func_summary(global_e2_node_id_t* id);
+
+// Subscribe to RC REPORT Service Style 4 (UE Information, event trigger
+// format 4 "UE information change", action definition format 1) for every
+// advertised RAN parameter. Returns the subscription handle, or -1 when the
+// node does not advertise a compatible report style.
+int report_rc_sm_auto(global_e2_node_id_t* id, rc_cb* handler);
+
+// Send one RIC CONTROL with E2SM-RC Control Service Style 1 (Radio Bearer
+// Control), Control Action 2 (QoS flow mapping configuration): DRB `drb_id`,
+// one QoS flow `qfi` with mapping indication `dir` (0 = UL, 1 = DL), UE
+// identified by a gNB UE ID with `amf_ue_ngap_id`. Blocks until the RIC
+// CONTROL ACKNOWLEDGE arrives. Returns 0 on ACK, -1 when the node does not
+// advertise E2SM-RC, -2 when it does not advertise style 1 / action 2.
+int control_rc_sm_qos_flow_map(global_e2_node_id_t* id, uint64_t amf_ue_ngap_id, int64_t drb_id, int64_t qfi, int64_t dir);
+
+// One-line summary of an RC indication (header/message format, UE ids and
+// integer RAN parameter values).
+std::string rc_ind_summary(rc_ind_data_t const* ind);
+
 #endif

@@ -19,6 +19,10 @@
 
 extern "C" {
 #include "../../util/time_now_us.h"
+// Complete types for the E2SM-RC CONTROL message built in control_rc_sm_qos_flow_map()
+#include "../../sm/rc_sm/ie/ir/ran_param_struct.h"
+#include "../../sm/rc_sm/ie/ir/ran_param_list.h"
+#include "../../sm/rc_sm/ie/ir/lst_ran_param.h"
 }
 
 
@@ -57,9 +61,17 @@ void init()
 {
   assert(initialized == false && "Already initialized!");
 
-  int const argc = 1;
-  char** argv = NULL;
-  fr_args_t args = init_fr_args(argc, argv);
+  // AppWeaver: init() takes no arguments from Python, so the config file
+  // (which carries NEAR_RIC_IP and the xApp DB_DIR) can be redirected with the
+  // FLEXRIC_XAPP_CONF environment variable, e.g. to target a second "twin"
+  // nearRT-RIC. Unset -> FlexRIC default (/usr/local/etc/flexric/flexric.conf).
+  char const* env_conf = getenv("FLEXRIC_XAPP_CONF");
+  std::string conf_path = (env_conf != NULL) ? std::string(env_conf) : std::string();
+  char arg0[] = "xapp_sdk";
+  char arg1[] = "-c";
+  char* argv_conf[] = {arg0, arg1, &conf_path[0], NULL};
+
+  fr_args_t args = conf_path.empty() ? init_fr_args(1, NULL) : init_fr_args(3, argv_conf);
 
   initialized = true; 
 
@@ -1302,4 +1314,295 @@ void control_rc_sm(global_e2_node_id_t* id, rc_ctrl_req_data_t* ctrl)
   assert(ctrl != NULL);
 
   control_sm_xapp_api(id, SM_RC_ID, ctrl);
+}
+
+//////////////////////////////////////
+// RC SM helpers (AppWeaver revision)
+//
+// Building rc_sub_data_t / rc_ctrl_req_data_t from Python through SWIG is
+// impractical (nested unions and calloc'd arrays), so, like the KPM
+// report_kpm_sm_auto() helper above, these build the E2SM-RC messages in C++
+// from the RAN function definition the E2 node advertised at E2 Setup.
+/////////////////////////////////////
+
+static
+std::string rc_ba_str(byte_array_t const& ba)
+{
+  if (ba.buf == NULL || ba.len == 0) {
+    return std::string();
+  }
+  return std::string(reinterpret_cast<char const*>(ba.buf), ba.len);
+}
+
+// Runs fn(def) on the RC RAN function definition advertised by node `id`.
+// Returns false when the node is unknown or does not advertise E2SM-RC.
+template <typename F>
+static
+bool rc_with_node_def(global_e2_node_id_t const* id, F fn)
+{
+  assert(id != NULL);
+  e2_node_arr_xapp_t arr = e2_nodes_xapp_api();
+  bool found = false;
+  for (size_t i = 0; i < arr.len && found == false; ++i) {
+    e2_node_connected_xapp_t const* n = &arr.n[i];
+    if (eq_global_e2_node_id(id, &n->id) == false) {
+      continue;
+    }
+    for (size_t j = 0; j < n->len_rf; ++j) {
+      sm_ran_function_t const* rf = &n->rf[j];
+      if (rf->id != SM_RC_ID || rf->defn.type != RC_RAN_FUNC_DEF_E) {
+        continue;
+      }
+      found = true;
+      fn(&rf->defn.rc);
+      break;
+    }
+  }
+  free_e2_node_arr_xapp(&arr);
+  return found;
+}
+
+std::string rc_ran_func_summary(global_e2_node_id_t* id)
+{
+  std::ostringstream os;
+  bool const found = rc_with_node_def(id, [&os](e2sm_rc_func_def_t const* def) {
+    os << "report_styles=[";
+    if (def->report != NULL) {
+      for (size_t i = 0; i < def->report->sz_seq_report_sty; ++i) {
+        seq_report_sty_t const* s = &def->report->seq_report_sty[i];
+        os << (i ? "; " : "") << s->report_type << ":" << rc_ba_str(s->name)
+           << " ev_trig_fmt=" << (s->ev_trig_type + 1) << " act_fmt=" << (s->act_frmt_type + 1) << " params=";
+        for (size_t j = 0; j < s->sz_seq_ran_param; ++j) {
+          os << (j ? "," : "") << s->ran_param[j].id << "(" << rc_ba_str(s->ran_param[j].name) << ")";
+        }
+      }
+    }
+    os << "] control_styles=[";
+    if (def->ctrl != NULL) {
+      for (size_t i = 0; i < def->ctrl->sz_seq_ctrl_style; ++i) {
+        seq_ctrl_style_t const* s = &def->ctrl->seq_ctrl_style[i];
+        os << (i ? "; " : "") << s->style_type << ":" << rc_ba_str(s->name) << " actions=";
+        for (size_t k = 0; k < s->sz_seq_ctrl_act; ++k) {
+          os << (k ? "," : "") << s->seq_ctrl_act[k].id << "(" << rc_ba_str(s->seq_ctrl_act[k].name) << ")";
+        }
+      }
+    }
+    os << "]";
+  });
+  return found ? os.str() : std::string();
+}
+
+int report_rc_sm_auto(global_e2_node_id_t* id, rc_cb* handler)
+{
+  assert(id != NULL);
+  assert(handler != NULL);
+
+  rc_sub_data_t sub{};
+  bool built = false;
+  bool const found = rc_with_node_def(id, [&sub, &built](e2sm_rc_func_def_t const* def) {
+    if (def->report == NULL) {
+      return;
+    }
+    // REPORT Service Style 4 "UE Information" with Event Trigger Format 4
+    // (UE information change) and Action Definition Format 1 -- the style the
+    // FlexRIC emulator and OAI gNB advertise (cf. examples/xApp/c/monitor/xapp_rc_moni.c).
+    for (size_t i = 0; i < def->report->sz_seq_report_sty && built == false; ++i) {
+      seq_report_sty_t const* s = &def->report->seq_report_sty[i];
+      if (s->report_type != 4 || s->ev_trig_type != FORMAT_4_E2SM_RC_EV_TRIGGER_FORMAT
+          || s->act_frmt_type != FORMAT_1_E2SM_RC_ACT_DEF || s->sz_seq_ran_param == 0) {
+        continue;
+      }
+      size_t const sz = s->sz_seq_ran_param;
+      sub.et.format = FORMAT_4_E2SM_RC_EV_TRIGGER_FORMAT;
+      sub.et.frmt_4.sz_ue_info_chng = sz;
+      sub.et.frmt_4.ue_info_chng = (ue_info_chng_t*)calloc(sz, sizeof(ue_info_chng_t));
+      assert(sub.et.frmt_4.ue_info_chng != NULL && "Memory exhausted");
+
+      sub.sz_ad = 1;
+      sub.ad = (e2sm_rc_action_def_t*)calloc(1, sizeof(e2sm_rc_action_def_t));
+      assert(sub.ad != NULL && "Memory exhausted");
+      sub.ad[0].ric_style_type = 4;
+      sub.ad[0].format = FORMAT_1_E2SM_RC_ACT_DEF;
+      sub.ad[0].frmt_1.sz_param_report_def = sz;
+      sub.ad[0].frmt_1.param_report_def = (param_report_def_t*)calloc(sz, sizeof(param_report_def_t));
+      assert(sub.ad[0].frmt_1.param_report_def != NULL && "Memory exhausted");
+
+      for (size_t j = 0; j < sz; ++j) {
+        ue_info_chng_t* uic = &sub.et.frmt_4.ue_info_chng[j];
+        uic->ev_trig_cond_id = (uint16_t)(j + 1);
+        uic->type = RRC_STATE_UE_INFO_CHNG_TRIGGER_TYPE;
+        uic->rrc_state.sz_rrc_state = 1;
+        uic->rrc_state.state_chng_to = (rrc_state_t*)calloc(1, sizeof(rrc_state_t));
+        assert(uic->rrc_state.state_chng_to != NULL && "Memory exhausted");
+        uic->rrc_state.state_chng_to[0].state_chngd_to = ANY_RRC_STATE_E2SM_RC;
+
+        param_report_def_t* prd = &sub.ad[0].frmt_1.param_report_def[j];
+        prd->ran_param_id = s->ran_param[j].id;
+        if (s->ran_param[j].def != NULL) {
+          prd->ran_param_def = (ran_param_def_t*)calloc(1, sizeof(ran_param_def_t));
+          assert(prd->ran_param_def != NULL && "Memory exhausted");
+          *prd->ran_param_def = cp_ran_param_def(s->ran_param[j].def);
+        }
+      }
+      built = true;
+    }
+  });
+  if (found == false || built == false) {
+    return -1;
+  }
+
+  hndlr_rc_cb = handler;
+  sm_ans_xapp_t ans{};
+#ifdef XAPP_LANG_PYTHON
+  // The E2 node may send RC indications before the SUBSCRIPTION RESPONSE has
+  // been processed; release the GIL so the indication thread can call into
+  // Python while this thread waits for the response.
+  PyThreadState* ts = PyEval_SaveThread();
+#endif
+  ans = report_sm_xapp_api(id, SM_RC_ID, &sub, sm_cb_rc);
+#ifdef XAPP_LANG_PYTHON
+  PyEval_RestoreThread(ts);
+#endif
+  free_rc_sub_data(&sub);
+  if (ans.success == false) {
+    return -1;
+  }
+  return ans.u.handle;
+}
+
+static
+seq_ran_param_t rc_int_param(uint32_t ran_param_id, int64_t value, bool key_flag)
+{
+  seq_ran_param_t p{};
+  p.ran_param_id = ran_param_id;
+  ran_parameter_value_t* v = (ran_parameter_value_t*)calloc(1, sizeof(ran_parameter_value_t));
+  assert(v != NULL && "Memory exhausted");
+  v->type = INTEGER_RAN_PARAMETER_VALUE;
+  v->int_ran = value;
+  if (key_flag) {
+    p.ran_param_val.type = ELEMENT_KEY_FLAG_TRUE_RAN_PARAMETER_VAL_TYPE;
+    p.ran_param_val.flag_true = v;
+  } else {
+    p.ran_param_val.type = ELEMENT_KEY_FLAG_FALSE_RAN_PARAMETER_VAL_TYPE;
+    p.ran_param_val.flag_false = v;
+  }
+  return p;
+}
+
+int control_rc_sm_qos_flow_map(global_e2_node_id_t* id, uint64_t amf_ue_ngap_id, int64_t drb_id, int64_t qfi, int64_t dir)
+{
+  assert(id != NULL);
+
+  // E2SM-RC CONTROL Service Style 1 "Radio Bearer Control",
+  // Control Action ID 2 "QoS flow mapping configuration" (E2SM-RC 7.6.2.1 / 8.4.2.2).
+  bool advertised = false;
+  bool const found = rc_with_node_def(id, [&advertised](e2sm_rc_func_def_t const* def) {
+    if (def->ctrl == NULL) {
+      return;
+    }
+    for (size_t i = 0; i < def->ctrl->sz_seq_ctrl_style; ++i) {
+      seq_ctrl_style_t const* s = &def->ctrl->seq_ctrl_style[i];
+      if (s->style_type != 1 || s->hdr != FORMAT_1_E2SM_RC_CTRL_HDR || s->msg != FORMAT_1_E2SM_RC_CTRL_MSG) {
+        continue;
+      }
+      for (size_t k = 0; k < s->sz_seq_ctrl_act; ++k) {
+        if (s->seq_ctrl_act[k].id == 2) {
+          advertised = true;
+        }
+      }
+    }
+  });
+  if (found == false) {
+    return -1;  // node does not advertise E2SM-RC
+  }
+  if (advertised == false) {
+    return -2;  // RC advertised, but not control style 1 / action 2
+  }
+
+  rc_ctrl_req_data_t ctrl{};
+  ctrl.hdr.format = FORMAT_1_E2SM_RC_CTRL_HDR;
+  ctrl.hdr.frmt_1.ue_id.type = GNB_UE_ID_E2SM;
+  ctrl.hdr.frmt_1.ue_id.gnb.amf_ue_ngap_id = amf_ue_ngap_id;
+  ctrl.hdr.frmt_1.ue_id.gnb.guami.plmn_id.mcc = id->plmn.mcc;
+  ctrl.hdr.frmt_1.ue_id.gnb.guami.plmn_id.mnc = id->plmn.mnc;
+  ctrl.hdr.frmt_1.ue_id.gnb.guami.plmn_id.mnc_digit_len = id->plmn.mnc_digit_len;
+  ctrl.hdr.frmt_1.ue_id.gnb.guami.amf_region_id = 128;
+  ctrl.hdr.frmt_1.ue_id.gnb.guami.amf_set_id = 1;
+  ctrl.hdr.frmt_1.ue_id.gnb.guami.amf_ptr = 1;
+  ctrl.hdr.frmt_1.ric_style_type = 1;
+  ctrl.hdr.frmt_1.ctrl_act_id = 2;
+
+  ctrl.msg.format = FORMAT_1_E2SM_RC_CTRL_MSG;
+  ctrl.msg.frmt_1.sz_ran_param = 2;
+  ctrl.msg.frmt_1.ran_param = (seq_ran_param_t*)calloc(2, sizeof(seq_ran_param_t));
+  assert(ctrl.msg.frmt_1.ran_param != NULL && "Memory exhausted");
+
+  // RAN Parameter 1: DRB ID (element, key flag true)
+  ctrl.msg.frmt_1.ran_param[0] = rc_int_param(1, drb_id, true);
+
+  // RAN Parameter 2: List of QoS Flows to be modified in DRB, one item
+  // {4: QoS Flow Identifier (key), 5: QoS Flow Mapping Indication (0=ul, 1=dl)}
+  seq_ran_param_t* lp = &ctrl.msg.frmt_1.ran_param[1];
+  lp->ran_param_id = 2;
+  lp->ran_param_val.type = LIST_RAN_PARAMETER_VAL_TYPE;
+  lp->ran_param_val.lst = (ran_param_list_t*)calloc(1, sizeof(ran_param_list_t));
+  assert(lp->ran_param_val.lst != NULL && "Memory exhausted");
+  lp->ran_param_val.lst->sz_lst_ran_param = 1;
+  lp->ran_param_val.lst->lst_ran_param = (lst_ran_param_t*)calloc(1, sizeof(lst_ran_param_t));
+  assert(lp->ran_param_val.lst->lst_ran_param != NULL && "Memory exhausted");
+  ran_param_struct_t* rps = &lp->ran_param_val.lst->lst_ran_param[0].ran_param_struct;
+  rps->sz_ran_param_struct = 2;
+  rps->ran_param_struct = (seq_ran_param_t*)calloc(2, sizeof(seq_ran_param_t));
+  assert(rps->ran_param_struct != NULL && "Memory exhausted");
+  rps->ran_param_struct[0] = rc_int_param(4, qfi, true);
+  rps->ran_param_struct[1] = rc_int_param(5, dir, false);
+
+  sm_ans_xapp_t ans{};
+#ifdef XAPP_LANG_PYTHON
+  PyThreadState* ts = PyEval_SaveThread();
+#endif
+  // Blocks until the RIC CONTROL ACKNOWLEDGE arrives (the E2 library aborts
+  // on CONTROL FAILURE or timeout).
+  ans = control_sm_xapp_api(id, SM_RC_ID, &ctrl);
+#ifdef XAPP_LANG_PYTHON
+  PyEval_RestoreThread(ts);
+#endif
+  free_rc_ctrl_req_data(&ctrl);
+  return ans.success ? 0 : -3;
+}
+
+std::string rc_ind_summary(rc_ind_data_t const* ind)
+{
+  std::ostringstream os;
+  if (ind == NULL) {
+    return "null";
+  }
+  os << "hdr_fmt=" << (ind->hdr.format + 1) << " msg_fmt=" << (ind->msg.format + 1);
+  if (ind->msg.format == FORMAT_2_E2SM_RC_IND_MSG) {
+    e2sm_rc_ind_msg_frmt_2_t const* m = &ind->msg.frmt_2;
+    os << " ues=" << m->sz_seq_ue_id;
+    for (size_t i = 0; i < m->sz_seq_ue_id && i < 4; ++i) {
+      seq_ue_id_t const* u = &m->seq_ue_id[i];
+      if (u->ue_id.type == GNB_UE_ID_E2SM) {
+        os << " [amf_ue_ngap_id=" << u->ue_id.gnb.amf_ue_ngap_id;
+      } else {
+        os << " [ue_id_type=" << u->ue_id.type;
+      }
+      for (size_t j = 0; j < u->sz_seq_ran_param; ++j) {
+        seq_ran_param_t const* p = &u->seq_ran_param[j];
+        os << " param" << p->ran_param_id;
+        ran_parameter_value_t const* v = NULL;
+        if (p->ran_param_val.type == ELEMENT_KEY_FLAG_TRUE_RAN_PARAMETER_VAL_TYPE) {
+          v = p->ran_param_val.flag_true;
+        } else if (p->ran_param_val.type == ELEMENT_KEY_FLAG_FALSE_RAN_PARAMETER_VAL_TYPE) {
+          v = p->ran_param_val.flag_false;
+        }
+        if (v != NULL && v->type == INTEGER_RAN_PARAMETER_VALUE) {
+          os << "=" << v->int_ran;
+        }
+      }
+      os << "]";
+    }
+  }
+  return os.str();
 }

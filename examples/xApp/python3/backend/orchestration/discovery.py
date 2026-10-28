@@ -14,7 +14,7 @@ from __future__ import annotations
 import math
 import re
 from collections import Counter
-from typing import Dict, Iterable, List, Sequence, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 from backend.common.models import AgentCard
 
@@ -87,6 +87,98 @@ def card_family(card: AgentCard) -> str:
     return ".".join(parts[:2]) if parts[0] == "rapp" and len(parts) >= 2 else card.id
 
 
+def pinned_xapp_ids(registry: Dict[str, AgentCard]) -> List[str]:
+    """Executable near-RT xApps of the platform (kpm, slice, tc, rc).
+
+    They are the control/observation primitives every chain is built from, so the
+    Discover step always hands them to the planner; top-k only bounds the rApp
+    directory (review P0-6: at k=8 KPM/RC/SLICE were outranked by rApp families).
+    """
+    return sorted(
+        card.id for card in registry.values()
+        if card.actions and getattr(card, "app_type", "xapp") == "xapp" and card.status != "deprecated"
+    )
+
+
+def discover_with_report(
+    registry: Dict[str, AgentCard],
+    intent_text: str,
+    k: int = 8,
+    executable_only: bool = True,
+    include_deprecated: bool = True,
+    dedupe_families: bool = True,
+    pin: Optional[Sequence[str]] = None,
+    exclude: Optional[Iterable[str]] = None,
+) -> Tuple[List[Tuple[AgentCard, float]], Dict[str, object]]:
+    """Rank registry cards for an intent and explain the selection.
+
+    * ``pin``: card ids that are always returned (ahead of the ranked rApps) and
+      never consume one of the ``k`` slots.
+    * ``k`` bounds the number of *families* among the non-pinned cards
+      (``k <= 0`` returns every family).
+    * ``dedupe_families`` keeps the best-scoring active card of each family; a
+      vendor variant named in the intent text and the family's deprecated
+      releases ride along with the family's slot instead of taking one.
+    * ``include_deprecated`` keeps deprecated cards visible (marked by their
+      ``status``) so the planner can be caught selecting them; Compose/Validate
+      reject them (``compat.lifecycle_findings``).
+    * ``exclude``: ids removed before ranking (Recover re-plans around busy apps).
+    """
+    excluded = {str(item).strip().lower() for item in (exclude or []) if str(item).strip()}
+    pinned_ids = [pid for pid in (pin or []) if pid in registry and pid not in excluded]
+    cards = [
+        card for card in registry.values()
+        if (card.actions or not executable_only)
+        and (include_deprecated or card.status != "deprecated")
+        and card.id not in excluded
+    ]
+    ranked = BM25Index(cards).search(intent_text, 0)
+    by_id = {card.id: (card, score) for card, score in ranked}
+    pinned = [by_id[pid] for pid in pinned_ids if pid in by_id]
+    pinned.sort(key=lambda item: item[1], reverse=True)
+    pinned_set = {card.id for card, _ in pinned}
+    rest = [(card, score) for card, score in ranked if card.id not in pinned_set]
+
+    lowered = intent_text.lower()
+    slots: List[List[Tuple[AgentCard, float]]] = []
+    if dedupe_families:
+        family_slot: Dict[str, int] = {}
+        riders: Dict[str, List[Tuple[AgentCard, float]]] = {}
+        for card, score in rest:
+            family = card_family(card)
+            vendor_named = card.id != family and bool(card.vendor) and card.vendor.split()[0].lower() in lowered
+            rider = card.status == "deprecated" or vendor_named
+            if rider:
+                riders.setdefault(family, []).append((card, score))
+                continue
+            if family in family_slot:
+                continue
+            family_slot[family] = len(slots)
+            slots.append([(card, score)])
+        for family, items in riders.items():
+            if family in family_slot:
+                slots[family_slot[family]].extend(items)
+            else:
+                # A family with only deprecated/vendor cards still gets one slot.
+                family_slot[family] = len(slots)
+                slots.append(list(items))
+        slots.sort(key=lambda slot: slot[0][1], reverse=True)
+    else:
+        slots = [[item] for item in rest]
+    kept_slots = slots if k <= 0 else slots[:k]
+    selected = list(pinned) + [item for slot in kept_slots for item in slot]
+    report: Dict[str, object] = {
+        "k": k,
+        "pinned": [card.id for card, _ in pinned],
+        "family_slots": [slot[0][0].id for slot in kept_slots],
+        "riders": [item[0].id for slot in kept_slots for item in slot[1:]],
+        "deprecated_visible": [card.id for card, _ in selected if card.status == "deprecated"],
+        "excluded": sorted(excluded),
+        "candidate_count": len(cards),
+    }
+    return selected, report
+
+
 def discover(
     registry: Dict[str, AgentCard],
     intent_text: str,
@@ -94,37 +186,12 @@ def discover(
     executable_only: bool = True,
     include_deprecated: bool = False,
     dedupe_families: bool = True,
+    pin: Optional[Sequence[str]] = None,
+    exclude: Optional[Iterable[str]] = None,
 ) -> List[Tuple[AgentCard, float]]:
-    """Rank registry cards for an intent.
-
-    dedupe_families keeps only the best-scoring card of each capability
-    family (vendor variants of the same function collapse to one slot) unless
-    the intent text names that vendor, in which case the named variant is
-    kept as well. This is part of the Discover agent's design; the
-    evaluation can switch it off for the ablation.
-    """
-    cards = [
-        card for card in registry.values()
-        if (card.actions or not executable_only) and (include_deprecated or card.status != "deprecated")
-    ]
-    ranked = BM25Index(cards).search(intent_text, 0)
-    if dedupe_families:
-        lowered = intent_text.lower()
-        seen: set = set()
-        kept: List[Tuple[AgentCard, float]] = []
-        for card, score in ranked:
-            family = card_family(card)
-            vendor_named = card.vendor.split()[0].lower() in lowered and card.id != family
-            if vendor_named:
-                # A named vendor variant rides along without taking the family's slot.
-                kept.append((card, score))
-                continue
-            if family in seen:
-                continue
-            seen.add(family)
-            kept.append((card, score))
-        ranked = kept
-    if k <= 0 or k >= len(ranked):
-        # Small registry: return everything, ranked, so the prompt order is still informative.
-        return ranked
-    return ranked[:k]
+    """Backward-compatible wrapper around :func:`discover_with_report`."""
+    selected, _ = discover_with_report(
+        registry, intent_text, k=k, executable_only=executable_only,
+        include_deprecated=include_deprecated, dedupe_families=dedupe_families, pin=pin, exclude=exclude,
+    )
+    return selected

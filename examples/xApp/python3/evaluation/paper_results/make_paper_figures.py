@@ -26,9 +26,14 @@ Confidence intervals (stated in every caption/README):
   * conflict recall / false-positive rate: Wilson score interval over records (only 6 seeded
     intents, too few clusters for a bootstrap).
 
-Accuracy is "accepted" accuracy (exact ordered match with any chain in the intent's
-`accepted_workflows`; for intents_50 that is the single labelled chain) unless a column says
-"exact" or "set". See evaluation/METRICS.md.
+Accuracy in tables and figures is **rule accuracy** (primary, pre-registered 2026-10-28): the chain
+contains every required app of the intent, respects observe < control < validate, contains no
+forbidden writer, and any extra step is read-only (`evaluation/label_rules.py`). It is recomputed here
+from `generated_workflow` + the run's `intents.json` (or the labels stored in each record) + the run's
+registry (manifest card ids), so batches written before the rule existed score the same way.
+"Exact" = ordered match with the labelled chain (secondary); macros/CSV keys `accuracy`,
+`<split>_accuracy` keep their old meaning (accepted-chain match); rule keys are `rule_accuracy`,
+`<split>_rule_accuracy`. See evaluation/METRICS.md.
 
 Run inside the flexric-py310 conda env:
   python make_paper_figures.py --batch-a ../runs/<A> --batch-b ../runs/<B_k8> ../runs/<B_k0>
@@ -50,7 +55,7 @@ import matplotlib
 matplotlib.use("Agg")
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from analyze_results import conflict_flagged  # noqa: E402  (same detection rule as the batch summaries)
+from analyze_results import attach_rule_matches, conflict_flagged, load_run_intents, run_registry  # noqa: E402
 import matplotlib.pyplot as plt
 
 plt.rcParams.update(
@@ -106,6 +111,9 @@ class Batch:
         self.complete = records_file.name == "records.jsonl"
         self.records = [json.loads(line) for line in records_file.read_text(encoding="utf-8").splitlines() if line.strip()]
         self.records = [r for r in self.records if r.get("method_available") is not False]
+        # Pre-registered label rule, scored from the raw chain (records written by the harness may
+        # already carry workflow_match_rule; recompute anyway so every batch uses the same rule/cards).
+        attach_rule_matches(self.records, load_run_intents(path, self.records), run_registry(path), force=True)
         self.methods = [m for m, _ in METHODS if any(r.get("method") == m for r in self.records)]
 
     @property
@@ -205,6 +213,7 @@ ONE = lambda r: 1.0  # noqa: E731
 def method_metrics(records: List[Dict[str, Any]]) -> Dict[str, Any]:
     out: Dict[str, Any] = {"records": len(records), "intents": len({r.get("intent_id") for r in records}),
                            "repeats": len({r.get("repeat_index") for r in records})}
+    out["rule_accuracy"] = ratio_bootstrap(records, flag("workflow_match_rule"), ONE)
     out["accuracy"] = ratio_bootstrap(records, flag("workflow_match_any_accepted"), ONE)
     out["exact_accuracy"] = ratio_bootstrap(records, flag("workflow_match"), ONE)
     out["set_accuracy"] = ratio_bootstrap(records, flag("workflow_set_match"), ONE)
@@ -213,6 +222,8 @@ def method_metrics(records: List[Dict[str, Any]]) -> Dict[str, Any]:
         out[f"{split}_records"] = len(subset)
         out[f"{split}_intents"] = len({r.get("intent_id") for r in subset})
         out[f"{split}_accuracy"] = ratio_bootstrap(subset, flag("workflow_match_any_accepted"), ONE)
+        out[f"{split}_rule_accuracy"] = ratio_bootstrap(subset, flag("workflow_match_rule"), ONE)
+        out[f"{split}_exact_accuracy"] = ratio_bootstrap(subset, flag("workflow_match"), ONE)
 
     calls = lambda r: [c for c in (r.get("tool_calls") or []) if c.get("acknowledged") is not None]  # noqa: E731
     out["tool_calls"] = sum(len(r.get("tool_calls") or []) for r in records)
@@ -333,10 +344,10 @@ def fig_accuracy(batch: Batch, metrics: Dict[str, Dict[str, Any]], out: Path) ->
     methods = batch.methods
     m0 = metrics[methods[0]]
     fig, ax = plt.subplots(figsize=(SINGLE_COL, 2.0))
-    grouped(ax, [[metrics[m]["known_accuracy"] for m in methods], [metrics[m]["open_world_accuracy"] for m in methods]],
+    grouped(ax, [[metrics[m]["known_rule_accuracy"] for m in methods], [metrics[m]["open_world_rule_accuracy"] for m in methods]],
             [f"Known intents ({m0['known_intents']} intents)", f"Open-world intents ({m0['open_world_intents']} intents)"],
             [C_BLUE, C_ORANGE], width=0.72)
-    _finish(ax, "Workflow accuracy", methods)
+    _finish(ax, "Workflow accuracy (rule)", methods)
     ax.legend(ncol=2, loc="upper left", bbox_to_anchor=(0, 1.16), handlelength=1.4, columnspacing=1.0)
     save(fig, out, "fig_accuracy")
 
@@ -382,9 +393,9 @@ def fig_registry_splits(batches: List[Batch], all_metrics: Dict[str, Dict[str, D
         methods = batch.methods
         m0 = metrics[methods[0]]
         splits = [(s, label) for s, label in SPLITS if m0[f"{s}_intents"]]
-        grouped(ax, [[metrics[m][f"{s}_accuracy"] for m in methods] for s, _ in splits],
+        grouped(ax, [[metrics[m][f"{s}_rule_accuracy"] for m in methods] for s, _ in splits],
                 [f"{label} ({m0[f'{s}_intents']} intents)" for s, label in splits], [C_BLUE, C_ORANGE, C_GREEN])
-        _finish(ax, "Workflow accuracy" if ax is axes[0][0] else "", methods)
+        _finish(ax, "Workflow accuracy (rule)" if ax is axes[0][0] else "", methods)
         ax.set_title(f"rApp Directory, retrieval k={batch.retrieval_k or 'all'}", fontsize=7, pad=14)
     axes[0][0].legend(ncol=3, loc="upper left", bbox_to_anchor=(0, 1.12), handlelength=1.4, columnspacing=0.9)
     save(fig, out, "fig_registry_splits")
@@ -496,8 +507,10 @@ def batch_label(batch: Batch) -> str:
 
 
 # ---------------------------------------------------------------- tables / CSV
-CSV_METRICS = ["accuracy", "exact_accuracy", "set_accuracy", "known_accuracy", "open_world_accuracy",
-               "unseen_capability_accuracy", "ack_rate", "launch_rate", "conflict_recall", "conflict_fp_rate",
+CSV_METRICS = ["rule_accuracy", "known_rule_accuracy", "open_world_rule_accuracy", "unseen_capability_rule_accuracy",
+               "accuracy", "exact_accuracy", "set_accuracy", "known_accuracy", "open_world_accuracy",
+               "unseen_capability_accuracy", "known_exact_accuracy", "open_world_exact_accuracy",
+               "unseen_capability_exact_accuracy", "ack_rate", "launch_rate", "conflict_recall", "conflict_fp_rate",
                "seeded_recovered", "hallucinated_per_record", "retrieval_hit_rate", "compat_ok_rate"]
 CSV_SCALARS = ["records", "intents", "repeats", "known_records", "open_world_records", "unseen_capability_records",
                "tool_calls", "seeded_records", "hallucinated_refs", "records_with_hallucination", "latency_n",
@@ -535,7 +548,9 @@ def write_table_a(batch: Batch, metrics: Dict[str, Dict[str, Any]], out: Path) -
     m0 = metrics[batch.methods[0]]
     caption = (f"Composition and reliability on the 50-intent benchmark ({m0['known_intents']} known, "
                f"{m0['open_world_intents']} open-world intents; {m0['repeats']} repeats; planner {batch.model}). "
-               "Percent with 95\\% CI; conflicts: seeded records refused by the lease before control (refused) and "
+               "Percent with 95\\% CI. Accuracy: pre-registered label rule (all required apps, observe before control "
+               "before validation, no extra write-scope app; extra read-only apps allowed); exact: ordered match with "
+               "the labelled chain. Conflicts: seeded records refused by the lease before control (refused) and "
                "brought to a clean execution by the method (recovered); no method flagged an unseeded record. "
                "Latency is intent-to-plan wall clock, median / p95 in seconds.")
     if batch.preliminary:
@@ -544,7 +559,7 @@ def write_table_a(batch: Batch, metrics: Dict[str, Dict[str, Any]], out: Path) -
         "\\begin{table*}[t]", "\\centering", f"\\caption{{{caption}}}", "\\label{tab:appweaver-results}",
         "\\footnotesize", "\\setlength{\\tabcolsep}{3pt}", "\\begin{tabular}{@{}lcccccccc@{}}", "\\toprule",
         "\\textbf{Method} & \\makecell{\\textbf{Known}\\\\\\textbf{acc.}} & \\makecell{\\textbf{Open-world}\\\\\\textbf{acc.}} & "
-        "\\makecell{\\textbf{Set}\\\\\\textbf{acc.}} & \\makecell{\\textbf{Ack.}\\\\\\textbf{tool calls}} & "
+        "\\makecell{\\textbf{Exact}\\\\\\textbf{match}} & \\makecell{\\textbf{Ack.}\\\\\\textbf{tool calls}} & "
         "\\makecell{\\textbf{Conflict}\\\\\\textbf{refused}} & \\makecell{\\textbf{Conflict}\\\\\\textbf{recovered}} & "
         "\\makecell{\\textbf{Halluc.}\\\\\\textbf{refs}} & "
         "\\makecell{\\textbf{Latency (s)}\\\\\\textbf{med. / p95}} \\\\",
@@ -555,7 +570,7 @@ def write_table_a(batch: Batch, metrics: Dict[str, Dict[str, Any]], out: Path) -
         name = LABEL[method].replace("\n", " ")
         row = " & ".join([
             f"\\textbf{{{name}}}" if method == "langgraph_agentcard" else name,
-            pct(m["known_accuracy"]), pct(m["open_world_accuracy"]), pct(m["set_accuracy"]),
+            pct(m["known_rule_accuracy"]), pct(m["open_world_rule_accuracy"]), pct(m["exact_accuracy"]),
             pct(m["ack_rate"]) + f" {{\\scriptsize(n={m['tool_calls']})}}",
             pct(m["conflict_recall"]), pct(m["seeded_recovered"]), str(m["hallucinated_refs"]),
             f"{secs(m['latency_median_ms'])} / {secs(m['latency_p95_ms'])}",
@@ -572,7 +587,8 @@ def write_table_b(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[st
     caption = (f"Registry-scale benchmark: {reg.get('agent_count', '?')} cards in the Agent Registry "
                f"({m0['known_intents']} known, {m0['open_world_intents']} open-world, "
                f"{m0['unseen_capability_intents']} unseen-capability intents; {m0['repeats']} repeats; planner {first.model}). "
-               "Accuracy counts any accepted chain; retrieval hit = all needed cards in the top-$k$ prompt.")
+               "Accuracy: pre-registered label rule (as Table~\\ref{tab:appweaver-results}); exact: ordered match with the "
+               "labelled chain; retrieval hit = all needed cards in the top-$k$ prompt.")
     if any(b.preliminary for b in batches):
         caption = "\\textbf{PRELIMINARY.} " + caption
     lines = []
@@ -580,9 +596,10 @@ def write_table_b(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[st
         lines += _tex_header(b, f"Batch B, retrieval_k={b.retrieval_k}")
     lines += [
         "\\begin{table*}[t]", "\\centering", f"\\caption{{{caption}}}", "\\label{tab:appweaver-registry}",
-        "\\footnotesize", "\\setlength{\\tabcolsep}{3pt}", "\\begin{tabular}{@{}llcccccc@{}}", "\\toprule",
+        "\\footnotesize", "\\setlength{\\tabcolsep}{3pt}", "\\begin{tabular}{@{}llccccccc@{}}", "\\toprule",
         "\\textbf{Method} & $k$ & \\makecell{\\textbf{Known}\\\\\\textbf{acc.}} & \\makecell{\\textbf{Open-world}\\\\\\textbf{acc.}} & "
-        "\\makecell{\\textbf{Unseen-cap.}\\\\\\textbf{acc.}} & \\makecell{\\textbf{Retrieval}\\\\\\textbf{hit}} & "
+        "\\makecell{\\textbf{Unseen-cap.}\\\\\\textbf{acc.}} & \\makecell{\\textbf{Exact}\\\\\\textbf{match}} & "
+        "\\makecell{\\textbf{Retrieval}\\\\\\textbf{hit}} & "
         "\\makecell{\\textbf{Halluc.}\\\\\\textbf{refs}} & \\makecell{\\textbf{Compat.}\\\\\\textbf{clean}} \\\\",
         "\\midrule",
     ]
@@ -592,8 +609,8 @@ def write_table_b(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[st
             name = LABEL[method].replace("\n", " ")
             lines.append(" & ".join([
                 f"\\textbf{{{name}}}" if method == "langgraph_agentcard" else name, str(b.retrieval_k or "all"),
-                pct(m["known_accuracy"]), pct(m["open_world_accuracy"]), pct(m["unseen_capability_accuracy"]),
-                pct(m["retrieval_hit_rate"], ci=False), str(m["hallucinated_refs"]), pct(m["compat_ok_rate"], ci=False),
+                pct(m["known_rule_accuracy"]), pct(m["open_world_rule_accuracy"]), pct(m["unseen_capability_rule_accuracy"]),
+                pct(m["exact_accuracy"]), pct(m["retrieval_hit_rate"], ci=False), str(m["hallucinated_refs"]), pct(m["compat_ok_rate"], ci=False),
             ]) + " \\\\")
         if b is not batches[-1]:
             lines.append("\\midrule")
@@ -662,7 +679,9 @@ def write_macros(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[str
 def write_readme(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[str, Any]]], out: Path) -> None:
     lines = ["# AppWeaver paper results", "",
              "Generated by `make_paper_figures.py` from the batches below (every number is recomputed from",
-             "`records.jsonl`). Metric definitions: `../METRICS.md`. 95% CIs: intent-clustered percentile bootstrap",
+             "`records.jsonl`). Accuracy = pre-registered label rule (primary; known/open-world/unseen columns",
+             "use it too), Exact = ordered match with the labelled chain, Accepted = exact match with any accepted chain.",
+             "Metric definitions: `../METRICS.md`. 95% CIs: intent-clustered percentile bootstrap",
              "(2000 resamples) for accuracies, acknowledged calls and hallucinations per record; Wilson score",
              "interval for conflict recall / false-positive rate (6 seeded intents).", "",
              "No number from the May-2026 batches appears here.", "", "## Batches", ""]
@@ -673,13 +692,14 @@ def write_readme(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[str
         if b.preliminary:
             lines += [f"> **Preliminary.** Planner `{b.model}` stands in for gpt-oss (broken on spark2 under Ollama 0.40).",
                       "> These numbers validate the pipeline; they are not the paper's results.", ""]
-        lines += ["| Method | Accuracy | Known | Open-world | Unseen cap. | Exact | Set | Ack. calls | Conflict refused | Conflict recovered | Conflict FP | Halluc. refs | Retrieval hit | Latency med / p95 / max (s) |",
-                  "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+        lines += ["| Method | Accuracy (rule) | Known | Open-world | Unseen cap. | Exact | Accepted | Set | Ack. calls | Conflict refused | Conflict recovered | Conflict FP | Halluc. refs | Retrieval hit | Latency med / p95 / max (s) |",
+                  "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
         for method in b.methods:
             m = metrics[method]
             lines.append("| " + " | ".join([
-                LABEL[method].replace("\n", " "), pct_md(m["accuracy"]), pct_md(m["known_accuracy"]), pct_md(m["open_world_accuracy"]),
-                pct_md(m["unseen_capability_accuracy"]), pct_md(m["exact_accuracy"]), pct_md(m["set_accuracy"]),
+                LABEL[method].replace("\n", " "), pct_md(m["rule_accuracy"]), pct_md(m["known_rule_accuracy"]),
+                pct_md(m["open_world_rule_accuracy"]), pct_md(m["unseen_capability_rule_accuracy"]), pct_md(m["exact_accuracy"]),
+                pct_md(m["accuracy"]), pct_md(m["set_accuracy"]),
                 f"{pct_md(m['ack_rate'])} (n={m['tool_calls']})",
                 f"{pct_md(m['conflict_recall'])} (n={m['seeded_records']})", pct_md(m["seeded_recovered"]), pct_md(m["conflict_fp_rate"]),
                 f"{m['hallucinated_refs']} in {m['records_with_hallucination']} records", pct_md(m["retrieval_hit_rate"]),
@@ -690,10 +710,10 @@ def write_readme(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[str
     lines += ["", "## Files", "",
               "- `combined_results.csv` - per (batch, method): value and CI bounds for every metric",
               "- `results_table.tex` - Batch A table; `results_table_registry.tex` - Batch B table",
-              "- `figures/fig_accuracy` - Batch A known vs open-world accuracy with 95% CI",
+              "- `figures/fig_accuracy` - Batch A known vs open-world rule accuracy with 95% CI",
               "- `figures/fig_reliability` - acknowledged tool calls, seeded conflicts refused by the lease and recovered",
               "- `figures/fig_latency` - per-record intent-to-plan latency (box = IQR, whiskers 5-95th pct, dots beyond)",
-              "- `figures/fig_registry_splits` - Batch B accuracy per split, one panel per retrieval depth",
+              "- `figures/fig_registry_splits` - Batch B rule accuracy per split, one panel per retrieval depth",
               "- `figures/fig_hallucination` - hallucinated registry references per record",
               "- `plot_final.py` - slide-style variants built from `combined_results.csv`", ""]
     (out / "README.md").write_text("\n".join(lines), encoding="utf-8")

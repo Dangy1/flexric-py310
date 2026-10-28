@@ -8,6 +8,73 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, Iterable, List
 
+_ROOT = Path(__file__).resolve().parent.parent
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
+
+def _split(item: Dict[str, Any]) -> str:
+    return str(item.get("intent_split") or ("open_world" if item.get("intent_open_world") else "known"))
+
+
+# ---------------------------------------------------------------- pre-registered label rule
+def load_run_intents(run_dir: Path, records: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    """Intents of a run: `intents.json` copied into the run directory, else the labels each record carries.
+
+    Records store `expected_workflow` and `accepted_workflows`, the only inputs of the label rule, so
+    runs written before `intents.json` was copied (e.g. merged Batch A) score identically.
+    """
+    intents: Dict[str, Dict[str, Any]] = {}
+    path = run_dir / "intents.json"
+    if path.exists():
+        for intent in json.loads(path.read_text(encoding="utf-8")):
+            intents[str(intent.get("id"))] = intent
+    for record in records:
+        intent_id = str(record.get("intent_id"))
+        if intent_id not in intents:
+            intents[intent_id] = {
+                "id": intent_id,
+                "expected_workflow": list(record.get("expected_workflow") or []),
+                "accepted_workflows": [list(chain) for chain in (record.get("accepted_workflows") or [])],
+            }
+    return intents
+
+
+def run_registry(run_dir: Path) -> Dict[str, Any]:
+    """The Agent Registry of a run: current cards, restricted to the card ids in its manifest."""
+    from evaluation.label_rules import build_registry
+
+    manifest_path = run_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else {}
+    agent_ids = (manifest.get("registry") or {}).get("agent_ids")
+    directory = bool((manifest.get("evaluation_runtime_config") or {}).get("rapp_directory_enabled"))
+    if agent_ids and any(str(a).startswith("rapp.") for a in agent_ids):
+        directory = True
+    return build_registry(rapp_directory=directory or not agent_ids, agent_ids=agent_ids)
+
+
+def attach_rule_matches(records: List[Dict[str, Any]], intents: Dict[str, Dict[str, Any]],
+                        registry: Dict[str, Any], force: bool = False) -> int:
+    """Set `workflow_match_rule` / `workflow_rule_reasons` from `generated_workflow` (in place).
+
+    Records that already carry `workflow_match_rule` (written by the harness) are kept unless `force`.
+    Returns the number of records scored here.
+    """
+    from evaluation.label_rules import rule_match
+
+    scored = 0
+    for record in records:
+        if not force and record.get("workflow_match_rule") is not None:
+            continue
+        intent = intents.get(str(record.get("intent_id")))
+        if intent is None:
+            continue
+        ok, reasons = rule_match(record.get("generated_workflow") or [], intent, registry)
+        record["workflow_match_rule"] = ok
+        record["workflow_rule_reasons"] = reasons
+        scored += 1
+    return scored
+
 
 def load_records(path: Path) -> List[Dict[str, Any]]:
     records: List[Dict[str, Any]] = []
@@ -106,7 +173,12 @@ def _ci95_halfwidth(successes: int, total: int) -> float | None:
     return 1.96 * ((p * (1 - p)) / total) ** 0.5
 
 
-def build_summary(records: List[Dict[str, Any]]) -> Dict[str, Any]:
+def build_summary(records: List[Dict[str, Any]], intents: Dict[str, Dict[str, Any]] | None = None,
+                  registry: Dict[str, Any] | None = None) -> Dict[str, Any]:
+    """Per-method summary. With `intents` and `registry`, records without `workflow_match_rule` are scored
+    under the pre-registered label rule first (rule accuracy is the primary accuracy; METRICS.md)."""
+    if intents is not None and registry is not None:
+        attach_rule_matches(records, intents, registry)
     by_method: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
     by_intent: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
     for record in records:
@@ -123,6 +195,12 @@ def build_summary(records: List[Dict[str, Any]]) -> Dict[str, Any]:
         available_items = [item for item in items if item.get("method_available") is not False]
         known_items = [item for item in available_items if item.get("intent_open_world") is not True]
         open_world_items = [item for item in available_items if item.get("intent_open_world") is True]
+        rule_items = [item for item in available_items if item.get("workflow_match_rule") is not None]
+        rule_match_count = sum(1 for item in rule_items if item.get("workflow_match_rule") is True)
+        known_rule_items = [item for item in rule_items if _split(item) == "known"]
+        open_world_rule_items = [item for item in rule_items if item.get("intent_open_world") is True]
+        known_rule_match = sum(1 for item in known_rule_items if item.get("workflow_match_rule") is True)
+        open_world_rule_match = sum(1 for item in open_world_rule_items if item.get("workflow_match_rule") is True)
         exact_workflow = sum(1 for item in available_items if item.get("workflow_match") is True)
         known_exact_workflow = sum(1 for item in known_items if item.get("workflow_match") is True)
         open_world_exact_workflow = sum(1 for item in open_world_items if item.get("workflow_match") is True)
@@ -196,12 +274,16 @@ def build_summary(records: List[Dict[str, Any]]) -> Dict[str, Any]:
         compat_items = [item for item in available_items if item.get("compat_ok") is not None]
         compat_ok = sum(1 for item in compat_items if item.get("compat_ok") is True)
         by_split: Dict[str, Dict[str, Any]] = {}
-        for split in sorted({str(item.get("intent_split") or ("open_world" if item.get("intent_open_world") else "known")) for item in available_items}):
-            split_items = [item for item in available_items if str(item.get("intent_split") or ("open_world" if item.get("intent_open_world") else "known")) == split]
+        for split in sorted({_split(item) for item in available_items}):
+            split_items = [item for item in available_items if _split(item) == split]
             matched = sum(1 for item in split_items if item.get("workflow_match") is True)
             accepted = sum(1 for item in split_items if item.get("workflow_match_any_accepted") is True)
+            split_rule = [item for item in split_items if item.get("workflow_match_rule") is not None]
+            rule_ok = sum(1 for item in split_rule if item.get("workflow_match_rule") is True)
             by_split[split] = {
                 "records": len(split_items),
+                "rule_accuracy": _rate(rule_ok, len(split_rule)),
+                "rule_ci95": _ci95_halfwidth(rule_ok, len(split_rule)),
                 "workflow_accuracy": _rate(matched, len(split_items)),
                 "ci95": _ci95_halfwidth(matched, len(split_items)),
                 "accepted_accuracy": _rate(accepted, len(split_items)),
@@ -214,6 +296,13 @@ def build_summary(records: List[Dict[str, Any]]) -> Dict[str, Any]:
             "compat_ok_rate": _rate(compat_ok, len(compat_items)),
             "intent_count": len({str(item.get("intent_id")) for item in items}),
             "repeat_count": len({int(item.get("repeat_index") or 0) for item in items}),
+            "rule_scored_records": len(rule_items),
+            "rule_accuracy": _rate(rule_match_count, len(rule_items)),
+            "rule_accuracy_ci95": _ci95_halfwidth(rule_match_count, len(rule_items)),
+            "known_rule_accuracy": _rate(known_rule_match, len(known_rule_items)),
+            "known_rule_accuracy_ci95": _ci95_halfwidth(known_rule_match, len(known_rule_items)),
+            "open_world_rule_accuracy": _rate(open_world_rule_match, len(open_world_rule_items)),
+            "open_world_rule_accuracy_ci95": _ci95_halfwidth(open_world_rule_match, len(open_world_rule_items)),
             "workflow_accuracy_ci95": _ci95_halfwidth(exact_workflow, len(available_items)),
             "known_workflow_accuracy_ci95": _ci95_halfwidth(known_exact_workflow, len(known_items)),
             "open_world_workflow_accuracy_ci95": _ci95_halfwidth(open_world_exact_workflow, len(open_world_items)),
@@ -264,6 +353,8 @@ def build_summary(records: List[Dict[str, Any]]) -> Dict[str, Any]:
             "intent": items[0].get("intent"),
             "run_count": len(items),
             "methods": sorted({str(item.get("method")) for item in items}),
+            "rule_match_rate": _rate(sum(1 for item in items if item.get("workflow_match_rule") is True),
+                                     sum(1 for item in items if item.get("workflow_match_rule") is not None)),
             "workflow_match_rate": _rate(sum(1 for item in items if item.get("workflow_match") is True), len(items)),
             "failure_rate": _rate(sum(1 for item in items if item.get("failure_detected") is True), len(items)),
             "conflict_rate": _rate(sum(1 for item in items if conflict_flagged(item)), len(items)),
@@ -282,18 +373,24 @@ def build_markdown(summary: Dict[str, Any]) -> str:
     lines.append("")
     lines.append("## Method Summary")
     lines.append("")
-    lines.append("Metric definitions: `evaluation/METRICS.md`. Accuracies are exact ordered matches with ±95% CI half-widths; latency is intent→validated plan, excluding the tool-acknowledgement wait.")
+    lines.append("Metric definitions: `evaluation/METRICS.md`. **Accuracy** is the pre-registered label rule (required apps, observe < control < validate, no forbidden writer; `evaluation/label_rules.py`); *exact* is the ordered match with the labelled chain. ±95% CI half-widths; latency is intent→validated plan, excluding the tool-acknowledgement wait.")
     lines.append("")
-    lines.append("| Method | Records (intents×repeats) | Workflow acc. | Known acc. | Open-world acc. | Set acc. | Tool calls | Launched | Acknowledged | Halluc. refs | Conflict recall (TP/seeded) | Conflict FP rate | Seeded recovered | Latency mean±sd / median / p95 / max (ms) |")
-    lines.append("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |")
+    lines.append("| Method | Records (intents×repeats) | Accuracy (rule) | Known (rule) | Open-world (rule) | Exact acc. | Known exact | Open-world exact | Set acc. | Tool calls | Launched | Acknowledged | Halluc. refs | Conflict recall (TP/seeded) | Conflict FP rate | Seeded recovered | Latency mean±sd / median / p95 / max (ms) |")
+    lines.append("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |")
     for method, item in sorted(summary.get("methods", {}).items()):
         lat = item.get("latency") or {}
         lines.append(
-            "| {method} | {runs} ({intents}×{repeats}) | {workflow} ±{workflow_ci} | {known_workflow} ±{known_ci} | {open_world_workflow} ±{open_ci} | {set_acc} | {calls} | {launched} | {acked} | {hall} | {recall} ({tp}/{seeded}) | {fpr} | {recovered} | {lat_mean}±{lat_sd} / {lat_med} / {lat_p95} / {lat_max} |".format(
+            "| {method} | {runs} ({intents}×{repeats}) | {rule} ±{rule_ci} | {known_rule} ±{known_rule_ci} | {open_rule} ±{open_rule_ci} | {workflow} ±{workflow_ci} | {known_workflow} ±{known_ci} | {open_world_workflow} ±{open_ci} | {set_acc} | {calls} | {launched} | {acked} | {hall} | {recall} ({tp}/{seeded}) | {fpr} | {recovered} | {lat_mean}±{lat_sd} / {lat_med} / {lat_p95} / {lat_max} |".format(
                 method=method,
                 runs=item.get("available_run_count", 0),
                 intents=item.get("intent_count", 0),
                 repeats=item.get("repeat_count", 0),
+                rule=_format_rate(item.get("rule_accuracy")),
+                rule_ci=_format_rate(item.get("rule_accuracy_ci95")),
+                known_rule=_format_rate(item.get("known_rule_accuracy")),
+                known_rule_ci=_format_rate(item.get("known_rule_accuracy_ci95")),
+                open_rule=_format_rate(item.get("open_world_rule_accuracy")),
+                open_rule_ci=_format_rate(item.get("open_world_rule_accuracy_ci95")),
                 workflow=_format_rate(item.get("workflow_accuracy")),
                 workflow_ci=_format_rate(item.get("workflow_accuracy_ci95")),
                 known_workflow=_format_rate(item.get("known_workflow_accuracy")),
@@ -322,13 +419,14 @@ def build_markdown(summary: Dict[str, Any]) -> str:
     lines.append("")
     lines.append("## Intent Summary")
     lines.append("")
-    lines.append("| Intent ID | Runs | Workflow match | Failure rate | Conflict rate |")
-    lines.append("| --- | ---: | ---: | ---: | ---: |")
+    lines.append("| Intent ID | Runs | Rule match | Exact match | Failure rate | Conflict rate |")
+    lines.append("| --- | ---: | ---: | ---: | ---: | ---: |")
     for intent_id, item in sorted(summary.get("intents", {}).items()):
         lines.append(
-            "| {intent_id} | {runs} | {workflow} | {failure} | {conflict} |".format(
+            "| {intent_id} | {runs} | {rule} | {workflow} | {failure} | {conflict} |".format(
                 intent_id=intent_id,
                 runs=item.get("run_count", 0),
+                rule=_format_rate(item.get("rule_match_rate")),
                 workflow=_format_rate(item.get("workflow_match_rate")),
                 failure=_format_rate(item.get("failure_rate")),
                 conflict=_format_rate(item.get("conflict_rate")),
@@ -350,13 +448,20 @@ def _format_float(value: float | None) -> str:
 
 
 def main(argv: List[str]) -> int:
-    if len(argv) != 2:
-        print("Usage: analyze_results.py <records.jsonl>", file=sys.stderr)
-        return 2
-    record_path = Path(argv[1]).resolve()
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Summarise a batch; rule accuracy is scored from generated_workflow + "
+                                                 "the run's intents.json (or the labels in each record) + the run's registry.")
+    parser.add_argument("records", help="records.jsonl of a run directory")
+    parser.add_argument("--markdown", action="store_true", help="print the markdown analysis instead of JSON")
+    parser.add_argument("--rescore", action="store_true", help="recompute workflow_match_rule even if records carry it")
+    args = parser.parse_args(argv[1:])
+    record_path = Path(args.records).resolve()
     records = load_records(record_path)
+    run_dir = record_path.parent
+    attach_rule_matches(records, load_run_intents(run_dir, records), run_registry(run_dir), force=args.rescore)
     summary = build_summary(records)
-    print(json.dumps(summary, indent=2, sort_keys=True))
+    print(build_markdown(summary) if args.markdown else json.dumps(summary, indent=2, sort_keys=True))
     return 0
 
 

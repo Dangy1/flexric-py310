@@ -21,12 +21,12 @@ WORKFLOW_ACTIONS = {
         'kpm': 'observe-rru',
         'slice': 'monitor',
         'tc': 'apply-codel',
-        'rc': 'rc-scaffold',
+        'rc': 'rc-control',
     },
     'slice-assurance': {
         'slice': 'monitor',
         'kpm': 'observe-rru',
-        'rc': 'rc-scaffold',
+        'rc': 'rc-control',
     },
     'transport-qos': {
         'tc': 'apply-codel',

@@ -26,7 +26,73 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "SLICE",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "SLICE"
+        ],
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<SLICE": "role",
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "SLICE": "control",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "congestion_relief",
@@ -54,7 +120,73 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "SLICE",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "SLICE"
+        ],
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<SLICE": "role",
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "SLICE": "control",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "slice_fairness_assurance",
@@ -81,7 +213,60 @@
         "KPM",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "SLICE",
+        "KPM"
+      ],
+      "order": [],
+      "order_basis": {},
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "SLICE": "control"
+      }
+    }
   },
   {
     "id": "slice_isolation_validation",
@@ -108,7 +293,60 @@
         "KPM",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "SLICE",
+        "KPM"
+      ],
+      "order": [],
+      "order_basis": {},
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "SLICE": "control"
+      }
+    }
   },
   {
     "id": "transport_bufferbloat_mitigation",
@@ -131,7 +369,57 @@
       [
         "TC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "TC"
+      ],
+      "order": [],
+      "order_basis": {},
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "transport_tunnel_stability",
@@ -154,7 +442,57 @@
       [
         "TC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "TC"
+      ],
+      "order": [],
+      "order_basis": {},
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "handover_resilience_triage",
@@ -183,7 +521,73 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "SLICE",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "SLICE"
+        ],
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<SLICE": "role",
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "SLICE": "control",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "radio_capacity_headroom",
@@ -211,7 +615,73 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "SLICE",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "SLICE"
+        ],
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<SLICE": "role",
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "SLICE": "control",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "tc_conflict_recovery",
@@ -235,7 +705,57 @@
       [
         "TC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "TC"
+      ],
+      "order": [],
+      "order_basis": {},
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "latency_under_busy_tc",
@@ -265,7 +785,73 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "SLICE",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "SLICE"
+        ],
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<SLICE": "role",
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "SLICE": "control",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "uplink_queue_stability",
@@ -292,7 +878,67 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "downlink_jitter_containment",
@@ -319,7 +965,67 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "backhaul_delay_mitigation",
@@ -346,7 +1052,67 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "tunnel_retransmission_diagnosis",
@@ -376,7 +1142,62 @@
         "RAPP.ROOT_CAUSE",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM"
+      ],
+      "order": [],
+      "order_basis": {},
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [
+        "RAPP.ROOT_CAUSE"
+      ],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.ROOT_CAUSE": "analyze",
+        "RC": "validate"
+      }
+    }
   },
   {
     "id": "rlc_queue_anomaly_detection",
@@ -406,7 +1227,62 @@
         "RAPP.ANOMALY_DETECTION",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM"
+      ],
+      "order": [],
+      "order_basis": {},
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [
+        "RAPP.ANOMALY_DETECTION"
+      ],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.ANOMALY_DETECTION": "analyze",
+        "RC": "validate"
+      }
+    }
   },
   {
     "id": "pdcp_reorder_investigation",
@@ -436,7 +1312,62 @@
         "RAPP.ROOT_CAUSE",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM"
+      ],
+      "order": [],
+      "order_basis": {},
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [
+        "RAPP.ROOT_CAUSE"
+      ],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.ROOT_CAUSE": "analyze",
+        "RC": "validate"
+      }
+    }
   },
   {
     "id": "gtp_tunnel_health_validation",
@@ -461,7 +1392,59 @@
         "KPM",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM"
+      ],
+      "order": [],
+      "order_basis": {},
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate"
+      }
+    }
   },
   {
     "id": "slice_admission_control",
@@ -488,7 +1471,67 @@
         "SLICE",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "SLICE"
+      ],
+      "order": [
+        [
+          "KPM",
+          "SLICE"
+        ]
+      ],
+      "order_basis": {
+        "KPM<SLICE": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "SLICE": "control"
+      }
+    }
   },
   {
     "id": "slice_oversubscription_repair",
@@ -515,7 +1558,67 @@
         "SLICE",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "SLICE"
+      ],
+      "order": [
+        [
+          "KPM",
+          "SLICE"
+        ]
+      ],
+      "order_basis": {
+        "KPM<SLICE": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "SLICE": "control"
+      }
+    }
   },
   {
     "id": "enterprise_slice_audit",
@@ -548,7 +1651,63 @@
         "RAPP.PM_KPI",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "SLICE",
+        "KPM"
+      ],
+      "order": [],
+      "order_basis": {},
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [
+        "RAPP.PM_KPI"
+      ],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.PM_KPI": "observe",
+        "RC": "validate",
+        "SLICE": "control"
+      }
+    }
   },
   {
     "id": "mobility_hotspot_stabilization",
@@ -575,7 +1734,67 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "handover_ping_pong_detection",
@@ -605,7 +1824,62 @@
         "RAPP.ANOMALY_DETECTION",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM"
+      ],
+      "order": [],
+      "order_basis": {},
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [
+        "RAPP.ANOMALY_DETECTION"
+      ],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.ANOMALY_DETECTION": "analyze",
+        "RC": "validate"
+      }
+    }
   },
   {
     "id": "edge_gaming_jitter_protection",
@@ -635,7 +1909,73 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "SLICE",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "SLICE"
+        ],
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<SLICE": "role",
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "SLICE": "control",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "volte_latency_safeguard",
@@ -662,7 +2002,67 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "urllc_reliability_safeguard",
@@ -692,7 +2092,73 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "SLICE",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "SLICE"
+        ],
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<SLICE": "role",
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "SLICE": "control",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "mmtc_capacity_preservation",
@@ -719,7 +2185,67 @@
         "SLICE",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "SLICE"
+      ],
+      "order": [
+        [
+          "KPM",
+          "SLICE"
+        ]
+      ],
+      "order_basis": {
+        "KPM<SLICE": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "SLICE": "control"
+      }
+    }
   },
   {
     "id": "video_throughput_smoothing",
@@ -746,7 +2272,67 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "ecn_policy_validation",
@@ -771,7 +2357,58 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "TC"
+      ],
+      "order": [],
+      "order_basis": {},
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "RC": "validate",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "codel_rollback_verification",
@@ -796,7 +2433,58 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "TC"
+      ],
+      "order": [],
+      "order_basis": {},
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "RC": "validate",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "bearer_stall_triage",
@@ -826,7 +2514,62 @@
         "RAPP.ROOT_CAUSE",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM"
+      ],
+      "order": [],
+      "order_basis": {},
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [
+        "RAPP.ROOT_CAUSE"
+      ],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.ROOT_CAUSE": "analyze",
+        "RC": "validate"
+      }
+    }
   },
   {
     "id": "drb_delay_hotspot",
@@ -856,7 +2599,62 @@
         "RAPP.ROOT_CAUSE",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM"
+      ],
+      "order": [],
+      "order_basis": {},
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [
+        "RAPP.ROOT_CAUSE"
+      ],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.ROOT_CAUSE": "analyze",
+        "RC": "validate"
+      }
+    }
   },
   {
     "id": "prb_imbalance_correction",
@@ -883,7 +2681,67 @@
         "SLICE",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "SLICE"
+      ],
+      "order": [
+        [
+          "KPM",
+          "SLICE"
+        ]
+      ],
+      "order_basis": {
+        "KPM<SLICE": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "SLICE": "control"
+      }
+    }
   },
   {
     "id": "cell_edge_fairness_protection",
@@ -910,7 +2768,67 @@
         "SLICE",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "SLICE"
+      ],
+      "order": [
+        [
+          "KPM",
+          "SLICE"
+        ]
+      ],
+      "order_basis": {
+        "KPM<SLICE": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "SLICE": "control"
+      }
+    }
   },
   {
     "id": "premium_qos_isolation",
@@ -940,7 +2858,73 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "SLICE",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "SLICE"
+        ],
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<SLICE": "role",
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "SLICE": "control",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "emergency_traffic_preemption",
@@ -969,7 +2953,73 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "SLICE",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "SLICE"
+        ],
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<SLICE": "role",
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "SLICE": "control",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "stadium_congestion_surge",
@@ -998,7 +3048,73 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "SLICE",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "SLICE"
+        ],
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<SLICE": "role",
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "SLICE": "control",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "campus_slice_drift_detection",
@@ -1031,7 +3147,70 @@
         "SLICE",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "SLICE"
+      ],
+      "order": [
+        [
+          "KPM",
+          "SLICE"
+        ]
+      ],
+      "order_basis": {
+        "KPM<SLICE": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [
+        "RAPP.ANOMALY_DETECTION"
+      ],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.ANOMALY_DETECTION": "analyze",
+        "RC": "validate",
+        "SLICE": "control"
+      }
+    }
   },
   {
     "id": "backhaul_queue_conflict_recovery",
@@ -1059,7 +3238,67 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "slice_policy_race_recovery",
@@ -1087,7 +3326,67 @@
         "SLICE",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "SLICE"
+      ],
+      "order": [
+        [
+          "KPM",
+          "SLICE"
+        ]
+      ],
+      "order_basis": {
+        "KPM<SLICE": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "SLICE": "control"
+      }
+    }
   },
   {
     "id": "enterprise_tunnel_busy_tc",
@@ -1116,7 +3415,67 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "qos_policy_sanity_check",
@@ -1141,7 +3500,58 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "TC"
+      ],
+      "order": [],
+      "order_basis": {},
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "RC": "validate",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "latency_regression_root_cause",
@@ -1171,7 +3581,62 @@
         "RAPP.ROOT_CAUSE",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM"
+      ],
+      "order": [],
+      "order_basis": {},
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [
+        "RAPP.ROOT_CAUSE"
+      ],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.ROOT_CAUSE": "analyze",
+        "RC": "validate"
+      }
+    }
   },
   {
     "id": "slice_drift_correction",
@@ -1204,7 +3669,70 @@
         "SLICE",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "SLICE"
+      ],
+      "order": [
+        [
+          "KPM",
+          "SLICE"
+        ]
+      ],
+      "order_basis": {
+        "KPM<SLICE": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [
+        "RAPP.ANOMALY_DETECTION"
+      ],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.ANOMALY_DETECTION": "analyze",
+        "RC": "validate",
+        "SLICE": "control"
+      }
+    }
   },
   {
     "id": "transport_queue_partition_tuning",
@@ -1229,7 +3757,58 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "TC"
+      ],
+      "order": [],
+      "order_basis": {},
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "RC": "validate",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "anomaly_containment_degraded_service",
@@ -1262,7 +3841,70 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [
+        "RAPP.ANOMALY_DETECTION"
+      ],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.ANOMALY_DETECTION": "analyze",
+        "RC": "validate",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "handover_route_risk_screening",
@@ -1287,7 +3929,59 @@
         "KPM",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM"
+      ],
+      "order": [],
+      "order_basis": {},
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate"
+      }
+    }
   },
   {
     "id": "cross_slice_resource_rebalance",
@@ -1316,7 +4010,73 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "SLICE",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "SLICE"
+        ],
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<SLICE": "role",
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "SLICE": "control",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "low_priority_traffic_shaping_guard",
@@ -1341,7 +4101,58 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "TC"
+      ],
+      "order": [],
+      "order_basis": {},
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "RC": "validate",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "unknown_enterprise_xr_slowdown",
@@ -1371,7 +4182,73 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "SLICE",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "SLICE"
+        ],
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<SLICE": "role",
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "SLICE": "control",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "unknown_busy_runtime_recovery",
@@ -1399,7 +4276,67 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RC": "validate",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "night_energy_saving",
@@ -1430,7 +4367,68 @@
     "open_world": true,
     "split": "unseen_capability",
     "expected_workflow_id": "custom:kpm-rapp.energy_saving-rc",
-    "expects_conflict": false
+    "expects_conflict": false,
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM|RAPP.PM_KPI",
+        "RAPP.ENERGY_SAVING"
+      ],
+      "order": [
+        [
+          "KPM|RAPP.PM_KPI",
+          "RAPP.ENERGY_SAVING"
+        ]
+      ],
+      "order_basis": {
+        "KPM|RAPP.PM_KPI<RAPP.ENERGY_SAVING": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.ENERGY_SAVING": "control",
+        "RAPP.PM_KPI": "observe",
+        "RC": "validate"
+      }
+    }
   },
   {
     "id": "energy_saving_wakeup_guard",
@@ -1453,7 +4451,66 @@
         "KPM",
         "RAPP.ENERGY_SAVING"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "RAPP.ENERGY_SAVING"
+      ],
+      "order": [
+        [
+          "KPM",
+          "RAPP.ENERGY_SAVING"
+        ]
+      ],
+      "order_basis": {
+        "KPM<RAPP.ENERGY_SAVING": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.ENERGY_SAVING": "control"
+      }
+    }
   },
   {
     "id": "energy_vs_capacity_conflict",
@@ -1479,7 +4536,67 @@
         "RAPP.ENERGY_SAVING",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "RAPP.ENERGY_SAVING"
+      ],
+      "order": [
+        [
+          "KPM",
+          "RAPP.ENERGY_SAVING"
+        ]
+      ],
+      "order_basis": {
+        "KPM<RAPP.ENERGY_SAVING": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.ENERGY_SAVING": "control",
+        "RC": "validate"
+      }
+    }
   },
   {
     "id": "cell_edge_qoe_protection",
@@ -1507,7 +4624,79 @@
         "RAPP.UE_QOS_CONTROL",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "RAPP.QOE_PREDICTION",
+        "RAPP.UE_QOS_CONTROL"
+      ],
+      "order": [
+        [
+          "KPM",
+          "RAPP.QOE_PREDICTION"
+        ],
+        [
+          "KPM",
+          "RAPP.UE_QOS_CONTROL"
+        ],
+        [
+          "RAPP.QOE_PREDICTION",
+          "RAPP.UE_QOS_CONTROL"
+        ]
+      ],
+      "order_basis": {
+        "KPM<RAPP.QOE_PREDICTION": "role",
+        "KPM<RAPP.UE_QOS_CONTROL": "role",
+        "RAPP.QOE_PREDICTION<RAPP.UE_QOS_CONTROL": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.QOE_PREDICTION": "analyze",
+        "RAPP.UE_QOS_CONTROL": "control",
+        "RC": "validate"
+      }
+    }
   },
   {
     "id": "video_qoe_forecast",
@@ -1531,7 +4720,67 @@
         "KPM",
         "RAPP.QOE_PREDICTION"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "RAPP.QOE_PREDICTION"
+      ],
+      "order": [
+        [
+          "KPM",
+          "RAPP.QOE_PREDICTION"
+        ]
+      ],
+      "order_basis": {
+        "KPM<RAPP.QOE_PREDICTION": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.QOE_PREDICTION": "analyze"
+      }
+    }
   },
   {
     "id": "qoe_driven_steering",
@@ -1559,7 +4808,79 @@
         "RAPP.TRAFFIC_STEERING",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "RAPP.QOE_PREDICTION",
+        "RAPP.TRAFFIC_STEERING"
+      ],
+      "order": [
+        [
+          "KPM",
+          "RAPP.QOE_PREDICTION"
+        ],
+        [
+          "KPM",
+          "RAPP.TRAFFIC_STEERING"
+        ],
+        [
+          "RAPP.QOE_PREDICTION",
+          "RAPP.TRAFFIC_STEERING"
+        ]
+      ],
+      "order_basis": {
+        "KPM<RAPP.QOE_PREDICTION": "role",
+        "KPM<RAPP.TRAFFIC_STEERING": "role",
+        "RAPP.QOE_PREDICTION<RAPP.TRAFFIC_STEERING": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.QOE_PREDICTION": "analyze",
+        "RAPP.TRAFFIC_STEERING": "control",
+        "RC": "validate"
+      }
+    }
   },
   {
     "id": "load_balance_hotspot",
@@ -1584,7 +4905,67 @@
         "RAPP.TRAFFIC_STEERING",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "RAPP.TRAFFIC_STEERING"
+      ],
+      "order": [
+        [
+          "KPM",
+          "RAPP.TRAFFIC_STEERING"
+        ]
+      ],
+      "order_basis": {
+        "KPM<RAPP.TRAFFIC_STEERING": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.TRAFFIC_STEERING": "control",
+        "RC": "validate"
+      }
+    }
   },
   {
     "id": "ping_pong_handover_fix",
@@ -1609,7 +4990,67 @@
         "RAPP.MOBILITY_OPTIMIZATION",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "RAPP.MOBILITY_OPTIMIZATION"
+      ],
+      "order": [
+        [
+          "KPM",
+          "RAPP.MOBILITY_OPTIMIZATION"
+        ]
+      ],
+      "order_basis": {
+        "KPM<RAPP.MOBILITY_OPTIMIZATION": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.MOBILITY_OPTIMIZATION": "control",
+        "RC": "validate"
+      }
+    }
   },
   {
     "id": "mobility_root_cause",
@@ -1633,7 +5074,67 @@
         "KPM",
         "RAPP.ROOT_CAUSE"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "RAPP.ROOT_CAUSE"
+      ],
+      "order": [
+        [
+          "KPM",
+          "RAPP.ROOT_CAUSE"
+        ]
+      ],
+      "order_basis": {
+        "KPM<RAPP.ROOT_CAUSE": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.ROOT_CAUSE": "analyze"
+      }
+    }
   },
   {
     "id": "coverage_hole_tilt",
@@ -1658,7 +5159,67 @@
         "RAPP.RET_TILT",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "RAPP.RET_TILT"
+      ],
+      "order": [
+        [
+          "KPM",
+          "RAPP.RET_TILT"
+        ]
+      ],
+      "order_basis": {
+        "KPM<RAPP.RET_TILT": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.RET_TILT": "control",
+        "RC": "validate"
+      }
+    }
   },
   {
     "id": "tilt_after_outage",
@@ -1685,7 +5246,79 @@
         "RAPP.SELF_HEALING",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "RAPP.ROOT_CAUSE",
+        "RAPP.SELF_HEALING"
+      ],
+      "order": [
+        [
+          "KPM",
+          "RAPP.ROOT_CAUSE"
+        ],
+        [
+          "KPM",
+          "RAPP.SELF_HEALING"
+        ],
+        [
+          "RAPP.ROOT_CAUSE",
+          "RAPP.SELF_HEALING"
+        ]
+      ],
+      "order_basis": {
+        "KPM<RAPP.ROOT_CAUSE": "role",
+        "KPM<RAPP.SELF_HEALING": "role",
+        "RAPP.ROOT_CAUSE<RAPP.SELF_HEALING": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.ROOT_CAUSE": "analyze",
+        "RAPP.SELF_HEALING": "control",
+        "RC": "validate"
+      }
+    }
   },
   {
     "id": "kpi_anomaly_sweep",
@@ -1708,7 +5341,67 @@
         "KPM",
         "RAPP.ANOMALY_DETECTION"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "RAPP.ANOMALY_DETECTION"
+      ],
+      "order": [
+        [
+          "KPM",
+          "RAPP.ANOMALY_DETECTION"
+        ]
+      ],
+      "order_basis": {
+        "KPM<RAPP.ANOMALY_DETECTION": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.ANOMALY_DETECTION": "analyze"
+      }
+    }
   },
   {
     "id": "anomaly_to_transport_fix",
@@ -1736,7 +5429,79 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "RAPP.ANOMALY_DETECTION",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "RAPP.ANOMALY_DETECTION"
+        ],
+        [
+          "KPM",
+          "TC"
+        ],
+        [
+          "RAPP.ANOMALY_DETECTION",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<RAPP.ANOMALY_DETECTION": "role",
+        "KPM<TC": "role",
+        "RAPP.ANOMALY_DETECTION<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.ANOMALY_DETECTION": "analyze",
+        "RC": "validate",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "slice_sla_breach",
@@ -1764,7 +5529,73 @@
         "SLICE",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "RAPP.SLICE_SLA",
+        "SLICE"
+      ],
+      "order": [
+        [
+          "KPM",
+          "RAPP.SLICE_SLA"
+        ],
+        [
+          "KPM",
+          "SLICE"
+        ]
+      ],
+      "order_basis": {
+        "KPM<RAPP.SLICE_SLA": "role",
+        "KPM<SLICE": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.SLICE_SLA": "control",
+        "RC": "validate",
+        "SLICE": "control"
+      }
+    }
   },
   {
     "id": "slice_sla_report",
@@ -1786,7 +5617,58 @@
       [
         "RAPP.PM_KPI"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "RAPP.PM_KPI"
+      ],
+      "order": [],
+      "order_basis": {},
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "RAPP.PM_KPI": "observe"
+      }
+    }
   },
   {
     "id": "capacity_headroom_forecast",
@@ -1809,7 +5691,66 @@
         "KPM",
         "RAPP.CAPACITY_MGMT"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "RAPP.CAPACITY_MGMT"
+      ],
+      "order": [
+        [
+          "KPM",
+          "RAPP.CAPACITY_MGMT"
+        ]
+      ],
+      "order_basis": {
+        "KPM<RAPP.CAPACITY_MGMT": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.CAPACITY_MGMT": "control"
+      }
+    }
   },
   {
     "id": "spectrum_resplit",
@@ -1836,7 +5777,78 @@
         "RAPP.SPECTRUM_SHARING",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.SPECTRUM_SHARING"
+      ],
+      "order": [
+        [
+          "KPM",
+          "RAPP.CAPACITY_MGMT"
+        ],
+        [
+          "KPM",
+          "RAPP.SPECTRUM_SHARING"
+        ],
+        [
+          "RAPP.CAPACITY_MGMT",
+          "RAPP.SPECTRUM_SHARING"
+        ]
+      ],
+      "order_basis": {
+        "KPM<RAPP.CAPACITY_MGMT": "role",
+        "KPM<RAPP.SPECTRUM_SHARING": "role",
+        "RAPP.CAPACITY_MGMT<RAPP.SPECTRUM_SHARING": "dependency"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.CAPACITY_MGMT": "control",
+        "RAPP.SPECTRUM_SHARING": "control",
+        "RC": "validate"
+      }
+    }
   },
   {
     "id": "interference_hotspot",
@@ -1861,7 +5873,67 @@
         "RAPP.INTERFERENCE",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "RAPP.INTERFERENCE"
+      ],
+      "order": [
+        [
+          "KPM",
+          "RAPP.INTERFERENCE"
+        ]
+      ],
+      "order_basis": {
+        "KPM<RAPP.INTERFERENCE": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.INTERFERENCE": "control",
+        "RC": "validate"
+      }
+    }
   },
   {
     "id": "backhaul_policy_advice",
@@ -1888,7 +5960,73 @@
         "TC",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "RAPP.TRANSPORT_QOS",
+        "TC"
+      ],
+      "order": [
+        [
+          "KPM",
+          "RAPP.TRANSPORT_QOS"
+        ],
+        [
+          "KPM",
+          "TC"
+        ]
+      ],
+      "order_basis": {
+        "KPM<RAPP.TRANSPORT_QOS": "role",
+        "KPM<TC": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.TRANSPORT_QOS": "control",
+        "RC": "validate",
+        "TC": "control"
+      }
+    }
   },
   {
     "id": "pm_report_daily",
@@ -1911,7 +6049,60 @@
         "KPM",
         "RAPP.PM_KPI"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "RAPP.PM_KPI"
+      ],
+      "order": [],
+      "order_basis": {},
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.PM_KPI": "observe"
+      }
+    }
   },
   {
     "id": "config_rollout_window",
@@ -1932,7 +6123,57 @@
       [
         "RAPP.RAN_LIFECYCLE"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "RAPP.RAN_LIFECYCLE"
+      ],
+      "order": [],
+      "order_basis": {},
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "RAPP.RAN_LIFECYCLE": "control"
+      }
+    }
   },
   {
     "id": "rollout_blocked_by_energy",
@@ -1954,7 +6195,57 @@
       [
         "RAPP.RAN_LIFECYCLE"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "RAPP.RAN_LIFECYCLE"
+      ],
+      "order": [],
+      "order_basis": {},
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "RAPP.RAN_LIFECYCLE": "control"
+      }
+    }
   },
   {
     "id": "priority_for_emergency_ues",
@@ -1979,7 +6270,78 @@
         "RAPP.QOE_PREDICTION",
         "RAPP.UE_QOS_CONTROL"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "RAPP.QOE_PREDICTION",
+        "RAPP.UE_QOS_CONTROL"
+      ],
+      "order": [
+        [
+          "KPM",
+          "RAPP.QOE_PREDICTION"
+        ],
+        [
+          "KPM",
+          "RAPP.UE_QOS_CONTROL"
+        ],
+        [
+          "RAPP.QOE_PREDICTION",
+          "RAPP.UE_QOS_CONTROL"
+        ]
+      ],
+      "order_basis": {
+        "KPM<RAPP.QOE_PREDICTION": "role",
+        "KPM<RAPP.UE_QOS_CONTROL": "role",
+        "RAPP.QOE_PREDICTION<RAPP.UE_QOS_CONTROL": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.QOE_PREDICTION": "analyze",
+        "RAPP.UE_QOS_CONTROL": "control"
+      }
+    }
   },
   {
     "id": "deprecated_card_trap",
@@ -2005,7 +6367,67 @@
         "RAPP.ENERGY_SAVING",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "RAPP.ENERGY_SAVING"
+      ],
+      "order": [
+        [
+          "KPM",
+          "RAPP.ENERGY_SAVING"
+        ]
+      ],
+      "order_basis": {
+        "KPM<RAPP.ENERGY_SAVING": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.ENERGY_SAVING": "control",
+        "RC": "validate"
+      }
+    }
   },
   {
     "id": "vendor_variant_trap",
@@ -2036,7 +6458,67 @@
     "open_world": true,
     "split": "unseen_capability",
     "expected_workflow_id": "custom:kpm-rapp.traffic_steering-rc",
-    "expects_conflict": false
+    "expects_conflict": false,
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "RAPP.TRAFFIC_STEERING|RAPP.TRAFFIC_STEERING.NORTHWIND"
+      ],
+      "order": [
+        [
+          "KPM",
+          "RAPP.TRAFFIC_STEERING|RAPP.TRAFFIC_STEERING.NORTHWIND"
+        ]
+      ],
+      "order_basis": {
+        "KPM<RAPP.TRAFFIC_STEERING|RAPP.TRAFFIC_STEERING.NORTHWIND": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.TRAFFIC_STEERING": "control",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND": "control",
+        "RC": "validate"
+      }
+    }
   },
   {
     "id": "qoe_without_observation",
@@ -2060,7 +6542,67 @@
         "KPM",
         "RAPP.QOE_PREDICTION"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "RAPP.QOE_PREDICTION"
+      ],
+      "order": [
+        [
+          "KPM",
+          "RAPP.QOE_PREDICTION"
+        ]
+      ],
+      "order_basis": {
+        "KPM<RAPP.QOE_PREDICTION": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.QOE_PREDICTION": "analyze"
+      }
+    }
   },
   {
     "id": "healing_full_chain",
@@ -2090,7 +6632,91 @@
         "RAPP.SELF_HEALING",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "RAPP.ANOMALY_DETECTION",
+        "RAPP.ROOT_CAUSE",
+        "RAPP.SELF_HEALING"
+      ],
+      "order": [
+        [
+          "KPM",
+          "RAPP.ANOMALY_DETECTION"
+        ],
+        [
+          "KPM",
+          "RAPP.ROOT_CAUSE"
+        ],
+        [
+          "KPM",
+          "RAPP.SELF_HEALING"
+        ],
+        [
+          "RAPP.ANOMALY_DETECTION",
+          "RAPP.SELF_HEALING"
+        ],
+        [
+          "RAPP.ROOT_CAUSE",
+          "RAPP.SELF_HEALING"
+        ]
+      ],
+      "order_basis": {
+        "KPM<RAPP.ANOMALY_DETECTION": "role",
+        "KPM<RAPP.ROOT_CAUSE": "role",
+        "KPM<RAPP.SELF_HEALING": "role",
+        "RAPP.ANOMALY_DETECTION<RAPP.SELF_HEALING": "role",
+        "RAPP.ROOT_CAUSE<RAPP.SELF_HEALING": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.ANOMALY_DETECTION": "analyze",
+        "RAPP.ROOT_CAUSE": "analyze",
+        "RAPP.SELF_HEALING": "control",
+        "RC": "validate"
+      }
+    }
   },
   {
     "id": "steering_then_energy",
@@ -2119,7 +6745,78 @@
         "RAPP.ENERGY_SAVING",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.ENERGY_SAVING"
+      ],
+      "order": [
+        [
+          "KPM",
+          "RAPP.TRAFFIC_STEERING"
+        ],
+        [
+          "KPM",
+          "RAPP.ENERGY_SAVING"
+        ],
+        [
+          "RAPP.TRAFFIC_STEERING",
+          "RAPP.ENERGY_SAVING"
+        ]
+      ],
+      "order_basis": {
+        "KPM<RAPP.TRAFFIC_STEERING": "role",
+        "KPM<RAPP.ENERGY_SAVING": "role",
+        "RAPP.TRAFFIC_STEERING<RAPP.ENERGY_SAVING": "conflict"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.ENERGY_SAVING": "control",
+        "RAPP.TRAFFIC_STEERING": "control",
+        "RC": "validate"
+      }
+    }
   },
   {
     "id": "unknown_vertical_request",
@@ -2147,7 +6844,79 @@
         "RAPP.UE_QOS_CONTROL",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "RAPP.QOE_PREDICTION",
+        "RAPP.UE_QOS_CONTROL"
+      ],
+      "order": [
+        [
+          "KPM",
+          "RAPP.QOE_PREDICTION"
+        ],
+        [
+          "KPM",
+          "RAPP.UE_QOS_CONTROL"
+        ],
+        [
+          "RAPP.QOE_PREDICTION",
+          "RAPP.UE_QOS_CONTROL"
+        ]
+      ],
+      "order_basis": {
+        "KPM<RAPP.QOE_PREDICTION": "role",
+        "KPM<RAPP.UE_QOS_CONTROL": "role",
+        "RAPP.QOE_PREDICTION<RAPP.UE_QOS_CONTROL": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.QOE_PREDICTION": "analyze",
+        "RAPP.UE_QOS_CONTROL": "control",
+        "RC": "validate"
+      }
+    }
   },
   {
     "id": "report_then_tilt",
@@ -2175,6 +6944,73 @@
         "RAPP.RET_TILT",
         "RC"
       ]
-    ]
+    ],
+    "label_rule": {
+      "version": "2026-10-28",
+      "required": [
+        "KPM",
+        "RAPP.PM_KPI",
+        "RAPP.RET_TILT"
+      ],
+      "order": [
+        [
+          "KPM",
+          "RAPP.RET_TILT"
+        ],
+        [
+          "RAPP.PM_KPI",
+          "RAPP.RET_TILT"
+        ]
+      ],
+      "order_basis": {
+        "KPM<RAPP.RET_TILT": "role",
+        "RAPP.PM_KPI<RAPP.RET_TILT": "role"
+      },
+      "validate_after_control": true,
+      "validate_optional": true,
+      "forbidden_writers": [
+        "RAPP.CAPACITY_MGMT",
+        "RAPP.CAPACITY_MGMT.NORTHWIND",
+        "RAPP.CAPACITY_MGMT.V0",
+        "RAPP.ENERGY_SAVING",
+        "RAPP.ENERGY_SAVING.KESTREL",
+        "RAPP.ENERGY_SAVING.NORTHWIND",
+        "RAPP.ENERGY_SAVING.V0",
+        "RAPP.INTERFERENCE",
+        "RAPP.INTERFERENCE.NORTHWIND",
+        "RAPP.INTERFERENCE.V0",
+        "RAPP.MOBILITY_OPTIMIZATION",
+        "RAPP.MOBILITY_OPTIMIZATION.NORTHWIND",
+        "RAPP.MOBILITY_OPTIMIZATION.V0",
+        "RAPP.RAN_LIFECYCLE",
+        "RAPP.RET_TILT.NORTHWIND",
+        "RAPP.RET_TILT.V0",
+        "RAPP.SELF_HEALING",
+        "RAPP.SLICE_SLA",
+        "RAPP.SLICE_SLA.NORTHWIND",
+        "RAPP.SLICE_SLA.V0",
+        "RAPP.SPECTRUM_SHARING",
+        "RAPP.TRAFFIC_STEERING",
+        "RAPP.TRAFFIC_STEERING.KESTREL",
+        "RAPP.TRAFFIC_STEERING.NORTHWIND",
+        "RAPP.TRAFFIC_STEERING.V0",
+        "RAPP.TRANSPORT_QOS",
+        "RAPP.TRANSPORT_QOS.NORTHWIND",
+        "RAPP.TRANSPORT_QOS.V0",
+        "RAPP.UE_QOS_CONTROL",
+        "RAPP.UE_QOS_CONTROL.NORTHWIND",
+        "RAPP.UE_QOS_CONTROL.V0",
+        "SLICE",
+        "TC"
+      ],
+      "optional_readonly_ok": true,
+      "optional_apps": [],
+      "roles": {
+        "KPM": "observe",
+        "RAPP.PM_KPI": "observe",
+        "RAPP.RET_TILT": "control",
+        "RC": "validate"
+      }
+    }
   }
 ]

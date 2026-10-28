@@ -69,6 +69,7 @@ def build_agents(python_bin: str, base_dir: Path) -> Dict[str, AgentCard]:
             conflicts_with=list(entry.get("conflicts_with", [])),
             mcp_endpoint=os.getenv("FLEXRIC_RAPP_MCP_URL", "http://127.0.0.1:8010/mcp"),
             capabilities=list(entry.get("capabilities", [])),
+            workflow_role=str(entry.get("workflow_role") or ""),
         )
         cards[card.id] = card
     return cards

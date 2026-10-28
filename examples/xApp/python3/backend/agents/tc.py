@@ -12,7 +12,10 @@ def build_agent(python_bin: str, base_dir: Path) -> AgentCard:
         name='TC Agent',
         role='Traffic control enforcer',
         service_model='TC',
-        description='Applies shaping, CoDel, ECN, partitioning, and queue strategies using the TC service model.',
+        description=('Applies transport/queue control over the TC service model: CoDel or ECN active queue management, shaping, '
+                     'partitioning and traffic classification on the bearer path. Use when the goal is queueing delay, jitter, '
+                     'bufferbloat or per-class transport treatment. Do not use for slice PRB reservation (SLICE) or radio '
+                     'parameters such as handover, tilt or cell power.'),
         page_path='/agents/tc',
         a2a_card_path='/.well-known/agents/tc.json',
         status='ready',
@@ -37,4 +40,5 @@ def build_agent(python_bin: str, base_dir: Path) -> AgentCard:
         capabilities=['transport_qos', 'bufferbloat_mitigation', 'traffic_shaping'],
         conflicts_with=[],
         mcp_endpoint='http://127.0.0.1:8000/mcp',
+        workflow_role='control',
     )

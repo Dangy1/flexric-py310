@@ -202,9 +202,9 @@ First tasks for the execution session:
 |---|---|---|---|
 | O1 | gpt-oss for the final batches. tlt022 (130.233.158.22) cannot load `gpt-oss:latest` under Ollama 0.40; the real spark2 (`spark2.dice.aalto.fi/v1`, key) serves `gpt-oss:120b` | Final batches A and B (paper model) | **endpoint works (2026-10-28)**: harness smoke test 6/6 records with `gpt-oss:120b` via provider `openai`; owner: spark2 is busy with other work, use spark1 for batches. qwen batches stay the working results until a gpt-oss batch exists |
 | O2 | spark1 vLLM endpoint | final batches (paper model) | **works (2026-10-28 09:21)**: `spark1.dice.aalto.fi/v1`, provider `vllm`, model `gpt-oss-120b` (vLLM, max_model_len 131072). Direct call 1.8 s, deterministic at seed 7; harness smoke test 18/18 records, 6 methods, no errors, LLM planner 7–20 s per record at reasoning effort medium. Owner: run batches on spark1 (spark2 busy) |
-| O3 | GPU line for spark2 (and spark1): `nvidia-smi --query-gpu=name,memory.total --format=csv` → `LLM_SERVER_HARDWARE` and `evaluation/HARDWARE.md` | manifests, paper hardware sentence | **open** (preliminary manifests say "GPU model pending owner") |
+| O3 | GPU line for spark2 (and spark1): `nvidia-smi --query-gpu=name,memory.total --format=csv` → `LLM_SERVER_HARDWARE` and `evaluation/HARDWARE.md` | manifests, paper hardware sentence | **decided 2026-10-28** (owner ran nvidia-smi on spark1): NVIDIA DGX Spark, GB10 Grace Blackwell, 128 GB unified CPU-GPU memory (121 GiB visible). `LLM_SERVER_HARDWARE` set in spark1.env; `evaluation/HARDWARE.md` |
 | O4 | Live side of the twin experiment: OAI rfsim gNB, or ns-3 seed B + traffic perturbation | T6 | **open** — default ns-3 seed B unless the owner says OAI |
-| O5 | Reasoning mode for the final batch: gpt-oss reasons by default (keep `FLEXRIC_LLM_THINK` unset). Preliminary qwen batches use `FLEXRIC_LLM_THINK=false` (24 s → 1.4 s per call); confirm that is acceptable for any qwen numbers shown | labelling of qwen results | **open** |
+| O5 | Reasoning mode for the final batch: gpt-oss reasons by default (keep `FLEXRIC_LLM_THINK` unset). Preliminary qwen batches use `FLEXRIC_LLM_THINK=false` (24 s → 1.4 s per call); confirm that is acceptable for any qwen numbers shown | labelling of qwen results | **decided by owner 2026-10-28**: "Yes, use reasoning effort medium for gpt-oss-120b in the final batches." `FLEXRIC_LLM_REASONING_EFFORT=medium` (spark1.env); manifests must show `planner_inference_settings.reasoning_effort = "medium"` |
 | O6 | Labelling: should an observe-first reordering of a known template (e.g. `KPM→SLICE→RC` for the `SLICE→KPM→RC` slice-assurance template) be an accepted chain? AppWeaver composes observe-first and scores 9 % on known intents vs 100 % for the template router; set accuracy (any order) is reported alongside. Changing `accepted_workflows` after seeing results must be a rule decided independently of which method gains, and applied to all methods | known-split accuracy in Table II | **decided by owner 2026-10-28**: pre-registered partial-order label rule is the primary metric for all methods (required apps, observe < control < validate, no extra write-scope app), exact template match secondary; rule and labels committed before the final batches (`docs/FABLE_REVIEW_AND_PLAN.md` §4.4) |
 | O7 | Paper claim on conflicts: with one rule for all methods the per-agent lease refuses seeded conflicts for every method whose chain reaches the busy app (rule router 100 %, AppWeaver 80 %); only AppWeaver recovers (80 % vs 0 %). Proposed framing: AppWeaver's contribution is recovery, not detection | §IV text, response R1.6/R3.5 | **decided by owner 2026-10-28**: no forced runtime reset. Recovery = bounded wait for the lease (same wait for every method) or re-plan with the busy app excluded; pre-emption counted separately (should be 0). The preliminary '80 % recovered' was lease pre-emption via portal reset and is withdrawn |
 | O8 | Labelling at directory scale: in Batch B AppWeaver inserts a directory analytics rApp (anomaly detection, root cause, transport QoS) into 62 % (all cards) / 59 % (top-8) of open-world chains, and open-world accuracy drops from 71 % (Batch A) to 17 % / 12 %. Most misses also drop a required control step (wrong under any rule), but some only add an analytics step. Should "required chain as an ordered subsequence, extra steps only from rApps with read-only control scope" be an accepted-chain rule? Decide before the gpt-oss batch | open-world accuracy in Table III, §IV-B | **decided by owner 2026-10-28**: under the O6 rule, extra read-only analytics rApps are allowed; dropping or substituting a required control step is wrong |
@@ -283,6 +283,23 @@ First tasks for the execution session:
   ns-3 twin gate, AppWeaver planner on LangGraph; then one final A/B run on spark1 gpt-oss-120b.
   ns-3 simulator issues (single KPM subscriber, empty reports, load-gated reporting, wall-clock timestamps,
   cell 1–9 / no switch-on) reviewed separately in `docs/FABLE_SIM_REVIEW.md` for the ns-oran-sim session.
+- **Revision integrated (2026-10-28 10:45), before any final batch:** streams A/B/C (Opus) + Fable sim review.
+  A: real E2SM-RC xApp (`xapp_rc_ctrl.py`, style-1 QoS-flow mapping control and style-4 report; SWIG helpers in
+  `src/xApp/swig/swig_wrapper.*`; SDK `init()` honours `FLEXRIC_XAPP_CONF`), RC card re-described; tier-1 emulator
+  twin (second RIC + `emu_agent_gnb` on 127.0.0.2, `scripts/*twin_emu*`, `backend/orchestration/emu_twin.py`),
+  8/8 xApp actions acked 5/5 on the twin. Found that this Release build prints "Successfully received CONTROL-ACK"
+  also on a 6 s timeout; only `[xApp]: CONTROL ACK rx` is a real ACK (all preliminary slice/TC ack rates are
+  overstated). B: card fixes (slice_sla, pm_kpi, anomaly_detection, spectrum_sharing, capacity_mgmt), per-action
+  scopes, `workflow_role`, use-when/do-not-use card text; pre-registered label rule `evaluation/label_rules.py`
+  (`label_rule` in both intent files, `build_label_rules.py --check`), rule accuracy primary in analysis/figures;
+  14 label tests. C: AppWeaver as a LangGraph StateGraph (`backend/appweaver/`: discover → compose (repair by
+  insertion to fixpoint) → validate (compat + lifecycle, E2 RAN-function conformance, lease pre-check, optional
+  twin dry-run) → deploy → recover (wait or re-plan, never reset)); no notes/category in any method input (asserted);
+  deterministic fallback removed; same seeding and 45 s lease wait for all methods; pinned xApps in retrieval,
+  deprecated cards visible; full-log ack checking with the real markers; manifest provenance. Integration: suites run
+  under `stdbuf -oL`; nearRT-RIC rebuilt with the iApp fix (`eq_xapp_ric_gen_id` compared `m0->xapp_id` with
+  itself); 35/35 tests pass in source and build tree. Smoke run on the live stack: all control steps acked by the
+  real marker, no pre-emption. k=all prompts reach 68k chars → Batch B uses `--max-prompt-chars 80000`.
 
 ## 4. Done criteria
 A fresh clone + the README's three commands reproduce every number and figure in the revised paper

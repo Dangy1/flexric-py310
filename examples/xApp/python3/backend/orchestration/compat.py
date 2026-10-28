@@ -23,8 +23,9 @@ timescale      a near-RT step scheduled after a non-RT step must be separated
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional, Tuple
 
 from backend.common.models import AgentCard
 
@@ -138,3 +139,172 @@ def check_chain(registry: Dict[str, AgentCard], chain: Iterable[str]) -> CompatR
         available_caps |= set(card.capabilities) | set(card.skills) | {card.id}
         available_data |= set(card.produces) | set(card.measurements)
     return report
+
+
+# ---------------------------------------------------------------------------
+# Lifecycle check and repair helpers (Compose step of AppWeaver).
+#
+# `check_chain` above is unchanged; the helpers below only *use* it. Repair is
+# registry-driven: it never looks at the intent or at any label.
+# ---------------------------------------------------------------------------
+
+
+def lifecycle_findings(registry: Dict[str, AgentCard], chain: Iterable[str]) -> List[Finding]:
+    """Deprecated cards are visible to the planner but may not be deployed."""
+    findings: List[Finding] = []
+    for index, agent_id in enumerate(str(item).strip().lower() for item in chain if str(item).strip()):
+        card = registry.get(agent_id)
+        if card is not None and card.status == "deprecated":
+            findings.append(Finding("lifecycle", "error", index, agent_id, "Card is deprecated; its runtime refuses to run it."))
+    return findings
+
+
+def _provides_capability(card: AgentCard, capability: str) -> bool:
+    return capability in card.capabilities or capability in card.skills or capability == card.id
+
+
+def _provides_data(card: AgentCard, data_model: str) -> bool:
+    return data_model in card.produces or data_model in card.measurements
+
+
+def _is_reader(card: AgentCard) -> bool:
+    return bool(card.control_scopes) and all(scope.mode == "read" for scope in card.control_scopes)
+
+
+def find_producer(
+    registry: Dict[str, AgentCard],
+    *,
+    capability: Optional[str] = None,
+    data_model: Optional[str] = None,
+    exclude: Iterable[str] = (),
+) -> Optional[AgentCard]:
+    """Pick the registry card that provides a missing capability / data model.
+
+    Deterministic preference: executable, active cards only; near-RT xApps before
+    rApps; read-only observers before writers; fewest own requirements; then id.
+    """
+    excluded = {str(item).lower() for item in exclude}
+    candidates = []
+    for card in registry.values():
+        if card.id in excluded or not card.actions or card.status == "deprecated":
+            continue
+        if capability is not None and not _provides_capability(card, capability):
+            continue
+        if data_model is not None and not _provides_data(card, data_model):
+            continue
+        candidates.append(card)
+    if not candidates:
+        return None
+    candidates.sort(key=lambda c: (c.app_type != "xapp", not _is_reader(c), len(c.requires) + len(c.consumes), c.id))
+    return candidates[0]
+
+
+def _same_family_active(registry: Dict[str, AgentCard], card: AgentCard, exclude: Iterable[str]) -> Optional[AgentCard]:
+    parts = card.id.split(".")
+    if parts[0] != "rapp" or len(parts) < 2:
+        return None
+    family = ".".join(parts[:2])
+    excluded = {str(item).lower() for item in exclude}
+    options = [
+        other for other in registry.values()
+        if other.id not in excluded and other.status != "deprecated" and other.actions
+        and (other.id == family or other.id.startswith(family + "."))
+    ]
+    options.sort(key=lambda c: (c.id != family, c.id))
+    return options[0] if options else None
+
+
+_NEED_RE = re.compile(r"(Requires capability|Consumes) '([^']+)'")
+
+
+def repair_chain(
+    registry: Dict[str, AgentCard],
+    chain: Iterable[str],
+    *,
+    exclude: Iterable[str] = (),
+    max_iterations: int = 0,
+) -> Tuple[List[str], List[Dict[str, object]], CompatReport]:
+    """Repair a candidate chain until `check_chain` (+ lifecycle) is clean or no move is left.
+
+    Moves, applied to the first error each iteration (fixpoint re-check after each):
+      * unknown id                      -> drop it
+      * deprecated card                 -> replace by the active card of its family, else drop
+      * missing capability / data model -> move an existing later producer in front of the
+                                           consumer, else insert the registry's producer
+                                           (`find_producer`) immediately before it; drop the
+                                           consumer only when nothing in the registry provides it
+      * control-scope conflict          -> drop the later (conflicting) writer
+    ``exclude`` lists ids that may not be inserted (e.g. busy applications).
+    Returns (chain, events, final_report); final_report.ok is False when repair gave up.
+    """
+    current = [str(item).strip().lower() for item in chain if str(item).strip()]
+    excluded = {str(item).lower() for item in exclude}
+    events: List[Dict[str, object]] = []
+    limit = max_iterations or (2 * len(current) + 8)
+    inserted_for: set = set()
+
+    def full_report(ids: List[str]) -> CompatReport:
+        report = check_chain(registry, ids)
+        report.findings.extend(lifecycle_findings(registry, ids))
+        report.checks_run = list(report.checks_run) + ["lifecycle"]
+        return report
+
+    report = full_report(current)
+    for _ in range(limit):
+        errors = [f for f in report.findings if f.severity == "error"]
+        if not errors:
+            break
+        finding = sorted(errors, key=lambda f: f.step_index)[0]
+        index, agent_id = finding.step_index, finding.agent_id
+        card = registry.get(agent_id)
+        if card is None:
+            current.pop(index)
+            events.append({"move": "drop_unknown", "agent_id": agent_id, "index": index, "detail": finding.detail})
+        elif finding.check == "lifecycle":
+            replacement = _same_family_active(registry, card, excluded | set(current))
+            if replacement is not None:
+                current[index] = replacement.id
+                events.append({"move": "replace_deprecated", "agent_id": agent_id, "replacement": replacement.id, "index": index})
+            else:
+                current.pop(index)
+                events.append({"move": "drop_deprecated", "agent_id": agent_id, "index": index})
+        elif finding.check == "dependency":
+            match = _NEED_RE.search(finding.detail)
+            kind, need = (match.group(1), match.group(2)) if match else ("", "")
+            is_cap = kind.startswith("Requires")
+            later = [
+                j for j in range(index + 1, len(current))
+                if registry.get(current[j]) is not None
+                and (_provides_capability(registry[current[j]], need) if is_cap else _provides_data(registry[current[j]], need))
+            ]
+            key = (agent_id, need)
+            if later and key not in inserted_for:
+                moved = current.pop(later[0])
+                current.insert(index, moved)
+                inserted_for.add(key)
+                events.append({"move": "reorder_producer", "agent_id": moved, "before": agent_id, "need": need, "index": index})
+            else:
+                producer = None
+                if key not in inserted_for:
+                    producer = find_producer(
+                        registry,
+                        capability=need if is_cap else None,
+                        data_model=None if is_cap else need,
+                        exclude=excluded | set(current),
+                    )
+                if producer is not None:
+                    current.insert(index, producer.id)
+                    inserted_for.add(key)
+                    events.append({"move": "insert_producer", "agent_id": producer.id, "before": agent_id, "need": need, "index": index})
+                else:
+                    current.pop(index)
+                    events.append({"move": "drop_unsatisfiable", "agent_id": agent_id, "need": need, "index": index})
+        else:
+            current.pop(index)
+            events.append({"move": f"drop_{finding.check}", "agent_id": agent_id, "index": index, "detail": finding.detail})
+        report = full_report(current)
+        if not current:
+            break
+    if not report.ok:
+        events.append({"move": "gave_up", "errors": [f.to_dict() for f in report.findings if f.severity == "error"]})
+    return current, events, report

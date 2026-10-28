@@ -5,20 +5,23 @@ from typing import List
 
 
 @dataclass
+class ControlScope:
+    """What an application may write, and at which granularity."""
+    target: str          # cell | ue | slice | node | transport
+    mode: str = "read"   # read | write
+    resource: str = ""   # lease class, e.g. slice_control, tc_control, rc_control, cell_power
+
+
+@dataclass
 class AgentAction:
     id: str
     label: str
     description: str
     kind: str
     command: List[str] = field(default_factory=list)
-
-
-@dataclass
-class ControlScope:
-    """What an application may write, and at which granularity."""
-    target: str          # cell | ue | slice | node | transport
-    mode: str = "read"   # read | write
-    resource: str = ""   # lease class, e.g. slice_control, tc_control, rc_control, cell_power
+    # Per-action scope (optional). Empty = the action may use every scope of its card.
+    # Lets a card with a write scope declare a read-only action (e.g. slice `monitor`).
+    control_scopes: List[ControlScope] = field(default_factory=list)
 
 
 @dataclass
@@ -59,3 +62,7 @@ class AgentCard:
     conflicts_with: List[str] = field(default_factory=list)  # lease classes it must not share a window with
     mcp_endpoint: str = ""                                   # MCP server URL exposing the actions as tools
     capabilities: List[str] = field(default_factory=list)    # discovery vocabulary, e.g. energy_saving, qoe_prediction
+    # Declared workflow role: observe | analyze | control | validate ("" = derive it from
+    # control_scopes and capabilities, see evaluation/label_rules.app_role). Must agree with the
+    # scopes: a card with a write scope is control (or validate), a read-only card never is.
+    workflow_role: str = ""

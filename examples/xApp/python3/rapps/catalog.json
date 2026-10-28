@@ -8,7 +8,7 @@
     "family": "energy_saving",
     "solution_area": "Network Optimization",
     "use_case": "O-RAN UC21 cell switch on/off energy saving",
-    "description": "Cell Sleep Energy Saver rApp (O-RAN UC21 cell switch on/off energy saving). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Cell Sleep Energy Saver rApp (O-RAN UC21 cell switch on/off energy saving). Ranks lightly loaded cells or carriers for sleep, switches them off and restores them when load returns (writes cell_power). Use when the goal is to cut RAN energy consumption by switching cells or carriers off in low-traffic periods, or to bring sleeping cells back. Do not use when capacity has to be added, coverage reshaped or individual users prioritised; declared conflict with capacity-boost functions. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "energy_saving",
       "cell_switch_off",
@@ -42,6 +42,7 @@
     "conflicts_with": [
       "capacity_boost"
     ],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "recommend_sleep_cells",
@@ -71,7 +72,7 @@
     "family": "energy_saving",
     "solution_area": "Network Optimization",
     "use_case": "O-RAN UC21 cell switch on/off energy saving",
-    "description": "Cell Sleep Energy Saver rApp (O-RAN UC21 cell switch on/off energy saving). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Northwind Radio implementation of the Cell Sleep Energy Saver rApp (O-RAN UC21 cell switch on/off energy saving). Ranks lightly loaded cells or carriers for sleep, switches them off and restores them when load returns (writes cell_power). Use when the goal is to cut RAN energy consumption by switching cells or carriers off in low-traffic periods, or to bring sleeping cells back. Do not use when capacity has to be added, coverage reshaped or individual users prioritised; declared conflict with capacity-boost functions. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "energy_saving",
       "cell_switch_off",
@@ -105,6 +106,7 @@
     "conflicts_with": [
       "capacity_boost"
     ],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "northwind_recommend_sleep_cells",
@@ -136,7 +138,7 @@
     "family": "energy_saving",
     "solution_area": "Network Optimization",
     "use_case": "O-RAN UC21 cell switch on/off energy saving",
-    "description": "Cell Sleep Energy Saver rApp (O-RAN UC21 cell switch on/off energy saving). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Kestrel Networks implementation of the Cell Sleep Energy Saver rApp (O-RAN UC21 cell switch on/off energy saving). Ranks lightly loaded cells or carriers for sleep, switches them off and restores them when load returns (writes cell_power). Use when the goal is to cut RAN energy consumption by switching cells or carriers off in low-traffic periods, or to bring sleeping cells back. Do not use when capacity has to be added, coverage reshaped or individual users prioritised; declared conflict with capacity-boost functions. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "energy_saving",
       "cell_switch_off",
@@ -170,6 +172,7 @@
     "conflicts_with": [
       "capacity_boost"
     ],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "kestrel_recommend_sleep_cells",
@@ -201,7 +204,7 @@
     "family": "energy_saving",
     "solution_area": "Network Optimization",
     "use_case": "O-RAN UC21 cell switch on/off energy saving",
-    "description": "Cell Sleep Energy Saver rApp (O-RAN UC21 cell switch on/off energy saving). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "DEPRECATED release 0.9.0 of the Cell Sleep Energy Saver rApp, superseded by rapp.energy_saving 2.1.0 and kept in the directory for migration only. Do not select it for new workflows: its tools are refused at run time. Cell Sleep Energy Saver rApp (O-RAN UC21 cell switch on/off energy saving). Ranks lightly loaded cells or carriers for sleep, switches them off and restores them when load returns (writes cell_power). Use when the goal is to cut RAN energy consumption by switching cells or carriers off in low-traffic periods, or to bring sleeping cells back. Do not use when capacity has to be added, coverage reshaped or individual users prioritised; declared conflict with capacity-boost functions. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "energy_saving",
       "cell_switch_off",
@@ -235,6 +238,7 @@
     "conflicts_with": [
       "capacity_boost"
     ],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "recommend_sleep_cells",
@@ -255,7 +259,8 @@
     "distractor": true,
     "notes": [
       "Deprecated release kept in the directory for migration; superseded by the 2.x card."
-    ]
+    ],
+    "superseded_by": "rapp.energy_saving"
   },
   {
     "id": "rapp.traffic_steering",
@@ -266,7 +271,7 @@
     "family": "traffic_steering",
     "solution_area": "Network Optimization",
     "use_case": "O-RAN UC1 traffic steering",
-    "description": "Traffic Steering rApp (O-RAN UC1 traffic steering). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Traffic Steering rApp (O-RAN UC1 traffic steering). Computes load-balancing handover targets and pushes a per-UE steering policy (writes UE-level rc_control). Use when traffic has to be moved between cells or carriers, e.g. offloading a congested cell onto its neighbours. Do not use when the fix is a transport queue policy or a slice reservation; it must not run after a cell_power writer (declared conflict). Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "traffic_steering",
       "load_balancing",
@@ -298,6 +303,7 @@
     "conflicts_with": [
       "cell_power"
     ],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "compute_steering_targets",
@@ -327,7 +333,7 @@
     "family": "traffic_steering",
     "solution_area": "Network Optimization",
     "use_case": "O-RAN UC1 traffic steering",
-    "description": "Traffic Steering rApp (O-RAN UC1 traffic steering). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Northwind Radio implementation of the Traffic Steering rApp (O-RAN UC1 traffic steering). Computes load-balancing handover targets and pushes a per-UE steering policy (writes UE-level rc_control). Use when traffic has to be moved between cells or carriers, e.g. offloading a congested cell onto its neighbours. Do not use when the fix is a transport queue policy or a slice reservation; it must not run after a cell_power writer (declared conflict). Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "traffic_steering",
       "load_balancing",
@@ -359,6 +365,7 @@
     "conflicts_with": [
       "cell_power"
     ],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "northwind_compute_steering_targets",
@@ -390,7 +397,7 @@
     "family": "traffic_steering",
     "solution_area": "Network Optimization",
     "use_case": "O-RAN UC1 traffic steering",
-    "description": "Traffic Steering rApp (O-RAN UC1 traffic steering). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Kestrel Networks implementation of the Traffic Steering rApp (O-RAN UC1 traffic steering). Computes load-balancing handover targets and pushes a per-UE steering policy (writes UE-level rc_control). Use when traffic has to be moved between cells or carriers, e.g. offloading a congested cell onto its neighbours. Do not use when the fix is a transport queue policy or a slice reservation; it must not run after a cell_power writer (declared conflict). Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "traffic_steering",
       "load_balancing",
@@ -422,6 +429,7 @@
     "conflicts_with": [
       "cell_power"
     ],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "kestrel_compute_steering_targets",
@@ -453,7 +461,7 @@
     "family": "traffic_steering",
     "solution_area": "Network Optimization",
     "use_case": "O-RAN UC1 traffic steering",
-    "description": "Traffic Steering rApp (O-RAN UC1 traffic steering). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "DEPRECATED release 0.9.0 of the Traffic Steering rApp, superseded by rapp.traffic_steering 2.1.0 and kept in the directory for migration only. Do not select it for new workflows: its tools are refused at run time. Traffic Steering rApp (O-RAN UC1 traffic steering). Computes load-balancing handover targets and pushes a per-UE steering policy (writes UE-level rc_control). Use when traffic has to be moved between cells or carriers, e.g. offloading a congested cell onto its neighbours. Do not use when the fix is a transport queue policy or a slice reservation; it must not run after a cell_power writer (declared conflict). Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "traffic_steering",
       "load_balancing",
@@ -485,6 +493,7 @@
     "conflicts_with": [
       "cell_power"
     ],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "compute_steering_targets",
@@ -505,7 +514,8 @@
     "distractor": true,
     "notes": [
       "Deprecated release kept in the directory for migration; superseded by the 2.x card."
-    ]
+    ],
+    "superseded_by": "rapp.traffic_steering"
   },
   {
     "id": "rapp.qoe_prediction",
@@ -516,7 +526,7 @@
     "family": "qoe_prediction",
     "solution_area": "Automation and AI Foundation",
     "use_case": "O-RAN UC2 QoE optimisation",
-    "description": "QoE Predictor rApp (O-RAN UC2 QoE optimisation). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "QoE Predictor rApp (O-RAN UC2 QoE optimisation). Forecasts per-cell MOS from throughput and delay and lists the UEs at risk of poor QoE. Read-only. Use when user-perceived quality (QoE/MOS) has to be estimated or forecast, or at-risk users identified before acting. Do not use when a control action is all that is needed; it never changes RAN state. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "qoe_prediction",
       "mos_estimation",
@@ -546,6 +556,7 @@
       "kpi_monitoring"
     ],
     "conflicts_with": [],
+    "workflow_role": "analyze",
     "tools": [
       {
         "id": "predict_qoe",
@@ -570,7 +581,7 @@
     "family": "qoe_prediction",
     "solution_area": "Automation and AI Foundation",
     "use_case": "O-RAN UC2 QoE optimisation",
-    "description": "QoE Predictor rApp (O-RAN UC2 QoE optimisation). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Northwind Radio implementation of the QoE Predictor rApp (O-RAN UC2 QoE optimisation). Forecasts per-cell MOS from throughput and delay and lists the UEs at risk of poor QoE. Read-only. Use when user-perceived quality (QoE/MOS) has to be estimated or forecast, or at-risk users identified before acting. Do not use when a control action is all that is needed; it never changes RAN state. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "qoe_prediction",
       "mos_estimation",
@@ -600,6 +611,7 @@
       "kpi_monitoring"
     ],
     "conflicts_with": [],
+    "workflow_role": "analyze",
     "tools": [
       {
         "id": "northwind_predict_qoe",
@@ -626,7 +638,7 @@
     "family": "qoe_prediction",
     "solution_area": "Automation and AI Foundation",
     "use_case": "O-RAN UC2 QoE optimisation",
-    "description": "QoE Predictor rApp (O-RAN UC2 QoE optimisation). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Kestrel Networks implementation of the QoE Predictor rApp (O-RAN UC2 QoE optimisation). Forecasts per-cell MOS from throughput and delay and lists the UEs at risk of poor QoE. Read-only. Use when user-perceived quality (QoE/MOS) has to be estimated or forecast, or at-risk users identified before acting. Do not use when a control action is all that is needed; it never changes RAN state. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "qoe_prediction",
       "mos_estimation",
@@ -656,6 +668,7 @@
       "kpi_monitoring"
     ],
     "conflicts_with": [],
+    "workflow_role": "analyze",
     "tools": [
       {
         "id": "kestrel_predict_qoe",
@@ -682,7 +695,7 @@
     "family": "qoe_prediction",
     "solution_area": "Automation and AI Foundation",
     "use_case": "O-RAN UC2 QoE optimisation",
-    "description": "QoE Predictor rApp (O-RAN UC2 QoE optimisation). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "DEPRECATED release 0.9.0 of the QoE Predictor rApp, superseded by rapp.qoe_prediction 2.1.0 and kept in the directory for migration only. Do not select it for new workflows: its tools are refused at run time. QoE Predictor rApp (O-RAN UC2 QoE optimisation). Forecasts per-cell MOS from throughput and delay and lists the UEs at risk of poor QoE. Read-only. Use when user-perceived quality (QoE/MOS) has to be estimated or forecast, or at-risk users identified before acting. Do not use when a control action is all that is needed; it never changes RAN state. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "qoe_prediction",
       "mos_estimation",
@@ -712,6 +725,7 @@
       "kpi_monitoring"
     ],
     "conflicts_with": [],
+    "workflow_role": "analyze",
     "tools": [
       {
         "id": "predict_qoe",
@@ -727,7 +741,8 @@
     "distractor": true,
     "notes": [
       "Deprecated release kept in the directory for migration; superseded by the 2.x card."
-    ]
+    ],
+    "superseded_by": "rapp.qoe_prediction"
   },
   {
     "id": "rapp.mobility_optimization",
@@ -738,7 +753,7 @@
     "family": "mobility_optimization",
     "solution_area": "Network Optimization",
     "use_case": "Mobility robustness optimisation (MRO)",
-    "description": "Mobility Robustness Optimizer rApp (Mobility robustness optimisation (MRO)). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Mobility Robustness Optimizer rApp (Mobility robustness optimisation (MRO)). Detects handover oscillation and tunes A3 offset / time-to-trigger per cell pair (writes cell-level rc_control). Use when handover failures or too-early, too-late or oscillating handovers have to be reduced by changing handover parameters. Do not use when the problem is load imbalance between cells (traffic steering) or transport delay. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "mobility_optimization",
       "handover_tuning",
@@ -767,6 +782,7 @@
       "kpi_monitoring"
     ],
     "conflicts_with": [],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "detect_ping_pong",
@@ -796,7 +812,7 @@
     "family": "mobility_optimization",
     "solution_area": "Network Optimization",
     "use_case": "Mobility robustness optimisation (MRO)",
-    "description": "Mobility Robustness Optimizer rApp (Mobility robustness optimisation (MRO)). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Northwind Radio implementation of the Mobility Robustness Optimizer rApp (Mobility robustness optimisation (MRO)). Detects handover oscillation and tunes A3 offset / time-to-trigger per cell pair (writes cell-level rc_control). Use when handover failures or too-early, too-late or oscillating handovers have to be reduced by changing handover parameters. Do not use when the problem is load imbalance between cells (traffic steering) or transport delay. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "mobility_optimization",
       "handover_tuning",
@@ -825,6 +841,7 @@
       "kpi_monitoring"
     ],
     "conflicts_with": [],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "northwind_detect_ping_pong",
@@ -856,7 +873,7 @@
     "family": "mobility_optimization",
     "solution_area": "Network Optimization",
     "use_case": "Mobility robustness optimisation (MRO)",
-    "description": "Mobility Robustness Optimizer rApp (Mobility robustness optimisation (MRO)). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "DEPRECATED release 0.9.0 of the Mobility Robustness Optimizer rApp, superseded by rapp.mobility_optimization 2.1.0 and kept in the directory for migration only. Do not select it for new workflows: its tools are refused at run time. Mobility Robustness Optimizer rApp (Mobility robustness optimisation (MRO)). Detects handover oscillation and tunes A3 offset / time-to-trigger per cell pair (writes cell-level rc_control). Use when handover failures or too-early, too-late or oscillating handovers have to be reduced by changing handover parameters. Do not use when the problem is load imbalance between cells (traffic steering) or transport delay. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "mobility_optimization",
       "handover_tuning",
@@ -885,6 +902,7 @@
       "kpi_monitoring"
     ],
     "conflicts_with": [],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "detect_ping_pong",
@@ -905,7 +923,8 @@
     "distractor": true,
     "notes": [
       "Deprecated release kept in the directory for migration; superseded by the 2.x card."
-    ]
+    ],
+    "superseded_by": "rapp.mobility_optimization"
   },
   {
     "id": "rapp.ret_tilt",
@@ -916,7 +935,7 @@
     "family": "ret_tilt",
     "solution_area": "Network Optimization",
     "use_case": "Coverage & capacity optimisation (RET)",
-    "description": "Remote Electrical Tilt Optimizer rApp (Coverage & capacity optimisation (RET)). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Remote Electrical Tilt Optimizer rApp (Coverage & capacity optimisation (RET)). Proposes and applies remote electrical tilt changes to reshape coverage and capacity (writes antenna_config). Use when coverage holes, overshooting or weak cell-edge coverage have to be fixed by changing antenna tilt. Do not use when the problem is load, energy or transport; declared conflict with cell_power writers. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "coverage_optimization",
       "antenna_tilt",
@@ -947,6 +966,7 @@
     "conflicts_with": [
       "cell_power"
     ],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "propose_tilt_changes",
@@ -971,7 +991,7 @@
     "family": "ret_tilt",
     "solution_area": "Network Optimization",
     "use_case": "Coverage & capacity optimisation (RET)",
-    "description": "Remote Electrical Tilt Optimizer rApp (Coverage & capacity optimisation (RET)). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Northwind Radio implementation of the Remote Electrical Tilt Optimizer rApp (Coverage & capacity optimisation (RET)). Proposes and applies remote electrical tilt changes to reshape coverage and capacity (writes antenna_config). Use when coverage holes, overshooting or weak cell-edge coverage have to be fixed by changing antenna tilt. Do not use when the problem is load, energy or transport; declared conflict with cell_power writers. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "coverage_optimization",
       "antenna_tilt",
@@ -1002,6 +1022,7 @@
     "conflicts_with": [
       "cell_power"
     ],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "northwind_propose_tilt_changes",
@@ -1028,7 +1049,7 @@
     "family": "ret_tilt",
     "solution_area": "Network Optimization",
     "use_case": "Coverage & capacity optimisation (RET)",
-    "description": "Remote Electrical Tilt Optimizer rApp (Coverage & capacity optimisation (RET)). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "DEPRECATED release 0.9.0 of the Remote Electrical Tilt Optimizer rApp, superseded by rapp.ret_tilt 2.1.0 and kept in the directory for migration only. Do not select it for new workflows: its tools are refused at run time. Remote Electrical Tilt Optimizer rApp (Coverage & capacity optimisation (RET)). Proposes and applies remote electrical tilt changes to reshape coverage and capacity (writes antenna_config). Use when coverage holes, overshooting or weak cell-edge coverage have to be fixed by changing antenna tilt. Do not use when the problem is load, energy or transport; declared conflict with cell_power writers. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "coverage_optimization",
       "antenna_tilt",
@@ -1059,6 +1080,7 @@
     "conflicts_with": [
       "cell_power"
     ],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "propose_tilt_changes",
@@ -1074,7 +1096,8 @@
     "distractor": true,
     "notes": [
       "Deprecated release kept in the directory for migration; superseded by the 2.x card."
-    ]
+    ],
+    "superseded_by": "rapp.ret_tilt"
   },
   {
     "id": "rapp.root_cause",
@@ -1085,7 +1108,7 @@
     "family": "root_cause",
     "solution_area": "Network Healing",
     "use_case": "Root cause analysis",
-    "description": "Root Cause Analyzer rApp (Root cause analysis). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Root Cause Analyzer rApp (Root cause analysis). Correlates KPI degradations with recent control actions and alarms and ranks likely causes. Read-only. Use when the goal is to explain why a KPI degraded or a fault occurred, before or instead of acting. Do not use when the cause is already known and only a control action is needed. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "root_cause_analysis",
       "anomaly_attribution",
@@ -1115,6 +1138,7 @@
       "kpi_monitoring"
     ],
     "conflicts_with": [],
+    "workflow_role": "analyze",
     "tools": [
       {
         "id": "diagnose_degradation",
@@ -1139,7 +1163,7 @@
     "family": "root_cause",
     "solution_area": "Network Healing",
     "use_case": "Root cause analysis",
-    "description": "Root Cause Analyzer rApp (Root cause analysis). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Northwind Radio implementation of the Root Cause Analyzer rApp (Root cause analysis). Correlates KPI degradations with recent control actions and alarms and ranks likely causes. Read-only. Use when the goal is to explain why a KPI degraded or a fault occurred, before or instead of acting. Do not use when the cause is already known and only a control action is needed. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "root_cause_analysis",
       "anomaly_attribution",
@@ -1169,6 +1193,7 @@
       "kpi_monitoring"
     ],
     "conflicts_with": [],
+    "workflow_role": "analyze",
     "tools": [
       {
         "id": "northwind_diagnose_degradation",
@@ -1195,7 +1220,7 @@
     "family": "root_cause",
     "solution_area": "Network Healing",
     "use_case": "Root cause analysis",
-    "description": "Root Cause Analyzer rApp (Root cause analysis). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "DEPRECATED release 0.9.0 of the Root Cause Analyzer rApp, superseded by rapp.root_cause 2.1.0 and kept in the directory for migration only. Do not select it for new workflows: its tools are refused at run time. Root Cause Analyzer rApp (Root cause analysis). Correlates KPI degradations with recent control actions and alarms and ranks likely causes. Read-only. Use when the goal is to explain why a KPI degraded or a fault occurred, before or instead of acting. Do not use when the cause is already known and only a control action is needed. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "root_cause_analysis",
       "anomaly_attribution",
@@ -1225,6 +1250,7 @@
       "kpi_monitoring"
     ],
     "conflicts_with": [],
+    "workflow_role": "analyze",
     "tools": [
       {
         "id": "diagnose_degradation",
@@ -1240,7 +1266,8 @@
     "distractor": true,
     "notes": [
       "Deprecated release kept in the directory for migration; superseded by the 2.x card."
-    ]
+    ],
+    "superseded_by": "rapp.root_cause"
   },
   {
     "id": "rapp.anomaly_detection",
@@ -1251,7 +1278,7 @@
     "family": "anomaly_detection",
     "solution_area": "Network Healing",
     "use_case": "KPI anomaly detection",
-    "description": "KPI Anomaly Detector rApp (KPI anomaly detection). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "KPI Anomaly Detector rApp (KPI anomaly detection). Learns per-cell KPI baselines from KPM and flags series that leave them. Read-only. Use when deviations from normal KPI behaviour have to be detected, flagged or summarised. Do not use when the cause has to be explained (root cause analysis) or a control applied; it never changes RAN state. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "anomaly_detection",
       "kpi_baselining",
@@ -1276,8 +1303,11 @@
       }
     ],
     "timescale_s": 5,
-    "requires": [],
+    "requires": [
+      "kpi_monitoring"
+    ],
     "conflicts_with": [],
+    "workflow_role": "analyze",
     "tools": [
       {
         "id": "detect_anomalies",
@@ -1302,7 +1332,7 @@
     "family": "anomaly_detection",
     "solution_area": "Network Healing",
     "use_case": "KPI anomaly detection",
-    "description": "KPI Anomaly Detector rApp (KPI anomaly detection). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Northwind Radio implementation of the KPI Anomaly Detector rApp (KPI anomaly detection). Learns per-cell KPI baselines from KPM and flags series that leave them. Read-only. Use when deviations from normal KPI behaviour have to be detected, flagged or summarised. Do not use when the cause has to be explained (root cause analysis) or a control applied; it never changes RAN state. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "anomaly_detection",
       "kpi_baselining",
@@ -1327,8 +1357,11 @@
       }
     ],
     "timescale_s": 5,
-    "requires": [],
+    "requires": [
+      "kpi_monitoring"
+    ],
     "conflicts_with": [],
+    "workflow_role": "analyze",
     "tools": [
       {
         "id": "northwind_detect_anomalies",
@@ -1355,7 +1388,7 @@
     "family": "anomaly_detection",
     "solution_area": "Network Healing",
     "use_case": "KPI anomaly detection",
-    "description": "KPI Anomaly Detector rApp (KPI anomaly detection). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Kestrel Networks implementation of the KPI Anomaly Detector rApp (KPI anomaly detection). Learns per-cell KPI baselines from KPM and flags series that leave them. Read-only. Use when deviations from normal KPI behaviour have to be detected, flagged or summarised. Do not use when the cause has to be explained (root cause analysis) or a control applied; it never changes RAN state. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "anomaly_detection",
       "kpi_baselining",
@@ -1380,8 +1413,11 @@
       }
     ],
     "timescale_s": 5,
-    "requires": [],
+    "requires": [
+      "kpi_monitoring"
+    ],
     "conflicts_with": [],
+    "workflow_role": "analyze",
     "tools": [
       {
         "id": "kestrel_detect_anomalies",
@@ -1408,7 +1444,7 @@
     "family": "anomaly_detection",
     "solution_area": "Network Healing",
     "use_case": "KPI anomaly detection",
-    "description": "KPI Anomaly Detector rApp (KPI anomaly detection). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "DEPRECATED release 0.9.0 of the KPI Anomaly Detector rApp, superseded by rapp.anomaly_detection 2.1.0 and kept in the directory for migration only. Do not select it for new workflows: its tools are refused at run time. KPI Anomaly Detector rApp (KPI anomaly detection). Learns per-cell KPI baselines from KPM and flags series that leave them. Read-only. Use when deviations from normal KPI behaviour have to be detected, flagged or summarised. Do not use when the cause has to be explained (root cause analysis) or a control applied; it never changes RAN state. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "anomaly_detection",
       "kpi_baselining",
@@ -1433,8 +1469,11 @@
       }
     ],
     "timescale_s": 5,
-    "requires": [],
+    "requires": [
+      "kpi_monitoring"
+    ],
     "conflicts_with": [],
+    "workflow_role": "analyze",
     "tools": [
       {
         "id": "detect_anomalies",
@@ -1450,7 +1489,8 @@
     "distractor": true,
     "notes": [
       "Deprecated release kept in the directory for migration; superseded by the 2.x card."
-    ]
+    ],
+    "superseded_by": "rapp.anomaly_detection"
   },
   {
     "id": "rapp.slice_sla",
@@ -1461,7 +1501,7 @@
     "family": "slice_sla",
     "solution_area": "Network Optimization",
     "use_case": "O-RAN UC3 slice SLA assurance",
-    "description": "Slice SLA Assurance rApp (O-RAN UC3 slice SLA assurance). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Slice SLA Assurance rApp (O-RAN UC3 slice SLA assurance). Compares per-slice KPIs with SLA targets and recomputes PRB reservations, applied through the SLICE xApp (writes slice_control). Use when a slice violates or is about to violate its SLA and its resource reservation has to be recomputed. Do not use when only an SLA evidence report is needed, or no slice is involved. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "slice_assurance",
       "sla_monitoring",
@@ -1474,7 +1514,7 @@
     ],
     "consumes": [
       "RRU.PrbTotDl",
-      "slice.policy"
+      "DRB.RlcSduDelayDl"
     ],
     "produces": [
       "sla.violation_report",
@@ -1492,6 +1532,7 @@
       "kpi_monitoring"
     ],
     "conflicts_with": [],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "evaluate_sla",
@@ -1521,7 +1562,7 @@
     "family": "slice_sla",
     "solution_area": "Network Optimization",
     "use_case": "O-RAN UC3 slice SLA assurance",
-    "description": "Slice SLA Assurance rApp (O-RAN UC3 slice SLA assurance). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Northwind Radio implementation of the Slice SLA Assurance rApp (O-RAN UC3 slice SLA assurance). Compares per-slice KPIs with SLA targets and recomputes PRB reservations, applied through the SLICE xApp (writes slice_control). Use when a slice violates or is about to violate its SLA and its resource reservation has to be recomputed. Do not use when only an SLA evidence report is needed, or no slice is involved. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "slice_assurance",
       "sla_monitoring",
@@ -1534,7 +1575,7 @@
     ],
     "consumes": [
       "RRU.PrbTotDl",
-      "slice.policy"
+      "DRB.RlcSduDelayDl"
     ],
     "produces": [
       "sla.violation_report",
@@ -1552,6 +1593,7 @@
       "kpi_monitoring"
     ],
     "conflicts_with": [],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "northwind_evaluate_sla",
@@ -1583,7 +1625,7 @@
     "family": "slice_sla",
     "solution_area": "Network Optimization",
     "use_case": "O-RAN UC3 slice SLA assurance",
-    "description": "Slice SLA Assurance rApp (O-RAN UC3 slice SLA assurance). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "DEPRECATED release 0.9.0 of the Slice SLA Assurance rApp, superseded by rapp.slice_sla 2.1.0 and kept in the directory for migration only. Do not select it for new workflows: its tools are refused at run time. Slice SLA Assurance rApp (O-RAN UC3 slice SLA assurance). Compares per-slice KPIs with SLA targets and recomputes PRB reservations, applied through the SLICE xApp (writes slice_control). Use when a slice violates or is about to violate its SLA and its resource reservation has to be recomputed. Do not use when only an SLA evidence report is needed, or no slice is involved. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "slice_assurance",
       "sla_monitoring",
@@ -1596,7 +1638,7 @@
     ],
     "consumes": [
       "RRU.PrbTotDl",
-      "slice.policy"
+      "DRB.RlcSduDelayDl"
     ],
     "produces": [
       "sla.violation_report",
@@ -1614,6 +1656,7 @@
       "kpi_monitoring"
     ],
     "conflicts_with": [],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "evaluate_sla",
@@ -1634,7 +1677,8 @@
     "distractor": true,
     "notes": [
       "Deprecated release kept in the directory for migration; superseded by the 2.x card."
-    ]
+    ],
+    "superseded_by": "rapp.slice_sla"
   },
   {
     "id": "rapp.capacity_mgmt",
@@ -1645,7 +1689,7 @@
     "family": "capacity_mgmt",
     "solution_area": "Network Deployment",
     "use_case": "Site capacity management",
-    "description": "Site Capacity Manager rApp (Site capacity management). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Site Capacity Manager rApp (Site capacity management). Forecasts PRB headroom per site and plans and activates additional carriers or cells (writes cell_power). Use when the goal is capacity planning: headroom forecasts, site expansion or carrier-add decisions. Do not use when the goal is to save energy (declared conflict with energy saving) or a near-real-time fix. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "capacity_planning",
       "capacity_boost",
@@ -1677,6 +1721,7 @@
     "conflicts_with": [
       "energy_saving"
     ],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "forecast_capacity",
@@ -1687,6 +1732,11 @@
         "id": "plan_carrier_add",
         "label": "Plan Carrier Add",
         "description": "Recommend carrier/cell activation."
+      },
+      {
+        "id": "apply_carrier_activation",
+        "label": "Apply Carrier Activation",
+        "description": "Activate the planned carriers/cells via O1 and confirm."
       }
     ],
     "distractor": false,
@@ -1701,7 +1751,7 @@
     "family": "capacity_mgmt",
     "solution_area": "Network Deployment",
     "use_case": "Site capacity management",
-    "description": "Site Capacity Manager rApp (Site capacity management). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Northwind Radio implementation of the Site Capacity Manager rApp (Site capacity management). Forecasts PRB headroom per site and plans and activates additional carriers or cells (writes cell_power). Use when the goal is capacity planning: headroom forecasts, site expansion or carrier-add decisions. Do not use when the goal is to save energy (declared conflict with energy saving) or a near-real-time fix. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "capacity_planning",
       "capacity_boost",
@@ -1733,6 +1783,7 @@
     "conflicts_with": [
       "energy_saving"
     ],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "northwind_forecast_capacity",
@@ -1743,6 +1794,11 @@
         "id": "northwind_plan_carrier_add",
         "label": "Plan Carrier Add",
         "description": "Recommend carrier/cell activation."
+      },
+      {
+        "id": "northwind_apply_carrier_activation",
+        "label": "Apply Carrier Activation",
+        "description": "Activate the planned carriers/cells via O1 and confirm."
       }
     ],
     "distractor": true,
@@ -1759,7 +1815,7 @@
     "family": "capacity_mgmt",
     "solution_area": "Network Deployment",
     "use_case": "Site capacity management",
-    "description": "Site Capacity Manager rApp (Site capacity management). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "DEPRECATED release 0.9.0 of the Site Capacity Manager rApp, superseded by rapp.capacity_mgmt 2.1.0 and kept in the directory for migration only. Do not select it for new workflows: its tools are refused at run time. Site Capacity Manager rApp (Site capacity management). Forecasts PRB headroom per site and plans and activates additional carriers or cells (writes cell_power). Use when the goal is capacity planning: headroom forecasts, site expansion or carrier-add decisions. Do not use when the goal is to save energy (declared conflict with energy saving) or a near-real-time fix. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "capacity_planning",
       "capacity_boost",
@@ -1791,6 +1847,7 @@
     "conflicts_with": [
       "energy_saving"
     ],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "forecast_capacity",
@@ -1801,12 +1858,18 @@
         "id": "plan_carrier_add",
         "label": "Plan Carrier Add",
         "description": "Recommend carrier/cell activation."
+      },
+      {
+        "id": "apply_carrier_activation",
+        "label": "Apply Carrier Activation",
+        "description": "Activate the planned carriers/cells via O1 and confirm."
       }
     ],
     "distractor": true,
     "notes": [
       "Deprecated release kept in the directory for migration; superseded by the 2.x card."
-    ]
+    ],
+    "superseded_by": "rapp.capacity_mgmt"
   },
   {
     "id": "rapp.pm_kpi",
@@ -1817,11 +1880,12 @@
     "family": "pm_kpi",
     "solution_area": "Automation and AI Foundation",
     "use_case": "Performance management and KPI reporting",
-    "description": "KPI Manager rApp (Performance management and KPI reporting). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "KPI Manager rApp (Performance management and KPI reporting). Aggregates O1 PM and KPM counters into KPI reports and SLA evidence packages; reads PM itself, so it can serve as the KPI input of other rApps. Read-only. Use when a periodic KPI/performance report or SLA evidence package is requested, or KPI aggregates are needed as input. Do not use when a control decision or a forecast is needed. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "kpi_reporting",
       "pm_collection",
-      "sla_evidence"
+      "sla_evidence",
+      "kpi_monitoring"
     ],
     "interfaces": [
       "O1 PM",
@@ -1847,6 +1911,7 @@
     "timescale_s": 60,
     "requires": [],
     "conflicts_with": [],
+    "workflow_role": "observe",
     "tools": [
       {
         "id": "build_kpi_report",
@@ -1871,11 +1936,12 @@
     "family": "pm_kpi",
     "solution_area": "Automation and AI Foundation",
     "use_case": "Performance management and KPI reporting",
-    "description": "KPI Manager rApp (Performance management and KPI reporting). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Northwind Radio implementation of the KPI Manager rApp (Performance management and KPI reporting). Aggregates O1 PM and KPM counters into KPI reports and SLA evidence packages; reads PM itself, so it can serve as the KPI input of other rApps. Read-only. Use when a periodic KPI/performance report or SLA evidence package is requested, or KPI aggregates are needed as input. Do not use when a control decision or a forecast is needed. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "kpi_reporting",
       "pm_collection",
-      "sla_evidence"
+      "sla_evidence",
+      "kpi_monitoring"
     ],
     "interfaces": [
       "O1 PM",
@@ -1901,6 +1967,7 @@
     "timescale_s": 60,
     "requires": [],
     "conflicts_with": [],
+    "workflow_role": "observe",
     "tools": [
       {
         "id": "northwind_build_kpi_report",
@@ -1927,11 +1994,12 @@
     "family": "pm_kpi",
     "solution_area": "Automation and AI Foundation",
     "use_case": "Performance management and KPI reporting",
-    "description": "KPI Manager rApp (Performance management and KPI reporting). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "DEPRECATED release 0.9.0 of the KPI Manager rApp, superseded by rapp.pm_kpi 2.1.0 and kept in the directory for migration only. Do not select it for new workflows: its tools are refused at run time. KPI Manager rApp (Performance management and KPI reporting). Aggregates O1 PM and KPM counters into KPI reports and SLA evidence packages; reads PM itself, so it can serve as the KPI input of other rApps. Read-only. Use when a periodic KPI/performance report or SLA evidence package is requested, or KPI aggregates are needed as input. Do not use when a control decision or a forecast is needed. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "kpi_reporting",
       "pm_collection",
-      "sla_evidence"
+      "sla_evidence",
+      "kpi_monitoring"
     ],
     "interfaces": [
       "O1 PM",
@@ -1957,6 +2025,7 @@
     "timescale_s": 60,
     "requires": [],
     "conflicts_with": [],
+    "workflow_role": "observe",
     "tools": [
       {
         "id": "build_kpi_report",
@@ -1972,7 +2041,8 @@
     "distractor": true,
     "notes": [
       "Deprecated release kept in the directory for migration; superseded by the 2.x card."
-    ]
+    ],
+    "superseded_by": "rapp.pm_kpi"
   },
   {
     "id": "rapp.interference",
@@ -1983,7 +2053,7 @@
     "family": "interference",
     "solution_area": "Network Healing",
     "use_case": "Interference management",
-    "description": "Interference Mitigator rApp (Interference management). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Interference Mitigator rApp (Interference management). Locates cells whose SINR collapses under low load and applies per-cell power caps (writes cell-level rc_control). Use when interference, SINR degradation or PCI clashes have to be mitigated. Do not use when the degradation is caused by load or congestion rather than interference. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "interference_mitigation",
       "pci_optimization",
@@ -2012,6 +2082,7 @@
       "kpi_monitoring"
     ],
     "conflicts_with": [],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "detect_interference",
@@ -2036,7 +2107,7 @@
     "family": "interference",
     "solution_area": "Network Healing",
     "use_case": "Interference management",
-    "description": "Interference Mitigator rApp (Interference management). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Northwind Radio implementation of the Interference Mitigator rApp (Interference management). Locates cells whose SINR collapses under low load and applies per-cell power caps (writes cell-level rc_control). Use when interference, SINR degradation or PCI clashes have to be mitigated. Do not use when the degradation is caused by load or congestion rather than interference. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "interference_mitigation",
       "pci_optimization",
@@ -2065,6 +2136,7 @@
       "kpi_monitoring"
     ],
     "conflicts_with": [],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "northwind_detect_interference",
@@ -2091,7 +2163,7 @@
     "family": "interference",
     "solution_area": "Network Healing",
     "use_case": "Interference management",
-    "description": "Interference Mitigator rApp (Interference management). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "DEPRECATED release 0.9.0 of the Interference Mitigator rApp, superseded by rapp.interference 2.1.0 and kept in the directory for migration only. Do not select it for new workflows: its tools are refused at run time. Interference Mitigator rApp (Interference management). Locates cells whose SINR collapses under low load and applies per-cell power caps (writes cell-level rc_control). Use when interference, SINR degradation or PCI clashes have to be mitigated. Do not use when the degradation is caused by load or congestion rather than interference. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "interference_mitigation",
       "pci_optimization",
@@ -2120,6 +2192,7 @@
       "kpi_monitoring"
     ],
     "conflicts_with": [],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "detect_interference",
@@ -2135,7 +2208,8 @@
     "distractor": true,
     "notes": [
       "Deprecated release kept in the directory for migration; superseded by the 2.x card."
-    ]
+    ],
+    "superseded_by": "rapp.interference"
   },
   {
     "id": "rapp.transport_qos",
@@ -2146,7 +2220,7 @@
     "family": "transport_qos",
     "solution_area": "Network Optimization",
     "use_case": "Transport / backhaul QoS",
-    "description": "Transport QoS Advisor rApp (Transport / backhaul QoS). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Transport QoS Advisor rApp (Transport / backhaul QoS). Recommends a queue policy per bearer class (CoDel, ECN, shaping); enforcement is performed by the TC xApp (writes tc_control). Use when a transport/backhaul queue policy has to be chosen per traffic class before it is enforced. Do not use when a queue policy is already known and only has to be enforced, or the problem is in the radio domain. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "transport_qos",
       "backhaul_monitoring",
@@ -2175,6 +2249,7 @@
       "kpi_monitoring"
     ],
     "conflicts_with": [],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "recommend_queue_policy",
@@ -2199,7 +2274,7 @@
     "family": "transport_qos",
     "solution_area": "Network Optimization",
     "use_case": "Transport / backhaul QoS",
-    "description": "Transport QoS Advisor rApp (Transport / backhaul QoS). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Northwind Radio implementation of the Transport QoS Advisor rApp (Transport / backhaul QoS). Recommends a queue policy per bearer class (CoDel, ECN, shaping); enforcement is performed by the TC xApp (writes tc_control). Use when a transport/backhaul queue policy has to be chosen per traffic class before it is enforced. Do not use when a queue policy is already known and only has to be enforced, or the problem is in the radio domain. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "transport_qos",
       "backhaul_monitoring",
@@ -2228,6 +2303,7 @@
       "kpi_monitoring"
     ],
     "conflicts_with": [],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "northwind_recommend_queue_policy",
@@ -2254,7 +2330,7 @@
     "family": "transport_qos",
     "solution_area": "Network Optimization",
     "use_case": "Transport / backhaul QoS",
-    "description": "Transport QoS Advisor rApp (Transport / backhaul QoS). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "DEPRECATED release 0.9.0 of the Transport QoS Advisor rApp, superseded by rapp.transport_qos 2.1.0 and kept in the directory for migration only. Do not select it for new workflows: its tools are refused at run time. Transport QoS Advisor rApp (Transport / backhaul QoS). Recommends a queue policy per bearer class (CoDel, ECN, shaping); enforcement is performed by the TC xApp (writes tc_control). Use when a transport/backhaul queue policy has to be chosen per traffic class before it is enforced. Do not use when a queue policy is already known and only has to be enforced, or the problem is in the radio domain. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "transport_qos",
       "backhaul_monitoring",
@@ -2283,6 +2359,7 @@
       "kpi_monitoring"
     ],
     "conflicts_with": [],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "recommend_queue_policy",
@@ -2298,7 +2375,8 @@
     "distractor": true,
     "notes": [
       "Deprecated release kept in the directory for migration; superseded by the 2.x card."
-    ]
+    ],
+    "superseded_by": "rapp.transport_qos"
   },
   {
     "id": "rapp.ran_lifecycle",
@@ -2309,7 +2387,7 @@
     "family": "ran_lifecycle",
     "solution_area": "Network Deployment",
     "use_case": "RAN lifecycle orchestration",
-    "description": "RAN Lifecycle Orchestrator rApp (RAN lifecycle orchestration). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "RAN Lifecycle Orchestrator rApp (RAN lifecycle orchestration). Plans and executes configuration or software rollouts within maintenance windows (writes node_config). Use when configuration or software has to be rolled out, staged or upgraded across sites. Do not use when a closed-loop KPI optimisation is needed; declared conflict with cell_power and antenna_config writers. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "lifecycle_management",
       "config_rollout",
@@ -2336,6 +2414,7 @@
       "cell_power",
       "antenna_config"
     ],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "plan_rollout",
@@ -2360,7 +2439,7 @@
     "family": "ue_qos_control",
     "solution_area": "Network Optimization",
     "use_case": "Per-UE QoS / priority control",
-    "description": "QoS Priority Controller rApp (Per-UE QoS / priority control). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "QoS Priority Controller rApp (Per-UE QoS / priority control). Raises or resets scheduler priority for selected UEs (writes UE-level rc_control); needs the at-risk UE list from a QoE predictor upstream. Use when specific users or user groups need higher scheduling priority or protection. Do not use when a whole slice needs more resources (slice control) or no at-risk UE list is available. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "qos_control",
       "scheduling_priority",
@@ -2388,6 +2467,7 @@
       "qoe_prediction"
     ],
     "conflicts_with": [],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "set_priority",
@@ -2412,7 +2492,7 @@
     "family": "ue_qos_control",
     "solution_area": "Network Optimization",
     "use_case": "Per-UE QoS / priority control",
-    "description": "QoS Priority Controller rApp (Per-UE QoS / priority control). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Northwind Radio implementation of the QoS Priority Controller rApp (Per-UE QoS / priority control). Raises or resets scheduler priority for selected UEs (writes UE-level rc_control); needs the at-risk UE list from a QoE predictor upstream. Use when specific users or user groups need higher scheduling priority or protection. Do not use when a whole slice needs more resources (slice control) or no at-risk UE list is available. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "qos_control",
       "scheduling_priority",
@@ -2440,6 +2520,7 @@
       "qoe_prediction"
     ],
     "conflicts_with": [],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "northwind_set_priority",
@@ -2466,7 +2547,7 @@
     "family": "ue_qos_control",
     "solution_area": "Network Optimization",
     "use_case": "Per-UE QoS / priority control",
-    "description": "QoS Priority Controller rApp (Per-UE QoS / priority control). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "DEPRECATED release 0.9.0 of the QoS Priority Controller rApp, superseded by rapp.ue_qos_control 2.1.0 and kept in the directory for migration only. Do not select it for new workflows: its tools are refused at run time. QoS Priority Controller rApp (Per-UE QoS / priority control). Raises or resets scheduler priority for selected UEs (writes UE-level rc_control); needs the at-risk UE list from a QoE predictor upstream. Use when specific users or user groups need higher scheduling priority or protection. Do not use when a whole slice needs more resources (slice control) or no at-risk UE list is available. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "qos_control",
       "scheduling_priority",
@@ -2494,6 +2575,7 @@
       "qoe_prediction"
     ],
     "conflicts_with": [],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "set_priority",
@@ -2509,7 +2591,8 @@
     "distractor": true,
     "notes": [
       "Deprecated release kept in the directory for migration; superseded by the 2.x card."
-    ]
+    ],
+    "superseded_by": "rapp.ue_qos_control"
   },
   {
     "id": "rapp.spectrum_sharing",
@@ -2520,7 +2603,7 @@
     "family": "spectrum_sharing",
     "solution_area": "Network Evolution",
     "use_case": "Dynamic spectrum sharing",
-    "description": "Spectrum Share Planner rApp (Dynamic spectrum sharing). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Spectrum Share Planner rApp (Dynamic spectrum sharing). Splits shared carriers between RATs or slices from a capacity forecast and reconfigures them via CCC (writes antenna_config); needs capacity planning upstream. Use when spectrum or carrier shares have to be re-split between RATs or slices. Do not use when energy saving is switching cells off at the same time (declared conflict). Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "spectrum_sharing",
       "carrier_reconfiguration"
@@ -2548,8 +2631,9 @@
       "capacity_planning"
     ],
     "conflicts_with": [
-      "cell_power"
+      "energy_saving"
     ],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "plan_spectrum_split",
@@ -2574,7 +2658,7 @@
     "family": "self_healing",
     "solution_area": "Network Healing",
     "use_case": "Cell outage compensation",
-    "description": "Outage Compensator rApp (Cell outage compensation). Emulated rApp served by rapps/runtime.py; decisions are computed from live KPM and pushed through A1/RC.",
+    "description": "Outage Compensator rApp (Cell outage compensation). Compensates a failed or degraded cell by adjusting neighbour power and tilt (writes cell-level rc_control); needs root-cause evidence upstream. Use when a cell outage or severe degradation has to be compensated by its neighbours. Do not use when the cause has not been diagnosed yet; declared conflict with cell_power writers. Emulated rApp served by rapps/runtime.py: decisions are simple estimators over live KPM; apply tools write an A1-style policy document that is not enforced on the RAN.",
     "capabilities": [
       "outage_compensation",
       "neighbour_power_boost",
@@ -2605,6 +2689,7 @@
     "conflicts_with": [
       "cell_power"
     ],
+    "workflow_role": "control",
     "tools": [
       {
         "id": "plan_compensation",

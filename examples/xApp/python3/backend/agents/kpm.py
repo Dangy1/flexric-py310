@@ -12,7 +12,10 @@ def build_agent(python_bin: str, base_dir: Path) -> AgentCard:
         name='KPM Agent',
         role='Measurement and KPI analyst',
         service_model='KPM',
-        description='Consumes shared KPM telemetry from the single-owner KPM bus and surfaces radio/resource measurements for downstream agents.',
+        description=('Reads E2SM-KPM measurements (PRB utilisation, UE throughput, RLC SDU delay) from the shared KPM bus and '
+                     'surfaces them to downstream apps. Read-only. Use when a workflow needs current radio/load evidence before '
+                     'a decision, or a measurement check after a control; most rApps require this kpi_monitoring input. '
+                     'Does not change any RAN state.'),
         page_path='/agents/kpm',
         a2a_card_path='/.well-known/agents/kpm.json',
         status='ready',
@@ -36,4 +39,5 @@ def build_agent(python_bin: str, base_dir: Path) -> AgentCard:
         timescale_s=1.0,
         capabilities=['kpi_monitoring', 'congestion_detection', 'anomaly_evidence'],
         mcp_endpoint='http://127.0.0.1:8000/mcp',
+        workflow_role='observe',
     )

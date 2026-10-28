@@ -17,5 +17,7 @@ def suite_action(action_id: str, label: str, description: str, python_bin: str, 
         label=label,
         description=description,
         kind='suite',
-        command=[python_bin, '-u', *resolved],
+        # stdbuf: the FlexRIC C library prints E2 events (e.g. "[xApp]: CONTROL ACK rx") through C stdio,
+        # which is fully buffered into the run log; line-buffer it so acknowledgements appear when they happen.
+        command=['stdbuf', '-oL', '-eL', python_bin, '-u', *resolved],
     )
