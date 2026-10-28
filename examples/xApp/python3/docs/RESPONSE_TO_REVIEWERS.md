@@ -151,7 +151,7 @@ during that batch); the revised batches verify that RPC, MCP and KPM-bus service
 *Change.* Every manifest records the planner provider, model, temperature, seed, token limit, reasoning
 mode, timeout, a SHA-256 of each prompt builder (from Batch B on; Batch A's builders are byte-identical)
 and LLM host hardware; the paper states them in §IV-A. The batches currently in the paper use
-qwen3.6:27b (Ollama) with reasoning disabled, temperature 0.2, seed 7.
+qwen3.6:27b (Ollama on the lab host 130.233.158.22) with reasoning disabled, temperature 0.2, seed 7.
 
 ---
 

@@ -10,11 +10,14 @@ paper says). This file is the working roadmap; tick items off and record decisio
 - Conda env `flexric-py310` (`~/anaconda3/envs/flexric-py310/bin/python`). Planner LLM: Ollama at
   `http://130.233.158.22:11434`, model `gpt-oss:latest` (the paper's model). Any OpenAI-compatible
   endpoint works via `OPENAI_BASE_URL/OPENAI_MODEL/OPENAI_API_KEY`.
-- **LLM hosts (owner's words, 2026-10-27):** *spark2* = the Ollama host `130.233.158.22` (tlt022.hut.fi,
-  Ollama 0.40); *spark1* = a **vLLM** server (OpenAI-compatible). spark1's address/port and model id are
-  not on this machine and the names do not resolve here — ask the owner, then use the portal's existing
-  OpenAI provider: `OPENAI_BASE_URL=http://<spark1>:<port>/v1 OPENAI_MODEL=<served model> OPENAI_API_KEY=<any>`.
-- **gpt-oss is currently broken on spark2:** Ollama 0.40 fails to load `gpt-oss:latest`
+- **LLM hosts (corrected 2026-10-28):** *spark2* = `spark2.dice.aalto.fi` (130.233.154.152): Ollama behind
+  an authenticating OpenAI-compatible `/v1` (per-user key); serves `gpt-oss:120b` (tested: correct answer,
+  ~160 s cold load, ~1.4 s warm), `flint:40b`, `ornith-1.5:35b/122b`, `laguna-s-2.1`. Portal provider
+  `openai`. *spark1* = `spark1.dice.aalto.fi` (130.233.154.151): **vLLM**, OpenAI-compatible `/v1` with a
+  bearer key; portal provider `vllm`. Keys: `~/.config/appweaver/spark{1,2}.env` (mode 600). The keyless
+  Ollama at `130.233.158.22:11434` (tlt022.hut.fi) that ran the preliminary qwen batches is **not**
+  spark2; its manifests say "spark2 130.233.158.22", which is wrong about the name (the address is right).
+- **gpt-oss fails on tlt022 (130.233.158.22, earlier mislabelled spark2):** Ollama 0.40 fails to load `gpt-oss:latest`
   (`key not found in model: gpt-oss.expert_feed_forward_length`, HTTP 500). Other models load
   (`qwen3.6:27b` answers in ~20 s, `gemma3:1b` in 2 s). Fix on the server: `ollama pull gpt-oss:20b`
   (re-pull a build compatible with 0.40) — owner's decision, it is their machine. Until then run
@@ -195,8 +198,8 @@ First tasks for the execution session:
 
 | # | Question | Blocks | Status |
 |---|---|---|---|
-| O1 | Re-pull gpt-oss on spark2 (`ollama pull gpt-oss:20b` or a build that loads under Ollama 0.40); check: `curl http://130.233.158.22:11434/api/generate -d '{"model":"gpt-oss:latest","prompt":"hi","stream":false}'` returns no `error` | Final batches A and B (paper model) | **deferred by owner (2026-10-28)**: "Keep running with qwen3.6:27b for now; I will sort out gpt-oss and spark1 later." The qwen batches (reasoning off) are the working results; [CHECK] markers stay in §IV for the swap |
-| O2 | spark1 vLLM endpoint: `OPENAI_BASE_URL`, served model id, API key if any | Batch B second model | **deferred by owner (2026-10-28)**, with O1 |
+| O1 | gpt-oss for the final batches. tlt022 (130.233.158.22) cannot load `gpt-oss:latest` under Ollama 0.40; the real spark2 (`spark2.dice.aalto.fi/v1`, key) serves `gpt-oss:120b` | Final batches A and B (paper model) | **endpoint works (2026-10-28)**: harness smoke test 6/6 records with `gpt-oss:120b` via provider `openai`; owner: spark2 is busy with other work, use spark1 for batches. qwen batches stay the working results until a gpt-oss batch exists |
+| O2 | spark1 vLLM endpoint | Batch B second model / final batches | **endpoint and key known** (`spark1.dice.aalto.fi/v1`, provider `vllm`); 2026-10-28 09:10 nginx returns 502 for every request (vLLM backend down), served model id not yet seen |
 | O3 | GPU line for spark2 (and spark1): `nvidia-smi --query-gpu=name,memory.total --format=csv` → `LLM_SERVER_HARDWARE` and `evaluation/HARDWARE.md` | manifests, paper hardware sentence | **open** (preliminary manifests say "GPU model pending owner") |
 | O4 | Live side of the twin experiment: OAI rfsim gNB, or ns-3 seed B + traffic perturbation | T6 | **open** — default ns-3 seed B unless the owner says OAI |
 | O5 | Reasoning mode for the final batch: gpt-oss reasons by default (keep `FLEXRIC_LLM_THINK` unset). Preliminary qwen batches use `FLEXRIC_LLM_THINK=false` (24 s → 1.4 s per call); confirm that is acceptable for any qwen numbers shown | labelling of qwen results | **open** |

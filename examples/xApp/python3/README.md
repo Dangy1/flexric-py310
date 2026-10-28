@@ -16,11 +16,15 @@ cmake --build build --target xapp_sdk -j8
 cd build/examples/xApp/python3/evaluation
 
 # 2. planner settings (recorded in every batch manifest)
-#    Ollama host (spark2):
-export OLLAMA_BASE_URL=http://<gpu-host>:11434 OLLAMA_MODEL=qwen3.6:27b FLEXRIC_LLM_THINK=false
-#    or a vLLM host (spark1), with Ollama left configured for later; LLM_PROVIDER picks the one used:
-# export VLLM_BASE_URL=http://<vllm-host>:8000/v1 VLLM_MODEL=openai/gpt-oss-20b VLLM_API_KEY=<key>
+#    LLM_PROVIDER picks the endpoint; keys live in ~/.config/appweaver/spark{1,2}.env (mode 600, not in git).
+#    a) keyless Ollama (130.233.158.22 = tlt022.hut.fi; ran the preliminary qwen batches; not spark2):
+export OLLAMA_BASE_URL=http://<ollama-host>:11434 OLLAMA_MODEL=qwen3.6:27b FLEXRIC_LLM_THINK=false LLM_PROVIDER=ollama
+#    b) spark1 = spark1.dice.aalto.fi, vLLM (OpenAI-compatible, bearer key):
+# export VLLM_BASE_URL=https://spark1.dice.aalto.fi/v1 VLLM_MODEL=<served model id> VLLM_API_KEY=<spark1 key>
 # export LLM_PROVIDER=vllm FLEXRIC_LLM_REASONING_EFFORT=medium
+#    c) spark2 = spark2.dice.aalto.fi, Ollama behind an authenticating OpenAI-compatible /v1:
+# export OPENAI_BASE_URL=https://spark2.dice.aalto.fi/v1 OPENAI_MODEL=gpt-oss:120b OPENAI_API_KEY=<spark2 key>
+# export LLM_PROVIDER=openai FLEXRIC_AGENT_PROVIDER_TIMEOUT=300   # first call loads the model (~160 s)
 export FLEXRIC_LLM_TEMPERATURE=0.2 FLEXRIC_LLM_SEED=7 LLM_SERVER_HARDWARE="<host, GPU model, VRAM>"
 ../scripts/check_llm_provider.py     # one planner call; prints provider, model, latency, reply
 S=../scripts
