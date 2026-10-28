@@ -56,7 +56,7 @@ All are in `patches/`; apply them to fresh clones with `git apply`.
    `E2SIM_PREFIX` (default `/usr/local`) plus `link_directories` at top level (the nr module links
    `-le2sim` too). This avoids the README's `sudo dpkg -i e2sim-dev*.deb`.
 6. 2026-10-28 review fixes (§11): `flexric-taap-0005`, `flexric-taap-0006`, `e2sim-0001`,
-   `mmwave-LENA-oran-0002`, `oran-interface-0002`, `nr-0001`, and `appweaver-actuator-0001` (for
+   `mmwave-LENA-oran-0002`, `mmwave-LENA-oran-0003` (`uePositionFile`), `oran-interface-0002`, `nr-0001`, and `appweaver-actuator-0001` (for
    `~/flexric/examples/xApp/python3/evaluation/twin/xapp_appweaver_actuator.c`, not applied there).
 
 ## 3. Rebuild from scratch (exact commands)
@@ -79,7 +79,7 @@ git clone https://gitlab.eurecom.fr/mosaic5g/flexric.git ~/flexric-taap
 cd ~/flexric-taap && git checkout f56d4487507c7ace392f1ec3f598e7eeda670acc
 git apply ~/ns-oran-flexric/patches/flexric-taap-000{1,2,3,4,5}-*.patch
 patch -p1 < ~/ns-oran-flexric/patches/flexric-taap-0006-kpm-capture-sigint-after-init.patch   # file added by 0003
-cd ~/ns-oran-flexric/mmwave-LENA-oran && git apply ../patches/mmwave-LENA-oran-000{1,2}-*.patch
+cd ~/ns-oran-flexric/mmwave-LENA-oran && git apply ../patches/mmwave-LENA-oran-000{1,2,3}-*.patch
 (cd src/nr && git apply ../../../patches/nr-0001-sim-time-indication-header.patch)
 cd contrib/oran-interface && git apply ../../../patches/oran-interface-000{1,2}-*.patch
 cd ~/ns-oran-flexric/e2sim-kpmv3 && git apply ../patches/e2sim-0001-subscription-delete-keeps-connection.patch
@@ -135,6 +135,7 @@ cd ~/ns-oran-flexric
 | `-s` | `scenario-zero-with_parallel_loging` | binary `build/scratch/ns3.42-<SCENARIO>-<PROFILE>` |
 | `-p` | 0.1 | `--indicationPeriodicity` (s of sim time between KPM reports) |
 | `-x` | none | `capture` → `$LOG_DIR/kpm.csv`; `kpm` → `xapp_kpm_rc_Enhanced`; `es` → `xapp_es_with_cell_util` |
+| `-P` | — | initial UE positions file → `--uePositionFile=<abs path>` (scenario-zero* only, §11 fix 7) |
 | `PROFILE` | optimized | `optimized` or `default` binaries |
 | `LOG_DIR` | `/tmp/ns_oran_stack` | `ric.log`, `ns3.log`, `ns3.cmd`, `xapp_*.log`, `kpm.csv`, `*.pid`, `ns3_out/` (scenario trace files) |
 | `ISD_CELLS`, `ISD_UES`, `CENTER_FREQ`, `BANDWIDTH` | 600, 500, 3.5e9, 20e6 | scenario geometry/carrier flags |
@@ -326,10 +327,10 @@ Regression scripts: `tools/regress_kpm_subscriptions.sh` (2 gNB/4 UE, ~6 wall-mi
 | 3 | P5: RC cell id 1 digit, no switch-on | ns-3 parses the NR CGI as a decimal string of any length; style 300 honours action `'1'`/1 = CELL_ON (restores saved TX power); actuator encodes `"%u"` and has `ON <cell>` | `ric-control-message.cc` (`oran-interface-0002`); `mmwave-enb-net-device.cc` (`mmwave-LENA-oran-0002`); actuator (`appweaver-actuator-0001`, built in `tools/actuator/build/`) | RC test: `OFF 11`, `ON 11` (txPower 30), `HO <imsi> 11`, `OFF 5` |
 | 4 | P4: `collectStartTime` was host wall-clock | encoder uses the node's `m_timestamp` = `Simulator::Now()` in µs (gNB, LTE eNB, NR gNB) | `kpm-indication.cc` (`oran-interface-0002`); header builders (`mmwave-LENA-oran-0002`, `nr-0001`) | subs test: per-node stamps step exactly 100 000 µs, first 0.525 s, last 59.925 s for simTime 60 |
 | 5 | P2: KPM records with 0 items | `L3neighSINRListOf…` with only the serving-cell marker gets one `noValue` record; a measurement item with no data gets a `noValue` item (keeps data[i]↔info[i]) | `kpm-indication.cc` (`oran-interface-0002`) | subs test (2 gNB): 1778/1778 neighbour rows are noValue, RIC never sees an empty list |
+| 7 | Review step 9: no UE-position input for a placement-synced twin | GlobalValue `uePositionFile` in `scenario-zero-with_parallel_loging`: CSV `ue_index,x,y[,z]` (0-based = IMSI−1; header `imsi,x,y[,z]` switches to IMSI numbering; rows in any order; z default 0; `#` comments). Replaces the uniform-disc placement by a `ListPositionAllocator`; mobility after t = 0 unchanged (random walk 2–4 m/s, bounds 0…4000 m). Missing UEs, out-of-range ids or positions outside the bounds are fatal errors. `start_sim_stack.sh -P file` | `scratch/scenario-zero-with_parallel_loging.cc` (`mmwave-LENA-oran-0003`) | `tools/regress_ue_positions.sh`: both formats, t = 0 rows of `ue_position.txt` equal the file, UEs move afterwards |
 | 6 | P3: reporting gated ≥ 1 s / never for formats ≠ 4 | trivially true condition or non-format-4 → report at once; attributes `ns3::MmWaveEnbNetDevice::E2PrbHistoryLen` (10), `E2PrbCheckPeriod` (100 ms); the gate chain stops once reporting latches | `mmwave-enb-net-device.*` (`mmwave-LENA-oran-0002`) | subs test: all 3 nodes (LTE + 2 gNB) first stamp 0.525 s = subscription time |
 
-Not done (review §6 steps 7–10): N concurrent subscriptions per node, the `uePositionFile` input for
-scenario-zero, releasing RC-handed-over UEs (`E2HoControlSticky`), and the AppWeaver KPM-bus collector
+Not done (review §6 steps 7, 8, 10): N concurrent subscriptions per node, releasing RC-handed-over UEs (`E2HoControlSticky`), and the AppWeaver KPM-bus collector
 profile (AppWeaver side). Also not changed: `m_startTime` (uninitialised, used in the `cu-*/du-*`
 trace-file timestamps; the E2 stream no longer uses it), the NR (5G-LENA) gNB's sticky stop on delete,
 and the shipped ES xApp's one-digit encoder.
@@ -373,3 +374,15 @@ semantics; `Energy_saving_with_cell_utilization_scenario -g 4 -u 3 -t 3`): `Cell
 shutdown`, `1.63825s … Initiate handover for rnti 1 to  CellId 3` (IMSI 6), `Cell turned off 2 at
 1.65325 s` — same sequence and timing as `captures/es_cell_switch_off` (HO at 1.6 s). Logs:
 `logs/regress_2026-10-28/es/`.
+
+`tools/regress_ue_positions.sh` (2 gNB, 4 UEs, simTime 2 s, two runs) — **ALL PASS**: with
+`ue_index,x,y,z` rows out of order (one without z) and with `imsi,x,y`, every UE's t = 0 row in
+`ns3_out/ue_position.txt` equals the file exactly (e.g. IMSI 3 at 2300.5, 1800.25); by t = 1.9 s
+the UEs have moved by 3–7 m.
+
+Feeding a live run's positions to the twin: `ue_position.txt` rows are
+`timestamp,id,x,y,type,cell,simid` with `id` = IMSI and `timestamp − simid` = simulated ms (one row per UE
+every 100 ms). Take the rows with `timestamp − simid` = t_act, write `imsi,x,y` (header included) and
+pass the file with `-P` (or `--uePositionFile=`). z is not in the trace; the default 0 equals the
+uniform-disc placement's z. Only the position is synced: the twin's random-walk direction/speed after
+t = 0 and the serving cell (initial attachment = closest eNB/gNB) are not.

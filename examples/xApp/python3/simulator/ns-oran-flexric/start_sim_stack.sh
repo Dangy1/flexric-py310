@@ -8,7 +8,8 @@
 # kpm = shipped xapp_kpm_rc_Enhanced, es = shipped energy-saving xapp_es_with_cell_util.
 #
 # Usage:  ./start_sim_stack.sh [-g N_GNB] [-u N_UE] [-t SIM_TIME_S] [-s SCENARIO] [-p IND_PERIOD_S]
-#                              [-x capture|kpm|es|none] [-- extra ns-3 flags]
+#                              [-x capture|kpm|es|none] [-P UE_POS_CSV] [-- extra ns-3 flags]
+# -P: initial UE positions (scenario-zero* only), CSV ue_index,x,y[,z] (0-based) or imsi,x,y[,z] with header
 # Env overrides: PROFILE (optimized|default), E2_HELPER (MmWaveHelper|NrHelper), FLEXRIC_TAAP, NS3_DIR, LOG_DIR, E2_PORT, ISD_CELLS, ISD_UES, CENTER_FREQ, BANDWIDTH
 #
 # Logs + PID files go to $LOG_DIR (default /tmp/ns_oran_stack/). Stop with ./stop_sim_stack.sh
@@ -27,12 +28,13 @@ SIM_TIME=100
 SCENARIO=scenario-zero-with_parallel_loging
 IND_PERIOD=0.1
 XAPP=none
+UE_POS_FILE=""
 ISD_CELLS="${ISD_CELLS:-600}"
 ISD_UES="${ISD_UES:-500}"
 CENTER_FREQ="${CENTER_FREQ:-3.5e9}"
 BANDWIDTH="${BANDWIDTH:-20e6}"
 
-while getopts "g:u:t:s:p:x:h" opt; do
+while getopts "g:u:t:s:p:x:P:h" opt; do
   case $opt in
     g) N_GNB=$OPTARG ;;
     u) N_UE=$OPTARG ;;
@@ -40,7 +42,8 @@ while getopts "g:u:t:s:p:x:h" opt; do
     s) SCENARIO=$OPTARG ;;
     p) IND_PERIOD=$OPTARG ;;
     x) XAPP=$OPTARG ;;
-    h) sed -n 2,15p "$0"; exit 0 ;;
+    P) UE_POS_FILE=$(realpath "$OPTARG") || exit 1; [[ -f "$UE_POS_FILE" ]] || { echo "no such file: $OPTARG"; exit 1; } ;;
+    h) sed -n 2,16p "$0"; exit 0 ;;
     *) exit 1 ;;
   esac
 done
@@ -99,6 +102,8 @@ NS3_ARGS=(
   --IntersideDistanceUEs="$ISD_UES"
   --IntersideDistanceCells="$ISD_CELLS"
 )
+# absolute path: ns-3 runs in $LOG_DIR/ns3_out
+[[ -n "$UE_POS_FILE" ]] && NS3_ARGS+=(--uePositionFile="$UE_POS_FILE")
 echo "$NS3_BIN ${NS3_ARGS[*]} ${EXTRA_NS3_ARGS[*]:-}" > "$LOG_DIR/ns3.cmd"
 mkdir -p "$LOG_DIR/ns3_out"
 (cd "$LOG_DIR/ns3_out" && exec env LD_LIBRARY_PATH="$NS3_DIR/build/lib:${LD_LIBRARY_PATH:-}" \
