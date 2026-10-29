@@ -1,0 +1,287 @@
+diff --git a/src/lte/model/lte-enb-net-device.h b/src/lte/model/lte-enb-net-device.h
+--- a/src/lte/model/lte-enb-net-device.h
++++ b/src/lte/model/lte-enb-net-device.h
+@@ -307,7 +307,7 @@
+ 
+         bool m_sendCuUp;
+         bool m_sendCuCp;
+-        uint64_t m_startTime;
++        uint64_t m_startTime{0}; //!< epoch ms added to the trace timestamps (SetStartTime)
+         bool m_isReportingEnabled; //! true is KPM reporting cycle is active, false otherwise
+         EventId m_reportEvent; //!< pending BuildAndSendReportMessage
+         void ArmKpmReporting (E2Termination::RicSubscriptionRequest_rval_s params);
+diff --git a/src/mmwave/helper/mmwave-helper.cc b/src/mmwave/helper/mmwave-helper.cc
+--- a/src/mmwave/helper/mmwave-helper.cc
++++ b/src/mmwave/helper/mmwave-helper.cc
+@@ -84,7 +84,8 @@
+     m_harqEnabled (false),
+     m_rlcAmEnabled (false),
+     m_snrTest (false),
+-    m_useIdealRrc (false)
++    m_useIdealRrc (false),
++    m_startTime (0)
+ {
+     NS_LOG_FUNCTION(this);
+     m_channelFactory.SetTypeId(MultiModelSpectrumChannel::GetTypeId());
+@@ -763,6 +764,12 @@
+     m_snrTest = snrTest;
+ }
+ 
++void
++MmWaveHelper::SetStartTime(uint64_t startTime)
++{
++    m_startTime = startTime;
++}
++
+ bool
+ MmWaveHelper::GetSnrTest()
+ {
+@@ -2262,6 +2269,7 @@
+     uint16_t cellId = m_cellIdCounter; // \todo Remove, eNB has no cell ID
+ 
+     Ptr<LteEnbNetDevice> dev = m_lteEnbNetDeviceFactory.Create<LteEnbNetDevice>();
++    dev->SetStartTime(m_startTime);
+     Ptr<LteHandoverAlgorithm> handoverAlgorithm =
+         m_lteHandoverAlgorithmFactory.Create<LteHandoverAlgorithm>();
+ 
+diff --git a/src/mmwave/helper/mmwave-helper.h b/src/mmwave/helper/mmwave-helper.h
+--- a/src/mmwave/helper/mmwave-helper.h
++++ b/src/mmwave/helper/mmwave-helper.h
+@@ -269,6 +269,11 @@
+     bool GetHarqEnabled();
+     void SetSnrTest(bool snrTest);
+     bool GetSnrTest();
++    /**
++     * Epoch ms added to the timestamps of the eNB/gNB trace files (cu-up/cu-cp/du-cell-*.txt).
++     * Call before installing the eNB/gNB devices; default 0 (timestamps in simulated ms).
++     */
++    void SetStartTime(uint64_t startTime);
+     Ptr<PropagationLossModel> GetPathLossModel(uint8_t index);
+ 
+     /**
+@@ -538,7 +543,7 @@
+      * Number of component carriers that will be installed by default at gNodeB
+      * and UE devices.
+      */
+-      uint64_t m_startTime; //!< starting time of the MmWaveHelper life in epoch format
++      uint64_t m_startTime; //!< epoch ms added to the eNB/gNB trace timestamps (SetStartTime)
+ 
+     uint16_t m_noOfCcs;
+ };
+diff --git a/src/mmwave/model/mmwave-enb-net-device.cc b/src/mmwave/model/mmwave-enb-net-device.cc
+--- a/src/mmwave/model/mmwave-enb-net-device.cc
++++ b/src/mmwave/model/mmwave-enb-net-device.cc
+@@ -197,7 +197,9 @@
+             {
+               m_is_reported = true;
+               m_isReportingEnabled = true;
+-              BuildAndSendReportMessage(m_lastSubscriptionParams);
++              m_reportEvent = Simulator::Schedule(E2ReportDelay(),
++                                                  &MmWaveEnbNetDevice::BuildAndSendReportMessage,
++                                                  this, m_lastSubscriptionParams);
+               // Reporting is latched on: the gate is no longer needed
+               return;
+             }
+@@ -288,6 +290,19 @@
+                                  params, startNow);
+ }
+ 
++// Delay to the next E2 report slot: 1 ns before the next BuildGUIDu tick, after which the
++// trace loggers reset the shared counters (see BuildRicIndicationMessageCuUp)
++Time
++MmWaveEnbNetDevice::E2ReportDelay () const
++{
++  Time slot = m_nextDuLogTime - NanoSeconds (1);
++  while (slot <= Simulator::Now ())
++    {
++      slot += MilliSeconds (100);
++    }
++  return slot - Simulator::Now ();
++}
++
+ void
+ MmWaveEnbNetDevice::ArmKpmReporting(E2Termination::RicSubscriptionRequest_rval_s params,
+                                     bool startNow)
+@@ -308,7 +323,8 @@
+     NS_LOG_DEBUG("Cell " << m_cellId << ": KPM reporting starts now");
+     m_is_reported = true;
+     m_isReportingEnabled = true;
+-    BuildAndSendReportMessage(m_lastSubscriptionParams);
++    m_reportEvent = Simulator::Schedule(E2ReportDelay(), &MmWaveEnbNetDevice::BuildAndSendReportMessage,
++                                        this, m_lastSubscriptionParams);
+   }
+   else
+   {
+@@ -743,6 +759,7 @@
+               encoding::encode_plmn_bcd (plmnBCD_kpm, "001", "01");
+               std::string plmId (reinterpret_cast<char*>(plmnBCD_kpm), 3);
+               std::string gnbId = std::to_string (m_cellId);
++              m_nextDuLogTime = Simulator::Now () + MilliSeconds (100);
+               Simulator::Schedule (MilliSeconds (100), &MmWaveEnbNetDevice::BuildGUIDu, this, plmId,
+                                    m_cellId);
+               Simulator::Schedule (MilliSeconds (100), &MmWaveEnbNetDevice::BuildGUICuUp, this,
+@@ -1009,8 +1026,9 @@
+       headerValues.m_gnbId = gnbId;
+       headerValues.m_nrCellId = nrCellId;
+       auto time = Simulator::Now ();
+-      // Simulated time in microseconds; encoded as the KPM header's colletStartTime
+-      uint64_t timestamp = (uint64_t) time.GetMicroSeconds ();
++      // Simulated time in microseconds, rounded (reports run 1 ns before the 100 ms tick, see
++      // E2ReportDelay); encoded as the KPM header's colletStartTime
++      uint64_t timestamp = (uint64_t) ((time.GetNanoSeconds () + 500) / 1000);
+       NS_LOG_DEBUG ("NR plmid " << plmId << " gnbId " << gnbId << " nrCellId " << nrCellId);
+       NS_LOG_DEBUG ("Timestamp " << timestamp);
+       headerValues.m_timestamp = timestamp;
+@@ -1045,6 +1063,13 @@
+ 
+   std::unordered_map<uint64_t, std::string> uePmString{};
+ 
++  // The PDCP, RLC and PHY counters are shared with the 100 ms trace loggers (BuildGUI*), which
++  // reset them. The E2 builders only read them, just before a logger tick (E2ReportDelay), so an
++  // E2 report covers the same 100 ms window as the du/cu-up-cell trace, whatever the
++  // subscription time.
++  m_e2DrbThrDlPdcpBasedUeid.clear ();
++  m_e2DrbThrDlUeid.clear ();
++
+   for (auto ue : ueMap)
+     {
+       uint64_t imsi = ue.second->GetImsi ();
+@@ -1068,7 +1093,6 @@
+         {
+           txPdcpPduNrRlc += drb.second->m_rlc->GetTxPacketsInReportingPeriod ();
+           txPdcpPduBytesNrRlc += drb.second->m_rlc->GetTxBytesInReportingPeriod ();
+-          drb.second->m_rlc->ResetRlcCounters ();
+         }
+ 
+       auto rlcMap = ue.second->GetRlcMap (); // secondary-connected RLCs
+@@ -1076,7 +1100,6 @@
+         {
+           txPdcpPduNrRlc += drb.second->m_rlc->GetTxPacketsInReportingPeriod ();
+           txPdcpPduBytesNrRlc += drb.second->m_rlc->GetTxBytesInReportingPeriod ();
+-          drb.second->m_rlc->ResetRlcCounters ();
+         }
+       txPdcpPduBytesNrRlc *= 8 / 1e3;
+ 
+@@ -1086,15 +1109,7 @@
+       double pdcpThroughput = txBytes / m_e2Periodicity; // unit kbps
+       double pdcpThroughputRx = rxBytes / m_e2Periodicity; // unit kbps
+ 
+-      if (m_drbThrDlPdcpBasedComputationUeid.find (imsi) !=
+-          m_drbThrDlPdcpBasedComputationUeid.end ())
+-        {
+-          m_drbThrDlPdcpBasedComputationUeid.at (imsi) += pdcpThroughputRx;
+-        }
+-      else
+-        {
+-          m_drbThrDlPdcpBasedComputationUeid[imsi] = pdcpThroughputRx;
+-        }
++      m_e2DrbThrDlPdcpBasedUeid[imsi] = pdcpThroughputRx;
+ 
+       // compute bitrate based on RLC statistics, decoupled from pdcp throughput
+       double rlcLatency = m_e2RlcStatsCalculator->GetDlDelay (imsi, 3) / 1e9; // unit: s
+@@ -1102,7 +1117,7 @@
+           m_e2RlcStatsCalculator->GetDlPduSizeStats (imsi, 3)[0] * 8.0 / 1e3; // unit kbit
+       double rlcBitrate = (rlcLatency == 0) ? 0 : pduStats / rlcLatency; // unit kbit/s
+ 
+-      m_drbThrDlUeid[imsi] = rlcBitrate;
++      m_e2DrbThrDlUeid[imsi] = rlcBitrate;
+ 
+       NS_LOG_DEBUG (Simulator::Now ().GetSeconds ()
+                     << " " << m_cellId << " cell, connected UE with IMSI " << imsi
+@@ -1112,8 +1127,6 @@
+                     << pdcpLatency << " pdcpThroughput " << pdcpThroughput << " rlcBitrate "
+                     << rlcBitrate);
+ 
+-      m_e2PdcpStatsCalculator->ResetResultsForImsiLcid (imsi, 3);
+-
+       if (!indicationMessageHelper->IsOffline ())
+         {
+           indicationMessageHelper->AddCuUpUePmItem (ueImsiComplete, txPdcpPduBytesNrRlc,
+@@ -1552,14 +1565,14 @@
+ 
+       // UE-specific Downlink IP combined EN-DC throughput from LTE eNB. Unit is kbps. Pdcp based computation
+       // This value is not requested anymore, so it has been removed from the delivery, but it will be still logged;
+-      double drbThrDlPdcpBasedUeid = m_drbThrDlPdcpBasedComputationUeid.find (imsi) !=
+-                                             m_drbThrDlPdcpBasedComputationUeid.end ()
+-                                         ? m_drbThrDlPdcpBasedComputationUeid.at (imsi)
+-                                         : 0;
++      const auto &thrPdcp = m_sendCuUp ? m_e2DrbThrDlPdcpBasedUeid
++                                       : m_drbThrDlPdcpBasedComputationUeid;
++      const auto &thrRlc = m_sendCuUp ? m_e2DrbThrDlUeid : m_drbThrDlUeid;
++      double drbThrDlPdcpBasedUeid =
++          thrPdcp.find (imsi) != thrPdcp.end () ? thrPdcp.at (imsi) : 0;
+ 
+       // UE-specific Downlink IP combined EN-DC throughput from LTE eNB. Unit is kbps. Rlc based computation
+-      double drbThrDlUeid =
+-          m_drbThrDlUeid.find (imsi) != m_drbThrDlUeid.end () ? m_drbThrDlUeid.at (imsi) : 0;
++      double drbThrDlUeid = thrRlc.find (imsi) != thrRlc.end () ? thrRlc.at (imsi) : 0;
+ 
+       indicationMessageHelper->AddDuUePmItem (
+           ueImsiComplete, macPduUe, macPduInitialUe, macQpsk, mac16Qam, mac64Qam, macRetx,
+@@ -1580,12 +1593,7 @@
+                     std::to_string (macSinrBin5) + "," + std::to_string (macSinrBin6) + "," +
+                     std::to_string (macSinrBin7) + "," + std::to_string (rlcBufferOccup) + ',' +
+                     std::to_string (drbThrDlUeid) + ',' + std::to_string (drbThrDlPdcpBasedUeid)));
+-
+-      // reset UE
+-      m_e2DuCalculator->ResetPhyTracesForRntiCellId (rnti, m_cellId);
+     }
+-  m_drbThrDlPdcpBasedComputationUeid.clear ();
+-  m_drbThrDlUeid.clear ();
+ 
+   // Denominator = (Total number of rows (TTIs) within a given time window* 14)
+   // Numerator = (Sum of number of symbols across all rows (TTIs) group by cell ID within a given time window) * 139
+@@ -2094,6 +2102,7 @@
+       csv << to_print;
+     }
+   csv.close ();
++  m_nextDuLogTime = Simulator::Now () + MilliSeconds (100);
+   Simulator::Schedule (MilliSeconds (100), &MmWaveEnbNetDevice::BuildGUIDu, this, plmId, m_cellId);
+ 
+   return nullptr;
+diff --git a/src/mmwave/model/mmwave-enb-net-device.h b/src/mmwave/model/mmwave-enb-net-device.h
+--- a/src/mmwave/model/mmwave-enb-net-device.h
++++ b/src/mmwave/model/mmwave-enb-net-device.h
+@@ -204,9 +204,15 @@
+             void RegisterNewSinrReading(uint64_t imsi, uint16_t cellId, long double sinr);
+ 
+             std::map <uint64_t, std::map<uint16_t, long double>> m_l3sinrMap;
+-            uint64_t m_startTime;
++            uint64_t m_startTime{0}; //!< epoch ms added to the trace timestamps (SetStartTime)
+             std::map <uint64_t, uint32_t> m_drbThrDlPdcpBasedComputationUeid;
+             std::map <uint64_t, uint32_t> m_drbThrDlUeid;
++            // Throughputs of the E2 CU-UP builder for the E2 DU builder; the maps above belong
++            // to the 100 ms trace loggers (BuildGUI*)
++            std::map <uint64_t, uint32_t> m_e2DrbThrDlPdcpBasedUeid;
++            std::map <uint64_t, uint32_t> m_e2DrbThrDlUeid;
++            Time m_nextDuLogTime; //!< time of the next BuildGUIDu (resets the shared calculators)
++            Time E2ReportDelay (void) const;
+             bool m_isReportingEnabled; //! true is KPM reporting cycle is active, false otherwise
+             bool m_reducedPmValues; //< if true use a reduced subset of pmvalues
+ 
+diff --git a/scratch/scenario-zero-with_parallel_loging.cc b/scratch/scenario-zero-with_parallel_loging.cc
+--- a/scratch/scenario-zero-with_parallel_loging.cc
++++ b/scratch/scenario-zero-with_parallel_loging.cc
+@@ -667,6 +667,12 @@
+     Config::SetDefault("ns3::MmWavePhyMacCommon::CenterFreq", DoubleValue(centerFrequency));
+ 
+     Ptr <MmWaveHelper> mmwaveHelper = CreateObject<MmWaveHelper>();
++    // One epoch-ms run id for every trace: ue_position/enbs/gnbs.txt and the eNB/gNB
++    // cu-up/cu-cp/du-cell files (timestamp = id + simulated ms)
++    struct timeval time_now{};
++    gettimeofday(&time_now, nullptr);
++    uint64_t t_startTime_simid = (time_now.tv_sec * 1000) + (time_now.tv_usec / 1000);
++    mmwaveHelper->SetStartTime(t_startTime_simid);
+     mmwaveHelper->SetPathlossModelType("ns3::ThreeGppUmiStreetCanyonPropagationLossModel");
+     mmwaveHelper->SetChannelConditionModelType("ns3::ThreeGppUmiStreetCanyonChannelConditionModel");
+ 
+@@ -873,9 +879,6 @@
+     clientApp.Start(MilliSeconds(100));
+     clientApp.Stop(Seconds(simTime - 0.1));
+ 
+-    struct timeval time_now{};
+-    gettimeofday(&time_now, nullptr);
+-    uint64_t t_startTime_simid = (time_now.tv_sec * 1000) + (time_now.tv_usec / 1000);
+     std::string ue_poss_out = "ue_position.txt";
+     ClearFile(ue_poss_out, t_startTime_simid);
+     ClearFile("enbs.txt", t_startTime_simid);

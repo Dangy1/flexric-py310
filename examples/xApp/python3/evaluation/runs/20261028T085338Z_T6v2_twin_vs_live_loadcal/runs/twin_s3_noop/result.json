@@ -1,0 +1,72 @@
+{
+  "attempts": 2,
+  "chain": [
+    "KPM"
+  ],
+  "clock": "sim-time collectStartTime",
+  "commands_dispatched_sim_s": [],
+  "error": "ns-3 rc=-6; no KPM report at or after t_act; KPI window has reports in 0/54 periods",
+  "first_attempt_error": "ns-3 rc=-6; no KPM report at or after t_act; KPI window has reports in 0/54 periods",
+  "first_report_sim_s": null,
+  "indications_per_gnb": {
+    "2": 0,
+    "3": 0,
+    "4": 0,
+    "5": 0
+  },
+  "kpi": {
+    "dl_buffer_kbytes": 0.0,
+    "dl_throughput_mbps": 0.0,
+    "energy_j_per_s": 0.0,
+    "prb_used_dl": 0.0
+  },
+  "kpi_per_cell": {
+    "2": {
+      "dl_buffer_kbytes": 0.0,
+      "dl_throughput_mbps": 0.0,
+      "energy_j_per_s": 0.0,
+      "prb_used_dl": 0.0
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.0,
+      "dl_throughput_mbps": 0.0,
+      "energy_j_per_s": 0.0,
+      "prb_used_dl": 0.0
+    },
+    "4": {
+      "dl_buffer_kbytes": 0.0,
+      "dl_throughput_mbps": 0.0,
+      "energy_j_per_s": 0.0,
+      "prb_used_dl": 0.0
+    },
+    "5": {
+      "dl_buffer_kbytes": 0.0,
+      "dl_throughput_mbps": 0.0,
+      "energy_j_per_s": 0.0,
+      "prb_used_dl": 0.0
+    }
+  },
+  "kpi_window_bins": [
+    54,
+    0
+  ],
+  "kpi_window_sim_s": [
+    2.5,
+    7.9
+  ],
+  "kpm_history_at_act_s": null,
+  "last_report_sim_s": 0.2063,
+  "load_avg_end": 1.80078125,
+  "load_avg_start": 1.91259765625,
+  "n_ues": 10,
+  "novalue_rows": 0,
+  "ns3_returncode": -6,
+  "ok": false,
+  "rc_acks": [],
+  "role": "twin",
+  "seed": 3,
+  "sim_time_s": 8.0,
+  "t_act_s": 2.0,
+  "wall_s": 18.8,
+  "workflow": "noop"
+}

@@ -1,0 +1,159 @@
+{
+  "act_sim_time_s": 2.0003,
+  "chain": [
+    "KPM",
+    "RAPP.TRAFFIC_STEERING",
+    "RC"
+  ],
+  "clock": "sim-time collectStartTime",
+  "commands": [
+    "HO 10 2"
+  ],
+  "commands_dispatched_sim_s": [
+    [
+      2.0003,
+      "HO 10 2"
+    ]
+  ],
+  "first_report_sim_s": 0.2003,
+  "indications_per_gnb": {
+    "2": 78,
+    "3": 78,
+    "4": 0,
+    "5": 19
+  },
+  "kpi": {
+    "dl_buffer_kbytes": 9453.928814814815,
+    "dl_delay_ms": 1.530103527870483,
+    "dl_throughput_mbps": 21.8430780952381,
+    "energy_j_per_s": 4621.770370370371,
+    "prb_used_dl": 81.63125971724888
+  },
+  "kpi_e2": {
+    "dl_buffer_kbytes": 9270.850962962964,
+    "dl_throughput_mbps": 13.385333333333335,
+    "energy_j_per_s": 4621.770370370371,
+    "prb_used_dl": 33.5
+  },
+  "kpi_per_cell": {
+    "2": {
+      "dl_buffer_kbytes": 9453.928814814815,
+      "energy_j_per_s": 1944.0166666666667,
+      "prb_used_dl": 53.5124314550224
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.0,
+      "energy_j_per_s": 1346.2833333333333,
+      "prb_used_dl": 28.11882826222648
+    },
+    "4": {
+      "dl_buffer_kbytes": 0.0,
+      "energy_j_per_s": 665.7351851851852,
+      "prb_used_dl": 0.0
+    },
+    "5": {
+      "dl_buffer_kbytes": 0.0,
+      "energy_j_per_s": 665.7351851851852,
+      "prb_used_dl": 0.0
+    }
+  },
+  "kpi_per_cell_e2": {
+    "2": {
+      "dl_buffer_kbytes": 9270.849796296297,
+      "dl_throughput_mbps": 11.643074074074075,
+      "energy_j_per_s": 1944.0166666666667,
+      "prb_used_dl": 7.666666666666667
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.0011666666666666668,
+      "dl_throughput_mbps": 1.7422592592592594,
+      "energy_j_per_s": 1346.2833333333333,
+      "prb_used_dl": 25.833333333333332
+    },
+    "4": {
+      "dl_buffer_kbytes": 0.0,
+      "dl_throughput_mbps": 0.0,
+      "energy_j_per_s": 665.7351851851852,
+      "prb_used_dl": 0.0
+    },
+    "5": {
+      "dl_buffer_kbytes": 0.0,
+      "dl_throughput_mbps": 0.0,
+      "energy_j_per_s": 665.7351851851852,
+      "prb_used_dl": 0.0
+    }
+  },
+  "kpi_source": {
+    "version": "ns3-trace-v2"
+  },
+  "kpi_trace_window": {
+    "du_logger_writes": 54,
+    "pdcp_epochs_s": [
+      2.5,
+      7.75
+    ],
+    "prb_method": "e2+logger, phi=0.267 ms"
+  },
+  "kpi_window_bins": [
+    54,
+    54
+  ],
+  "kpi_window_sim_s": [
+    2.5,
+    7.9
+  ],
+  "kpm_history_at_act_s": 1.8,
+  "last_report_sim_s": 7.9003,
+  "load_avg_end": 2.7021484375,
+  "load_avg_start": 2.7919921875,
+  "n_ues": 10,
+  "novalue_rows": 0,
+  "ns3_returncode": 0,
+  "ok": true,
+  "policy": {
+    "shed": [
+      {
+        "from": 5,
+        "share": 0.2,
+        "to": 2
+      }
+    ],
+    "sleep_cells": [],
+    "trace": {
+      "kpm_snapshot": {
+        "2": {
+          "DRB.UEThpDl": 1.300575,
+          "RRU.PrbTotDl": 0.0
+        },
+        "3": {
+          "DRB.UEThpDl": 1.9324000000000001,
+          "RRU.PrbTotDl": 0.572
+        },
+        "5": {
+          "DRB.UEThpDl": 1.9786,
+          "RRU.PrbTotDl": 1.0
+        }
+      },
+      "steps": [
+        {
+          "decision": {
+            "from_cell": "5",
+            "to_cell": "2",
+            "ue_share_pct": 20
+          },
+          "rapp": "traffic_steering"
+        }
+      ]
+    },
+    "workflow": "traffic_steering"
+  },
+  "rc_acks": [
+    "1793192285437322 HO 10 2 sent"
+  ],
+  "role": "twin",
+  "seed": 9,
+  "sim_time_s": 8.0,
+  "t_act_s": 2.0,
+  "wall_s": 207.9,
+  "workflow": "traffic_steering"
+}

@@ -1,0 +1,180 @@
+{
+  "act_sim_time_s": 2.0664,
+  "chain": [
+    "KPM",
+    "RAPP.QOE_PREDICTION",
+    "RAPP.TRAFFIC_STEERING",
+    "RC"
+  ],
+  "clock": "sim-time collectStartTime",
+  "commands": [
+    "HO 8 5"
+  ],
+  "commands_dispatched_sim_s": [
+    [
+      2.0664,
+      "HO 8 5"
+    ]
+  ],
+  "first_report_sim_s": 0.1664,
+  "indications_per_gnb": {
+    "2": 79,
+    "3": 79,
+    "4": 79,
+    "5": 79
+  },
+  "kpi": {
+    "dl_buffer_kbytes": 0.3920740740740741,
+    "dl_delay_ms": 5.286055675240996,
+    "dl_throughput_mbps": 35.08441904761904,
+    "energy_j_per_s": 7506.3814814814805,
+    "prb_used_dl": 199.34123134948737
+  },
+  "kpi_e2": {
+    "dl_buffer_kbytes": 0.2877222222222222,
+    "dl_throughput_mbps": 18.60022222222222,
+    "energy_j_per_s": 7506.3814814814805,
+    "prb_used_dl": 197.85185185185185
+  },
+  "kpi_per_cell": {
+    "2": {
+      "dl_buffer_kbytes": 0.05109259259259259,
+      "energy_j_per_s": 2120.4240740740743,
+      "prb_used_dl": 60.04436726699501
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.0029814814814814812,
+      "energy_j_per_s": 1638.1666666666665,
+      "prb_used_dl": 39.87036195855925
+    },
+    "4": {
+      "dl_buffer_kbytes": 0.0028333333333333335,
+      "energy_j_per_s": 1536.4685185185185,
+      "prb_used_dl": 35.52942952176462
+    },
+    "5": {
+      "dl_buffer_kbytes": 0.33516666666666667,
+      "energy_j_per_s": 2211.322222222222,
+      "prb_used_dl": 63.89707260216851
+    }
+  },
+  "kpi_per_cell_e2": {
+    "2": {
+      "dl_buffer_kbytes": 0.034055555555555554,
+      "dl_throughput_mbps": 5.486592592592592,
+      "energy_j_per_s": 2120.4240740740743,
+      "prb_used_dl": 59.68518518518518
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.004574074074074074,
+      "dl_throughput_mbps": 3.812962962962963,
+      "energy_j_per_s": 1638.1666666666665,
+      "prb_used_dl": 39.44444444444444
+    },
+    "4": {
+      "dl_buffer_kbytes": 0.0030925925925925925,
+      "dl_throughput_mbps": 3.9639814814814813,
+      "energy_j_per_s": 1536.4685185185185,
+      "prb_used_dl": 35.092592592592595
+    },
+    "5": {
+      "dl_buffer_kbytes": 0.246,
+      "dl_throughput_mbps": 5.3366851851851855,
+      "energy_j_per_s": 2211.322222222222,
+      "prb_used_dl": 63.629629629629626
+    }
+  },
+  "kpi_source": {
+    "version": "ns3-trace-v2"
+  },
+  "kpi_trace_window": {
+    "du_logger_writes": 54,
+    "pdcp_epochs_s": [
+      2.5,
+      7.75
+    ],
+    "prb_method": "e2+logger, phi=66.357 ms"
+  },
+  "kpi_window_bins": [
+    54,
+    54
+  ],
+  "kpi_window_sim_s": [
+    2.5,
+    7.9
+  ],
+  "kpm_history_at_act_s": 1.9,
+  "last_report_sim_s": 7.9664,
+  "load_avg_end": 2.3642578125,
+  "load_avg_start": 2.22412109375,
+  "n_ues": 10,
+  "novalue_rows": 0,
+  "ns3_returncode": 0,
+  "ok": true,
+  "policy": {
+    "shed": [
+      {
+        "avoid": [
+          2
+        ],
+        "from": 2,
+        "share": 0.2,
+        "to": 5
+      }
+    ],
+    "sleep_cells": [],
+    "trace": {
+      "kpm_snapshot": {
+        "2": {
+          "DRB.UEThpDl": 1.5848571428571427,
+          "RRU.PrbTotDl": 1.0
+        },
+        "3": {
+          "DRB.UEThpDl": 1.7552999999999999,
+          "RRU.PrbTotDl": 0.996
+        },
+        "5": {
+          "DRB.UEThpDl": 2.0972,
+          "RRU.PrbTotDl": 0.298
+        }
+      },
+      "steps": [
+        {
+          "decision": {
+            "at_risk_cells": [
+              "3",
+              "5",
+              "2"
+            ],
+            "model": "linear(thp, delay) emulation",
+            "mos_forecast": {
+              "2": 1.75,
+              "3": 1.85,
+              "5": 2.06
+            }
+          },
+          "rapp": "qoe_prediction"
+        },
+        {
+          "decision": {
+            "from_cell": "2",
+            "to_cell": "5",
+            "ue_share_pct": 20
+          },
+          "rapp": "traffic_steering"
+        }
+      ]
+    },
+    "workflow": "qoe_steering"
+  },
+  "policy_from": "twin",
+  "rc_acks": [
+    "1793189828553154 HO 8 5 sent"
+  ],
+  "role": "live",
+  "seed": 104,
+  "sim_time_s": 8.0,
+  "t_act_s": 2.0,
+  "wall_s": 303.4,
+  "workflow": "qoe_steering"
+}

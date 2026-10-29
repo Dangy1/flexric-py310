@@ -1,0 +1,170 @@
+{
+  "act_sim_time_s": 2.0,
+  "chain": [
+    "KPM",
+    "RAPP.TRAFFIC_STEERING",
+    "RC"
+  ],
+  "clock": "sim-time collectStartTime",
+  "commands": [
+    "HO 9 5",
+    "HO 1 5"
+  ],
+  "commands_dispatched_sim_s": [
+    [
+      2.0,
+      "HO 9 5"
+    ],
+    [
+      2.0,
+      "HO 1 5"
+    ]
+  ],
+  "first_report_sim_s": 0.2,
+  "indications_per_gnb": {
+    "2": 79,
+    "3": 79,
+    "4": 79,
+    "5": 79
+  },
+  "kpi": {
+    "dl_buffer_kbytes": 1599.486037037037,
+    "dl_delay_ms": 36.24714023440727,
+    "dl_throughput_mbps": 30.54610285714286,
+    "energy_j_per_s": 9002.701851851853,
+    "prb_used_dl": 265.53228840740746
+  },
+  "kpi_e2": {
+    "dl_buffer_kbytes": 1599.486037037037,
+    "dl_throughput_mbps": 16.793574074074073,
+    "energy_j_per_s": 9002.701851851853,
+    "prb_used_dl": 261.2037037037037
+  },
+  "kpi_per_cell": {
+    "2": {
+      "dl_buffer_kbytes": 0.251,
+      "energy_j_per_s": 2093.8703703703704,
+      "prb_used_dl": 59.73828377777778
+    },
+    "3": {
+      "dl_buffer_kbytes": 100.08772222222223,
+      "energy_j_per_s": 2493.8148148148152,
+      "prb_used_dl": 76.68764216666668
+    },
+    "4": {
+      "dl_buffer_kbytes": 6.092777777777777,
+      "energy_j_per_s": 2247.3444444444444,
+      "prb_used_dl": 66.24103837037038
+    },
+    "5": {
+      "dl_buffer_kbytes": 1493.054537037037,
+      "energy_j_per_s": 2167.672222222222,
+      "prb_used_dl": 62.8653240925926
+    }
+  },
+  "kpi_per_cell_e2": {
+    "2": {
+      "dl_buffer_kbytes": 0.251,
+      "dl_throughput_mbps": 7.916740740740741,
+      "energy_j_per_s": 2093.8703703703704,
+      "prb_used_dl": 57.833333333333336
+    },
+    "3": {
+      "dl_buffer_kbytes": 100.08772222222223,
+      "dl_throughput_mbps": 1.6923333333333332,
+      "energy_j_per_s": 2493.8148148148152,
+      "prb_used_dl": 76.18518518518519
+    },
+    "4": {
+      "dl_buffer_kbytes": 6.092777777777777,
+      "dl_throughput_mbps": 1.6777962962962962,
+      "energy_j_per_s": 2247.3444444444444,
+      "prb_used_dl": 65.75925925925925
+    },
+    "5": {
+      "dl_buffer_kbytes": 1493.054537037037,
+      "dl_throughput_mbps": 5.506703703703703,
+      "energy_j_per_s": 2167.672222222222,
+      "prb_used_dl": 61.425925925925924
+    }
+  },
+  "kpi_source": {
+    "version": "ns3-trace-v2"
+  },
+  "kpi_trace_window": {
+    "du_logger_writes": 54,
+    "pdcp_epochs_s": [
+      2.5,
+      7.75
+    ],
+    "prb_method": "logger (E2 reports grid-aligned: same window)"
+  },
+  "kpi_window_bins": [
+    54,
+    54
+  ],
+  "kpi_window_sim_s": [
+    2.5,
+    7.9
+  ],
+  "kpm_history_at_act_s": 1.8,
+  "last_report_sim_s": 8.0,
+  "load_avg_end": 2.2080078125,
+  "load_avg_start": 2.705078125,
+  "n_ues": 10,
+  "novalue_rows": 0,
+  "ns3_returncode": 0,
+  "ok": true,
+  "policy": {
+    "shed": [
+      {
+        "from": 2,
+        "share": 0.2,
+        "to": 5
+      }
+    ],
+    "sleep_cells": [],
+    "trace": {
+      "kpm_snapshot": {
+        "2": {
+          "DRB.UEThpDl": 1.9521,
+          "RRU.PrbTotDl": 1.0
+        },
+        "3": {
+          "DRB.UEThpDl": 1.4982,
+          "RRU.PrbTotDl": 0.769
+        },
+        "4": {
+          "DRB.UEThpDl": 1.4465999999999999,
+          "RRU.PrbTotDl": 0.751
+        },
+        "5": {
+          "DRB.UEThpDl": 2.1632,
+          "RRU.PrbTotDl": 0.418
+        }
+      },
+      "steps": [
+        {
+          "decision": {
+            "from_cell": "2",
+            "to_cell": "5",
+            "ue_share_pct": 20
+          },
+          "rapp": "traffic_steering"
+        }
+      ]
+    },
+    "workflow": "traffic_steering"
+  },
+  "rc_acks": [
+    "1793229582910452 HO 9 5 sent",
+    "1793229582911146 HO 1 5 sent"
+  ],
+  "role": "twin",
+  "seed": 2,
+  "sim_time_s": 8.0,
+  "t_act_s": 2.0,
+  "ue_position_file": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261028T173841Z_T6v3_twin_vs_live_positions/ue_positions/pair2_live_s102_t2.csv",
+  "wall_s": 271.6,
+  "workflow": "traffic_steering"
+}

@@ -1,0 +1,174 @@
+{
+  "act_sim_time_s": 2.0678,
+  "chain": [
+    "KPM",
+    "RAPP.QOE_PREDICTION",
+    "RAPP.TRAFFIC_STEERING",
+    "RC"
+  ],
+  "clock": "sim-time collectStartTime",
+  "commands": [
+    "HO 6 2"
+  ],
+  "commands_dispatched_sim_s": [
+    [
+      2.0678,
+      "HO 6 2"
+    ]
+  ],
+  "first_report_sim_s": 0.1678,
+  "indications_per_gnb": {
+    "2": 79,
+    "3": 79,
+    "4": 79,
+    "5": 79
+  },
+  "kpi": {
+    "dl_buffer_kbytes": 1.6376296296296298,
+    "dl_delay_ms": 4.420268557779624,
+    "dl_throughput_mbps": 34.96595809523809,
+    "energy_j_per_s": 7518.903703703703,
+    "prb_used_dl": 199.7822238453889
+  },
+  "kpi_e2": {
+    "dl_buffer_kbytes": 1.3758333333333335,
+    "dl_throughput_mbps": 19.97235185185185,
+    "energy_j_per_s": 7518.903703703703,
+    "prb_used_dl": 197.7222222222222
+  },
+  "kpi_per_cell": {
+    "2": {
+      "dl_buffer_kbytes": 0.2720740740740741,
+      "energy_j_per_s": 2492.790740740741,
+      "prb_used_dl": 75.12333561411168
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.004537037037037037,
+      "energy_j_per_s": 1400.7333333333333,
+      "prb_used_dl": 29.779415677355747
+    },
+    "4": {
+      "dl_buffer_kbytes": 1.3585555555555557,
+      "energy_j_per_s": 2089.416666666666,
+      "prb_used_dl": 59.31858673332721
+    },
+    "5": {
+      "dl_buffer_kbytes": 0.002462962962962963,
+      "energy_j_per_s": 1535.962962962963,
+      "prb_used_dl": 35.560885820594244
+    }
+  },
+  "kpi_per_cell_e2": {
+    "2": {
+      "dl_buffer_kbytes": 0.05653703703703704,
+      "dl_throughput_mbps": 10.002037037037036,
+      "energy_j_per_s": 2492.790740740741,
+      "prb_used_dl": 74.33333333333333
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.0,
+      "dl_throughput_mbps": 4.104481481481482,
+      "energy_j_per_s": 1400.7333333333333,
+      "prb_used_dl": 29.40740740740741
+    },
+    "4": {
+      "dl_buffer_kbytes": 1.0344629629629631,
+      "dl_throughput_mbps": 1.8860925925925927,
+      "energy_j_per_s": 2089.416666666666,
+      "prb_used_dl": 59.129629629629626
+    },
+    "5": {
+      "dl_buffer_kbytes": 0.2848333333333333,
+      "dl_throughput_mbps": 3.979740740740741,
+      "energy_j_per_s": 1535.962962962963,
+      "prb_used_dl": 34.851851851851855
+    }
+  },
+  "kpi_source": {
+    "version": "ns3-trace-v2"
+  },
+  "kpi_trace_window": {
+    "du_logger_writes": 54,
+    "pdcp_epochs_s": [
+      2.5,
+      7.75
+    ],
+    "prb_method": "e2+logger, phi=67.803 ms"
+  },
+  "kpi_window_bins": [
+    54,
+    54
+  ],
+  "kpi_window_sim_s": [
+    2.5,
+    7.9
+  ],
+  "kpm_history_at_act_s": 1.9,
+  "last_report_sim_s": 7.9678,
+  "load_avg_end": 2.04345703125,
+  "load_avg_start": 2.154296875,
+  "n_ues": 10,
+  "novalue_rows": 0,
+  "ns3_returncode": 0,
+  "ok": true,
+  "policy": {
+    "shed": [
+      {
+        "avoid": [
+          3
+        ],
+        "from": 3,
+        "share": 0.2,
+        "to": null
+      }
+    ],
+    "sleep_cells": [],
+    "trace": {
+      "kpm_snapshot": {
+        "2": {
+          "DRB.UEThpDl": 2.1267666666666667,
+          "RRU.PrbTotDl": 1.0
+        },
+        "3": {
+          "DRB.UEThpDl": 2.0825,
+          "RRU.PrbTotDl": 0.347
+        }
+      },
+      "steps": [
+        {
+          "decision": {
+            "at_risk_cells": [
+              "2",
+              "3"
+            ],
+            "model": "linear(thp, delay) emulation",
+            "mos_forecast": {
+              "2": 2.08,
+              "3": 2.05
+            }
+          },
+          "rapp": "qoe_prediction"
+        },
+        {
+          "decision": {
+            "from_cell": "2",
+            "to_cell": "3",
+            "ue_share_pct": 20
+          },
+          "rapp": "traffic_steering"
+        }
+      ]
+    },
+    "workflow": "qoe_steering"
+  },
+  "policy_from": "twin",
+  "rc_acks": [
+    "1793183380668270 HO 6 2 sent"
+  ],
+  "role": "live",
+  "seed": 106,
+  "sim_time_s": 8.0,
+  "t_act_s": 2.0,
+  "wall_s": 293.6,
+  "workflow": "qoe_steering"
+}

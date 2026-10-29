@@ -1,0 +1,1033 @@
+{
+  "rows": [
+    {
+      "run": "live_s101_noop",
+      "kpi": "prb_used_dl",
+      "first": 176.09056848148148,
+      "repeat": 176.09056848148148,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s101_noop",
+      "kpi": "dl_throughput_mbps",
+      "first": 34.4020419047619,
+      "repeat": 34.4020419047619,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s101_noop",
+      "kpi": "dl_delay_ms",
+      "first": 4.641847410684814,
+      "repeat": 4.641847410684814,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s101_noop",
+      "kpi": "dl_buffer_kbytes",
+      "first": 49.97375925925926,
+      "repeat": 49.97375925925926,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s101_noop",
+      "kpi": "energy_j_per_s",
+      "first": 6892.455555555555,
+      "repeat": 6892.455555555555,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s101_noop",
+      "kpi": "prb_used_dl@cell2",
+      "first": 62.83314812962962,
+      "repeat": 62.83314812962962,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s101_noop",
+      "kpi": "prb_used_dl@cell3",
+      "first": 70.1265110740741,
+      "repeat": 70.1265110740741,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s101_noop",
+      "kpi": "prb_used_dl@cell4",
+      "first": 28.288154666666657,
+      "repeat": 28.288154666666657,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s101_noop",
+      "kpi": "prb_used_dl@cell5",
+      "first": 14.842754611111115,
+      "repeat": 14.842754611111115,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s101_noop",
+      "kpi": "e2:prb_used_dl",
+      "first": 171.33333333333334,
+      "repeat": 171.33333333333334,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s101_noop",
+      "kpi": "e2:dl_throughput_mbps",
+      "first": 19.844703703703704,
+      "repeat": 19.844703703703704,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s101_noop",
+      "kpi": "e2:dl_buffer_kbytes",
+      "first": 49.97375925925926,
+      "repeat": 49.97375925925926,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s101_noop",
+      "kpi": "e2:energy_j_per_s",
+      "first": 6892.455555555555,
+      "repeat": 6892.455555555555,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s101_noop",
+      "kpi": "e2:prb_used_dl@cell2",
+      "first": 60.7962962962963,
+      "repeat": 60.7962962962963,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s101_noop",
+      "kpi": "e2:prb_used_dl@cell3",
+      "first": 68.77777777777777,
+      "repeat": 68.77777777777777,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s101_noop",
+      "kpi": "e2:prb_used_dl@cell4",
+      "first": 27.35185185185185,
+      "repeat": 27.35185185185185,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s101_noop",
+      "kpi": "e2:prb_used_dl@cell5",
+      "first": 14.407407407407407,
+      "repeat": 14.407407407407407,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s102_noop",
+      "kpi": "prb_used_dl",
+      "first": 98.49648464814813,
+      "repeat": 98.49648464814813,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s102_noop",
+      "kpi": "dl_throughput_mbps",
+      "first": 25.16664380952381,
+      "repeat": 25.16664380952381,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s102_noop",
+      "kpi": "dl_delay_ms",
+      "first": 3.0019127189549764,
+      "repeat": 3.0019127189549764,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s102_noop",
+      "kpi": "dl_buffer_kbytes",
+      "first": 6925.831111111112,
+      "repeat": 6925.831111111112,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s102_noop",
+      "kpi": "energy_j_per_s",
+      "first": 5024.246296296296,
+      "repeat": 5024.246296296296,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s102_noop",
+      "kpi": "prb_used_dl@cell2",
+      "first": 66.78848874074072,
+      "repeat": 66.78848874074072,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s102_noop",
+      "kpi": "prb_used_dl@cell3",
+      "first": 0.0,
+      "repeat": 0.0,
+      "rel_diff_pct": null,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s102_noop",
+      "kpi": "prb_used_dl@cell4",
+      "first": 0.0,
+      "repeat": 0.0,
+      "rel_diff_pct": null,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s102_noop",
+      "kpi": "prb_used_dl@cell5",
+      "first": 31.70799590740741,
+      "repeat": 31.70799590740741,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s102_noop",
+      "kpi": "e2:prb_used_dl",
+      "first": 95.46296296296296,
+      "repeat": 95.46296296296296,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s102_noop",
+      "kpi": "e2:dl_throughput_mbps",
+      "first": 14.881,
+      "repeat": 14.881,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s102_noop",
+      "kpi": "e2:dl_buffer_kbytes",
+      "first": 6925.831111111112,
+      "repeat": 6925.831111111112,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s102_noop",
+      "kpi": "e2:energy_j_per_s",
+      "first": 5024.246296296296,
+      "repeat": 5024.246296296296,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s102_noop",
+      "kpi": "e2:prb_used_dl@cell2",
+      "first": 64.66666666666667,
+      "repeat": 64.66666666666667,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s102_noop",
+      "kpi": "e2:prb_used_dl@cell3",
+      "first": 0.0,
+      "repeat": 0.0,
+      "rel_diff_pct": null,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s102_noop",
+      "kpi": "e2:prb_used_dl@cell4",
+      "first": 0.0,
+      "repeat": 0.0,
+      "rel_diff_pct": null,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s102_noop",
+      "kpi": "e2:prb_used_dl@cell5",
+      "first": 30.796296296296298,
+      "repeat": 30.796296296296298,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s103_noop",
+      "kpi": "prb_used_dl",
+      "first": 155.1104859074074,
+      "repeat": 155.1104859074074,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s103_noop",
+      "kpi": "dl_throughput_mbps",
+      "first": 28.15865904761905,
+      "repeat": 28.15865904761905,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s103_noop",
+      "kpi": "dl_delay_ms",
+      "first": 3.350265874614159,
+      "repeat": 3.350265874614159,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s103_noop",
+      "kpi": "dl_buffer_kbytes",
+      "first": 4728.777314814815,
+      "repeat": 4728.777314814815,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s103_noop",
+      "kpi": "energy_j_per_s",
+      "first": 6378.714814814814,
+      "repeat": 6378.714814814814,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s103_noop",
+      "kpi": "prb_used_dl@cell2",
+      "first": 69.64295292592594,
+      "repeat": 69.64295292592594,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s103_noop",
+      "kpi": "prb_used_dl@cell3",
+      "first": 0.0,
+      "repeat": 0.0,
+      "rel_diff_pct": null,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s103_noop",
+      "kpi": "prb_used_dl@cell4",
+      "first": 17.720201722222225,
+      "repeat": 17.720201722222225,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s103_noop",
+      "kpi": "prb_used_dl@cell5",
+      "first": 67.74733125925924,
+      "repeat": 67.74733125925924,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s103_noop",
+      "kpi": "e2:prb_used_dl",
+      "first": 151.07407407407408,
+      "repeat": 151.07407407407408,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s103_noop",
+      "kpi": "e2:dl_throughput_mbps",
+      "first": 15.890796296296296,
+      "repeat": 15.890796296296296,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s103_noop",
+      "kpi": "e2:dl_buffer_kbytes",
+      "first": 4728.777314814815,
+      "repeat": 4728.777314814815,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s103_noop",
+      "kpi": "e2:energy_j_per_s",
+      "first": 6378.714814814814,
+      "repeat": 6378.714814814814,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s103_noop",
+      "kpi": "e2:prb_used_dl@cell2",
+      "first": 67.12962962962963,
+      "repeat": 67.12962962962963,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s103_noop",
+      "kpi": "e2:prb_used_dl@cell3",
+      "first": 0.0,
+      "repeat": 0.0,
+      "rel_diff_pct": null,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s103_noop",
+      "kpi": "e2:prb_used_dl@cell4",
+      "first": 17.203703703703702,
+      "repeat": 17.203703703703702,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s103_noop",
+      "kpi": "e2:prb_used_dl@cell5",
+      "first": 66.74074074074075,
+      "repeat": 66.74074074074075,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s104_noop",
+      "kpi": "prb_used_dl",
+      "first": 189.94230494444446,
+      "repeat": 189.94230494444446,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s104_noop",
+      "kpi": "dl_throughput_mbps",
+      "first": 35.337112380952384,
+      "repeat": 35.337112380952384,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s104_noop",
+      "kpi": "dl_delay_ms",
+      "first": 4.692087952115525,
+      "repeat": 4.692087952115525,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s104_noop",
+      "kpi": "dl_buffer_kbytes",
+      "first": 0.39494444444444443,
+      "repeat": 0.39494444444444443,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s104_noop",
+      "kpi": "energy_j_per_s",
+      "first": 7219.246296296295,
+      "repeat": 7219.246296296295,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s104_noop",
+      "kpi": "prb_used_dl@cell2",
+      "first": 73.45534074074074,
+      "repeat": 73.45534074074074,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s104_noop",
+      "kpi": "prb_used_dl@cell3",
+      "first": 40.58395503703704,
+      "repeat": 40.58395503703704,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s104_noop",
+      "kpi": "prb_used_dl@cell4",
+      "first": 37.43255290740741,
+      "repeat": 37.43255290740741,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s104_noop",
+      "kpi": "prb_used_dl@cell5",
+      "first": 38.470456259259265,
+      "repeat": 38.470456259259265,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s104_noop",
+      "kpi": "e2:prb_used_dl",
+      "first": 184.9074074074074,
+      "repeat": 184.9074074074074,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s104_noop",
+      "kpi": "e2:dl_throughput_mbps",
+      "first": 19.019666666666666,
+      "repeat": 19.019666666666666,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s104_noop",
+      "kpi": "e2:dl_buffer_kbytes",
+      "first": 0.39494444444444443,
+      "repeat": 0.39494444444444443,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s104_noop",
+      "kpi": "e2:energy_j_per_s",
+      "first": 7219.246296296295,
+      "repeat": 7219.246296296295,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "live_s104_noop",
+      "kpi": "e2:prb_used_dl@cell2",
+      "first": 71.55555555555556,
+      "repeat": 71.55555555555556,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s104_noop",
+      "kpi": "e2:prb_used_dl@cell3",
+      "first": 39.648148148148145,
+      "repeat": 39.648148148148145,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s104_noop",
+      "kpi": "e2:prb_used_dl@cell4",
+      "first": 36.31481481481482,
+      "repeat": 36.31481481481482,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "live_s104_noop",
+      "kpi": "e2:prb_used_dl@cell5",
+      "first": 37.388888888888886,
+      "repeat": 37.388888888888886,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s1_noop",
+      "kpi": "prb_used_dl",
+      "first": 105.23458301851852,
+      "repeat": 105.23458301851852,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s1_noop",
+      "kpi": "dl_throughput_mbps",
+      "first": 29.32854857142857,
+      "repeat": 29.32854857142857,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s1_noop",
+      "kpi": "dl_delay_ms",
+      "first": 1.324481220453622,
+      "repeat": 1.324481220453622,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s1_noop",
+      "kpi": "dl_buffer_kbytes",
+      "first": 0.027944444444444445,
+      "repeat": 0.027944444444444445,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s1_noop",
+      "kpi": "energy_j_per_s",
+      "first": 5220.7777777777765,
+      "repeat": 5220.7777777777765,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s1_noop",
+      "kpi": "prb_used_dl@cell2",
+      "first": 62.01174253703702,
+      "repeat": 62.01174253703702,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s1_noop",
+      "kpi": "prb_used_dl@cell3",
+      "first": 14.205671296296297,
+      "repeat": 14.205671296296297,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s1_noop",
+      "kpi": "prb_used_dl@cell4",
+      "first": 12.390489333333333,
+      "repeat": 12.390489333333333,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s1_noop",
+      "kpi": "prb_used_dl@cell5",
+      "first": 16.626679851851854,
+      "repeat": 16.626679851851854,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s1_noop",
+      "kpi": "e2:prb_used_dl",
+      "first": 101.29629629629629,
+      "repeat": 101.29629629629629,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s1_noop",
+      "kpi": "e2:dl_throughput_mbps",
+      "first": 17.41622222222222,
+      "repeat": 17.41622222222222,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s1_noop",
+      "kpi": "e2:dl_buffer_kbytes",
+      "first": 0.027944444444444445,
+      "repeat": 0.027944444444444445,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s1_noop",
+      "kpi": "e2:energy_j_per_s",
+      "first": 5220.7777777777765,
+      "repeat": 5220.7777777777765,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s1_noop",
+      "kpi": "e2:prb_used_dl@cell2",
+      "first": 59.407407407407405,
+      "repeat": 59.407407407407405,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s1_noop",
+      "kpi": "e2:prb_used_dl@cell3",
+      "first": 13.722222222222221,
+      "repeat": 13.722222222222221,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s1_noop",
+      "kpi": "e2:prb_used_dl@cell4",
+      "first": 12.037037037037036,
+      "repeat": 12.037037037037036,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s1_noop",
+      "kpi": "e2:prb_used_dl@cell5",
+      "first": 16.12962962962963,
+      "repeat": 16.12962962962963,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s2_noop",
+      "kpi": "prb_used_dl",
+      "first": 150.81224138888888,
+      "repeat": 150.81224138888888,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s2_noop",
+      "kpi": "dl_throughput_mbps",
+      "first": 28.353874285714287,
+      "repeat": 28.353874285714287,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s2_noop",
+      "kpi": "dl_delay_ms",
+      "first": 3.5260622344594017,
+      "repeat": 3.5260622344594017,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s2_noop",
+      "kpi": "dl_buffer_kbytes",
+      "first": 0.044333333333333336,
+      "repeat": 0.044333333333333336,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s2_noop",
+      "kpi": "energy_j_per_s",
+      "first": 6296.087037037037,
+      "repeat": 6296.087037037037,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s2_noop",
+      "kpi": "prb_used_dl@cell2",
+      "first": 34.985343240740754,
+      "repeat": 34.985343240740754,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s2_noop",
+      "kpi": "prb_used_dl@cell3",
+      "first": 14.994900796296292,
+      "repeat": 14.994900796296292,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s2_noop",
+      "kpi": "prb_used_dl@cell4",
+      "first": 49.94255287037037,
+      "repeat": 49.94255287037037,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s2_noop",
+      "kpi": "prb_used_dl@cell5",
+      "first": 50.88944448148147,
+      "repeat": 50.88944448148147,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s2_noop",
+      "kpi": "e2:prb_used_dl",
+      "first": 146.37037037037038,
+      "repeat": 146.37037037037038,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s2_noop",
+      "kpi": "e2:dl_throughput_mbps",
+      "first": 16.278055555555557,
+      "repeat": 16.278055555555557,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s2_noop",
+      "kpi": "e2:dl_buffer_kbytes",
+      "first": 0.044333333333333336,
+      "repeat": 0.044333333333333336,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s2_noop",
+      "kpi": "e2:energy_j_per_s",
+      "first": 6296.087037037037,
+      "repeat": 6296.087037037037,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s2_noop",
+      "kpi": "e2:prb_used_dl@cell2",
+      "first": 33.074074074074076,
+      "repeat": 33.074074074074076,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s2_noop",
+      "kpi": "e2:prb_used_dl@cell3",
+      "first": 14.518518518518519,
+      "repeat": 14.518518518518519,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s2_noop",
+      "kpi": "e2:prb_used_dl@cell4",
+      "first": 48.925925925925924,
+      "repeat": 48.925925925925924,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s2_noop",
+      "kpi": "e2:prb_used_dl@cell5",
+      "first": 49.851851851851855,
+      "repeat": 49.851851851851855,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s3_noop",
+      "kpi": "prb_used_dl",
+      "first": 140.2833597037037,
+      "repeat": 140.2833597037037,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s3_noop",
+      "kpi": "dl_throughput_mbps",
+      "first": 21.36257523809524,
+      "repeat": 21.36257523809524,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s3_noop",
+      "kpi": "dl_delay_ms",
+      "first": 256.16286821921807,
+      "repeat": 256.16286821921807,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s3_noop",
+      "kpi": "dl_buffer_kbytes",
+      "first": 5541.688870370371,
+      "repeat": 5541.688870370371,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s3_noop",
+      "kpi": "energy_j_per_s",
+      "first": 6010.157407407408,
+      "repeat": 6010.157407407408,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s3_noop",
+      "kpi": "prb_used_dl@cell2",
+      "first": 62.29994701851852,
+      "repeat": 62.29994701851852,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s3_noop",
+      "kpi": "prb_used_dl@cell3",
+      "first": 0.0,
+      "repeat": 0.0,
+      "rel_diff_pct": null,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s3_noop",
+      "kpi": "prb_used_dl@cell4",
+      "first": 0.0,
+      "repeat": 0.0,
+      "rel_diff_pct": null,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s3_noop",
+      "kpi": "prb_used_dl@cell5",
+      "first": 77.98341268518519,
+      "repeat": 77.98341268518519,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s3_noop",
+      "kpi": "e2:prb_used_dl",
+      "first": 137.2037037037037,
+      "repeat": 137.2037037037037,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s3_noop",
+      "kpi": "e2:dl_throughput_mbps",
+      "first": 12.727481481481481,
+      "repeat": 12.727481481481481,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s3_noop",
+      "kpi": "e2:dl_buffer_kbytes",
+      "first": 5541.688870370371,
+      "repeat": 5541.688870370371,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s3_noop",
+      "kpi": "e2:energy_j_per_s",
+      "first": 6010.157407407408,
+      "repeat": 6010.157407407408,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s3_noop",
+      "kpi": "e2:prb_used_dl@cell2",
+      "first": 59.629629629629626,
+      "repeat": 59.629629629629626,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s3_noop",
+      "kpi": "e2:prb_used_dl@cell3",
+      "first": 0.0,
+      "repeat": 0.0,
+      "rel_diff_pct": null,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s3_noop",
+      "kpi": "e2:prb_used_dl@cell4",
+      "first": 0.0,
+      "repeat": 0.0,
+      "rel_diff_pct": null,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s3_noop",
+      "kpi": "e2:prb_used_dl@cell5",
+      "first": 77.57407407407408,
+      "repeat": 77.57407407407408,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s4_noop",
+      "kpi": "prb_used_dl",
+      "first": 73.04486716666668,
+      "repeat": 73.04486716666668,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s4_noop",
+      "kpi": "dl_throughput_mbps",
+      "first": 21.99238095238095,
+      "repeat": 21.99238095238095,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s4_noop",
+      "kpi": "dl_delay_ms",
+      "first": 1.3957706009880473,
+      "repeat": 1.3957706009880473,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s4_noop",
+      "kpi": "dl_buffer_kbytes",
+      "first": 4726.977537037037,
+      "repeat": 4726.977537037037,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s4_noop",
+      "kpi": "energy_j_per_s",
+      "first": 4423.787037037037,
+      "repeat": 4423.787037037037,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s4_noop",
+      "kpi": "prb_used_dl@cell2",
+      "first": 58.5928201851852,
+      "repeat": 58.5928201851852,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s4_noop",
+      "kpi": "prb_used_dl@cell3",
+      "first": 0.0,
+      "repeat": 0.0,
+      "rel_diff_pct": null,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s4_noop",
+      "kpi": "prb_used_dl@cell4",
+      "first": 0.0,
+      "repeat": 0.0,
+      "rel_diff_pct": null,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s4_noop",
+      "kpi": "prb_used_dl@cell5",
+      "first": 14.452046981481484,
+      "repeat": 14.452046981481484,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s4_noop",
+      "kpi": "e2:prb_used_dl",
+      "first": 69.48148148148148,
+      "repeat": 69.48148148148148,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s4_noop",
+      "kpi": "e2:dl_throughput_mbps",
+      "first": 13.61412962962963,
+      "repeat": 13.61412962962963,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s4_noop",
+      "kpi": "e2:dl_buffer_kbytes",
+      "first": 4726.977537037037,
+      "repeat": 4726.977537037037,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s4_noop",
+      "kpi": "e2:energy_j_per_s",
+      "first": 4423.787037037037,
+      "repeat": 4423.787037037037,
+      "rel_diff_pct": 0.0
+    },
+    {
+      "run": "twin_s4_noop",
+      "kpi": "e2:prb_used_dl@cell2",
+      "first": 55.592592592592595,
+      "repeat": 55.592592592592595,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s4_noop",
+      "kpi": "e2:prb_used_dl@cell3",
+      "first": 0.0,
+      "repeat": 0.0,
+      "rel_diff_pct": null,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s4_noop",
+      "kpi": "e2:prb_used_dl@cell4",
+      "first": 0.0,
+      "repeat": 0.0,
+      "rel_diff_pct": null,
+      "abs_diff": 0.0
+    },
+    {
+      "run": "twin_s4_noop",
+      "kpi": "e2:prb_used_dl@cell5",
+      "first": 13.88888888888889,
+      "repeat": 13.88888888888889,
+      "rel_diff_pct": 0.0,
+      "abs_diff": 0.0
+    }
+  ],
+  "max_rel_diff_pct": {
+    "prb_used_dl": 0.0,
+    "dl_throughput_mbps": 0.0,
+    "dl_delay_ms": 0.0,
+    "dl_buffer_kbytes": 0.0,
+    "energy_j_per_s": 0.0,
+    "prb_used_dl_per_cell": 0.0,
+    "e2:prb_used_dl": 0.0,
+    "e2:dl_throughput_mbps": 0.0,
+    "e2:dl_buffer_kbytes": 0.0,
+    "e2:energy_j_per_s": 0.0,
+    "e2:prb_used_dl_per_cell": 0.0
+  }
+}

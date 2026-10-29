@@ -310,6 +310,31 @@ First tasks for the execution session:
   same intents is excluded (test-set leakage). Developed in a separate worktree/branch `appweaver-learning`
   (~/flexric-learning) so the running batches and Batch B's build-tree sync are not affected; run as additional
   batches after Batch C, with the same commands, planner and metrics.
+- **Final Batch A done (2026-10-28 10:43–19:12):** `20261028T084337_250177Z_A_final_gptoss120b_spark1`, gpt-oss-120b on
+  spark1, code d128dbbe, 1500/1500 records, 6 health-check re-runs, 0 method errors, 0 label hints in 1005 planner
+  prompts, 0 pre-emptions. Rule accuracy: AppWeaver 70.4 % (known 65.5, open-world 71.8), no-repair 70.0, rule router
+  36.0 (known 81.8, open-world 23.1), catalog LLM 34.4, single app 24.0, no-catalog LLM 0 (706 hallucinated refs). On the
+  27 open-world intents no template satisfies (template-solvable 12 excluded, computed from labels): AppWeaver 67.4 %,
+  rule router 0 %, catalog LLM 0 %. Median latency AppWeaver 27.3 s (planner 19.3 s + twin dry-run 8.2 s), catalog
+  LLM 7.6 s. Audit found two infrastructure bugs affecting only the 6 seeded-conflict intents (host-wide TC lock
+  collided with the twin dry-run; slice xApp shutdown hang held the lease) — fixed (188395df, 21bc22f5); those 180
+  records are re-run for all methods before Batch B and replace the originals in the conflict analysis.
+- **Seeded-conflict re-run (19:16–20:59) and final Batch A = `20261028T190000Z_A_final_gptoss120b_spark1_seededfix`:**
+  original Batch A with the 6 seeded intents x 6 methods x 5 repeats replaced by `…_A_seeded_rerun_…` (code e6998752,
+  fixes 188395df + 21bc22f5; manifest `merged_from`/`merge_note`). Fix verified: AppWeaver Validate rejections 6 -> 0,
+  no-repair 9 -> 0; every AppWeaver record that met the busy app waited and completed. Seeded results (n=30 each):
+  done after wait — rule router 97 %, catalog LLM 37 %, AppWeaver 37 % (it met the busy app in 11/30; in the others the
+  planner left TC out because the intent sentence says TC is busy); correct chain — AppWeaver 37 %, no-repair 50 %,
+  rule router 17 %, catalog LLM 13 %. Conflict metrics now follow O7 (met / done after wait / unresolved / correct),
+  ack rate excludes lease-refused attempts. Known infrastructure limitation: 12/360 RC-control calls in seeded records
+  unacknowledged because the RIC resent the xApp's E42 setup while the seed's xApp was connected (worker time budget
+  expired); documented, not changed while Batch B runs.
+- **Batch B k=8 RIC degradation (2026-10-29 ~00:40):** the live RIC answered E42 SETUP only after 1-3 resend timeouts
+  (2-4 s) while the 8 s health probe still passed, so TC/RC control ACKs missed the 12 s window (28/71 calls in records
+  612-645; also elevated in records 72-143, 21:32-22:01). Probe limit lowered to 2.5 s (052ad713; healthy ~1 s); the
+  next check restarted the stack. TODO when B k=8 ends: identify records whose unacknowledged calls coincide with E42
+  resends in their xApp logs, re-run those intents x all methods for the affected repeat, merge with a manifest note
+  (same procedure as the seeded re-run).
 
 ## 4. Done criteria
 A fresh clone + the README's three commands reproduce every number and figure in the revised paper

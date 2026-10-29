@@ -1,0 +1,180 @@
+{
+  "act_sim_time_s": 2.0849,
+  "chain": [
+    "KPM",
+    "RAPP.QOE_PREDICTION",
+    "RAPP.TRAFFIC_STEERING",
+    "RC"
+  ],
+  "clock": "sim-time collectStartTime",
+  "commands": [
+    "HO 1 2"
+  ],
+  "commands_dispatched_sim_s": [
+    [
+      2.0849,
+      "HO 1 2"
+    ]
+  ],
+  "first_report_sim_s": 0.1849,
+  "indications_per_gnb": {
+    "2": 79,
+    "3": 79,
+    "4": 0,
+    "5": 79
+  },
+  "kpi": {
+    "dl_buffer_kbytes": 4727.810018518519,
+    "dl_delay_ms": 3.376499892703172,
+    "dl_throughput_mbps": 28.37209904761905,
+    "energy_j_per_s": 6069.951851851851,
+    "prb_used_dl": 138.71644826204817
+  },
+  "kpi_e2": {
+    "dl_buffer_kbytes": 4713.772925925926,
+    "dl_throughput_mbps": 15.977555555555554,
+    "energy_j_per_s": 6069.951851851851,
+    "prb_used_dl": 138.14814814814815
+  },
+  "kpi_per_cell": {
+    "2": {
+      "dl_buffer_kbytes": 4727.704166666667,
+      "energy_j_per_s": 2550.672222222222,
+      "prb_used_dl": 76.49842038324077
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.0,
+      "energy_j_per_s": 1446.5944444444444,
+      "prb_used_dl": 31.961795275914817
+    },
+    "4": {
+      "dl_buffer_kbytes": 0.0,
+      "energy_j_per_s": 665.7351851851852,
+      "prb_used_dl": 0.0
+    },
+    "5": {
+      "dl_buffer_kbytes": 0.10585185185185185,
+      "energy_j_per_s": 1406.9499999999998,
+      "prb_used_dl": 30.25623260289259
+    }
+  },
+  "kpi_per_cell_e2": {
+    "2": {
+      "dl_buffer_kbytes": 4713.749666666667,
+      "dl_throughput_mbps": 12.04675925925926,
+      "energy_j_per_s": 2550.672222222222,
+      "prb_used_dl": 76.07407407407408
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.0042592592592592595,
+      "dl_throughput_mbps": 1.9203148148148148,
+      "energy_j_per_s": 1446.5944444444444,
+      "prb_used_dl": 31.87037037037037
+    },
+    "4": {
+      "dl_buffer_kbytes": 0.0,
+      "dl_throughput_mbps": 0.0,
+      "energy_j_per_s": 665.7351851851852,
+      "prb_used_dl": 0.0
+    },
+    "5": {
+      "dl_buffer_kbytes": 0.019,
+      "dl_throughput_mbps": 2.0104814814814813,
+      "energy_j_per_s": 1406.9499999999998,
+      "prb_used_dl": 30.203703703703702
+    }
+  },
+  "kpi_source": {
+    "version": "ns3-trace-v2"
+  },
+  "kpi_trace_window": {
+    "du_logger_writes": 54,
+    "pdcp_epochs_s": [
+      2.5,
+      7.75
+    ],
+    "prb_method": "e2+logger, phi=84.910 ms"
+  },
+  "kpi_window_bins": [
+    54,
+    54
+  ],
+  "kpi_window_sim_s": [
+    2.5,
+    7.9
+  ],
+  "kpm_history_at_act_s": 1.9,
+  "last_report_sim_s": 7.9849,
+  "load_avg_end": 2.515625,
+  "load_avg_start": 2.55859375,
+  "n_ues": 10,
+  "novalue_rows": 0,
+  "ns3_returncode": 0,
+  "ok": true,
+  "policy": {
+    "shed": [
+      {
+        "avoid": [
+          5
+        ],
+        "from": 5,
+        "share": 0.2,
+        "to": 2
+      }
+    ],
+    "sleep_cells": [],
+    "trace": {
+      "kpm_snapshot": {
+        "2": {
+          "DRB.UEThpDl": 1.93168,
+          "RRU.PrbTotDl": 0.892
+        },
+        "3": {
+          "DRB.UEThpDl": 1.6775,
+          "RRU.PrbTotDl": 0.934
+        },
+        "5": {
+          "DRB.UEThpDl": 1.5794,
+          "RRU.PrbTotDl": 1.0
+        }
+      },
+      "steps": [
+        {
+          "decision": {
+            "at_risk_cells": [
+              "5",
+              "3",
+              "2"
+            ],
+            "model": "linear(thp, delay) emulation",
+            "mos_forecast": {
+              "2": 1.96,
+              "3": 1.81,
+              "5": 1.75
+            }
+          },
+          "rapp": "qoe_prediction"
+        },
+        {
+          "decision": {
+            "from_cell": "5",
+            "to_cell": "2",
+            "ue_share_pct": 0
+          },
+          "rapp": "traffic_steering"
+        }
+      ]
+    },
+    "workflow": "qoe_steering"
+  },
+  "policy_from": "twin",
+  "rc_acks": [
+    "1793203878709424 HO 1 2 sent"
+  ],
+  "role": "live",
+  "seed": 108,
+  "sim_time_s": 8.0,
+  "t_act_s": 2.0,
+  "wall_s": 259.2,
+  "workflow": "qoe_steering"
+}

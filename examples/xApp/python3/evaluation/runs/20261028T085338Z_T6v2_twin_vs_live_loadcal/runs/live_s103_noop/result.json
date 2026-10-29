@@ -1,0 +1,110 @@
+{
+  "act_sim_time_s": 2.0874,
+  "chain": [
+    "KPM"
+  ],
+  "clock": "sim-time collectStartTime",
+  "commands_dispatched_sim_s": [],
+  "first_report_sim_s": 0.1874,
+  "indications_per_gnb": {
+    "2": 79,
+    "3": 0,
+    "4": 79,
+    "5": 79
+  },
+  "kpi": {
+    "dl_buffer_kbytes": 4728.777314814815,
+    "dl_delay_ms": 3.350265874614159,
+    "dl_throughput_mbps": 28.15865904761905,
+    "energy_j_per_s": 6378.714814814814,
+    "prb_used_dl": 152.0528064083461
+  },
+  "kpi_e2": {
+    "dl_buffer_kbytes": 4716.871222222223,
+    "dl_throughput_mbps": 15.89275925925926,
+    "energy_j_per_s": 6378.714814814814,
+    "prb_used_dl": 151.83333333333331
+  },
+  "kpi_per_cell": {
+    "2": {
+      "dl_buffer_kbytes": 4727.189537037038,
+      "energy_j_per_s": 2327.546296296296,
+      "prb_used_dl": 67.70853057980129
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.0,
+      "energy_j_per_s": 665.7351851851852,
+      "prb_used_dl": 0.0
+    },
+    "4": {
+      "dl_buffer_kbytes": 0.20277777777777778,
+      "energy_j_per_s": 1102.5777777777778,
+      "prb_used_dl": 17.279462311400184
+    },
+    "5": {
+      "dl_buffer_kbytes": 1.385,
+      "energy_j_per_s": 2282.8555555555554,
+      "prb_used_dl": 67.06481351714463
+    }
+  },
+  "kpi_per_cell_e2": {
+    "2": {
+      "dl_buffer_kbytes": 4715.619425925926,
+      "dl_throughput_mbps": 10.31324074074074,
+      "energy_j_per_s": 2327.546296296296,
+      "prb_used_dl": 67.25925925925925
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.0,
+      "dl_throughput_mbps": 0.0,
+      "energy_j_per_s": 665.7351851851852,
+      "prb_used_dl": 0.0
+    },
+    "4": {
+      "dl_buffer_kbytes": 0.12351851851851851,
+      "dl_throughput_mbps": 1.956537037037037,
+      "energy_j_per_s": 1102.5777777777778,
+      "prb_used_dl": 17.35185185185185
+    },
+    "5": {
+      "dl_buffer_kbytes": 1.128277777777778,
+      "dl_throughput_mbps": 3.622981481481481,
+      "energy_j_per_s": 2282.8555555555554,
+      "prb_used_dl": 67.22222222222223
+    }
+  },
+  "kpi_source": {
+    "version": "ns3-trace-v2"
+  },
+  "kpi_trace_window": {
+    "du_logger_writes": 54,
+    "pdcp_epochs_s": [
+      2.5,
+      7.75
+    ],
+    "prb_method": "e2+logger, phi=87.357 ms"
+  },
+  "kpi_window_bins": [
+    54,
+    54
+  ],
+  "kpi_window_sim_s": [
+    2.5,
+    7.9
+  ],
+  "kpm_history_at_act_s": 1.9,
+  "last_report_sim_s": 7.9874,
+  "load_avg_end": 2.7578125,
+  "load_avg_start": 2.14501953125,
+  "n_ues": 10,
+  "novalue_rows": 0,
+  "ns3_returncode": 0,
+  "ok": true,
+  "rc_acks": [],
+  "role": "live",
+  "seed": 103,
+  "sim_time_s": 8.0,
+  "t_act_s": 2.0,
+  "wall_s": 258.1,
+  "workflow": "noop"
+}

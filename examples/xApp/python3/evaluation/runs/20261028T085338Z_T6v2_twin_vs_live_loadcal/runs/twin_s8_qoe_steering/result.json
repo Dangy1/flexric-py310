@@ -1,0 +1,179 @@
+{
+  "act_sim_time_s": 2.074,
+  "chain": [
+    "KPM",
+    "RAPP.QOE_PREDICTION",
+    "RAPP.TRAFFIC_STEERING",
+    "RC"
+  ],
+  "clock": "sim-time collectStartTime",
+  "commands": [
+    "HO 7 4"
+  ],
+  "commands_dispatched_sim_s": [
+    [
+      2.074,
+      "HO 7 4"
+    ]
+  ],
+  "first_report_sim_s": 0.174,
+  "indications_per_gnb": {
+    "2": 79,
+    "3": 79,
+    "4": 79,
+    "5": 0
+  },
+  "kpi": {
+    "dl_buffer_kbytes": 1361.9293888888888,
+    "dl_delay_ms": 5.253659432762345,
+    "dl_throughput_mbps": 31.46785523809524,
+    "energy_j_per_s": 6970.625925925926,
+    "prb_used_dl": 177.49547590447924
+  },
+  "kpi_e2": {
+    "dl_buffer_kbytes": 1349.8239999999998,
+    "dl_throughput_mbps": 17.281777777777776,
+    "energy_j_per_s": 6970.625925925926,
+    "prb_used_dl": 177.14814814814815
+  },
+  "kpi_per_cell": {
+    "2": {
+      "dl_buffer_kbytes": 1361.3490925925926,
+      "energy_j_per_s": 2514.112962962963,
+      "prb_used_dl": 75.9611923029048
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.1432037037037037,
+      "energy_j_per_s": 1737.6018518518515,
+      "prb_used_dl": 44.051620892767765
+    },
+    "4": {
+      "dl_buffer_kbytes": 0.4370925925925926,
+      "energy_j_per_s": 2053.175925925926,
+      "prb_used_dl": 57.48266270880666
+    },
+    "5": {
+      "dl_buffer_kbytes": 0.0,
+      "energy_j_per_s": 665.7351851851852,
+      "prb_used_dl": 0.0
+    }
+  },
+  "kpi_per_cell_e2": {
+    "2": {
+      "dl_buffer_kbytes": 1349.4608148148147,
+      "dl_throughput_mbps": 9.789,
+      "energy_j_per_s": 2514.112962962963,
+      "prb_used_dl": 75.64814814814815
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.08868518518518519,
+      "dl_throughput_mbps": 3.695314814814815,
+      "energy_j_per_s": 1737.6018518518515,
+      "prb_used_dl": 43.888888888888886
+    },
+    "4": {
+      "dl_buffer_kbytes": 0.2745,
+      "dl_throughput_mbps": 3.797462962962963,
+      "energy_j_per_s": 2053.175925925926,
+      "prb_used_dl": 57.611111111111114
+    },
+    "5": {
+      "dl_buffer_kbytes": 0.0,
+      "dl_throughput_mbps": 0.0,
+      "energy_j_per_s": 665.7351851851852,
+      "prb_used_dl": 0.0
+    }
+  },
+  "kpi_source": {
+    "version": "ns3-trace-v2"
+  },
+  "kpi_trace_window": {
+    "du_logger_writes": 54,
+    "pdcp_epochs_s": [
+      2.5,
+      7.75
+    ],
+    "prb_method": "e2+logger, phi=73.974 ms"
+  },
+  "kpi_window_bins": [
+    54,
+    54
+  ],
+  "kpi_window_sim_s": [
+    2.5,
+    7.9
+  ],
+  "kpm_history_at_act_s": 1.9,
+  "last_report_sim_s": 7.974,
+  "load_avg_end": 1.7021484375,
+  "load_avg_start": 1.310546875,
+  "n_ues": 10,
+  "novalue_rows": 0,
+  "ns3_returncode": 0,
+  "ok": true,
+  "policy": {
+    "shed": [
+      {
+        "avoid": [
+          3
+        ],
+        "from": 3,
+        "share": 0.2,
+        "to": 4
+      }
+    ],
+    "sleep_cells": [],
+    "trace": {
+      "kpm_snapshot": {
+        "2": {
+          "DRB.UEThpDl": 1.7088999999999999,
+          "RRU.PrbTotDl": 1.0
+        },
+        "3": {
+          "DRB.UEThpDl": 1.4965333333333335,
+          "RRU.PrbTotDl": 0.897
+        },
+        "4": {
+          "DRB.UEThpDl": 1.8164,
+          "RRU.PrbTotDl": 0.289
+        }
+      },
+      "steps": [
+        {
+          "decision": {
+            "at_risk_cells": [
+              "4",
+              "2",
+              "3"
+            ],
+            "model": "linear(thp, delay) emulation",
+            "mos_forecast": {
+              "2": 1.83,
+              "3": 1.7,
+              "4": 1.89
+            }
+          },
+          "rapp": "qoe_prediction"
+        },
+        {
+          "decision": {
+            "from_cell": "2",
+            "to_cell": "4",
+            "ue_share_pct": 20
+          },
+          "rapp": "traffic_steering"
+        }
+      ]
+    },
+    "workflow": "qoe_steering"
+  },
+  "rc_acks": [
+    "1793194044189289 HO 7 4 sent"
+  ],
+  "role": "twin",
+  "seed": 8,
+  "sim_time_s": 8.0,
+  "t_act_s": 2.0,
+  "wall_s": 297.3,
+  "workflow": "qoe_steering"
+}

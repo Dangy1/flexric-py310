@@ -28,6 +28,9 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 METHODS = ["manual_rule", "single_xapp", "llm_blind", "llm_only", "agentcard_no_repair", "langgraph_agentcard", "appweaver_tpl", "appweaver_mem", "appweaver_guided", "appweaver_v2"]
+# Processes on the host that are not part of the evaluated stack (the ns-3 / e2sim simulator of the
+# T6 twin study runs alongside the batches). Reported in the batch totals, never attributed to a method.
+BACKGROUND = {"ns3", "sim_ric"}
 STAGES = ["planner", "validate", "dryrun", "lease_wait", "deploy", "ack", "total"]
 
 
@@ -126,7 +129,8 @@ def summarize(run: Path, samples_path: Path, interval_s: float) -> Dict[str, Any
             per_method: Dict[str, Dict[str, Dict[str, float]]] = defaultdict(lambda: defaultdict(lambda: {"cpu_s": 0.0, "rss_sum": 0.0, "n": 0}))
             windows.sort()
             j = 0
-            for s in sorted((s for s in in_batch if s["component"] != "_host"), key=lambda s: s["t"]):
+            for s in sorted((s for s in in_batch if s["component"] != "_host" and s["component"] not in BACKGROUND),
+                            key=lambda s: s["t"]):
                 while j < len(windows) and windows[j][1] < s["t"]:
                     j += 1
                 if j < len(windows) and windows[j][0] <= s["t"] <= windows[j][1]:
@@ -161,7 +165,8 @@ def markdown(summary: Dict[str, Any]) -> str:
         lines += ["", f"Host resources over the batch ({res['samples']} samples):", "",
                   "| Component | CPU core-seconds | Mean RSS (MiB) |", "|---|---|---|"]
         for name, v in res["components"].items():
-            lines.append(f"| {name} | {v['cpu_core_seconds']} | {v['mean_rss_mib']} |")
+            label = f"{name} (background, not evaluated)" if name in BACKGROUND else name
+            lines.append(f"| {label} | {v['cpu_core_seconds']} | {v['mean_rss_mib']} |")
     per = {m: v["resources_per_record"] for m, v in summary["methods"].items() if v.get("resources_per_record")}
     if per:
         comps = sorted({c for v in per.values() for c in v})

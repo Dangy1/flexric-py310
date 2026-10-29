@@ -1,0 +1,2612 @@
+{
+  "by_workflow_kpi": {
+    "energy_saving/dl_buffer_kbytes": {
+      "mape_pairs": 0,
+      "mape_pct": null,
+      "mean_abs_rel_error_pp": 0.0,
+      "mean_abs_rel_error_pp_acted": null,
+      "mean_actual_delta": 0.0,
+      "mean_actual_rel_pct": 0.0,
+      "mean_predicted_delta": 0.0,
+      "mean_predicted_rel_pct": 0.0,
+      "pairs": 8,
+      "pairs_acted": 0,
+      "sign_agreement": 1.0,
+      "sign_agreement_acted": null
+    },
+    "energy_saving/dl_delay_ms": {
+      "mape_pairs": 0,
+      "mape_pct": null,
+      "mean_abs_rel_error_pp": 0.0,
+      "mean_abs_rel_error_pp_acted": null,
+      "mean_actual_delta": 0.0,
+      "mean_actual_rel_pct": 0.0,
+      "mean_predicted_delta": 0.0,
+      "mean_predicted_rel_pct": 0.0,
+      "pairs": 8,
+      "pairs_acted": 0,
+      "sign_agreement": 1.0,
+      "sign_agreement_acted": null
+    },
+    "energy_saving/dl_throughput_mbps": {
+      "mape_pairs": 0,
+      "mape_pct": null,
+      "mean_abs_rel_error_pp": 0.0,
+      "mean_abs_rel_error_pp_acted": null,
+      "mean_actual_delta": 0.0,
+      "mean_actual_rel_pct": 0.0,
+      "mean_predicted_delta": 0.0,
+      "mean_predicted_rel_pct": 0.0,
+      "pairs": 8,
+      "pairs_acted": 0,
+      "sign_agreement": 1.0,
+      "sign_agreement_acted": null
+    },
+    "energy_saving/energy_j_per_s": {
+      "mape_pairs": 0,
+      "mape_pct": null,
+      "mean_abs_rel_error_pp": 0.0,
+      "mean_abs_rel_error_pp_acted": null,
+      "mean_actual_delta": 0.0,
+      "mean_actual_rel_pct": 0.0,
+      "mean_predicted_delta": 0.0,
+      "mean_predicted_rel_pct": 0.0,
+      "pairs": 8,
+      "pairs_acted": 0,
+      "sign_agreement": 1.0,
+      "sign_agreement_acted": null
+    },
+    "energy_saving/prb_used_dl": {
+      "mape_pairs": 0,
+      "mape_pct": null,
+      "mean_abs_rel_error_pp": 0.0,
+      "mean_abs_rel_error_pp_acted": null,
+      "mean_actual_delta": 0.0,
+      "mean_actual_rel_pct": 0.0,
+      "mean_predicted_delta": 0.0,
+      "mean_predicted_rel_pct": 0.0,
+      "pairs": 8,
+      "pairs_acted": 0,
+      "sign_agreement": 1.0,
+      "sign_agreement_acted": null
+    },
+    "qoe_steering/dl_buffer_kbytes": {
+      "mape_pairs": 8,
+      "mape_pct": 5302.544104433788,
+      "mean_abs_rel_error_pp": 85192.03252252207,
+      "mean_abs_rel_error_pp_acted": 85192.03252252207,
+      "mean_actual_delta": 1101.025092592593,
+      "mean_actual_rel_pct": 63782.53992502892,
+      "mean_predicted_delta": -668.7655995370367,
+      "mean_predicted_rel_pct": 88246.84700887224,
+      "pairs": 8,
+      "pairs_acted": 8,
+      "sign_agreement": 0.5,
+      "sign_agreement_acted": 0.5
+    },
+    "qoe_steering/dl_delay_ms": {
+      "mape_pairs": 8,
+      "mape_pct": 31077.058615538754,
+      "mean_abs_rel_error_pp": 2366.084380189831,
+      "mean_abs_rel_error_pp_acted": 2366.084380189831,
+      "mean_actual_delta": 1.25519629346817,
+      "mean_actual_rel_pct": 34.78949283021883,
+      "mean_predicted_delta": 32.172605571883786,
+      "mean_predicted_rel_pct": 2381.1496908770523,
+      "pairs": 8,
+      "pairs_acted": 8,
+      "sign_agreement": 0.625,
+      "sign_agreement_acted": 0.625
+    },
+    "qoe_steering/dl_throughput_mbps": {
+      "mape_pairs": 8,
+      "mape_pct": 351.72116429780283,
+      "mean_abs_rel_error_pp": 12.382283783800643,
+      "mean_abs_rel_error_pp_acted": 12.382283783800643,
+      "mean_actual_delta": -3.0791523809523804,
+      "mean_actual_rel_pct": -9.441369610352458,
+      "mean_predicted_delta": -0.029659047619047696,
+      "mean_predicted_rel_pct": 1.732283475042556,
+      "pairs": 8,
+      "pairs_acted": 8,
+      "sign_agreement": 0.625,
+      "sign_agreement_acted": 0.625
+    },
+    "qoe_steering/energy_j_per_s": {
+      "mape_pairs": 8,
+      "mape_pct": 635.0311144957926,
+      "mean_abs_rel_error_pp": 23.626944882780872,
+      "mean_abs_rel_error_pp_acted": 23.626944882780872,
+      "mean_actual_delta": -357.4018518518517,
+      "mean_actual_rel_pct": -5.476083685936554,
+      "mean_predicted_delta": 888.8863425925927,
+      "mean_predicted_rel_pct": 18.150861196844318,
+      "pairs": 8,
+      "pairs_acted": 8,
+      "sign_agreement": 0.625,
+      "sign_agreement_acted": 0.625
+    },
+    "qoe_steering/prb_used_dl": {
+      "mape_pairs": 8,
+      "mape_pct": 635.9245545848412,
+      "mean_abs_rel_error_pp": 54.55069422638662,
+      "mean_abs_rel_error_pp_acted": 54.55069422638662,
+      "mean_actual_delta": -14.950026766203704,
+      "mean_actual_rel_pct": -9.70169706812806,
+      "mean_predicted_delta": 37.87514441435185,
+      "mean_predicted_rel_pct": 44.848997158258555,
+      "pairs": 8,
+      "pairs_acted": 8,
+      "sign_agreement": 0.625,
+      "sign_agreement_acted": 0.625
+    },
+    "traffic_steering/dl_buffer_kbytes": {
+      "mape_pairs": 7,
+      "mape_pct": 28763.868517820607,
+      "mean_abs_rel_error_pp": 48885.111146903175,
+      "mean_abs_rel_error_pp_acted": 55868.698453603625,
+      "mean_actual_delta": 309.3251273148152,
+      "mean_actual_rel_pct": 43552.565683619745,
+      "mean_predicted_delta": -704.8030578703701,
+      "mean_predicted_rel_pct": 27443.825361947547,
+      "pairs": 8,
+      "pairs_acted": 7,
+      "sign_agreement": 0.375,
+      "sign_agreement_acted": 0.2857142857142857
+    },
+    "traffic_steering/dl_delay_ms": {
+      "mape_pairs": 7,
+      "mape_pct": 4867.729041595764,
+      "mean_abs_rel_error_pp": 1739.2469542514064,
+      "mean_abs_rel_error_pp_acted": 1987.7108048587502,
+      "mean_actual_delta": 13.498916456616064,
+      "mean_actual_rel_pct": 355.3853351771405,
+      "mean_predicted_delta": 16.762350954215258,
+      "mean_predicted_rel_pct": 1789.3667926166163,
+      "pairs": 8,
+      "pairs_acted": 7,
+      "sign_agreement": 1.0,
+      "sign_agreement_acted": 1.0
+    },
+    "traffic_steering/dl_throughput_mbps": {
+      "mape_pairs": 7,
+      "mape_pct": 424.7734976976697,
+      "mean_abs_rel_error_pp": 10.278060338284766,
+      "mean_abs_rel_error_pp_acted": 11.746354672325447,
+      "mean_actual_delta": -1.6088171428571418,
+      "mean_actual_rel_pct": -4.664453494451379,
+      "mean_predicted_delta": 0.14435238095238057,
+      "mean_predicted_rel_pct": 1.8028755098948215,
+      "pairs": 8,
+      "pairs_acted": 7,
+      "sign_agreement": 0.625,
+      "sign_agreement_acted": 0.5714285714285714
+    },
+    "traffic_steering/energy_j_per_s": {
+      "mape_pairs": 7,
+      "mape_pct": 253.16212982119873,
+      "mean_abs_rel_error_pp": 14.023795730744066,
+      "mean_abs_rel_error_pp_acted": 16.02719512085036,
+      "mean_actual_delta": 233.691203703704,
+      "mean_actual_rel_pct": 3.7503741327806406,
+      "mean_predicted_delta": 826.4456018518516,
+      "mean_predicted_rel_pct": 16.45770565599429,
+      "pairs": 8,
+      "pairs_acted": 7,
+      "sign_agreement": 1.0,
+      "sign_agreement_acted": 1.0
+    },
+    "traffic_steering/prb_used_dl": {
+      "mape_pairs": 7,
+      "mape_pct": 252.97934523682306,
+      "mean_abs_rel_error_pp": 37.69456185740834,
+      "mean_abs_rel_error_pp_acted": 43.07949926560953,
+      "mean_actual_delta": 10.004242451388885,
+      "mean_actual_rel_pct": 7.10702213425106,
+      "mean_predicted_delta": 35.029471046296294,
+      "mean_predicted_rel_pct": 40.4550486890573,
+      "pairs": 8,
+      "pairs_acted": 7,
+      "sign_agreement": 1.0,
+      "sign_agreement_acted": 1.0
+    }
+  },
+  "excluded_pairs": [
+    3
+  ],
+  "gate": {
+    "by_workflow": {
+      "energy_saving": {
+        "accuracy": 1.0,
+        "accuracy_ci95": [
+          0.6755924316585924,
+          1.0
+        ],
+        "fn": 0,
+        "fp": 0,
+        "live_accept_rate": 0.0,
+        "live_accept_rate_ci95": [
+          0.0,
+          0.3244075683414076
+        ],
+        "n": 8,
+        "precision": null,
+        "precision_ci95": null,
+        "recall": null,
+        "recall_ci95": null,
+        "specificity": 1.0,
+        "specificity_ci95": [
+          0.6755924316585924,
+          1.0
+        ],
+        "tn": 8,
+        "tp": 0,
+        "twin_accept_rate": 0.0
+      },
+      "qoe_steering": {
+        "accuracy": 0.625,
+        "accuracy_ci95": [
+          0.30574239265377096,
+          0.8631557152608771
+        ],
+        "fn": 0,
+        "fp": 3,
+        "live_accept_rate": 0.375,
+        "live_accept_rate_ci95": [
+          0.13684428473912286,
+          0.694257607346229
+        ],
+        "n": 8,
+        "precision": 0.5,
+        "precision_ci95": [
+          0.18761630498040816,
+          0.8123836950195918
+        ],
+        "recall": 1.0,
+        "recall_ci95": [
+          0.43850296436068037,
+          1.0
+        ],
+        "specificity": 0.4,
+        "specificity_ci95": [
+          0.11762077314099711,
+          0.7692757205908813
+        ],
+        "tn": 2,
+        "tp": 3,
+        "twin_accept_rate": 0.75
+      },
+      "traffic_steering": {
+        "accuracy": 0.5,
+        "accuracy_ci95": [
+          0.21521606069626764,
+          0.7847839393037324
+        ],
+        "fn": 1,
+        "fp": 3,
+        "live_accept_rate": 0.5,
+        "live_accept_rate_ci95": [
+          0.21521606069626764,
+          0.7847839393037324
+        ],
+        "n": 8,
+        "precision": 0.5,
+        "precision_ci95": [
+          0.18761630498040816,
+          0.8123836950195918
+        ],
+        "recall": 0.75,
+        "recall_ci95": [
+          0.3006418400969081,
+          0.954412739704631
+        ],
+        "specificity": 0.25,
+        "specificity_ci95": [
+          0.04558726029536886,
+          0.6993581599030918
+        ],
+        "tn": 1,
+        "tp": 3,
+        "twin_accept_rate": 0.75
+      }
+    },
+    "definitions": {
+      "energy_saving_pct": "-100 * (energy_wf - energy_noop) / energy_noop, all gNBs, J per simulated s in the KPI window",
+      "hot_prb_reduction_pct": "-100 * (PRB_wf - PRB_noop) / PRB_noop summed over the policy's source cells (shed.from); no source cell or noop sum 0 -> undefined -> reject",
+      "remaining_prb_increase_pct": "100 * (PRB_wf - PRB_noop) / PRB_noop summed over the gNBs this instance did not switch off (its own OFF commands); noop sum 0 -> 0 if wf sum is 0 else +inf",
+      "throughput_loss_pct": "-100 * (thp_wf - thp_noop) / thp_noop, all gNBs",
+      "verdict": "accept iff every criterion of the workflow holds; twin verdict from predicted (twin) deltas, live outcome from measured (live) deltas, same thresholds"
+    },
+    "pooled": {
+      "accuracy": 0.7083333333333334,
+      "accuracy_ci95": [
+        0.5083230617667995,
+        0.8508535188368138
+      ],
+      "fn": 1,
+      "fp": 6,
+      "live_accept_rate": 0.2916666666666667,
+      "live_accept_rate_ci95": [
+        0.14914648116318613,
+        0.4916769382332005
+      ],
+      "n": 24,
+      "precision": 0.5,
+      "precision_ci95": [
+        0.25378159616252394,
+        0.7462184038374761
+      ],
+      "recall": 0.8571428571428571,
+      "recall_ci95": [
+        0.486872167860775,
+        0.9743203759421759
+      ],
+      "specificity": 0.6470588235294118,
+      "specificity_ci95": [
+        0.4130036331490377,
+        0.8269027970331224
+      ],
+      "tn": 11,
+      "tp": 6,
+      "twin_accept_rate": 0.5
+    },
+    "rows": [
+      {
+        "live": {
+          "accept": false,
+          "commands": 0,
+          "energy_saving_pct": -0.0,
+          "remaining_cells": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "remaining_prb_increase_pct": 0.0
+        },
+        "live_commands": [],
+        "pair": 1,
+        "shed": [],
+        "sleep_cells": [],
+        "twin": {
+          "accept": false,
+          "commands": 0,
+          "energy_saving_pct": -0.0,
+          "remaining_cells": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "remaining_prb_increase_pct": 0.0
+        },
+        "twin_commands": [],
+        "workflow": "energy_saving"
+      },
+      {
+        "live": {
+          "accept": false,
+          "commands": 1,
+          "hot_cells": [
+            2
+          ],
+          "hot_prb_reduction_pct": 5.878006656629685,
+          "throughput_loss_pct": 6.338759958434358
+        },
+        "live_commands": [
+          "HO 2 5"
+        ],
+        "pair": 1,
+        "shed": [
+          {
+            "from": 2,
+            "share": 0.2,
+            "to": 5
+          }
+        ],
+        "sleep_cells": [],
+        "twin": {
+          "accept": true,
+          "commands": 2,
+          "hot_cells": [
+            2
+          ],
+          "hot_prb_reduction_pct": 7.477115748061772,
+          "throughput_loss_pct": -8.466849341294433
+        },
+        "twin_commands": [
+          "HO 10 5",
+          "HO 7 5"
+        ],
+        "workflow": "traffic_steering"
+      },
+      {
+        "live": {
+          "accept": false,
+          "commands": 2,
+          "hot_cells": [
+            2,
+            3
+          ],
+          "hot_prb_reduction_pct": 33.99997915017831,
+          "throughput_loss_pct": 13.863363149208416
+        },
+        "live_commands": [
+          "HO 10 5",
+          "HO 2 5"
+        ],
+        "pair": 1,
+        "shed": [
+          {
+            "from": 3,
+            "share": 0.2,
+            "to": 5
+          },
+          {
+            "from": 2,
+            "share": 0.2,
+            "to": 5
+          }
+        ],
+        "sleep_cells": [],
+        "twin": {
+          "accept": true,
+          "commands": 3,
+          "hot_cells": [
+            2,
+            3
+          ],
+          "hot_prb_reduction_pct": 27.87753392138287,
+          "throughput_loss_pct": 1.001519629545423
+        },
+        "twin_commands": [
+          "HO 1 5",
+          "HO 10 5",
+          "HO 7 5"
+        ],
+        "workflow": "qoe_steering"
+      },
+      {
+        "live": {
+          "accept": false,
+          "commands": 0,
+          "energy_saving_pct": -0.0,
+          "remaining_cells": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "remaining_prb_increase_pct": 0.0
+        },
+        "live_commands": [],
+        "pair": 2,
+        "shed": [],
+        "sleep_cells": [],
+        "twin": {
+          "accept": false,
+          "commands": 0,
+          "energy_saving_pct": -0.0,
+          "remaining_cells": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "remaining_prb_increase_pct": 0.0
+        },
+        "twin_commands": [],
+        "workflow": "energy_saving"
+      },
+      {
+        "live": {
+          "accept": true,
+          "commands": 2,
+          "hot_cells": [
+            2
+          ],
+          "hot_prb_reduction_pct": 9.850586078706788,
+          "throughput_loss_pct": 2.055509908504735
+        },
+        "live_commands": [
+          "HO 10 5",
+          "HO 1 5"
+        ],
+        "pair": 2,
+        "shed": [
+          {
+            "from": 2,
+            "share": 0.2,
+            "to": 3
+          }
+        ],
+        "sleep_cells": [],
+        "twin": {
+          "accept": false,
+          "commands": 2,
+          "hot_cells": [
+            2
+          ],
+          "hot_prb_reduction_pct": 22.097120387582468,
+          "throughput_loss_pct": 14.08433996955378
+        },
+        "twin_commands": [
+          "HO 10 3",
+          "HO 6 3"
+        ],
+        "workflow": "traffic_steering"
+      },
+      {
+        "live": {
+          "accept": false,
+          "commands": 1,
+          "hot_cells": [
+            4,
+            5
+          ],
+          "hot_prb_reduction_pct": 63.1874984607443,
+          "throughput_loss_pct": 12.430542983274613
+        },
+        "live_commands": [
+          "HO 4 2"
+        ],
+        "pair": 2,
+        "shed": [
+          {
+            "from": 4,
+            "share": 0.2,
+            "to": 3
+          },
+          {
+            "from": 5,
+            "share": 0.2,
+            "to": 3
+          }
+        ],
+        "sleep_cells": [],
+        "twin": {
+          "accept": false,
+          "commands": 2,
+          "hot_cells": [
+            4,
+            5
+          ],
+          "hot_prb_reduction_pct": 75.26448059073984,
+          "throughput_loss_pct": 10.280540123761881
+        },
+        "twin_commands": [
+          "HO 2 3",
+          "HO 1 3"
+        ],
+        "workflow": "qoe_steering"
+      },
+      {
+        "live": {
+          "accept": false,
+          "commands": 0,
+          "energy_saving_pct": -0.0,
+          "remaining_cells": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "remaining_prb_increase_pct": 0.0
+        },
+        "live_commands": [],
+        "pair": 4,
+        "shed": [],
+        "sleep_cells": [],
+        "twin": {
+          "accept": false,
+          "commands": 0,
+          "energy_saving_pct": -0.0,
+          "remaining_cells": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "remaining_prb_increase_pct": 0.0
+        },
+        "twin_commands": [],
+        "workflow": "energy_saving"
+      },
+      {
+        "live": {
+          "accept": true,
+          "commands": 1,
+          "hot_cells": [
+            2
+          ],
+          "hot_prb_reduction_pct": 11.61603207935564,
+          "throughput_loss_pct": 0.8212167496479079
+        },
+        "live_commands": [
+          "HO 8 5"
+        ],
+        "pair": 4,
+        "shed": [
+          {
+            "from": 2,
+            "share": 0.2,
+            "to": 5
+          }
+        ],
+        "sleep_cells": [],
+        "twin": {
+          "accept": true,
+          "commands": 2,
+          "hot_cells": [
+            2
+          ],
+          "hot_prb_reduction_pct": 35.90931634873719,
+          "throughput_loss_pct": 4.035312024353121
+        },
+        "twin_commands": [
+          "HO 1 5",
+          "HO 3 5"
+        ],
+        "workflow": "traffic_steering"
+      },
+      {
+        "live": {
+          "accept": true,
+          "commands": 1,
+          "hot_cells": [
+            2
+          ],
+          "hot_prb_reduction_pct": 11.61603207935564,
+          "throughput_loss_pct": 0.8212167496479079
+        },
+        "live_commands": [
+          "HO 8 5"
+        ],
+        "pair": 4,
+        "shed": [
+          {
+            "from": 2,
+            "share": 0.2,
+            "to": 5
+          }
+        ],
+        "sleep_cells": [],
+        "twin": {
+          "accept": true,
+          "commands": 2,
+          "hot_cells": [
+            2
+          ],
+          "hot_prb_reduction_pct": 35.602424881815864,
+          "throughput_loss_pct": 4.136377473363778
+        },
+        "twin_commands": [
+          "HO 1 5",
+          "HO 3 5"
+        ],
+        "workflow": "qoe_steering"
+      },
+      {
+        "live": {
+          "accept": false,
+          "commands": 0,
+          "energy_saving_pct": -0.0,
+          "remaining_cells": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "remaining_prb_increase_pct": 0.0
+        },
+        "live_commands": [],
+        "pair": 5,
+        "shed": [],
+        "sleep_cells": [],
+        "twin": {
+          "accept": false,
+          "commands": 0,
+          "energy_saving_pct": -0.0,
+          "remaining_cells": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "remaining_prb_increase_pct": 0.0
+        },
+        "twin_commands": [],
+        "workflow": "energy_saving"
+      },
+      {
+        "live": {
+          "accept": false,
+          "commands": 2,
+          "hot_cells": [
+            2
+          ],
+          "hot_prb_reduction_pct": 37.42661016775569,
+          "throughput_loss_pct": 20.051682704393023
+        },
+        "live_commands": [
+          "HO 5 4",
+          "HO 9 4"
+        ],
+        "pair": 5,
+        "shed": [
+          {
+            "from": 2,
+            "share": 0.2,
+            "to": 4
+          }
+        ],
+        "sleep_cells": [],
+        "twin": {
+          "accept": true,
+          "commands": 1,
+          "hot_cells": [
+            2
+          ],
+          "hot_prb_reduction_pct": 7.517105136519204,
+          "throughput_loss_pct": 2.946465624567725
+        },
+        "twin_commands": [
+          "HO 1 4"
+        ],
+        "workflow": "traffic_steering"
+      },
+      {
+        "live": {
+          "accept": false,
+          "commands": 3,
+          "hot_cells": [
+            2,
+            3
+          ],
+          "hot_prb_reduction_pct": 44.88461475009053,
+          "throughput_loss_pct": 30.041326053512716
+        },
+        "live_commands": [
+          "HO 10 5",
+          "HO 5 4",
+          "HO 9 4"
+        ],
+        "pair": 5,
+        "shed": [
+          {
+            "from": 3,
+            "share": 0.2,
+            "to": 4
+          },
+          {
+            "from": 2,
+            "share": 0.2,
+            "to": 4
+          }
+        ],
+        "sleep_cells": [],
+        "twin": {
+          "accept": false,
+          "commands": 2,
+          "hot_cells": [
+            2,
+            3
+          ],
+          "hot_prb_reduction_pct": 17.537983950168623,
+          "throughput_loss_pct": 13.294666324130988
+        },
+        "twin_commands": [
+          "HO 8 4",
+          "HO 1 4"
+        ],
+        "workflow": "qoe_steering"
+      },
+      {
+        "live": {
+          "accept": false,
+          "commands": 0,
+          "energy_saving_pct": -0.0,
+          "remaining_cells": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "remaining_prb_increase_pct": 0.0
+        },
+        "live_commands": [],
+        "pair": 6,
+        "shed": [],
+        "sleep_cells": [],
+        "twin": {
+          "accept": false,
+          "commands": 0,
+          "energy_saving_pct": -0.0,
+          "remaining_cells": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "remaining_prb_increase_pct": 0.0
+        },
+        "twin_commands": [],
+        "workflow": "energy_saving"
+      },
+      {
+        "live": {
+          "accept": false,
+          "commands": 0,
+          "hot_cells": [],
+          "hot_prb_reduction_pct": null,
+          "throughput_loss_pct": -0.0
+        },
+        "live_commands": [],
+        "pair": 6,
+        "shed": [],
+        "sleep_cells": [],
+        "twin": {
+          "accept": false,
+          "commands": 0,
+          "hot_cells": [],
+          "hot_prb_reduction_pct": null,
+          "throughput_loss_pct": -0.0
+        },
+        "twin_commands": [],
+        "workflow": "traffic_steering"
+      },
+      {
+        "live": {
+          "accept": true,
+          "commands": 1,
+          "hot_cells": [
+            2
+          ],
+          "hot_prb_reduction_pct": 19.708347737071087,
+          "throughput_loss_pct": 0.08259911894273193
+        },
+        "live_commands": [
+          "HO 1 3"
+        ],
+        "pair": 6,
+        "shed": [
+          {
+            "from": 2,
+            "share": 0.2,
+            "to": 3
+          }
+        ],
+        "sleep_cells": [],
+        "twin": {
+          "accept": true,
+          "commands": 2,
+          "hot_cells": [
+            2
+          ],
+          "hot_prb_reduction_pct": 13.192790024563376,
+          "throughput_loss_pct": 1.6019611888493768
+        },
+        "twin_commands": [
+          "HO 4 3",
+          "HO 10 3"
+        ],
+        "workflow": "qoe_steering"
+      },
+      {
+        "live": {
+          "accept": false,
+          "commands": 0,
+          "energy_saving_pct": -0.0,
+          "remaining_cells": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "remaining_prb_increase_pct": 0.0
+        },
+        "live_commands": [],
+        "pair": 7,
+        "shed": [],
+        "sleep_cells": [],
+        "twin": {
+          "accept": false,
+          "commands": 0,
+          "energy_saving_pct": -0.0,
+          "remaining_cells": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "remaining_prb_increase_pct": 0.0
+        },
+        "twin_commands": [],
+        "workflow": "energy_saving"
+      },
+      {
+        "live": {
+          "accept": true,
+          "commands": 1,
+          "hot_cells": [
+            2
+          ],
+          "hot_prb_reduction_pct": 20.814029970097643,
+          "throughput_loss_pct": 2.2033615261446564
+        },
+        "live_commands": [
+          "HO 1 4"
+        ],
+        "pair": 7,
+        "shed": [
+          {
+            "from": 2,
+            "share": 0.2,
+            "to": 4
+          }
+        ],
+        "sleep_cells": [],
+        "twin": {
+          "accept": true,
+          "commands": 2,
+          "hot_cells": [
+            2
+          ],
+          "hot_prb_reduction_pct": 27.447957231967887,
+          "throughput_loss_pct": -8.585040495474042
+        },
+        "twin_commands": [
+          "HO 3 4",
+          "HO 4 4"
+        ],
+        "workflow": "traffic_steering"
+      },
+      {
+        "live": {
+          "accept": true,
+          "commands": 1,
+          "hot_cells": [
+            2
+          ],
+          "hot_prb_reduction_pct": 24.265394300774226,
+          "throughput_loss_pct": 4.359571312095405
+        },
+        "live_commands": [
+          "HO 1 4"
+        ],
+        "pair": 7,
+        "shed": [
+          {
+            "from": 2,
+            "share": 0.2,
+            "to": 4
+          }
+        ],
+        "sleep_cells": [],
+        "twin": {
+          "accept": true,
+          "commands": 2,
+          "hot_cells": [
+            2
+          ],
+          "hot_prb_reduction_pct": 27.414016813709434,
+          "throughput_loss_pct": -14.14006669842782
+        },
+        "twin_commands": [
+          "HO 3 4",
+          "HO 4 4"
+        ],
+        "workflow": "qoe_steering"
+      },
+      {
+        "live": {
+          "accept": false,
+          "commands": 0,
+          "energy_saving_pct": -0.0,
+          "remaining_cells": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "remaining_prb_increase_pct": 0.0
+        },
+        "live_commands": [],
+        "pair": 8,
+        "shed": [],
+        "sleep_cells": [],
+        "twin": {
+          "accept": false,
+          "commands": 0,
+          "energy_saving_pct": -0.0,
+          "remaining_cells": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "remaining_prb_increase_pct": 0.0
+        },
+        "twin_commands": [],
+        "workflow": "energy_saving"
+      },
+      {
+        "live": {
+          "accept": true,
+          "commands": 1,
+          "hot_cells": [
+            3
+          ],
+          "hot_prb_reduction_pct": 100.0,
+          "throughput_loss_pct": -0.7559676758649014
+        },
+        "live_commands": [
+          "HO 6 2"
+        ],
+        "pair": 8,
+        "shed": [
+          {
+            "from": 3,
+            "share": 0.2,
+            "to": 4
+          }
+        ],
+        "sleep_cells": [],
+        "twin": {
+          "accept": true,
+          "commands": 1,
+          "hot_cells": [
+            3
+          ],
+          "hot_prb_reduction_pct": 52.67944927996423,
+          "throughput_loss_pct": -8.471109185859023
+        },
+        "twin_commands": [
+          "HO 7 4"
+        ],
+        "workflow": "traffic_steering"
+      },
+      {
+        "live": {
+          "accept": false,
+          "commands": 1,
+          "hot_cells": [
+            3
+          ],
+          "hot_prb_reduction_pct": 100.0,
+          "throughput_loss_pct": 7.331272731786629
+        },
+        "live_commands": [
+          "HO 6 2"
+        ],
+        "pair": 8,
+        "shed": [
+          {
+            "from": 3,
+            "share": 0.2,
+            "to": 4
+          }
+        ],
+        "sleep_cells": [],
+        "twin": {
+          "accept": true,
+          "commands": 1,
+          "hot_cells": [
+            3
+          ],
+          "hot_prb_reduction_pct": 50.79402750642736,
+          "throughput_loss_pct": -20.067143166558374
+        },
+        "twin_commands": [
+          "HO 7 4"
+        ],
+        "workflow": "qoe_steering"
+      },
+      {
+        "live": {
+          "accept": false,
+          "commands": 0,
+          "energy_saving_pct": -0.0,
+          "remaining_cells": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "remaining_prb_increase_pct": 0.0
+        },
+        "live_commands": [],
+        "pair": 9,
+        "shed": [],
+        "sleep_cells": [],
+        "twin": {
+          "accept": false,
+          "commands": 0,
+          "energy_saving_pct": -0.0,
+          "remaining_cells": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "remaining_prb_increase_pct": 0.0
+        },
+        "twin_commands": [],
+        "workflow": "energy_saving"
+      },
+      {
+        "live": {
+          "accept": false,
+          "commands": 1,
+          "hot_cells": [
+            2
+          ],
+          "hot_prb_reduction_pct": 18.040294634082375,
+          "throughput_loss_pct": 6.601064784351255
+        },
+        "live_commands": [
+          "HO 8 4"
+        ],
+        "pair": 9,
+        "shed": [
+          {
+            "from": 2,
+            "share": 0.2,
+            "to": 5
+          }
+        ],
+        "sleep_cells": [],
+        "twin": {
+          "accept": true,
+          "commands": 2,
+          "hot_cells": [
+            2
+          ],
+          "hot_prb_reduction_pct": 24.239534652757623,
+          "throughput_loss_pct": -9.966122675005701
+        },
+        "twin_commands": [
+          "HO 4 5",
+          "HO 9 5"
+        ],
+        "workflow": "traffic_steering"
+      },
+      {
+        "live": {
+          "accept": false,
+          "commands": 1,
+          "hot_cells": [
+            2
+          ],
+          "hot_prb_reduction_pct": 18.040294634082375,
+          "throughput_loss_pct": 6.601064784351255
+        },
+        "live_commands": [
+          "HO 8 4"
+        ],
+        "pair": 9,
+        "shed": [
+          {
+            "from": 2,
+            "share": 0.2,
+            "to": 5
+          }
+        ],
+        "sleep_cells": [],
+        "twin": {
+          "accept": true,
+          "commands": 2,
+          "hot_cells": [
+            2
+          ],
+          "hot_prb_reduction_pct": 24.239534652757623,
+          "throughput_loss_pct": -9.966122675005701
+        },
+        "twin_commands": [
+          "HO 4 5",
+          "HO 9 5"
+        ],
+        "workflow": "qoe_steering"
+      }
+    ],
+    "thresholds": {
+      "energy_saving": {
+        "accept_if": "energy_saving_pct >= 5 AND remaining_prb_increase_pct <= 30",
+        "energy_saving_min_pct": 5.0,
+        "remaining_prb_increase_max_pct": 30.0
+      },
+      "qoe_steering": {
+        "accept_if": "hot_prb_reduction_pct >= 5 AND throughput_loss_pct <= 5",
+        "hot_prb_reduction_min_pct": 5.0,
+        "throughput_loss_max_pct": 5.0
+      },
+      "traffic_steering": {
+        "accept_if": "hot_prb_reduction_pct >= 5 AND throughput_loss_pct <= 5",
+        "hot_prb_reduction_min_pct": 5.0,
+        "throughput_loss_max_pct": 5.0
+      }
+    }
+  },
+  "kpi_source": {
+    "dl_buffer_kbytes": "du-cell-<c>.txt: sum of DRB.BufferSize.Qos.UEID over UEs, same writes",
+    "dl_delay_ms": "DlPdcpStats.txt: PDCP DL delay, mean weighted by nRxPDUs over the same epochs",
+    "dl_throughput_mbps": "DlPdcpStats.txt (ns-3 PDCP stats at the LTE anchor, 0.25 s epochs): RxBytes received by all UEs in the epochs inside [t0, t1], i.e. UE-received DL goodput incl. UEs left without service",
+    "e2_kpm": "kpi_e2 / kpi_per_cell_e2: the same window from the E2 KPM stream (pre-2026-10-28 KPI source), reported in summary_e2kpm.*",
+    "energy_j_per_s": "energyfilecell<c>.csv (ns-3 radio energy model), unchanged",
+    "prb_used_dl": "full-period PRB per 100 ms period (k*100, (k+1)*100] ms rebuilt from the two consumers of ns-3's shared DU calculator: the E2 report at k*100+phi ms (window phi, kpm.csv) and the DU logger write at (k+1)*100 ms (window 100-phi, du-cell-<c>.txt), weighted phi/100 and (100-phi)/100; sum of RRU.PrbUsedDl.UEID over UEs, mean over the periods inside (t0, t1] (a cell with no UE = 0). Runs without sim-time KPM stamps (pre-fix): DU logger alone",
+    "version": "ns3-trace-v2"
+  },
+  "pairs": [
+    1,
+    2,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "rows": [
+    {
+      "actual_delta": 0.0,
+      "kpi": "prb_used_dl",
+      "live_commands": 0,
+      "live_noop": 176.09056848148148,
+      "pair": 1,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 106.78316444444444,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_throughput_mbps",
+      "live_commands": 0,
+      "live_noop": 34.4020419047619,
+      "pair": 1,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 29.290346666666668,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_delay_ms",
+      "live_commands": 0,
+      "live_noop": 4.641847410684814,
+      "pair": 1,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 1.3622865284840795,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_buffer_kbytes",
+      "live_commands": 0,
+      "live_noop": 49.97375925925926,
+      "pair": 1,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 4726.983407407407,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "energy_j_per_s",
+      "live_commands": 0,
+      "live_noop": 6892.455555555555,
+      "pair": 1,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 5257.324074074074,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 8.820800425925938,
+      "kpi": "prb_used_dl",
+      "live_commands": 1,
+      "live_noop": 176.09056848148148,
+      "pair": 1,
+      "predicted_delta": 65.22657751851854,
+      "twin_commands": 2,
+      "twin_noop": 106.78316444444444,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": -2.180662857142856,
+      "kpi": "dl_throughput_mbps",
+      "live_commands": 1,
+      "live_noop": 34.4020419047619,
+      "pair": 1,
+      "predicted_delta": 2.4799695238095225,
+      "twin_commands": 2,
+      "twin_noop": 29.290346666666668,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": 0.5883030399547602,
+      "kpi": "dl_delay_ms",
+      "live_commands": 1,
+      "live_noop": 4.641847410684814,
+      "pair": 1,
+      "predicted_delta": 4.880563873318475,
+      "twin_commands": 2,
+      "twin_noop": 1.3622865284840795,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": 620.0942592592593,
+      "kpi": "dl_buffer_kbytes",
+      "live_commands": 1,
+      "live_noop": 49.97375925925926,
+      "pair": 1,
+      "predicted_delta": -2361.2991481481477,
+      "twin_commands": 2,
+      "twin_noop": 4726.983407407407,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": 208.12962962963047,
+      "kpi": "energy_j_per_s",
+      "live_commands": 1,
+      "live_noop": 6892.455555555555,
+      "pair": 1,
+      "predicted_delta": 1538.8574074074068,
+      "twin_commands": 2,
+      "twin_noop": 5257.324074074074,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": -26.763475407407384,
+      "kpi": "prb_used_dl",
+      "live_commands": 2,
+      "live_noop": 176.09056848148148,
+      "pair": 1,
+      "predicted_delta": 66.38537050000001,
+      "twin_commands": 3,
+      "twin_noop": 106.78316444444444,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": -4.769279999999998,
+      "kpi": "dl_throughput_mbps",
+      "live_commands": 2,
+      "live_noop": 34.4020419047619,
+      "pair": 1,
+      "predicted_delta": -0.2933485714285702,
+      "twin_commands": 3,
+      "twin_noop": 29.290346666666668,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": -0.26843731649202507,
+      "kpi": "dl_delay_ms",
+      "live_commands": 2,
+      "live_noop": 4.641847410684814,
+      "pair": 1,
+      "predicted_delta": 45.28326525031839,
+      "twin_commands": 3,
+      "twin_noop": 1.3622865284840795,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": 1721.0700370370373,
+      "kpi": "dl_buffer_kbytes",
+      "live_commands": 2,
+      "live_noop": 49.97375925925926,
+      "pair": 1,
+      "predicted_delta": -1193.966592592592,
+      "twin_commands": 3,
+      "twin_noop": 4726.983407407407,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": -631.4203703703697,
+      "kpi": "energy_j_per_s",
+      "live_commands": 2,
+      "live_noop": 6892.455555555555,
+      "pair": 1,
+      "predicted_delta": 1547.425925925926,
+      "twin_commands": 3,
+      "twin_noop": 5257.324074074074,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "prb_used_dl",
+      "live_commands": 0,
+      "live_noop": 98.49648464814813,
+      "pair": 2,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 190.80278098148153,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_throughput_mbps",
+      "live_commands": 0,
+      "live_noop": 25.16664380952381,
+      "pair": 2,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 35.45487238095238,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_delay_ms",
+      "live_commands": 0,
+      "live_noop": 3.0019127189549764,
+      "pair": 2,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 3.5327978540262164,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_buffer_kbytes",
+      "live_commands": 0,
+      "live_noop": 6925.831111111112,
+      "pair": 2,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 0.8992407407407408,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "energy_j_per_s",
+      "live_commands": 0,
+      "live_noop": 5024.246296296296,
+      "pair": 2,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 7239.538888888887,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 34.28252983333333,
+      "kpi": "prb_used_dl",
+      "live_commands": 2,
+      "live_noop": 98.49648464814813,
+      "pair": 2,
+      "predicted_delta": 33.23727162962956,
+      "twin_commands": 2,
+      "twin_noop": 190.80278098148153,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": -0.5173028571428553,
+      "kpi": "dl_throughput_mbps",
+      "live_commands": 2,
+      "live_noop": 25.16664380952381,
+      "pair": 2,
+      "predicted_delta": -4.99358476190476,
+      "twin_commands": 2,
+      "twin_noop": 35.45487238095238,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": 15.967807293799012,
+      "kpi": "dl_delay_ms",
+      "live_commands": 2,
+      "live_noop": 3.0019127189549764,
+      "pair": 2,
+      "predicted_delta": 2.7199071970127404,
+      "twin_commands": 2,
+      "twin_noop": 3.5327978540262164,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": -1031.9980555555549,
+      "kpi": "dl_buffer_kbytes",
+      "live_commands": 2,
+      "live_noop": 6925.831111111112,
+      "pair": 2,
+      "predicted_delta": 1178.819925925926,
+      "twin_commands": 2,
+      "twin_noop": 0.8992407407407408,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": 808.8166666666666,
+      "kpi": "energy_j_per_s",
+      "live_commands": 2,
+      "live_noop": 5024.246296296296,
+      "pair": 2,
+      "predicted_delta": 784.2166666666672,
+      "twin_commands": 2,
+      "twin_noop": 7239.538888888887,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": -27.863892259259245,
+      "kpi": "prb_used_dl",
+      "live_commands": 1,
+      "live_noop": 98.49648464814813,
+      "pair": 2,
+      "predicted_delta": -15.125903166666717,
+      "twin_commands": 2,
+      "twin_noop": 190.80278098148153,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": -3.1283504761904766,
+      "kpi": "dl_throughput_mbps",
+      "live_commands": 1,
+      "live_noop": 25.16664380952381,
+      "pair": 2,
+      "predicted_delta": -3.644952380952379,
+      "twin_commands": 2,
+      "twin_noop": 35.45487238095238,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": -1.7435391677391872,
+      "kpi": "dl_delay_ms",
+      "live_commands": 1,
+      "live_noop": 3.0019127189549764,
+      "pair": 2,
+      "predicted_delta": -0.5243426347824793,
+      "twin_commands": 2,
+      "twin_noop": 3.5327978540262164,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": 1493.3824444444444,
+      "kpi": "dl_buffer_kbytes",
+      "live_commands": 1,
+      "live_noop": 6925.831111111112,
+      "pair": 2,
+      "predicted_delta": 1469.3729259259262,
+      "twin_commands": 2,
+      "twin_noop": 0.8992407407407408,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": -657.3703703703704,
+      "kpi": "energy_j_per_s",
+      "live_commands": 1,
+      "live_noop": 5024.246296296296,
+      "pair": 2,
+      "predicted_delta": -375.6240740740732,
+      "twin_commands": 2,
+      "twin_noop": 7239.538888888887,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "prb_used_dl",
+      "live_commands": 0,
+      "live_noop": 189.94230494444446,
+      "pair": 4,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 127.63316407407407,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_throughput_mbps",
+      "live_commands": 0,
+      "live_noop": 35.337112380952384,
+      "pair": 4,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 28.782857142857143,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_delay_ms",
+      "live_commands": 0,
+      "live_noop": 4.692087952115525,
+      "pair": 4,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 2.952091677479452,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_buffer_kbytes",
+      "live_commands": 0,
+      "live_noop": 0.39494444444444443,
+      "pair": 4,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 4727.716592592592,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "energy_j_per_s",
+      "live_commands": 0,
+      "live_noop": 7219.246296296295,
+      "pair": 4,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 5730.444444444444,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 14.046630314814792,
+      "kpi": "prb_used_dl",
+      "live_commands": 1,
+      "live_noop": 189.94230494444446,
+      "pair": 4,
+      "predicted_delta": 34.10418331481483,
+      "twin_commands": 2,
+      "twin_noop": 127.63316407407407,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": -0.2901942857142856,
+      "kpi": "dl_throughput_mbps",
+      "live_commands": 1,
+      "live_noop": 35.337112380952384,
+      "pair": 4,
+      "predicted_delta": -1.1614780952380954,
+      "twin_commands": 2,
+      "twin_noop": 28.782857142857143,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": 0.567675972262963,
+      "kpi": "dl_delay_ms",
+      "live_commands": 1,
+      "live_noop": 4.692087952115525,
+      "pair": 4,
+      "predicted_delta": 2.3575102222299784,
+      "twin_commands": 2,
+      "twin_noop": 2.952091677479452,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": 0.2792592592592593,
+      "kpi": "dl_buffer_kbytes",
+      "live_commands": 1,
+      "live_noop": 0.39494444444444443,
+      "pair": 4,
+      "predicted_delta": -0.1012592592578585,
+      "twin_commands": 2,
+      "twin_noop": 4727.716592592592,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": 331.3907407407414,
+      "kpi": "energy_j_per_s",
+      "live_commands": 1,
+      "live_noop": 7219.246296296295,
+      "pair": 4,
+      "predicted_delta": 804.6074074074068,
+      "twin_commands": 2,
+      "twin_noop": 5730.444444444444,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": 14.046630314814792,
+      "kpi": "prb_used_dl",
+      "live_commands": 1,
+      "live_noop": 189.94230494444446,
+      "pair": 4,
+      "predicted_delta": 28.236673685185195,
+      "twin_commands": 2,
+      "twin_noop": 127.63316407407407,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": -0.2901942857142856,
+      "kpi": "dl_throughput_mbps",
+      "live_commands": 1,
+      "live_noop": 35.337112380952384,
+      "pair": 4,
+      "predicted_delta": -1.19056761904762,
+      "twin_commands": 2,
+      "twin_noop": 28.782857142857143,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": 0.567675972262963,
+      "kpi": "dl_delay_ms",
+      "live_commands": 1,
+      "live_noop": 4.692087952115525,
+      "pair": 4,
+      "predicted_delta": 2.594383621296076,
+      "twin_commands": 2,
+      "twin_noop": 2.952091677479452,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": 0.2792592592592593,
+      "kpi": "dl_buffer_kbytes",
+      "live_commands": 1,
+      "live_noop": 0.39494444444444443,
+      "pair": 4,
+      "predicted_delta": 0.36750000000120053,
+      "twin_commands": 2,
+      "twin_noop": 4727.716592592592,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": 331.3907407407414,
+      "kpi": "energy_j_per_s",
+      "live_commands": 1,
+      "live_noop": 7219.246296296295,
+      "pair": 4,
+      "predicted_delta": 666.1925925925934,
+      "twin_commands": 2,
+      "twin_noop": 5730.444444444444,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "prb_used_dl",
+      "live_commands": 0,
+      "live_noop": 216.61706662962968,
+      "pair": 5,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 183.69511870370368,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_throughput_mbps",
+      "live_commands": 0,
+      "live_noop": 34.85590857142857,
+      "pair": 5,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 35.47029333333334,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_delay_ms",
+      "live_commands": 0,
+      "live_noop": 4.120053969412688,
+      "pair": 5,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 4.091993962116872,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_buffer_kbytes",
+      "live_commands": 0,
+      "live_noop": 1.6222592592592593,
+      "pair": 5,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 0.2739074074074075,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "energy_j_per_s",
+      "live_commands": 0,
+      "live_noop": 7848.570370370369,
+      "pair": 5,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 7071.853703703704,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 15.578204629629624,
+      "kpi": "prb_used_dl",
+      "live_commands": 2,
+      "live_noop": 216.61706662962968,
+      "pair": 5,
+      "predicted_delta": 27.57247044444449,
+      "twin_commands": 1,
+      "twin_noop": 183.69511870370368,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": -6.989196190476189,
+      "kpi": "dl_throughput_mbps",
+      "live_commands": 2,
+      "live_noop": 34.85590857142857,
+      "pair": 5,
+      "predicted_delta": -1.0451200000000043,
+      "twin_commands": 1,
+      "twin_noop": 35.47029333333334,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": 72.11185439366908,
+      "kpi": "dl_delay_ms",
+      "live_commands": 2,
+      "live_noop": 4.120053969412688,
+      "pair": 5,
+      "predicted_delta": 43.87113794668345,
+      "twin_commands": 1,
+      "twin_noop": 4.091993962116872,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": 2391.735462962963,
+      "kpi": "dl_buffer_kbytes",
+      "live_commands": 2,
+      "live_noop": 1.6222592592592593,
+      "pair": 5,
+      "predicted_delta": 242.63146296296293,
+      "twin_commands": 1,
+      "twin_noop": 0.2739074074074075,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": 367.61296296296314,
+      "kpi": "energy_j_per_s",
+      "live_commands": 2,
+      "live_noop": 7848.570370370369,
+      "pair": 5,
+      "predicted_delta": 650.5259259259246,
+      "twin_commands": 1,
+      "twin_noop": 7071.853703703704,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": -64.49940153703704,
+      "kpi": "prb_used_dl",
+      "live_commands": 3,
+      "live_noop": 216.61706662962968,
+      "pair": 5,
+      "predicted_delta": 34.7435650740741,
+      "twin_commands": 2,
+      "twin_noop": 183.69511870370368,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": -10.471177142857144,
+      "kpi": "dl_throughput_mbps",
+      "live_commands": 3,
+      "live_noop": 34.85590857142857,
+      "pair": 5,
+      "predicted_delta": -4.715657142857147,
+      "twin_commands": 2,
+      "twin_noop": 35.47029333333334,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": -0.26351773127022415,
+      "kpi": "dl_delay_ms",
+      "live_commands": 3,
+      "live_noop": 4.120053969412688,
+      "pair": 5,
+      "predicted_delta": 1.555719630320822,
+      "twin_commands": 2,
+      "twin_noop": 4.091993962116872,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": 4340.347259259259,
+      "kpi": "dl_buffer_kbytes",
+      "live_commands": 3,
+      "live_noop": 1.6222592592592593,
+      "pair": 5,
+      "predicted_delta": 1486.6318333333334,
+      "twin_commands": 2,
+      "twin_noop": 0.2739074074074075,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": -1540.4629629629626,
+      "kpi": "energy_j_per_s",
+      "live_commands": 3,
+      "live_noop": 7848.570370370369,
+      "pair": 5,
+      "predicted_delta": 819.7370370370354,
+      "twin_commands": 2,
+      "twin_noop": 7071.853703703704,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "prb_used_dl",
+      "live_commands": 0,
+      "live_noop": 220.2704131296296,
+      "pair": 6,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 105.76226764814814,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_throughput_mbps",
+      "live_commands": 0,
+      "live_noop": 34.36909714285714,
+      "pair": 6,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 28.87888761904762,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_delay_ms",
+      "live_commands": 0,
+      "live_noop": 5.527616842725161,
+      "pair": 6,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 2.732039662884258,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_buffer_kbytes",
+      "live_commands": 0,
+      "live_noop": 2.4928888888888885,
+      "pair": 6,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 4726.985296296297,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "energy_j_per_s",
+      "live_commands": 0,
+      "live_noop": 7934.775925925925,
+      "pair": 6,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 5195.65925925926,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "prb_used_dl",
+      "live_commands": 0,
+      "live_noop": 220.2704131296296,
+      "pair": 6,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 105.76226764814814,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_throughput_mbps",
+      "live_commands": 0,
+      "live_noop": 34.36909714285714,
+      "pair": 6,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 28.87888761904762,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_delay_ms",
+      "live_commands": 0,
+      "live_noop": 5.527616842725161,
+      "pair": 6,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 2.732039662884258,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_buffer_kbytes",
+      "live_commands": 0,
+      "live_noop": 2.4928888888888885,
+      "pair": 6,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 4726.985296296297,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "energy_j_per_s",
+      "live_commands": 0,
+      "live_noop": 7934.775925925925,
+      "pair": 6,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 5195.65925925926,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": 5.702033888888963,
+      "kpi": "prb_used_dl",
+      "live_commands": 1,
+      "live_noop": 220.2704131296296,
+      "pair": 6,
+      "predicted_delta": 49.56287712962964,
+      "twin_commands": 2,
+      "twin_noop": 105.76226764814814,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": -0.02838857142857165,
+      "kpi": "dl_throughput_mbps",
+      "live_commands": 1,
+      "live_noop": 34.36909714285714,
+      "pair": 6,
+      "predicted_delta": -0.4626285714285707,
+      "twin_commands": 2,
+      "twin_noop": 28.87888761904762,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": -0.07332676612004008,
+      "kpi": "dl_delay_ms",
+      "live_commands": 1,
+      "live_noop": 5.527616842725161,
+      "pair": 6,
+      "predicted_delta": 160.16011236685222,
+      "twin_commands": 2,
+      "twin_noop": 2.732039662884258,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": -1.429907407407407,
+      "kpi": "dl_buffer_kbytes",
+      "live_commands": 1,
+      "live_noop": 2.4928888888888885,
+      "pair": 6,
+      "predicted_delta": -575.508074074075,
+      "twin_commands": 2,
+      "twin_noop": 4726.985296296297,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": 134.54629629629653,
+      "kpi": "energy_j_per_s",
+      "live_commands": 1,
+      "live_noop": 7934.775925925925,
+      "pair": 6,
+      "predicted_delta": 1169.3296296296294,
+      "twin_commands": 2,
+      "twin_noop": 5195.65925925926,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "prb_used_dl",
+      "live_commands": 0,
+      "live_noop": 172.4436568148148,
+      "pair": 7,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 48.79892807407407,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_throughput_mbps",
+      "live_commands": 0,
+      "live_noop": 35.67812571428571,
+      "pair": 7,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 14.712990476190475,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_delay_ms",
+      "live_commands": 0,
+      "live_noop": 3.471309669436832,
+      "pair": 7,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 1.0802003111243443,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_buffer_kbytes",
+      "live_commands": 0,
+      "live_noop": 0.43016666666666664,
+      "pair": 7,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 14180.88,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "energy_j_per_s",
+      "live_commands": 0,
+      "live_noop": 6806.407407407407,
+      "pair": 7,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 3851.774074074074,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 19.427364851851877,
+      "kpi": "prb_used_dl",
+      "live_commands": 1,
+      "live_noop": 172.4436568148148,
+      "pair": 7,
+      "predicted_delta": 72.18714983333331,
+      "twin_commands": 2,
+      "twin_noop": 48.79892807407407,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": -0.7861180952380948,
+      "kpi": "dl_throughput_mbps",
+      "live_commands": 1,
+      "live_noop": 35.67812571428571,
+      "pair": 7,
+      "predicted_delta": 1.2631161904761914,
+      "twin_commands": 2,
+      "twin_noop": 14.712990476190475,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": 18.38600342086412,
+      "kpi": "dl_delay_ms",
+      "live_commands": 1,
+      "live_noop": 3.471309669436832,
+      "pair": 7,
+      "predicted_delta": 137.24918217891604,
+      "twin_commands": 2,
+      "twin_noop": 1.0802003111243443,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": 103.5994074074074,
+      "kpi": "dl_buffer_kbytes",
+      "live_commands": 1,
+      "live_noop": 0.43016666666666664,
+      "pair": 7,
+      "predicted_delta": -1563.3504259259262,
+      "twin_commands": 2,
+      "twin_noop": 14180.88,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": 458.37037037037135,
+      "kpi": "energy_j_per_s",
+      "live_commands": 1,
+      "live_noop": 6806.407407407407,
+      "pair": 7,
+      "predicted_delta": 1703.1222222222218,
+      "twin_commands": 2,
+      "twin_noop": 3851.774074074074,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": 2.417331777777747,
+      "kpi": "prb_used_dl",
+      "live_commands": 1,
+      "live_noop": 172.4436568148148,
+      "pair": 7,
+      "predicted_delta": 74.06116757407406,
+      "twin_commands": 2,
+      "twin_noop": 48.79892807407407,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": -1.555413333333334,
+      "kpi": "dl_throughput_mbps",
+      "live_commands": 1,
+      "live_noop": 35.67812571428571,
+      "pair": 7,
+      "predicted_delta": 2.080426666666666,
+      "twin_commands": 2,
+      "twin_noop": 14.712990476190475,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": 11.80691835208103,
+      "kpi": "dl_delay_ms",
+      "live_commands": 1,
+      "live_noop": 3.471309669436832,
+      "pair": 7,
+      "predicted_delta": 105.10009851991325,
+      "twin_commands": 2,
+      "twin_noop": 1.0802003111243443,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": 273.6354259259259,
+      "kpi": "dl_buffer_kbytes",
+      "live_commands": 1,
+      "live_noop": 0.43016666666666664,
+      "pair": 7,
+      "predicted_delta": -2003.2247407407394,
+      "twin_commands": 2,
+      "twin_noop": 14180.88,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": 57.02777777777828,
+      "kpi": "energy_j_per_s",
+      "live_commands": 1,
+      "live_noop": 6806.407407407407,
+      "pair": 7,
+      "predicted_delta": 1747.327777777778,
+      "twin_commands": 2,
+      "twin_noop": 3851.774074074074,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "prb_used_dl",
+      "live_commands": 0,
+      "live_noop": 151.90576364814817,
+      "pair": 8,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 183.2092624074074,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_throughput_mbps",
+      "live_commands": 0,
+      "live_noop": 28.234011428571428,
+      "pair": 8,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 29.126674285714287,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_delay_ms",
+      "live_commands": 0,
+      "live_noop": 4.024676675219404,
+      "pair": 8,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 64.17392889707122,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_buffer_kbytes",
+      "live_commands": 0,
+      "live_noop": 4727.644537037036,
+      "pair": 8,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 2172.1809629629633,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "energy_j_per_s",
+      "live_commands": 0,
+      "live_noop": 6303.111111111111,
+      "pair": 8,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 7041.666666666666,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": -20.370118925925937,
+      "kpi": "prb_used_dl",
+      "live_commands": 1,
+      "live_noop": 151.90576364814817,
+      "pair": 8,
+      "predicted_delta": -7.786574000000002,
+      "twin_commands": 1,
+      "twin_noop": 183.2092624074074,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": 0.21344000000000207,
+      "kpi": "dl_throughput_mbps",
+      "live_commands": 1,
+      "live_noop": 28.234011428571428,
+      "pair": 8,
+      "predicted_delta": 2.4673523809523807,
+      "twin_commands": 1,
+      "twin_noop": 29.126674285714287,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": -0.18558274608476832,
+      "kpi": "dl_delay_ms",
+      "live_commands": 1,
+      "live_noop": 4.024676675219404,
+      "pair": 8,
+      "predicted_delta": -59.424195013149586,
+      "twin_commands": 1,
+      "twin_noop": 64.17392889707122,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": -0.3898518518499259,
+      "kpi": "dl_buffer_kbytes",
+      "live_commands": 1,
+      "live_noop": 4727.644537037036,
+      "pair": 8,
+      "predicted_delta": -772.73762962963,
+      "twin_commands": 1,
+      "twin_noop": 2172.1809629629633,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": -499.39999999999964,
+      "kpi": "energy_j_per_s",
+      "live_commands": 1,
+      "live_noop": 6303.111111111111,
+      "pair": 8,
+      "predicted_delta": -183.7648148148146,
+      "twin_commands": 1,
+      "twin_noop": 7041.666666666666,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": -30.88796938888892,
+      "kpi": "prb_used_dl",
+      "live_commands": 1,
+      "live_noop": 151.90576364814817,
+      "pair": 8,
+      "predicted_delta": 9.4427148888889,
+      "twin_commands": 1,
+      "twin_noop": 183.2092624074074,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": -2.0699123809523776,
+      "kpi": "dl_throughput_mbps",
+      "live_commands": 1,
+      "live_noop": 28.234011428571428,
+      "pair": 8,
+      "predicted_delta": 5.8448914285714295,
+      "twin_commands": 1,
+      "twin_noop": 29.126674285714287,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": -0.5394732734405099,
+      "kpi": "dl_delay_ms",
+      "live_commands": 1,
+      "live_noop": 4.024676675219404,
+      "pair": 8,
+      "predicted_delta": -59.23309340755898,
+      "twin_commands": 1,
+      "twin_noop": 64.17392889707122,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": 589.635685185187,
+      "kpi": "dl_buffer_kbytes",
+      "live_commands": 1,
+      "live_noop": 4727.644537037036,
+      "pair": 8,
+      "predicted_delta": -2171.4102592592594,
+      "twin_commands": 1,
+      "twin_noop": 2172.1809629629633,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": -747.5351851851856,
+      "kpi": "energy_j_per_s",
+      "live_commands": 1,
+      "live_noop": 6303.111111111111,
+      "pair": 8,
+      "predicted_delta": 222.70185185185164,
+      "twin_commands": 1,
+      "twin_noop": 7041.666666666666,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "prb_used_dl",
+      "live_commands": 0,
+      "live_noop": 179.3904397222222,
+      "pair": 9,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 93.24491259259258,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_throughput_mbps",
+      "live_commands": 0,
+      "live_noop": 35.153462857142856,
+      "pair": 9,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 21.51853714285714,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_delay_ms",
+      "live_commands": 0,
+      "live_noop": 5.01177217742418,
+      "pair": 9,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 2.1369969748526008,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "dl_buffer_kbytes",
+      "live_commands": 0,
+      "live_noop": 0.22281481481481483,
+      "pair": 9,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 9453.928518518518,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 0.0,
+      "kpi": "energy_j_per_s",
+      "live_commands": 0,
+      "live_noop": 6951.501851851852,
+      "pair": 9,
+      "predicted_delta": 0.0,
+      "twin_commands": 0,
+      "twin_noop": 4919.159259259259,
+      "workflow": "energy_saving"
+    },
+    {
+      "actual_delta": 8.248528481481458,
+      "kpi": "prb_used_dl",
+      "live_commands": 1,
+      "live_noop": 179.3904397222222,
+      "pair": 9,
+      "predicted_delta": 55.694689629629636,
+      "twin_commands": 2,
+      "twin_noop": 93.24491259259258,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": -2.3205028571428556,
+      "kpi": "dl_throughput_mbps",
+      "live_commands": 1,
+      "live_noop": 35.153462857142856,
+      "pair": 9,
+      "predicted_delta": 2.1445638095238095,
+      "twin_commands": 2,
+      "twin_noop": 21.51853714285714,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": 0.5552702784633539,
+      "kpi": "dl_delay_ms",
+      "live_commands": 1,
+      "live_noop": 5.01177217742418,
+      "pair": 9,
+      "predicted_delta": 2.444701228710947,
+      "twin_commands": 2,
+      "twin_noop": 2.1369969748526008,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": 391.28053703703705,
+      "kpi": "dl_buffer_kbytes",
+      "live_commands": 1,
+      "live_noop": 0.22281481481481483,
+      "pair": 9,
+      "predicted_delta": -2362.3873888888884,
+      "twin_commands": 2,
+      "twin_noop": 9453.928518518518,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": 194.60925925925858,
+      "kpi": "energy_j_per_s",
+      "live_commands": 1,
+      "live_noop": 6951.501851851852,
+      "pair": 9,
+      "predicted_delta": 1314.000000000001,
+      "twin_commands": 2,
+      "twin_noop": 4919.159259259259,
+      "workflow": "traffic_steering"
+    },
+    {
+      "actual_delta": 8.248528481481458,
+      "kpi": "prb_used_dl",
+      "live_commands": 1,
+      "live_noop": 179.3904397222222,
+      "pair": 9,
+      "predicted_delta": 55.694689629629636,
+      "twin_commands": 2,
+      "twin_noop": 93.24491259259258,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": -2.3205028571428556,
+      "kpi": "dl_throughput_mbps",
+      "live_commands": 1,
+      "live_noop": 35.153462857142856,
+      "pair": 9,
+      "predicted_delta": 2.1445638095238095,
+      "twin_commands": 2,
+      "twin_noop": 21.51853714285714,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": 0.5552702784633539,
+      "kpi": "dl_delay_ms",
+      "live_commands": 1,
+      "live_noop": 5.01177217742418,
+      "pair": 9,
+      "predicted_delta": 2.444701228710947,
+      "twin_commands": 2,
+      "twin_noop": 2.1369969748526008,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": 391.28053703703705,
+      "kpi": "dl_buffer_kbytes",
+      "live_commands": 1,
+      "live_noop": 0.22281481481481483,
+      "pair": 9,
+      "predicted_delta": -2362.3873888888884,
+      "twin_commands": 2,
+      "twin_noop": 9453.928518518518,
+      "workflow": "qoe_steering"
+    },
+    {
+      "actual_delta": 194.60925925925858,
+      "kpi": "energy_j_per_s",
+      "live_commands": 1,
+      "live_noop": 6951.501851851852,
+      "pair": 9,
+      "predicted_delta": 1314.000000000001,
+      "twin_commands": 2,
+      "twin_noop": 4919.159259259259,
+      "workflow": "qoe_steering"
+    }
+  ],
+  "source_agreement": {
+    "delta_sign_agreement": {
+      "actual_delta/dl_throughput_mbps": 0.9166666666666666,
+      "actual_delta/energy_j_per_s": 1.0,
+      "actual_delta/prb_used_dl": 1.0,
+      "predicted_delta/dl_throughput_mbps": 0.9166666666666666,
+      "predicted_delta/energy_j_per_s": 1.0,
+      "predicted_delta/prb_used_dl": 1.0
+    },
+    "e2_minus_trace_pct": {
+      "dl_buffer_kbytes": {
+        "max": 0.0,
+        "mean": 0.0,
+        "min": 0.0,
+        "n": 65
+      },
+      "dl_throughput_mbps": {
+        "max": -35.25789325144477,
+        "mean": -42.99214779671313,
+        "min": -50.19671097278927,
+        "n": 65
+      },
+      "prb_used_dl": {
+        "max": -1.7429825720233136,
+        "mean": -2.8600072798029292,
+        "min": -4.532573366806713,
+        "n": 65
+      },
+      "prb_used_dl_per_cell": {
+        "max": -0.7648432201222349,
+        "mean": -2.7944099305481203,
+        "min": -7.904781751505693,
+        "n": 210
+      }
+    },
+    "gate_cases": 24,
+    "gate_verdict_agreement": {
+      "live": 0.8333333333333334,
+      "twin": 0.9166666666666666
+    }
+  }
+}

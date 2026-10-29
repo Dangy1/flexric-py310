@@ -12,6 +12,9 @@ built and verified end to end.
   (subscription delete/re-arm, sim-time timestamps, noValue records, immediate reporting, RC cell ids
   > 9 and switch-on) — **see §11**. They change the indication clock: captures made before 2026-10-28
   (incl. the two in `captures/`) have wall-clock `collect_start_us` and a ≥1 s gated start.
+- 2026-10-28 (later): gNB E2 reports read the 100 ms trace window instead of resetting it, aligned to
+  the trace tick, and trace files get a valid run-id timestamp (§11 fixes 8–9). This changes gNB E2
+  KPI values and the first-report stamp; re-run anything captured with the earlier 2026-10-28 build.
 
 Nothing under `~/flexric`, `~/flexric/build`, `/usr/local/lib/flexric`, `~/openairinterface5g`, `~/oai`,
 `~/oai-cn5g` was modified. This RIC listens on **36423 (E2) / 36424 (E42)**, so it runs alongside the
@@ -56,7 +59,9 @@ All are in `patches/`; apply them to fresh clones with `git apply`.
    `E2SIM_PREFIX` (default `/usr/local`) plus `link_directories` at top level (the nr module links
    `-le2sim` too). This avoids the README's `sudo dpkg -i e2sim-dev*.deb`.
 6. 2026-10-28 review fixes (§11): `flexric-taap-0005`, `flexric-taap-0006`, `e2sim-0001`,
-   `mmwave-LENA-oran-0002`, `mmwave-LENA-oran-0003` (`uePositionFile`), `oran-interface-0002`, `nr-0001`, and `appweaver-actuator-0001` (for
+   `e2sim-0002` (indication buffer size),
+   `mmwave-LENA-oran-0002`, `mmwave-LENA-oran-0003` (`uePositionFile`), `mmwave-LENA-oran-0004`
+   (E2 report window, trace start time), `oran-interface-0002`, `nr-0001`, and `appweaver-actuator-0001` (for
    `~/flexric/examples/xApp/python3/evaluation/twin/xapp_appweaver_actuator.c`, not applied there).
 
 ## 3. Rebuild from scratch (exact commands)
@@ -79,10 +84,10 @@ git clone https://gitlab.eurecom.fr/mosaic5g/flexric.git ~/flexric-taap
 cd ~/flexric-taap && git checkout f56d4487507c7ace392f1ec3f598e7eeda670acc
 git apply ~/ns-oran-flexric/patches/flexric-taap-000{1,2,3,4,5}-*.patch
 patch -p1 < ~/ns-oran-flexric/patches/flexric-taap-0006-kpm-capture-sigint-after-init.patch   # file added by 0003
-cd ~/ns-oran-flexric/mmwave-LENA-oran && git apply ../patches/mmwave-LENA-oran-000{1,2,3}-*.patch
+cd ~/ns-oran-flexric/mmwave-LENA-oran && git apply ../patches/mmwave-LENA-oran-000{1,2,3,4}-*.patch
 (cd src/nr && git apply ../../../patches/nr-0001-sim-time-indication-header.patch)
 cd contrib/oran-interface && git apply ../../../patches/oran-interface-000{1,2}-*.patch
-cd ~/ns-oran-flexric/e2sim-kpmv3 && git apply ../patches/e2sim-0001-subscription-delete-keeps-connection.patch
+cd ~/ns-oran-flexric/e2sim-kpmv3 && git apply ../patches/e2sim-000{1,2}-*.patch
 
 # --- FlexRIC (separate build + private install prefix; ~2 min)
 cd ~/flexric-taap && mkdir -p build install && cd build
@@ -99,6 +104,11 @@ make -j12 && make install        # no sudo: installs into ~/flexric-taap/install
 cd ~/ns-oran-flexric/e2sim-kpmv3/e2sim && mkdir -p build && cd build
 cmake .. -DDEV_PKG=1 -DLOG_LEVEL=2 -DCMAKE_INSTALL_PREFIX=$HOME/ns-oran-flexric/e2sim-install
 make -j12 && make install
+# After rebuilding e2sim on an existing ns-3 build: CMake does not track the external libe2sim.a,
+# so force the libraries that embed it to relink, e.g.
+#   cd ~/ns-oran-flexric/mmwave-LENA-oran && touch contrib/oran-interface/model/oran-interface.cc \
+#     src/mmwave/model/mmwave-enb-net-device.cc src/lte/model/lte-enb-net-device.cc \
+#     src/nr/model/nr-gnb-net-device.cc && ./ns3 build -j14
 
 # --- ns-3.42 + mmWave + 5G-LENA + oran-interface (~4.5 min per profile with -j14)
 cd ~/ns-oran-flexric/mmwave-LENA-oran
@@ -192,9 +202,22 @@ function 2 (KPM), 3 (RC), and the 5G-LENA nodes also 4 (CCC).
   `meas_data[i]` carries all records of `meas_info[i]`. Header `collectStartTime` (`collect_start_us`
   in the CSV) is **simulated time in µs** since §11 fix 4 (before: host wall-clock µs); the CU-UP,
   CU-CP and DU reports of one period carry the same stamp.
+- gNB report window (§11 fix 8): a gNB report is sent 1 ns before each 100 ms trace tick (stamped with
+  the tick, so gNB stamps are multiples of 100 000 µs) and reads, without resetting, the counters the
+  trace loggers reset at every tick. Each gNB report therefore covers exactly the 100 ms window of the
+  `du-cell-<id>.txt`/`cu-up-cell-<id>.txt` row written at the same tick, independent of when the xApp
+  subscribed: same seed → same E2 values. The first gNB report comes at the first tick after the
+  subscription. `RRU.PrbUsedDl.UEID` is the trace value truncated to an integer;
+  `DRB.UEThpDl.UEID` is the current window's RLC-based rate (the du-cell trace row prints the
+  previous tick's value). With `indicationPeriodicity` ≠ 0.1 s a report still covers only the last
+  100 ms. The LTE eNB (own counters, no trace loggers) keeps reporting at subscription phase.
 - A UE without neighbour cell (always with 2 gNBs) gets one `noValue` record in
   `L3neighSINRListOf_UEID_*` (§11 fix 5); the capture CSV shows an empty `value`.
 - There is no cell-aggregate PRB metric; sum `RRU.PrbUsedDl.UEID` over UEs.
+- A gNB with **no UEs** still sends its CU-UP, CU-CP and DU indications every period, each with one
+  placeholder record `DRB.RlcSduDelayDl_Fake` = 0 whose UE id is `rand() % 112358132134` (junk,
+  different every row; `FillKpmIndicationMessageFormat3` overload in `kpm-indication.cc`). So a cell
+  whose only rows at a stamp are this placeholder has 0 UEs and PRB 0; it is not silent.
 
 Measurement names observed in the 60 s capture (rows per name, 608 indications/gNB):
 
@@ -311,13 +334,30 @@ keep consuming 140–300 J per 0.1 s.
     (`git submodule update --recursive` reports failure); harmless.
 12. The Python FlexRIC SDK of this branch has no KPM/RC/CCC → AppWeaver's Python portal cannot use it
     directly; wrap the C xApps (CSV/stdout) or add SWIG bindings later.
+13. **CELL_OFF strands UEs (model limit).** Style 300 OFF only sets the gNB's TX power to 0
+    (`SetBSTX`); nothing detaches its UEs or makes them re-attach elsewhere, so UEs still served by
+    the cell get no downlink for the rest of the run (twin re-run: 1–3 UEs in 14/31 runs with an OFF,
+    also UEs RC had just handed over there). Hand the UEs over with RC before switching a cell off,
+    or treat stranded UEs as an outcome of the policy. (Not traced further into the LTE RRC's
+    mmWave-outage / switch-to-LTE path.)
+14. **UEs outside coverage (scenario setting).** scenario-zero places UEs uniformly in a disc of
+    `IntersideDistanceUEs` (default 500 m) around the centre, which reaches beyond usable mmWave
+    coverage for some seeds: some UEs get no downlink at all even without any RC (twin re-run: 47 UEs
+    in 21/53 no-op runs). Use a smaller `--IntersideDistanceUEs`, or `-P` positions (§4), and drop
+    or report never-served UEs explicitly.
+15. ~~`malloc(): invalid size` aborts~~ (scenario-zero, 10 UEs, `RngRun=3` at ~0.3 s; `RngRun=7`
+    after RC `HO 6 2`) fixed (§11 fix 10): e2sim's indication buffer overflowed for KPM messages
+    > 8 KiB (a DU report of ~10 UEs in one cell). The RngRun=7 case was not re-run (T6v3 no longer
+    sends `HO 6 2`); it is most likely the same overflow (a handover moves UEs into one cell).
 
 ## 11. Fix log 2026-10-28 (review `~/flexric/examples/xApp/python3/docs/FABLE_SIM_REVIEW.md`)
 
 All rebuilt (FlexRIC, e2sim, ns-3 `optimized`+logs) and regression-tested; the `default`-profile
 binaries were **not** rebuilt (re-run `./ns3 configure --build-profile=default …` + build if needed).
-Regression scripts: `tools/regress_kpm_subscriptions.sh` (2 gNB/4 UE, ~6 wall-min) and
-`tools/regress_rc_controls.sh` (10 gNB/3 UE). Results: §11.1.
+Regression scripts: `tools/regress_kpm_subscriptions.sh` (2 gNB/4 UE, ~6 wall-min),
+`tools/regress_rc_controls.sh` (10 gNB/3 UE), `tools/regress_ue_positions.sh`,
+`tools/regress_kpm_window.sh` (2 × 20 s sim, ~4 wall-min), `tools/regress_large_indication.sh`
+(4 gNB/10 UE, 3 s sim). Results: §11.1.
 
 | # | Problem (review §) | What changed | Where (patch) | Regression test |
 |---|---|---|---|---|
@@ -328,17 +368,22 @@ Regression scripts: `tools/regress_kpm_subscriptions.sh` (2 gNB/4 UE, ~6 wall-mi
 | 4 | P4: `collectStartTime` was host wall-clock | encoder uses the node's `m_timestamp` = `Simulator::Now()` in µs (gNB, LTE eNB, NR gNB) | `kpm-indication.cc` (`oran-interface-0002`); header builders (`mmwave-LENA-oran-0002`, `nr-0001`) | subs test: per-node stamps step exactly 100 000 µs, first 0.525 s, last 59.925 s for simTime 60 |
 | 5 | P2: KPM records with 0 items | `L3neighSINRListOf…` with only the serving-cell marker gets one `noValue` record; a measurement item with no data gets a `noValue` item (keeps data[i]↔info[i]) | `kpm-indication.cc` (`oran-interface-0002`) | subs test (2 gNB): 1778/1778 neighbour rows are noValue, RIC never sees an empty list |
 | 7 | Review step 9: no UE-position input for a placement-synced twin | GlobalValue `uePositionFile` in `scenario-zero-with_parallel_loging`: CSV `ue_index,x,y[,z]` (0-based = IMSI−1; header `imsi,x,y[,z]` switches to IMSI numbering; rows in any order; z default 0; `#` comments). Replaces the uniform-disc placement by a `ListPositionAllocator`; mobility after t = 0 unchanged (random walk 2–4 m/s, bounds 0…4000 m). Missing UEs, out-of-range ids or positions outside the bounds are fatal errors. `start_sim_stack.sh -P file` | `scratch/scenario-zero-with_parallel_loging.cc` (`mmwave-LENA-oran-0003`) | `tools/regress_ue_positions.sh`: both formats, t = 0 rows of `ue_position.txt` equal the file, UEs move afterwards |
+| 8 | Twin validation (T6v2): E2 DU PRB differed up to 13× between same-seed runs | The gNB's E2 CU-UP/DU builders and the 100 ms trace loggers (`BuildGUI*`) read **and reset** the same PDCP/RLC/PHY counters, so an E2 report covered only the time since the last logger tick (0.3–98 ms, set by the wall-clock subscription time). Now the E2 builders only read (own throughput maps `m_e2DrbThr*`), and every gNB report is scheduled 1 ns before the next logger tick (`E2ReportDelay`, header stamp rounded to µs) → it covers the trace's 100 ms window | `mmwave-enb-net-device.*` (`mmwave-LENA-oran-0004`) | `tools/regress_kpm_window.sh`: same seed, xApp subscribing at 0.6 s vs 5.9 s → 1704 common DU values, 0 differ; PRB/TB values equal the du-cell trace rows (1552 + 1128, 0 differ); all gNB stamps on the 100 ms grid |
+| 9 | Twin validation: du-cell/cu-*-cell trace timestamps used an uninitialised `m_startTime` | `MmWaveHelper::SetStartTime()` (default 0), passed to gNB **and** LTE eNB devices (`m_startTime{0}` in both); scenario-zero computes its run id before installing devices and passes it, so every trace = run id + sim ms like `ue_position.txt` (`simid`) | `mmwave-helper.*`, `*-enb-net-device.h`, `scenario-zero-with_parallel_loging.cc` (`mmwave-LENA-oran-0004`) | `tools/regress_kpm_window.sh`: all du-cell rows are `simid` + a multiple of 100 ms |
+| 10 | T6v2/T6v3: `malloc(): invalid size` abort, RngRun=3 with 10 UEs at ~0.3 s | e2sim allocated the RIC indication message buffer as `calloc(1, 8192)` and copied `message_length` bytes into it → heap overflow for KPM messages > 8 KiB (one cell's DU report with ~10 UEs is ~8.4 KB); the abort came at a later `malloc` (gdb: `calloc` in `generate_e2apv1_indication_request_parameterized`, message 8461 bytes). Now sized to the message. Also `encode_and_send_sctp_data` sent `data.len` bytes from a 10000-byte buffer (over-read for PDUs > 10000 B): `MAX_SCTP_BUFFER` 10000 → 32768 (FlexRIC receives ≤ 32 KiB), larger PDUs are dropped with an error, the encode buffer is freed | e2sim `encode_e2apv1.cpp`, `e2sim.cpp`, `e2sim_defs.h` (`e2sim-0002`) | `tools/regress_large_indication.sh` (4 gNB, 10 UEs, RngRun=3): ns-3 reaches simTime, a cell reports 10 UEs in one DU report, no abort; the T6v3 s3 command under gdb runs all 8 s |
 | 6 | P3: reporting gated ≥ 1 s / never for formats ≠ 4 | trivially true condition or non-format-4 → report at once; attributes `ns3::MmWaveEnbNetDevice::E2PrbHistoryLen` (10), `E2PrbCheckPeriod` (100 ms); the gate chain stops once reporting latches | `mmwave-enb-net-device.*` (`mmwave-LENA-oran-0002`) | subs test: all 3 nodes (LTE + 2 gNB) first stamp 0.525 s = subscription time |
 
 Not done (review §6 steps 7, 8, 10): N concurrent subscriptions per node, releasing RC-handed-over UEs (`E2HoControlSticky`), and the AppWeaver KPM-bus collector
-profile (AppWeaver side). Also not changed: `m_startTime` (uninitialised, used in the `cu-*/du-*`
-trace-file timestamps; the E2 stream no longer uses it), the NR (5G-LENA) gNB's sticky stop on delete,
-and the shipped ES xApp's one-digit encoder.
+profile (AppWeaver side). Also not changed: the NR (5G-LENA) gNB's sticky stop on delete, the shipped
+ES xApp's one-digit encoder, and §10 items 13–14 (found by the twin validation; model/scenario limits).
 
 Consequences for AppWeaver:
 - `collect_start_us / 1e6` is the simulated time of the report; no more count × period estimate.
 - The first gNB report comes at the subscription time (+ < 1 period) with `KPM_PRB_LT=101`, ~1 s
   earlier than before → **T6 batches must be re-run** (window boundaries and first-report offset change).
+- After fix 8 gNB KPIs (PRB, TB counts, CU-UP volumes) are full 100 ms windows equal to the trace
+  files, and the first gNB stamp is the next 100 ms tick after subscribing → twin/live comparisons
+  made with the earlier 2026-10-28 build must be re-run.
 - An xApp may now stop and a new one subscribe within one simulation (e.g. several candidate policies
   per twin run); with `ON <cell>` the energy-saving policy is reversible.
 - The archived captures in `captures/` predate the fixes (wall-clock `collect_start_us`).
@@ -347,6 +392,21 @@ Consequences for AppWeaver:
   `examples/xApp/python3`) to adopt it there.
 
 ### 11.1 Regression results
+
+After fixes 8–9 all four scripts were re-run on the rebuilt ns-3 — **ALL PASS**
+(`logs/regress_2026-10-28/{window,subs,rc,pos}/`, files `*after_fix8*` and `window/`):
+`regress_kpm_window.sh` as in the fix-8/9 rows; subscription test unchanged except that the gNBs'
+first stamp is now 0.600 s (LTE eNB 0.527 s) and C's 11.000 s; RC test `OFF 11` 0.215 s, `ON 11`
+txPower 30 1.217 s, `HO` IMSI 1 → 11 1.703 s, `OFF 5` 2.218 s; position test both formats.
+After fix 10 (e2sim-0002, 2026-10-29): `regress_large_indication.sh` **ALL PASS** (4 gNB/10 UE,
+RngRun=3, a cell reports 10 UEs in one DU report, ns-3 reaches simTime); subscription and window
+tests re-run, **ALL PASS**. Message sizes, from a gdb `dprintf` on every indication
+(`logs/regress_2026-10-28/large/gdb_*`): gNB DU report ≈ 830 B per UE (10 UEs: 8279–8461 B; RngRun=7,
+at most 9 UEs per cell: largest message 7647 B), CU-CP ≈ 2.0 kB and CU-UP ≈ 1.5 kB for 10 UEs, idle-cell
+placeholder 66 B. With ≤ 10 UEs only a cell holding all 10 UEs exceeded 8192 B. Check of the AppWeaver
+T6v3 runs (213 captures): the largest per-cell UE count in any DU report is 9 (s7 loadcal twins); only the
+four s3 runs (aborted, marked failed) had 10, so no completed T6v3 run sent an oversized indication.
+The results below are from before fixes 8–10.
 
 Logs: `logs/regress_2026-10-28/` (script outputs, RIC/xApp logs, filtered `ns3.log.xz`, `kpm*.csv.xz`).
 
