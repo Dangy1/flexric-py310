@@ -42,6 +42,7 @@ from backend.appweaver import (  # type: ignore
 from backend.appweaver import learning as appweaver_learning  # type: ignore
 from backend.appweaver import learning_prompts as appweaver_learning_prompts  # type: ignore
 from backend.appweaver import prompts as appweaver_prompts  # type: ignore
+from backend.appweaver.nodes import compose as appweaver_compose  # type: ignore
 import flexric_agent_portal  # type: ignore
 from flexric_agent_portal import (  # type: ignore
     AGENTS,
@@ -78,6 +79,8 @@ METHODS = [
     "langgraph_agentcard",
     "appweaver_tpl",
     "appweaver_mem",
+    "appweaver_guided",
+    "appweaver_v2",
 ]
 
 # Learning variants (workstream F): AppWeaver + operator workflow-template cards, and additionally an
@@ -87,6 +90,10 @@ LEARNING_MIN_PROMPT_CHARS = 16000
 LEARNING_METHODS = {
     "appweaver_tpl": {"workflow_templates": True, "memory": False},
     "appweaver_mem": {"workflow_templates": True, "memory": True},
+    # Fixes from the failure analysis of the development batches A and B k=8
+    # (docs/APPWEAVER_FAILURE_ANALYSIS.md): planning guidance + one feedback re-plan; v2 adds templates + memory.
+    "appweaver_guided": {"workflow_templates": False, "memory": False, "guidance": True, "feedback": True},
+    "appweaver_v2": {"workflow_templates": True, "memory": True, "guidance": True, "feedback": True},
 }
 
 # Paper-facing names. `llm_only` keeps its historical id but is the
@@ -104,6 +111,8 @@ METHOD_LABELS = {
     "langgraph_agentcard": "AppWeaver",
     "appweaver_tpl": "AppWeaver + templates",
     "appweaver_mem": "AppWeaver + templates + memory",
+    "appweaver_guided": "AppWeaver + guidance + feedback",
+    "appweaver_v2": "AppWeaver v2 (guidance + feedback + templates + memory)",
 }
 
 # A launched action only counts as a successful tool call once its log shows
@@ -1136,6 +1145,7 @@ def prompt_builders_sha256() -> Dict[str, str]:
         appweaver_learning_prompts.memory_section, appweaver_learning_prompts.serialize_workflow_cards,
         appweaver_learning_prompts.serialize_memory, appweaver_learning.workflow_cards,
         appweaver_learning.retrieve_workflow_cards, appweaver_learning.ExperienceMemory,
+        appweaver_learning_prompts.guidance_section, appweaver_learning_prompts.feedback_prompt, appweaver_compose.feedback_findings,
     ]
     hashes.update({f"{fn.__module__.split('.')[-1]}.{fn.__name__}": hashlib.sha256(inspect.getsource(fn).encode("utf-8")).hexdigest()[:16] for fn in learning_builders})
     hashes["appweaver.learning_prompts_module"] = hashlib.sha256(inspect.getsource(appweaver_learning_prompts).encode("utf-8")).hexdigest()[:16]
@@ -1482,6 +1492,8 @@ def execute_langgraph_agentcard(intent: Dict[str, Any], duration_s: int, repair:
         dryrun_duration_s=int(EVAL_RUNTIME_CONFIG.get("dryrun_duration_s") or 5),
         workflow_templates=bool(learning.get("workflow_templates")),
         memory_path=str(memory_path_for_run()) if learning.get("memory") else None,
+        guidance=bool(learning.get("guidance")),
+        feedback=bool(learning.get("feedback")),
     )
     final = run_appweaver(str(intent.get("intent") or ""), _appweaver_deps(), cfg)
     chain = list(final.get("generated_workflow") or [])
@@ -1542,6 +1554,10 @@ def execute_langgraph_agentcard(intent: Dict[str, Any], duration_s: int, repair:
         "memory_retrieval": final.get("memory_retrieval"),
         "memory_retrieved": list((final.get("memory_retrieval") or {}).get("memory_retrieved") or []) if cfg.memory_path else None,
         "memory_excluded_identical": list((final.get("memory_retrieval") or {}).get("excluded_identical") or []) if cfg.memory_path else None,
+        "guidance_enabled": cfg.guidance,
+        "feedback_enabled": cfg.feedback,
+        "feedback": final.get("feedback"),
+        "feedback_planner_task": final.get("feedback_planner_task"),
     }
 
 
@@ -2106,7 +2122,10 @@ def learning_manifest(methods: List[str]) -> Dict[str, Any]:
     selected = [m for m in methods if m in LEARNING_METHODS]
     out: Dict[str, Any] = {
         "methods": {m: {"workflow_templates": bool(LEARNING_METHODS[m]["workflow_templates"]),
-                        "memory_path": str(memory_path_for_run()) if LEARNING_METHODS[m]["memory"] else None} for m in selected},
+                        "memory_path": str(memory_path_for_run()) if LEARNING_METHODS[m]["memory"] else None,
+                        "guidance": bool(LEARNING_METHODS[m].get("guidance")),
+                        "feedback": bool(LEARNING_METHODS[m].get("feedback"))} for m in selected},
+        "guidance_section_sha256": hashlib.sha256(appweaver_learning_prompts.GUIDANCE_SECTION.encode("utf-8")).hexdigest()[:16],
         "workflow_template_cards": default_workflow_cards(AGENTS) if selected else None,
         "template_k": AppWeaverConfig().template_k,
         "memory_path": None, "memory_sha256": None, "memory_entry_count": None,

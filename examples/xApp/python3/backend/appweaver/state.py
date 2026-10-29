@@ -21,7 +21,7 @@ class InvokeResult(TypedDict, total=False):
 
 @dataclass
 class AppWeaverConfig:
-    variant: str = "appweaver"            # appweaver | no_repair | appweaver_tpl | appweaver_mem
+    variant: str = "appweaver"            # appweaver | no_repair | appweaver_tpl | appweaver_mem | appweaver_guided | appweaver_v2
     repair: bool = True                   # Compose: repair-by-insertion with fixpoint re-check
     recover: bool = True                  # Recover node: wait or re-plan around busy apps
     validate_mode: str = "checks"         # checks | dryrun
@@ -34,6 +34,8 @@ class AppWeaverConfig:
     memory_path: Optional[str] = None     # experience memory (JSONL) retrieved by Discover for Compose
     memory_k: int = MEMORY_K
     memory_min_score: float = MEMORY_MIN_SCORE
+    guidance: bool = False                # Compose prompt adds the planning guidance (learning_prompts.GUIDANCE_SECTION)
+    feedback: bool = False                # one bounded re-plan when the repaired chain still has compat findings
 
 
 @dataclass
@@ -80,6 +82,8 @@ class AppWeaverState(TypedDict, total=False):
     prompts: Annotated[List[Dict[str, Any]], operator.add]
     planner_task: Dict[str, Any]
     planner_plan: Dict[str, Any]
+    feedback_planner_task: Dict[str, Any]   # the feedback re-plan call (appweaver_guided / appweaver_v2)
+    feedback: Dict[str, Any]                # {findings, first_chain, revised_chain, adopted}
     planner_unavailable: bool
     raw_chain: List[str]
     generated_workflow: List[str]
