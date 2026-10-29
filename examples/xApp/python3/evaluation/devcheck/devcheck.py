@@ -19,7 +19,7 @@ learning = h.LEARNING_METHODS.get(method, {})
 cfg = AppWeaverConfig(variant=method, validate_mode="checks", lease_wait_s=0.0,
                       workflow_templates=bool(learning.get("workflow_templates")),
                       memory_path=str(h.DEFAULT_MEMORY_PATH) if learning.get("memory") else None,
-                      guidance=bool(learning.get("guidance")), feedback=bool(learning.get("feedback")))
+                      guidance=bool(learning.get("guidance")), feedback=bool(learning.get("feedback")), needs=bool(learning.get("needs")))
 def invoke(agent_id, action_id):
     return {"tool_calls": [{"agent_id": agent_id, "action_id": action_id, "status": "success", "run_id": "x"}],
             "run_payloads": [], "error": None, "lease_wait_s": 0.0, "refused": False}
@@ -41,5 +41,5 @@ with open(out, "a") as f:
         chain = list(final.get("generated_workflow") or [])
         ok, reasons = rule_match(chain, it, h.AGENTS)
         f.write(json.dumps({"intent_id": it["id"], "method": method, "chain": chain, "rule": ok, "reasons": reasons,
-                            "feedback": final.get("feedback"), "status": final.get("status"), "s": round(time.time() - t0, 1)}) + "\n")
+                            "feedback": final.get("feedback"), "needs": final.get("needs"), "status": final.get("status"), "s": round(time.time() - t0, 1)}) + "\n")
         f.flush()

@@ -80,3 +80,33 @@ gives 33/50, consistent with its 70.4 % in the real Batch A (5 repeats).
 * The feedback re-plan never triggers on the 9-card registry (no two writers share a resource); it is
   aimed at the 81-card registry (F3).
 * Guidance frozen at this point (`guidance_section_sha256` in each batch manifest).
+
+## Needs-first step (owner decision 2026-10-29) and its development check
+
+The busy-app rule did not change the planner (F1), so `appweaver_guided` and `appweaver_v2` gained a
+needs-first step (`backend/appweaver/needs.py`): one LLM call fixes which control targets (the cards'
+write `control_scopes` targets: slice, transport, ue, cell, node) the intent needs and whether it needs
+observation, ignoring statements about busy applications; after repair a card-driven coverage check
+(needed target not written, unneeded target written, observation missing) feeds the single feedback re-plan.
+
+Same planner-only check on the 50 Batch A intents (in-sample), label rule / pre-registered sensitivity rule:
+
+| Variant | Rule | Sensitivity | Median s | Feedback re-plans (adopted) |
+|---|---|---|---|---|
+| AppWeaver (frozen) | 33 | 34 | 32.9 | 0 |
+| guided (guidance + feedback) | 38 | 38 | 35.3 | 0 |
+| v2 (guided + templates + memory) | 36 | 38 | 36.0 | 0 |
+| **guided + needs** (frozen as `appweaver_guided`) | **38** | **41** | 36.6 | 5 (5) |
+| **v2 + needs** (frozen as `appweaver_v2`) | 34 | 37 | 41.2 | 15 (15) |
+
+* F1 fixed: on all three busy-TC intents the chain now includes TC (needs = transport); two pass, the
+  third (`latency_under_busy_tc`) still lacks the SLICE its label also requires.
+* Gains (10): busy-TC x2, domain coverage (`radio_capacity_headroom`, `stadium_congestion_surge`,
+  `emergency_traffic_preemption`, `cell_edge_fairness_protection`), least privilege
+  (`rlc_queue_anomaly_detection`, `slice_fairness_assurance`, `slice_oversubscription_repair`, ...).
+* Losses (10): mostly validate/verify/audit intents that the needs step reads as observation-only
+  (`slice_isolation_validation`, `enterprise_slice_audit`, `codel_rollback_verification`,
+  `ecn_policy_validation`, `qos_policy_sanity_check`, ...); the committed labels require a writer. Three of
+  them are exactly the pre-registered sensitivity alternatives (read-only verification), hence the
+  sensitivity column. The needs prompt was NOT tuned towards the labels after this result.
+* Frozen at this point (needs module hash in each batch manifest); held-out test: Batch C part 2.
