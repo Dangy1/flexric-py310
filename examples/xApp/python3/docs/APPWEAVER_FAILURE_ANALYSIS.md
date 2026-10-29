@@ -126,3 +126,12 @@ Same planner-only check on the 50 Batch A intents (`evaluation/devcheck/run_glm.
 * The needs step still restores the busy TC with GLM (all three busy-TC chains contain TC for guided).
 * Speed is not comparable from this check: both endpoints were shared (spark1 with Batch C, the gateway
   with other Aalto users). GLM is a thinking model (~1.5k completion tokens even for a tiny prompt).
+
+## Two-planner experience memory (`appweaver_mem2`, owner decision 2026-10-29)
+
+`evaluation/memory/experience_A_both.jsonl`: one entry per Batch A intent with the accepted workflow(s) and up
+to three rejected AppWeaver proposals (ranked by frequency) from BOTH planners: gpt-oss-120b (final live
+Batch A, 5 repeats) and GLM-5.3-Flash (planner-only on the Batch A intents, 5 repeats, `evaluation/devcheck/
+GLM_A_langgraph_agentcard*.jsonl`; 4 failed GLM calls skipped). 26/50 entries carry rejected proposals
+(gpt-oss-only memory: 18/50). GLM frozen AppWeaver passed 29-35/50 per repeat. Built with
+`build_experience_memory.py --planner-only ... --max-rejected 3`. Held-out test: Batch C with both planners.

@@ -239,3 +239,17 @@ def test_builder_adds_planner_only_proposals(tmp_path):
     rec = records[0]
     assert rec["method"] == "langgraph_agentcard" and rec["generated_workflow"] == ["KPM", "TC"]
     assert rec["workflow_match_rule"] is False and rec["workflow_rule_reasons"] == ["missing required SLICE"]
+
+
+def test_two_planner_memory_is_batch_a_only_and_disjoint_from_batch_c():
+    from backend.appweaver.learning import ExperienceMemory, normalize_sentence
+    root = HERE.parents[0]
+    memory = ExperienceMemory.load(root / "memory" / "experience_A_both.jsonl")
+    a = {normalize_sentence(i["intent"]) for i in json.loads((root / "intents_50.json").read_text(encoding="utf-8"))}
+    c = json.loads((root / "intents_c.json").read_text(encoding="utf-8"))
+    assert len(memory.entries) == 50 and {normalize_sentence(e["intent"]) for e in memory.entries} <= a
+    assert not ({normalize_sentence(i["intent"]) for i in c} & a)
+    for intent in c:
+        assert memory.retrieve(intent["intent"])[1]["excluded_identical"] == []
+    runs = {str((e.get("provenance") or {}).get("run")) for e in memory.entries}
+    assert len(runs) == 1 and "GLM-5.3-Flash" in next(iter(runs)) and "gptoss120b" in next(iter(runs))
