@@ -110,3 +110,19 @@ Same planner-only check on the 50 Batch A intents (in-sample), label rule / pre-
   them are exactly the pre-registered sensitivity alternatives (read-only verification), hence the
   sensitivity column. The needs prompt was NOT tuned towards the labels after this result.
 * Frozen at this point (needs module hash in each batch manifest); held-out test: Batch C part 2.
+
+## Second planner: GLM-5.3-Flash via the Aalto LLM gateway (planner-only, 2026-10-29)
+
+Same planner-only check on the 50 Batch A intents (`evaluation/devcheck/run_glm.sh`; gateway
+`https://llm-gateway.k8s.aalto.fi/api/v1`, model `zai-org/GLM-5.3-Flash`, same temperature/seed, provider `vllm`).
+
+| Planner | AppWeaver (frozen) | appweaver_guided | appweaver_v2 |
+|---|---|---|---|
+| gpt-oss-120b (spark1), rule / sensitivity | 33 / 34 | 38 / 41 | 34 / 37 |
+| GLM-5.3-Flash (gateway), rule / sensitivity | 32 / 33 | 31 / 34 | 30 / 33 (1 planner failure) |
+
+* GLM is about as accurate as gpt-oss-120b for frozen AppWeaver, but the fixes (written while looking at
+  gpt-oss failures) do not carry over: the guided variant gains nothing with GLM.
+* The needs step still restores the busy TC with GLM (all three busy-TC chains contain TC for guided).
+* Speed is not comparable from this check: both endpoints were shared (spark1 with Batch C, the gateway
+  with other Aalto users). GLM is a thinking model (~1.5k completion tokens even for a tiny prompt).
