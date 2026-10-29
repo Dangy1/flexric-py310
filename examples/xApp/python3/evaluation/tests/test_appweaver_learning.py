@@ -333,7 +333,7 @@ def test_no_prompt_contains_notes_or_category_learning(harness, monkeypatch, nam
 def test_methods_labels_manifest_and_prompt_hashes(harness, monkeypatch):
     monkeypatch.setitem(harness.EVAL_RUNTIME_CONFIG, "memory_path", str(MEMORY))
     methods = harness.METHODS
-    assert methods.index("appweaver_tpl") == methods.index("langgraph_agentcard") + 1 and methods[-1] == "appweaver_mem"
+    assert methods.index("appweaver_tpl") == methods.index("langgraph_agentcard") + 1 and methods[-3:] == ["appweaver_mem", "appweaver_guided", "appweaver_v2"]
     assert harness.METHOD_LABELS["appweaver_tpl"] == "AppWeaver + templates"
     assert harness.METHOD_LABELS["appweaver_mem"] == "AppWeaver + templates + memory"
     hashes = harness.prompt_builders_sha256()
@@ -349,8 +349,8 @@ def test_methods_labels_manifest_and_prompt_hashes(harness, monkeypatch):
                 "learning.retrieve_workflow_cards", "appweaver.learning_prompts_module", "appweaver.learning_module"):
         assert key in hashes, key
     info = harness.learning_manifest(["langgraph_agentcard", "appweaver_tpl", "appweaver_mem"])
-    assert info["methods"]["appweaver_tpl"] == {"workflow_templates": True, "memory_path": None}
-    assert info["methods"]["appweaver_mem"] == {"workflow_templates": True, "memory_path": str(MEMORY.resolve())}
+    assert info["methods"]["appweaver_tpl"] == {"workflow_templates": True, "memory_path": None, "guidance": False, "feedback": False}
+    assert info["methods"]["appweaver_mem"] == {"workflow_templates": True, "memory_path": str(MEMORY.resolve()), "guidance": False, "feedback": False}
     assert info["memory_sha256"] == hashlib.sha256(MEMORY.read_bytes()).hexdigest()
     assert info["memory_entry_count"] == 50 and [c["workflow_id"] for c in info["workflow_template_cards"]] == list(WORKFLOW_TEMPLATES)
     assert harness.learning_manifest(["langgraph_agentcard"])["memory_path"] is None
@@ -387,7 +387,7 @@ def test_figures_know_the_variants():
     import make_paper_figures as mpf  # noqa: E402
 
     ids = [m for m, _ in mpf.METHODS]
-    assert ids[ids.index("langgraph_agentcard") + 1:] == ["appweaver_tpl", "appweaver_mem"]
+    assert ids[ids.index("langgraph_agentcard") + 1:] == ["appweaver_tpl", "appweaver_mem", "appweaver_guided", "appweaver_v2"]
 
 
 def test_harness_cli_guards_for_learning_methods(harness, tmp_path, monkeypatch):

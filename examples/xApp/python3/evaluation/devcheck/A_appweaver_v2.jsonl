@@ -1,0 +1,50 @@
+{"intent_id": "xr_latency_guard", "method": "appweaver_v2", "chain": ["KPM", "SLICE", "RC"], "rule": false, "reasons": ["missing required TC"], "feedback": null, "status": "completed", "s": 41.1}
+{"intent_id": "congestion_relief", "method": "appweaver_v2", "chain": ["KPM", "SLICE", "TC", "RC"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 42.5}
+{"intent_id": "slice_fairness_assurance", "method": "appweaver_v2", "chain": ["KPM", "SLICE", "TC"], "rule": false, "reasons": ["TC: forbidden writer (write scope, not required by the intent)"], "feedback": null, "status": "completed", "s": 34.5}
+{"intent_id": "slice_isolation_validation", "method": "appweaver_v2", "chain": ["KPM", "SLICE"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 36.8}
+{"intent_id": "transport_bufferbloat_mitigation", "method": "appweaver_v2", "chain": ["KPM", "TC"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 25.8}
+{"intent_id": "transport_tunnel_stability", "method": "appweaver_v2", "chain": ["KPM", "TC"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 35.6}
+{"intent_id": "handover_resilience_triage", "method": "appweaver_v2", "chain": ["KPM", "TC", "RC"], "rule": false, "reasons": ["missing required SLICE"], "feedback": null, "status": "completed", "s": 25.8}
+{"intent_id": "radio_capacity_headroom", "method": "appweaver_v2", "chain": ["KPM", "SLICE", "RC"], "rule": false, "reasons": ["missing required TC"], "feedback": null, "status": "completed", "s": 44.4}
+{"intent_id": "tc_conflict_recovery", "method": "appweaver_v2", "chain": ["KPM", "TC", "RC"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 32.1}
+{"intent_id": "latency_under_busy_tc", "method": "appweaver_v2", "chain": ["KPM", "TC", "RC"], "rule": false, "reasons": ["missing required SLICE"], "feedback": null, "status": "completed", "s": 36.0}
+{"intent_id": "uplink_queue_stability", "method": "appweaver_v2", "chain": ["KPM", "TC"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 29.5}
+{"intent_id": "downlink_jitter_containment", "method": "appweaver_v2", "chain": ["KPM", "TC"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 40.9}
+{"intent_id": "backhaul_delay_mitigation", "method": "appweaver_v2", "chain": ["KPM", "TC"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 29.1}
+{"intent_id": "tunnel_retransmission_diagnosis", "method": "appweaver_v2", "chain": ["KPM", "RC"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 22.9}
+{"intent_id": "rlc_queue_anomaly_detection", "method": "appweaver_v2", "chain": ["KPM"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 31.5}
+{"intent_id": "pdcp_reorder_investigation", "method": "appweaver_v2", "chain": ["KPM", "RC"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 35.8}
+{"intent_id": "gtp_tunnel_health_validation", "method": "appweaver_v2", "chain": ["KPM"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 39.8}
+{"intent_id": "slice_admission_control", "method": "appweaver_v2", "chain": ["KPM", "SLICE", "RC"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 54.9}
+{"intent_id": "slice_oversubscription_repair", "method": "appweaver_v2", "chain": ["KPM", "SLICE", "TC", "KPM"], "rule": false, "reasons": ["TC: forbidden writer (write scope, not required by the intent)"], "feedback": null, "status": "completed", "s": 61.0}
+{"intent_id": "enterprise_slice_audit", "method": "appweaver_v2", "chain": ["KPM", "SLICE"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 27.3}
+{"intent_id": "mobility_hotspot_stabilization", "method": "appweaver_v2", "chain": ["KPM", "TC"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 50.1}
+{"intent_id": "handover_ping_pong_detection", "method": "appweaver_v2", "chain": ["KPM", "RC"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 26.0}
+{"intent_id": "edge_gaming_jitter_protection", "method": "appweaver_v2", "chain": ["KPM", "SLICE", "TC", "RC"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 41.1}
+{"intent_id": "volte_latency_safeguard", "method": "appweaver_v2", "chain": ["KPM", "TC", "KPM"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 71.4}
+{"intent_id": "urllc_reliability_safeguard", "method": "appweaver_v2", "chain": ["KPM", "SLICE", "TC", "RC"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 25.7}
+{"intent_id": "mmtc_capacity_preservation", "method": "appweaver_v2", "chain": ["KPM", "SLICE"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 49.0}
+{"intent_id": "video_throughput_smoothing", "method": "appweaver_v2", "chain": ["KPM", "TC"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 40.1}
+{"intent_id": "ecn_policy_validation", "method": "appweaver_v2", "chain": ["KPM", "TC"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 48.8}
+{"intent_id": "codel_rollback_verification", "method": "appweaver_v2", "chain": ["KPM"], "rule": false, "reasons": ["missing required TC"], "feedback": null, "status": "completed", "s": 31.5}
+{"intent_id": "bearer_stall_triage", "method": "appweaver_v2", "chain": ["KPM"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 36.8}
+{"intent_id": "drb_delay_hotspot", "method": "appweaver_v2", "chain": ["KPM", "SLICE"], "rule": false, "reasons": ["SLICE: forbidden writer (write scope, not required by the intent)"], "feedback": null, "status": "completed", "s": 42.4}
+{"intent_id": "prb_imbalance_correction", "method": "appweaver_v2", "chain": ["KPM", "SLICE"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 30.4}
+{"intent_id": "cell_edge_fairness_protection", "method": "appweaver_v2", "chain": ["KPM", "SLICE"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 26.2}
+{"intent_id": "premium_qos_isolation", "method": "appweaver_v2", "chain": ["KPM", "SLICE", "TC", "RC"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 42.7}
+{"intent_id": "emergency_traffic_preemption", "method": "appweaver_v2", "chain": ["KPM", "TC", "RC"], "rule": false, "reasons": ["missing required SLICE"], "feedback": null, "status": "completed", "s": 42.2}
+{"intent_id": "stadium_congestion_surge", "method": "appweaver_v2", "chain": ["KPM", "SLICE", "TC"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 66.5}
+{"intent_id": "campus_slice_drift_detection", "method": "appweaver_v2", "chain": ["KPM", "SLICE"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 17.2}
+{"intent_id": "backhaul_queue_conflict_recovery", "method": "appweaver_v2", "chain": ["KPM", "TC"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 36.0}
+{"intent_id": "slice_policy_race_recovery", "method": "appweaver_v2", "chain": ["KPM", "SLICE"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 53.4}
+{"intent_id": "enterprise_tunnel_busy_tc", "method": "appweaver_v2", "chain": ["KPM", "SLICE", "TC", "RC"], "rule": false, "reasons": ["SLICE: forbidden writer (write scope, not required by the intent)"], "feedback": null, "status": "completed", "s": 36.2}
+{"intent_id": "qos_policy_sanity_check", "method": "appweaver_v2", "chain": ["KPM"], "rule": false, "reasons": ["missing required TC"], "feedback": null, "status": "completed", "s": 27.7}
+{"intent_id": "latency_regression_root_cause", "method": "appweaver_v2", "chain": ["KPM", "SLICE"], "rule": false, "reasons": ["SLICE: forbidden writer (write scope, not required by the intent)"], "feedback": null, "status": "completed", "s": 27.7}
+{"intent_id": "slice_drift_correction", "method": "appweaver_v2", "chain": ["KPM", "SLICE", "RC"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 42.6}
+{"intent_id": "transport_queue_partition_tuning", "method": "appweaver_v2", "chain": ["KPM", "TC"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 35.0}
+{"intent_id": "anomaly_containment_degraded_service", "method": "appweaver_v2", "chain": ["KPM", "TC"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 36.3}
+{"intent_id": "handover_route_risk_screening", "method": "appweaver_v2", "chain": ["KPM", "RC"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 28.1}
+{"intent_id": "cross_slice_resource_rebalance", "method": "appweaver_v2", "chain": ["KPM", "SLICE"], "rule": false, "reasons": ["missing required TC"], "feedback": null, "status": "completed", "s": 30.4}
+{"intent_id": "low_priority_traffic_shaping_guard", "method": "appweaver_v2", "chain": ["KPM", "TC"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 22.4}
+{"intent_id": "unknown_enterprise_xr_slowdown", "method": "appweaver_v2", "chain": ["KPM", "SLICE", "TC", "RC"], "rule": true, "reasons": [], "feedback": null, "status": "completed", "s": 37.5}
+{"intent_id": "unknown_busy_runtime_recovery", "method": "appweaver_v2", "chain": ["KPM", "RC"], "rule": false, "reasons": ["missing required TC"], "feedback": null, "status": "completed", "s": 27.2}
