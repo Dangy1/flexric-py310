@@ -19,6 +19,7 @@ from typing import Any, Callable, Dict, List, Tuple
 from backend.orchestration.compat import check_chain, lifecycle_findings, repair_chain
 
 from ..learning_prompts import compose_prompt_with_context, feedback_prompt
+from ..needs import coverage_findings, needs_prompt, parse_needs, write_targets
 from ..prompts import compose_prompt, serialize_cards
 from ..state import AppWeaverConfig, AppWeaverDeps, AppWeaverState
 from ..util import event, normalize_steps, parse_plan, plan_chain
@@ -80,18 +81,26 @@ def build_compose_node(deps: AppWeaverDeps, cfg: AppWeaverConfig) -> Callable[[A
         else:
             cards = [registry[i] for i in (state.get("card_ids") or []) if i in registry]
             prompt_meta: Dict[str, Any] = {}
-            if cfg.workflow_templates or cfg.memory_path or cfg.guidance:
+            needs: Dict[str, Any] = {}
+            if cfg.needs:
+                targets = write_targets(cards)
+                n_prompt = needs_prompt(intent_text, targets)
+                n_task = dict(deps.planner(n_prompt) or {})
+                needs = parse_needs(str(n_task.get("response") or ""), targets) if n_task.get("status") == "completed" else {"ok": False}
+                updates["needs"] = needs
+                updates["needs_planner_task"] = n_task
+            if cfg.workflow_templates or cfg.memory_path or cfg.guidance or cfg.needs:
                 workflow_cards = list(state.get("workflow_cards") or []) if cfg.workflow_templates else []
                 memory_entries = list(state.get("memory_entries") or []) if cfg.memory_path else []
                 prompt = compose_prompt_with_context(intent_text, serialize_cards(cards), workflow_cards, memory_entries,
-                                                     guidance=cfg.guidance)
+                                                     guidance=cfg.guidance, needs=needs)
                 prompt_meta = {"workflow_cards": [c.get("workflow_id") for c in workflow_cards],
                                "memory_entries": [e.get("id") for e in memory_entries]}
             else:
                 prompt = compose_prompt(intent_text, serialize_cards(cards))
             task = dict(deps.planner(prompt) or {})
             updates["planner_task"] = task
-            updates["prompts"] = [{"node": "compose", "chars": len(prompt), **prompt_meta}]
+            updates["prompts"] = ([{"node": "needs", "chars": len(n_prompt)}] if cfg.needs else []) + [{"node": "compose", "chars": len(prompt), **prompt_meta}]
             if task.get("status") != "completed":
                 text = str(task.get("response") or task.get("error") or "")
                 unavailable = bool(deps.is_unavailable(text))
@@ -113,8 +122,10 @@ def build_compose_node(deps: AppWeaverDeps, cfg: AppWeaverConfig) -> Callable[[A
 
         raw_chain, requested, ids, repair_events, compat = repair(plan, excluded)
 
+        needs_now = updates.get("needs") or {}
+        check = lambda report, chain: feedback_findings(report, chain) + coverage_findings(registry, chain, needs_now)  # noqa: E731
         if source == "planner" and cfg.feedback:
-            findings = feedback_findings(compat, ids)
+            findings = check(compat, ids)
             if findings:
                 revised_prompt = feedback_prompt(prompt, plan, findings)
                 task2 = dict(deps.planner(revised_prompt) or {})
@@ -129,7 +140,7 @@ def build_compose_node(deps: AppWeaverDeps, cfg: AppWeaverConfig) -> Callable[[A
                         plan2 = {"generated_workflow": [], "steps": [], "rationale": f"unparseable: {exc}"}
                     revised = repair(plan2, excluded)
                     record["revised_chain"] = [i.upper() for i in revised[2]]
-                    if revised[2] and len(feedback_findings(revised[4], revised[2])) < len(findings):
+                    if revised[2] and len(check(revised[4], revised[2])) < len(findings):
                         plan = plan2
                         raw_chain, requested, ids, repair_events, compat = revised
                         updates["planner_plan"] = plan2

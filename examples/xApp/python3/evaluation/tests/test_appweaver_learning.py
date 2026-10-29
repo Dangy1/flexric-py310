@@ -349,8 +349,8 @@ def test_methods_labels_manifest_and_prompt_hashes(harness, monkeypatch):
                 "learning.retrieve_workflow_cards", "appweaver.learning_prompts_module", "appweaver.learning_module"):
         assert key in hashes, key
     info = harness.learning_manifest(["langgraph_agentcard", "appweaver_tpl", "appweaver_mem"])
-    assert info["methods"]["appweaver_tpl"] == {"workflow_templates": True, "memory_path": None, "guidance": False, "feedback": False}
-    assert info["methods"]["appweaver_mem"] == {"workflow_templates": True, "memory_path": str(MEMORY.resolve()), "guidance": False, "feedback": False}
+    assert info["methods"]["appweaver_tpl"] == {"workflow_templates": True, "memory_path": None, "guidance": False, "feedback": False, "needs": False}
+    assert info["methods"]["appweaver_mem"] == {"workflow_templates": True, "memory_path": str(MEMORY.resolve()), "guidance": False, "feedback": False, "needs": False}
     assert info["memory_sha256"] == hashlib.sha256(MEMORY.read_bytes()).hexdigest()
     assert info["memory_entry_count"] == 50 and [c["workflow_id"] for c in info["workflow_template_cards"]] == list(WORKFLOW_TEMPLATES)
     assert harness.learning_manifest(["langgraph_agentcard"])["memory_path"] is None

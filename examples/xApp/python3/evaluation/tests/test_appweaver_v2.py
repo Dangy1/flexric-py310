@@ -22,6 +22,7 @@ from test_appweaver_graph import FakeWorld, harness, make_card, small_registry  
 
 from backend.appweaver import AppWeaverConfig, run_appweaver  # noqa: E402
 from backend.appweaver.learning_prompts import FEEDBACK_HEADER, GUIDANCE_SECTION, compose_prompt_with_context  # noqa: E402
+from backend.appweaver.needs import coverage_findings, needs_prompt, parse_needs, write_targets  # noqa: E402
 from backend.appweaver.nodes.compose import feedback_findings  # noqa: E402
 from backend.appweaver.prompts import compose_prompt, serialize_cards  # noqa: E402
 
@@ -131,13 +132,88 @@ def test_feedback_findings_are_card_driven():
 
 def test_harness_knows_the_new_variants(harness):
     assert harness.METHODS[-2:] == ["appweaver_guided", "appweaver_v2"]
-    assert harness.LEARNING_METHODS["appweaver_guided"] == {"workflow_templates": False, "memory": False, "guidance": True, "feedback": True}
-    assert harness.LEARNING_METHODS["appweaver_v2"] == {"workflow_templates": True, "memory": True, "guidance": True, "feedback": True}
+    assert harness.LEARNING_METHODS["appweaver_guided"] == {"workflow_templates": False, "memory": False, "guidance": True, "feedback": True, "needs": True}
+    assert harness.LEARNING_METHODS["appweaver_v2"] == {"workflow_templates": True, "memory": True, "guidance": True, "feedback": True, "needs": True}
     hashes = harness.prompt_builders_sha256()
-    for key in ("learning_prompts.guidance_section", "learning_prompts.feedback_prompt", "compose.feedback_findings"):
+    for key in ("learning_prompts.guidance_section", "learning_prompts.feedback_prompt", "compose.feedback_findings",
+                "needs.needs_prompt", "needs.coverage_findings", "appweaver.needs_module"):
         assert key in hashes, key
     # AppWeaver's own prompt builders are unchanged by the fixes
     assert hashes["prompts.compose_prompt"] == "9b781c4f44b6731f"
     info = harness.learning_manifest(["appweaver_guided", "appweaver_v2"])
     assert info["methods"]["appweaver_guided"]["guidance"] is True and info["methods"]["appweaver_v2"]["feedback"] is True
+    assert info["methods"]["appweaver_guided"]["needs"] is True and info["methods"]["appweaver_v2"]["needs"] is True
     assert info["guidance_section_sha256"]
+
+
+# --------------------------------------------------------------------------- needs-first
+
+NEEDS = AppWeaverConfig(variant="appweaver_guided", guidance=True, feedback=True, needs=True)
+
+
+class NeedsWorld(SeqWorld):
+    """SeqWorld whose Needs step answers `needs` (a dict) and whose Compose answers the chains in turn."""
+
+    def __init__(self, registry, needs, chains, **kw):
+        super().__init__(registry, chains, **kw)
+        self.needs_answer = needs
+        self.needs_prompts: List[str] = []
+
+    def planner(self, prompt: str) -> Dict[str, Any]:
+        if "You are the Needs step" in prompt:
+            self.needs_prompts.append(prompt)
+            return {"status": "completed", "response": json.dumps(self.needs_answer), "prompt": prompt}
+        return super().planner(prompt)
+
+
+def test_write_targets_and_parse_needs_are_card_driven():
+    registry = small_registry()
+    targets = write_targets(registry.values())
+    assert targets["transport"] == ["tc"] and targets["slice"] == ["slice"] and "cell" in targets
+    parsed = parse_needs('noise {"observe": true, "control_targets": ["Transport", "warp_drive"], "rationale": "r"}', targets)
+    assert parsed == {"observe": True, "control_targets": ["transport"], "unknown_targets": ["warp_drive"], "rationale": "r", "ok": True}
+    assert parse_needs("no json here", targets)["ok"] is False
+
+
+def test_needs_prompt_ignores_availability_and_lists_targets():
+    prompt = needs_prompt("Protect latency while TC is busy.", {"transport": ["tc"], "slice": ["slice"]})
+    assert "Ignore any statement about which applications are busy" in prompt
+    assert '"transport": ["TC"]' in prompt and prompt.endswith("Intent: Protect latency while TC is busy.\n")
+
+
+def test_coverage_findings_missing_extra_and_observation():
+    registry = small_registry()
+    needs = {"ok": True, "observe": True, "control_targets": ["transport"]}
+    assert coverage_findings(registry, ["kpm", "tc"], needs) == []
+    missing = coverage_findings(registry, ["kpm", "rc"], needs)
+    assert any("No step writes control target 'transport'" in f for f in missing)
+    assert any(f.startswith("RC: writes control target(s)") for f in missing)
+    assert coverage_findings(registry, ["tc"], needs) == ["No observation step, although the needs analysis requires observation."]
+    assert coverage_findings(registry, ["kpm", "rc"], {"ok": False}) == []
+
+
+def test_needs_first_replans_a_dropped_busy_app():
+    """F1: the planner drops TC (busy); the needs say transport; the feedback re-plan restores TC."""
+    world = NeedsWorld(small_registry(), {"observe": True, "control_targets": ["transport"], "rationale": "queues"},
+                       [["KPM", "RC"], ["KPM", "TC"]])
+    final = run_appweaver("Protect latency while TC is already busy with another workflow.", world.deps(), NEEDS)
+    assert len(world.needs_prompts) == 1 and world.compose_calls == 2
+    assert final["needs"]["control_targets"] == ["transport"]
+    assert "Needs analysis (a previous step decided" in world.prompts[0] and '["transport"]' in world.prompts[0]
+    assert final["feedback"]["adopted"] is True and final["generated_workflow"] == ["KPM", "TC"]
+    assert [p["node"] for p in final["prompts"]] == ["needs", "compose", "compose_feedback"]
+    assert final["needs_planner_task"]["status"] == "completed"
+
+
+def test_needs_failure_falls_back_to_guided_behaviour():
+    world = NeedsWorld(small_registry(), "not json", [["KPM", "TC", "RC"]])
+    world.needs_answer = None
+
+    def planner(prompt):
+        if "You are the Needs step" in prompt:
+            return {"status": "completed", "response": "no json", "prompt": prompt}
+        return SeqWorld.planner(world, prompt)
+    world.planner = planner
+    final = run_appweaver(INTENT, world.deps(), NEEDS)
+    assert final["needs"]["ok"] is False and "Needs analysis" not in world.prompts[0]
+    assert final["status"] == "completed" and world.compose_calls == 1

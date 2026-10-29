@@ -5,7 +5,7 @@ Inputs: a run directory (records.jsonl or records.partial.jsonl) and the resourc
 Outputs (into the run directory unless --out): `resources_summary.json` and `resources_summary.md`.
 
 Time per record (seconds, from the records):
-  planner      LLM planner call(s): planner_task (+ feedback re-plan + recovery planner task) ended_at - started_at
+  planner      LLM planner call(s): planner_task (+ needs step + feedback re-plan + recovery planner task) ended_at - started_at
   validate     AppWeaver Validate node (compat, E2 conformance, lease pre-check, twin dry-run)
   dryrun       of which: tier-1 twin dry-run of E2 control steps
   lease_wait   bounded wait for a busy application (same budget for every method)
@@ -55,7 +55,7 @@ def _usage(task: Any) -> Dict[str, int]:
 
 def record_times(r: Dict[str, Any]) -> Dict[str, Any]:
     art = r.get("execution_artifacts") or {}
-    tasks = [art.get("planner_task"), art.get("feedback_planner_task"), art.get("recovery_planner_task")]
+    tasks = [art.get("needs_planner_task"), art.get("planner_task"), art.get("feedback_planner_task"), art.get("recovery_planner_task")]
     validation = r.get("validation_report") or {}
     calls = r.get("tool_calls") or []
     tokens = {"prompt": 0, "completion": 0}

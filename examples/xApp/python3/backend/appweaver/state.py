@@ -36,6 +36,7 @@ class AppWeaverConfig:
     memory_min_score: float = MEMORY_MIN_SCORE
     guidance: bool = False                # Compose prompt adds the planning guidance (learning_prompts.GUIDANCE_SECTION)
     feedback: bool = False                # one bounded re-plan when the repaired chain still has compat findings
+    needs: bool = False                   # needs-first: a Needs LLM step + coverage findings for the feedback re-plan
 
 
 @dataclass
@@ -84,6 +85,8 @@ class AppWeaverState(TypedDict, total=False):
     planner_plan: Dict[str, Any]
     feedback_planner_task: Dict[str, Any]   # the feedback re-plan call (appweaver_guided / appweaver_v2)
     feedback: Dict[str, Any]                # {findings, first_chain, revised_chain, adopted}
+    needs: Dict[str, Any]                   # needs step result {observe, control_targets, rationale, ok}
+    needs_planner_task: Dict[str, Any]
     planner_unavailable: bool
     raw_chain: List[str]
     generated_workflow: List[str]

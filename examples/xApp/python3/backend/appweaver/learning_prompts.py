@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 
+from .needs import needs_section
 from .prompts import compose_prompt
 
 TEMPLATE_HEADER = (
@@ -102,8 +103,9 @@ def compose_prompt_with_context(
     workflow_cards: Optional[Sequence[Mapping[str, Any]]] = None,
     memory_entries: Optional[Sequence[Mapping[str, Any]]] = None,
     guidance: bool = False,
+    needs: Optional[Mapping[str, Any]] = None,
 ) -> str:
-    return (compose_prompt(intent_text, card_dicts) + guidance_section(guidance)
+    return (compose_prompt(intent_text, card_dicts) + guidance_section(guidance) + needs_section(needs or {})
             + template_section(workflow_cards or []) + memory_section(memory_entries or []))
 
 
