@@ -27,7 +27,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List
 
-METHODS = ["manual_rule", "single_xapp", "llm_blind", "llm_only", "agentcard_no_repair", "langgraph_agentcard", "appweaver_tpl", "appweaver_mem", "appweaver_guided", "appweaver_v2"]
+METHODS = ["manual_rule", "single_xapp", "llm_blind", "llm_only", "agentcard_no_repair", "langgraph_agentcard", "appweaver_tpl", "appweaver_mem", "appweaver_guided", "appweaver_v2", "appweaver_mem2"]
 # Processes on the host that are not part of the evaluated stack (the ns-3 / e2sim simulator of the
 # T6 twin study runs alongside the batches). Reported in the batch totals, never attributed to a method.
 BACKGROUND = {"ns3", "sim_ric"}

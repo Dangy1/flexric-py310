@@ -131,7 +131,7 @@ def test_feedback_findings_are_card_driven():
 
 
 def test_harness_knows_the_new_variants(harness):
-    assert harness.METHODS[-2:] == ["appweaver_guided", "appweaver_v2"]
+    assert harness.METHODS[-3:] == ["appweaver_guided", "appweaver_v2", "appweaver_mem2"]
     assert harness.LEARNING_METHODS["appweaver_guided"] == {"workflow_templates": False, "memory": False, "guidance": True, "feedback": True, "needs": True}
     assert harness.LEARNING_METHODS["appweaver_v2"] == {"workflow_templates": True, "memory": True, "guidance": True, "feedback": True, "needs": True}
     hashes = harness.prompt_builders_sha256()
@@ -217,3 +217,25 @@ def test_needs_failure_falls_back_to_guided_behaviour():
     final = run_appweaver(INTENT, world.deps(), NEEDS)
     assert final["needs"]["ok"] is False and "Needs analysis" not in world.prompts[0]
     assert final["status"] == "completed" and world.compose_calls == 1
+
+
+# --------------------------------------------------------------------------- two-planner memory
+
+def test_mem2_uses_its_own_memory_file(harness):
+    assert harness.LEARNING_METHODS["appweaver_mem2"] == {"workflow_templates": True, "memory": True, "memory_file": "experience_A_both.jsonl"}
+    assert harness.memory_path_for_run("appweaver_mem2").name == "experience_A_both.jsonl"
+    assert harness.memory_path_for_run("appweaver_mem").name == "experience_A.jsonl"
+    assert harness.memory_path_for_run("appweaver_mem2").parent == harness.memory_path_for_run("appweaver_mem").parent
+
+
+def test_builder_adds_planner_only_proposals(tmp_path):
+    from evaluation import build_experience_memory as bem
+    rows = [{"intent_id": "x", "chain": ["KPM", "TC"], "rule": False, "reasons": ["missing required SLICE"], "status": "completed"},
+            {"intent_id": "y", "chain": [], "rule": False, "reasons": [], "status": "failed"}]
+    path = tmp_path / "glm.jsonl"
+    path.write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+    records, label = bem.load_planner_only(f"{path}:GLM-5.3-Flash", "langgraph_agentcard")
+    assert label == "GLM-5.3-Flash" and len(records) == 1  # failed planner calls are not proposals
+    rec = records[0]
+    assert rec["method"] == "langgraph_agentcard" and rec["generated_workflow"] == ["KPM", "TC"]
+    assert rec["workflow_match_rule"] is False and rec["workflow_rule_reasons"] == ["missing required SLICE"]

@@ -55,6 +55,19 @@ def load_records(run: Path, allow_partial: bool = False) -> List[Dict[str, Any]]
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
+def load_planner_only(spec: str, method: str) -> Tuple[List[Dict[str, Any]], str]:
+    """Extra training proposals from a planner-only check (evaluation/devcheck/*.jsonl rows: intent_id, chain, rule,
+    reasons), given as PATH[:LABEL]; returned as records of `method` so they are judged like a live run's."""
+    path_text, _, label = spec.partition(":")
+    path = Path(path_text).expanduser()
+    rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    records = [{"method": method, "intent_id": row["intent_id"], "generated_workflow": row.get("chain") or [],
+                "workflow_match_rule": row.get("rule"), "workflow_rule_reasons": row.get("reasons"),
+                "repeat_index": index, "record_id": f"{label or path.stem}:{row['intent_id']}"}
+               for index, row in enumerate(rows) if row.get("status") != "failed"]
+    return records, (label or path.stem)
+
+
 def run_registry(run: Path) -> Dict[str, Any]:
     """The Agent Registry of the training run, exactly as the paper scoring rebuilds it
     (evaluation/analyze_results.run_registry: current cards restricted to the manifest's card ids)."""
@@ -146,12 +159,20 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--method", default=DEFAULT_METHOD, help="whose proposals become the rejected examples (AppWeaver)")
     parser.add_argument("--max-rejected", type=int, default=MAX_REJECTED)
     parser.add_argument("--allow-partial", action="store_true", help="use records.partial.jsonl of an unfinished batch (previews only)")
+    parser.add_argument("--planner-only", action="append", default=[], metavar="PATH[:LABEL]",
+                        help="add AppWeaver proposals from a planner-only check on the same training intents (e.g. a second planner model)")
     args = parser.parse_args(argv)
 
     run = Path(args.run).expanduser().resolve()
     intents = json.loads(Path(args.intents).expanduser().read_text(encoding="utf-8"))
     records = load_records(run, allow_partial=args.allow_partial)
-    entries, stats = build_entries(intents, records, run_registry(run), run.name, method=args.method, max_rejected=args.max_rejected)
+    sources = [run.name]
+    for spec in args.planner_only:
+        extra, label = load_planner_only(spec, args.method)
+        records += extra
+        sources.append(label)
+    entries, stats = build_entries(intents, records, run_registry(run), " + ".join(dict.fromkeys(sources)),
+                                   method=args.method, max_rejected=args.max_rejected)
     check_label_free(entries, intents)
     out = Path(args.out).expanduser()
     out.parent.mkdir(parents=True, exist_ok=True)

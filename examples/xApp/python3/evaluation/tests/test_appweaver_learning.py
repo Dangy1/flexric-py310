@@ -333,7 +333,7 @@ def test_no_prompt_contains_notes_or_category_learning(harness, monkeypatch, nam
 def test_methods_labels_manifest_and_prompt_hashes(harness, monkeypatch):
     monkeypatch.setitem(harness.EVAL_RUNTIME_CONFIG, "memory_path", str(MEMORY))
     methods = harness.METHODS
-    assert methods.index("appweaver_tpl") == methods.index("langgraph_agentcard") + 1 and methods[-3:] == ["appweaver_mem", "appweaver_guided", "appweaver_v2"]
+    assert methods.index("appweaver_tpl") == methods.index("langgraph_agentcard") + 1 and methods[-4:] == ["appweaver_mem", "appweaver_guided", "appweaver_v2", "appweaver_mem2"]
     assert harness.METHOD_LABELS["appweaver_tpl"] == "AppWeaver + templates"
     assert harness.METHOD_LABELS["appweaver_mem"] == "AppWeaver + templates + memory"
     hashes = harness.prompt_builders_sha256()
@@ -387,7 +387,7 @@ def test_figures_know_the_variants():
     import make_paper_figures as mpf  # noqa: E402
 
     ids = [m for m, _ in mpf.METHODS]
-    assert ids[ids.index("langgraph_agentcard") + 1:] == ["appweaver_tpl", "appweaver_mem", "appweaver_guided", "appweaver_v2"]
+    assert ids[ids.index("langgraph_agentcard") + 1:] == ["appweaver_tpl", "appweaver_mem", "appweaver_guided", "appweaver_v2", "appweaver_mem2"]
 
 
 def test_harness_cli_guards_for_learning_methods(harness, tmp_path, monkeypatch):

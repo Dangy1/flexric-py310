@@ -82,6 +82,7 @@ METHODS = [
     "appweaver_mem",
     "appweaver_guided",
     "appweaver_v2",
+    "appweaver_mem2",
 ]
 
 # Learning variants (workstream F): AppWeaver + operator workflow-template cards, and additionally an
@@ -96,6 +97,9 @@ LEARNING_METHODS = {
     # needs: needs-first step + coverage check (backend/appweaver/needs.py), added for failure class F1.
     "appweaver_guided": {"workflow_templates": False, "memory": False, "guidance": True, "feedback": True, "needs": True},
     "appweaver_v2": {"workflow_templates": True, "memory": True, "guidance": True, "feedback": True, "needs": True},
+    # appweaver_mem with the two-planner experience memory: Batch A feedback on the proposals of gpt-oss-120b
+    # (live final Batch A) AND GLM-5.3-Flash (planner-only, Batch A intents), owner decision 2026-10-29.
+    "appweaver_mem2": {"workflow_templates": True, "memory": True, "memory_file": "experience_A_both.jsonl"},
 }
 
 # Paper-facing names. `llm_only` keeps its historical id but is the
@@ -115,6 +119,7 @@ METHOD_LABELS = {
     "appweaver_mem": "AppWeaver + templates + memory",
     "appweaver_guided": "AppWeaver + guidance + feedback",
     "appweaver_v2": "AppWeaver v2 (guidance + feedback + templates + memory)",
+    "appweaver_mem2": "AppWeaver + templates + memory (gpt-oss + GLM feedback)",
 }
 
 # A launched action only counts as a successful tool call once its log shows
@@ -1100,15 +1105,19 @@ def agentcard_prompt(intent: Dict[str, Any]) -> str:
     return compose_prompt(str(intent.get("intent") or ""), executable_agent_cards(intent))
 
 
-def memory_path_for_run() -> Path:
+def memory_path_for_run(method: Optional[str] = None) -> Path:
+    """The experience memory of a learning method: its own `memory_file` (next to the default memory) or --memory-path."""
+    memory_file = (LEARNING_METHODS.get(str(method or "")) or {}).get("memory_file")
+    if memory_file:
+        return (DEFAULT_MEMORY_PATH.parent / str(memory_file)).resolve()
     return Path(str(EVAL_RUNTIME_CONFIG.get("memory_path") or DEFAULT_MEMORY_PATH)).expanduser().resolve()
 
 
 _HARNESS_MEMORY: Dict[str, ExperienceMemory] = {}
 
 
-def experience_memory() -> ExperienceMemory:
-    path = memory_path_for_run()
+def experience_memory(method: Optional[str] = None) -> ExperienceMemory:
+    path = memory_path_for_run(method)
     key = f"{path}:{path.stat().st_mtime_ns}"
     if key not in _HARNESS_MEMORY:
         _HARNESS_MEMORY[key] = ExperienceMemory.load(path)
@@ -1122,11 +1131,11 @@ def appweaver_tpl_prompt(intent: Dict[str, Any]) -> str:
     return compose_prompt_with_context(text, executable_agent_cards(intent), templates, None)
 
 
-def appweaver_mem_prompt(intent: Dict[str, Any]) -> str:
-    """`appweaver_mem` Compose prompt for an intent record (the graph builds the same prompt)."""
+def appweaver_mem_prompt(intent: Dict[str, Any], method: str = "appweaver_mem") -> str:
+    """`appweaver_mem` / `appweaver_mem2` Compose prompt for an intent record (the graph builds the same prompt)."""
     text = str(intent.get("intent") or "")
     templates, _ = retrieve_workflow_cards(default_workflow_cards(AGENTS), text)
-    entries, _ = experience_memory().retrieve(text)
+    entries, _ = experience_memory(method).retrieve(text)
     return compose_prompt_with_context(text, executable_agent_cards(intent), templates, entries)
 
 
@@ -1497,7 +1506,7 @@ def execute_langgraph_agentcard(intent: Dict[str, Any], duration_s: int, repair:
         lease_wait_s=float(EVAL_RUNTIME_CONFIG.get("lease_wait_s") or 0.0),
         dryrun_duration_s=int(EVAL_RUNTIME_CONFIG.get("dryrun_duration_s") or 5),
         workflow_templates=bool(learning.get("workflow_templates")),
-        memory_path=str(memory_path_for_run()) if learning.get("memory") else None,
+        memory_path=str(memory_path_for_run(variant)) if learning.get("memory") else None,
         guidance=bool(learning.get("guidance")),
         feedback=bool(learning.get("feedback")),
         needs=bool(learning.get("needs")),
@@ -2132,7 +2141,7 @@ def learning_manifest(methods: List[str]) -> Dict[str, Any]:
     selected = [m for m in methods if m in LEARNING_METHODS]
     out: Dict[str, Any] = {
         "methods": {m: {"workflow_templates": bool(LEARNING_METHODS[m]["workflow_templates"]),
-                        "memory_path": str(memory_path_for_run()) if LEARNING_METHODS[m]["memory"] else None,
+                        "memory_path": str(memory_path_for_run(m)) if LEARNING_METHODS[m]["memory"] else None,
                         "guidance": bool(LEARNING_METHODS[m].get("guidance")),
                         "feedback": bool(LEARNING_METHODS[m].get("feedback")),
                         "needs": bool(LEARNING_METHODS[m].get("needs"))} for m in selected},
@@ -2141,11 +2150,17 @@ def learning_manifest(methods: List[str]) -> Dict[str, Any]:
         "template_k": AppWeaverConfig().template_k,
         "memory_path": None, "memory_sha256": None, "memory_entry_count": None,
     }
-    if any(LEARNING_METHODS[m]["memory"] for m in selected):
-        memory = experience_memory()
+    memory_methods = [m for m in selected if LEARNING_METHODS[m]["memory"]]
+    if memory_methods:
+        memory = experience_memory(memory_methods[0] if "appweaver_mem" not in memory_methods else "appweaver_mem")
         out.update({"memory_path": memory.path, "memory_sha256": memory.sha256, "memory_entry_count": len(memory.entries),
                     "memory_k": memory.k, "memory_min_score": memory.min_score,
                     "memory_sources": sorted({str((e.get("provenance") or {}).get("run")) for e in memory.entries})})
+        out["memory_by_method"] = {}
+        for m in memory_methods:
+            mm = experience_memory(m)
+            out["memory_by_method"][m] = {"path": mm.path, "sha256": mm.sha256, "entry_count": len(mm.entries),
+                                          "sources": sorted({str((e.get("provenance") or {}).get("run")) for e in mm.entries})}
     return out
 
 
@@ -2236,8 +2251,9 @@ def main(argv: List[str]) -> int:
     methods = [method for method in args.methods if method in METHODS]
     if not methods:
         raise SystemExit("No supported methods were selected.")
-    if any(LEARNING_METHODS[m]["memory"] for m in methods if m in LEARNING_METHODS) and not memory_path_for_run().exists():
-        raise SystemExit(f"appweaver_mem needs an experience memory: {memory_path_for_run()} not found (evaluation/build_experience_memory.py).")
+    for m in [m for m in methods if m in LEARNING_METHODS and LEARNING_METHODS[m]["memory"]]:
+        if not memory_path_for_run(m).exists():
+            raise SystemExit(f"{m} needs an experience memory: {memory_path_for_run(m)} not found (evaluation/build_experience_memory.py).")
     # The template (+ memory) sections add ~1.3k (~2.3k) characters to AppWeaver's Compose prompt; with the
     # Batch A registry appweaver_mem prompts reach ~8.3k, over the portal's 8000-character UI input guard.
     # The guard only rejects; lifting it changes no method's prompt.
