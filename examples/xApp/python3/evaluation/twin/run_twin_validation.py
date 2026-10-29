@@ -270,8 +270,15 @@ class KpmState:
                 c["RRU.PrbTotDl"] = round(c["RRU.PrbTotDl"] / peak, 3)
         return {"available": bool(cells), "cells": cells, "detail": "ns-3 KPM via xapp_appweaver_actuator"}
 
+    def grid_aligned(self) -> bool:
+        """True with the simulator's report-window fix (2026-10-28 fix 8): gNB reports are stamped on the
+        100 ms tick and cover the window that ends there; before it, the stamp started a phi-ms window."""
+        return self.first_du_stamp_us is not None and self.first_du_stamp_us % PERIOD_US == 0
+
     def window_bins(self, t0: float, t1: float) -> range:
-        return range(int(round(t0 / IND_PERIOD)), int(round(t1 / IND_PERIOD)))
+        """Period bins of the KPI window (t0, t1]."""
+        k0, k1 = int(round(t0 / IND_PERIOD)), int(round(t1 / IND_PERIOD))
+        return range(k0 + 1, k1 + 1) if self.grid_aligned() else range(k0, k1)
 
     def window_kpis(self, t0: float, t1: float, gnbs: List[int]) -> Dict[str, Any]:
         """Mean over the period bins of [t0, t1) of the per-period sum over `gnbs` (a gNB without a report in
@@ -311,6 +318,18 @@ def energy_window(out_dir: Path, gnbs: List[int], t0: float, t1: float, per_cell
     return (value, cells) if per_cell else value
 
 
+def _trace_simid(out_dir: Path) -> Optional[int]:
+    """Run id (simid column of ue_position.txt), the time base of the ns-3 traces after simulator fix 9."""
+    path = out_dir / "ue_position.txt"
+    if not path.exists():
+        return None
+    with path.open() as handle:
+        for row in csv.reader(handle):
+            if len(row) >= 7 and row[6].isdigit():
+                return int(row[6])
+    return None
+
+
 def du_trace_kpis(out_dir: Path, gnbs: List[int], t0: float, t1: float, e2: Optional["KpmState"] = None) -> Dict[str, Any]:
     """Per-cell PRB and RLC buffer from the ns-3 DU logger files du-cell-<c>.txt. Their timestamp is an
     uninitialised constant (m_startTime) + simulated ms; the logger writes every 100 ms from t = 0.1 s, so the
@@ -342,13 +361,16 @@ def du_trace_kpis(out_dir: Path, gnbs: List[int], t0: float, t1: float, e2: Opti
     if not stamps:
         raise RuntimeError("no DU logger rows")
     base = min(stamps) - int(round(IND_PERIOD * 1000))
+    simid = _trace_simid(out_dir)
+    if simid is not None and all(0 < ts - simid <= SIM_TIME * 1000 and (ts - simid) % 100 == 0 for ts in stamps):
+        base = simid  # simulator fix 9: trace timestamp = run id + sim ms (as ue_position.txt)
     span = max(stamps) - min(stamps)
     expected_span = int(round((SIM_TIME - 2 * IND_PERIOD) * 1000))
     if span != expected_span:  # no cell logged from 0.1 s to SIM_TIME - 0.1 s: the anchor is not trustworthy
         raise RuntimeError(f"DU logger span {span} ms != {expected_span} ms")
     writes = [w for w in range(int(round(t0 * 1000)) + 100, int(round(t1 * 1000)) + 1, 100)]
     phi = None
-    if e2 is not None and e2.first_du_stamp_us is not None:
+    if e2 is not None and e2.first_du_stamp_us is not None and not e2.grid_aligned():
         phi = (e2.first_du_stamp_us % PERIOD_US) / 1000.0  # ms after the 100 ms boundary (constant per run)
     per_cell: Dict[str, Dict[str, float]] = {}
     for cell in gnbs:
@@ -363,7 +385,10 @@ def du_trace_kpis(out_dir: Path, gnbs: List[int], t0: float, t1: float, e2: Opti
                            for w in writes]
         per_cell[str(cell)] = {"prb_used_dl": sum(prb_periods) / len(writes),
                                "dl_buffer_kbytes": sum(buf.get(w, 0.0) for w in writes) / len(writes) / 1000.0}
-    return {"per_cell": per_cell, "writes": len(writes), "prb_method": "logger" if phi is None else f"e2+logger, phi={phi:.3f} ms",
+    method = "logger" if phi is None else f"e2+logger, phi={phi:.3f} ms"
+    if e2 is not None and e2.grid_aligned():
+        method = "logger (E2 reports grid-aligned: same window)"
+    return {"per_cell": per_cell, "writes": len(writes), "prb_method": method,
             "prb_used_dl": sum(c["prb_used_dl"] for c in per_cell.values()),
             "dl_buffer_kbytes": sum(c["dl_buffer_kbytes"] for c in per_cell.values())}
 
@@ -685,7 +710,11 @@ def run_instance(role: str, seed: int, n_ues: int, workflow: str, slot: int, out
         for trace in (run_dir / "ns3_out").glob("*.txt"):
             if trace.stat().st_size > 5_000_000:
                 trace.unlink()  # large ns-3 traces are not needed for the KPI window
-        apply_trace_kpis(run_dir, result)
+        trace_error = None
+        try:
+            apply_trace_kpis(run_dir, result)
+        except Exception as exc:  # e.g. ns-3 aborted: reported with the other problems below
+            trace_error = f"trace KPIs: {exc}"
         result["first_report_sim_s"] = None if state.first_du_stamp_us is None else round(state.first_du_stamp_us / 1e6, 4)
         result["last_report_sim_s"] = round(state.sim_time(), 4)
         result["kpm_history_at_act_s"] = (None if state.first_du_stamp_us is None or "act_sim_time_s" not in result
@@ -695,7 +724,7 @@ def run_instance(role: str, seed: int, n_ues: int, workflow: str, slot: int, out
         result["indications_per_gnb"] = {str(g): len(state.bins.get(g, ())) for g in GNBS}
         result["rc_acks"] = ack_file.read_text().splitlines() if ack_file.exists() else []
         result["ns3_returncode"] = ns3.returncode
-        problems = []
+        problems = [trace_error] if trace_error else []
         if ns3.returncode != 0:
             problems.append(f"ns-3 rc={ns3.returncode}")
         if result.get("act_sim_time_s") is None:
@@ -928,13 +957,50 @@ def _num(v: Optional[float]) -> str:
     return f"{v + 0.0:+.1f}"  # + 0.0: no "-0.0"
 
 
+def source_agreement(results: List[Dict[str, Any]], trace: Dict[str, Any], e2: Dict[str, Any]) -> Dict[str, Any]:
+    """How far the E2-KPM KPIs are from the trace KPIs: per-run relative difference of the same KPI
+    (PRB per cell and total; throughput is a different measurement: gNB RLC rate vs UE-received PDCP),
+    sign agreement of the predicted/actual deltas, and agreement of the gate verdicts."""
+    rel: Dict[str, List[float]] = defaultdict(list)
+    for r in results:
+        if not r.get("ok") or "kpi_e2" not in r:
+            continue
+        for kpi in ("prb_used_dl", "dl_throughput_mbps", "dl_buffer_kbytes"):
+            a, b = r["kpi"].get(kpi), r["kpi_e2"].get(kpi)
+            if a and b is not None:
+                rel[kpi].append(100.0 * (b - a) / a)
+        for cell, vals in (r.get("kpi_per_cell") or {}).items():
+            a, b = vals.get("prb_used_dl"), (r.get("kpi_per_cell_e2") or {}).get(cell, {}).get("prb_used_dl")
+            if a and b is not None and a > 1.0:
+                rel["prb_used_dl_per_cell"].append(100.0 * (b - a) / a)
+    out: Dict[str, Any] = {"e2_minus_trace_pct": {k: {"n": len(v), "mean": _mean(v), "min": min(v), "max": max(v)} for k, v in rel.items() if v}}
+    signs = {}
+    for key in ("predicted_delta", "actual_delta"):
+        tr = {(x["pair"], x["workflow"], x["kpi"]): x[key] for x in trace["rows"]}
+        ee = {(x["pair"], x["workflow"], x["kpi"]): x[key] for x in e2["rows"]}
+        for kpi in ("prb_used_dl", "dl_throughput_mbps", "energy_j_per_s"):
+            common = [k for k in tr if k in ee and k[2] == kpi]
+            same = [((tr[k] > 0) - (tr[k] < 0)) == ((ee[k] > 0) - (ee[k] < 0)) for k in common]
+            signs[f"{key}/{kpi}"] = (sum(same) / len(same)) if same else None
+    out["delta_sign_agreement"] = signs
+    tg = {(r["pair"], r["workflow"]): r for r in trace["gate"]["rows"]}
+    eg = {(r["pair"], r["workflow"]): r for r in e2["gate"]["rows"]}
+    common = [k for k in tg if k in eg]
+    out["gate_verdict_agreement"] = {
+        side: (sum(tg[k][side]["accept"] == eg[k][side]["accept"] for k in common) / len(common)) if common else None
+        for side in ("twin", "live")}
+    out["gate_cases"] = len(common)
+    return out
+
+
 def write_summaries(out: Path, results: List[Dict[str, Any]], excluded: Iterable[int]) -> Dict[str, Any]:
     """summary.json/.md (KPIs from the ns-3 traces, KPI_SOURCE) and summary_e2kpm.json/.md (E2 KPM KPIs)."""
     summary = analyse(results, excluded)
     summary["kpi_source"] = KPI_SOURCE
+    e2 = analyse(e2_view(results), excluded)
+    summary["source_agreement"] = source_agreement(results, summary, e2)
     (out / "summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True))
     write_report(out, summary, results)
-    e2 = analyse(e2_view(results), excluded)
     e2["kpi_source"] = "E2 KPM stream (report-phase dependent PRB/throughput window; see summary.json kpi_source)"
     (out / "summary_e2kpm.json").write_text(json.dumps(e2, indent=2, sort_keys=True))
     write_report(out, e2, results, report_name="summary_e2kpm",
@@ -991,6 +1057,16 @@ def write_report(out: Path, summary: Dict[str, Any], results: List[Dict[str, Any
                 return f"hot PRB {_num(g['hot_prb_reduction_pct'])}% cut, thp {_num(g['throughput_loss_pct'])}% lost, {g['commands']} cmd"
             lines.append(f"| {r['pair']} | {r['workflow']} | {pol} | {crit(r['twin'])} | {'accept' if r['twin']['accept'] else 'reject'} | "
                          f"{crit(r['live'])} | {'accept' if r['live']['accept'] else 'reject'} |")
+    agree = summary.get("source_agreement")
+    if agree:
+        lines += ["", "## E2 KPM vs ns-3 trace KPIs", "",
+                  "Per-run difference E2 - trace (% of trace): " + "; ".join(
+                      f"{k} mean {v['mean']:+.1f} (min {v['min']:+.1f}, max {v['max']:+.1f}, n={v['n']})"
+                      for k, v in agree["e2_minus_trace_pct"].items()) + ".",
+                  "Delta sign agreement between sources: " + "; ".join(
+                      f"{k} {100 * v:.0f}%" for k, v in agree["delta_sign_agreement"].items() if v is not None) + ".",
+                  f"Gate verdicts identical under both sources: twin {100 * (agree['gate_verdict_agreement']['twin'] or 0):.0f}%, "
+                  f"live {100 * (agree['gate_verdict_agreement']['live'] or 0):.0f}% of {agree['gate_cases']} cases."]
     lines += ["", "Runs in which the deployed policy produced RC commands:", ""]
     lines += [f"- {role} {wf}: {n}" for (role, wf), n in sorted(acted.items())]
     if failed:

@@ -167,3 +167,23 @@ def test_prb_rebuilt_from_e2_and_logger(tmp_path):
     assert du["prb_method"].startswith("e2+logger, phi=25.000")
     assert math.isclose(du["per_cell"]["2"]["prb_used_dl"], (25 * 40 + 75 * 20) / 100)
     assert math.isclose(tv.du_trace_kpis(tmp_path, [2], 2.5, 7.9)["per_cell"]["2"]["prb_used_dl"], 20.0)
+
+
+def test_grid_aligned_window_and_simid_base(tmp_path):
+    # simulator fix 8: gNB stamps on the 100 ms tick, each covering the window that ends there
+    rows = [(1, k * 100_000, 7, 2, 1, "RRU.PrbUsedDl.UEID", 0, k) for k in range(6, 81)]
+    state = _kpm(tmp_path, rows)
+    assert state.grid_aligned()
+    bins = state.window_bins(2.5, 7.9)
+    assert bins[0] == 26 and bins[-1] == 79 and len(bins) == 54
+    win = state.window_kpis(2.5, 7.9, [2])
+    assert math.isclose(win["prb_used_dl"], sum(range(26, 80)) / 54)
+    # simulator fix 9: trace timestamp = simid + sim ms
+    simid = 1793124066177
+    (tmp_path / "ue_position.txt").write_text(f"timestamp,id,x,y,type,cell,simid\n{simid},1,1.0,2.0,mc,2,{simid}\n")
+    cols = ["timestamp", "ueImsiComplete", "plmId", "RRU.PrbUsedDl.UEID", "DRB.BufferSize.Qos.UEID"]
+    lines = [",".join(cols)] + [f"{simid + ms},00001,x,{ms // 100},0" for ms in range(100, 8000, 100)]
+    (tmp_path / "du-cell-2.txt").write_text("\n".join(lines) + "\n")
+    du = tv.du_trace_kpis(tmp_path, [2], 2.5, 7.9, state)
+    assert du["prb_method"].startswith("logger (E2 reports grid-aligned")
+    assert math.isclose(du["per_cell"]["2"]["prb_used_dl"], sum(range(26, 80)) / 54)  # same windows as E2

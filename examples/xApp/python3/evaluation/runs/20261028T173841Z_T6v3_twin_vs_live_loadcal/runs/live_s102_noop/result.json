@@ -1,0 +1,110 @@
+{
+  "act_sim_time_s": 2.0,
+  "chain": [
+    "KPM"
+  ],
+  "clock": "sim-time collectStartTime",
+  "commands_dispatched_sim_s": [],
+  "first_report_sim_s": 0.2,
+  "indications_per_gnb": {
+    "2": 79,
+    "3": 0,
+    "4": 0,
+    "5": 79
+  },
+  "kpi": {
+    "dl_buffer_kbytes": 6925.831111111112,
+    "dl_delay_ms": 3.0019127189549764,
+    "dl_throughput_mbps": 25.16664380952381,
+    "energy_j_per_s": 5024.246296296296,
+    "prb_used_dl": 98.49648464814813
+  },
+  "kpi_e2": {
+    "dl_buffer_kbytes": 6925.831111111112,
+    "dl_throughput_mbps": 14.881,
+    "energy_j_per_s": 5024.246296296296,
+    "prb_used_dl": 95.46296296296296
+  },
+  "kpi_per_cell": {
+    "2": {
+      "dl_buffer_kbytes": 4727.267148148148,
+      "energy_j_per_s": 2260.2018518518516,
+      "prb_used_dl": 66.78848874074072
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.0,
+      "energy_j_per_s": 665.7351851851852,
+      "prb_used_dl": 0.0
+    },
+    "4": {
+      "dl_buffer_kbytes": 0.0,
+      "energy_j_per_s": 665.7351851851852,
+      "prb_used_dl": 0.0
+    },
+    "5": {
+      "dl_buffer_kbytes": 2198.563962962963,
+      "energy_j_per_s": 1432.574074074074,
+      "prb_used_dl": 31.70799590740741
+    }
+  },
+  "kpi_per_cell_e2": {
+    "2": {
+      "dl_buffer_kbytes": 4727.267148148148,
+      "dl_throughput_mbps": 10.588777777777777,
+      "energy_j_per_s": 2260.2018518518516,
+      "prb_used_dl": 64.66666666666667
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.0,
+      "dl_throughput_mbps": 0.0,
+      "energy_j_per_s": 665.7351851851852,
+      "prb_used_dl": 0.0
+    },
+    "4": {
+      "dl_buffer_kbytes": 0.0,
+      "dl_throughput_mbps": 0.0,
+      "energy_j_per_s": 665.7351851851852,
+      "prb_used_dl": 0.0
+    },
+    "5": {
+      "dl_buffer_kbytes": 2198.563962962963,
+      "dl_throughput_mbps": 4.292222222222223,
+      "energy_j_per_s": 1432.574074074074,
+      "prb_used_dl": 30.796296296296298
+    }
+  },
+  "kpi_source": {
+    "version": "ns3-trace-v2"
+  },
+  "kpi_trace_window": {
+    "du_logger_writes": 54,
+    "pdcp_epochs_s": [
+      2.5,
+      7.75
+    ],
+    "prb_method": "logger (E2 reports grid-aligned: same window)"
+  },
+  "kpi_window_bins": [
+    54,
+    54
+  ],
+  "kpi_window_sim_s": [
+    2.5,
+    7.9
+  ],
+  "kpm_history_at_act_s": 1.8,
+  "last_report_sim_s": 8.0,
+  "load_avg_end": 2.75341796875,
+  "load_avg_start": 2.142578125,
+  "n_ues": 10,
+  "novalue_rows": 0,
+  "ns3_returncode": 0,
+  "ok": true,
+  "rc_acks": [],
+  "role": "live",
+  "seed": 102,
+  "sim_time_s": 8.0,
+  "t_act_s": 2.0,
+  "wall_s": 250.9,
+  "workflow": "noop"
+}

@@ -1,0 +1,254 @@
+{
+  "created_at": "2026-10-28T22:10:20+0200",
+  "scenario": "scenario-zero-with_parallel_loging",
+  "ns3_bin": "/home/dang/ns-oran-flexric/mmwave-LENA-oran/build/scratch/ns3.42-scenario-zero-with_parallel_loging-optimized",
+  "ns3_bin_mtime": "2026-10-28T19:13:12+0200",
+  "ns3_bin_sha256": "75df6efbd2831c4d6198130f030e4074e7e443777dd6d3cc5553d96010c29905",
+  "actuator": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/xapp_appweaver_actuator",
+  "actuator_sha256": "5d5d3384db38e05f6d1a4517c9c036453831ab4cff37309d84bb036acf2d631b",
+  "rapps_runtime_sha256": "31878f8f13e59b6d62b462a7189379fe33d4e398ee948e0a7f4cb46fb66f69fd",
+  "rapps_catalog_sha256": "e02e2aa56719a223cfd85d9dd2e70f59ec9f47060eef6b2b14d4422d0f576017",
+  "flexric": "/home/dang/flexric-taap",
+  "ric_ports": "E2 36500+10*slot, E42 36501+10*slot (one RIC per run)",
+  "n_gnb": 4,
+  "twin_ues": 10,
+  "live_ues": 10,
+  "sync": "load",
+  "sim_time_s": 8.0,
+  "t_act_s": 2.0,
+  "t_act_definition": "absolute simulated time (KPM collectStartTime is sim time)",
+  "min_kpm_history_s": 0.5,
+  "settle_s": 0.5,
+  "kpi_window_sim_s": [
+    2.5,
+    7.9
+  ],
+  "indication_period_s": 0.1,
+  "workflows": {
+    "noop": [
+      "KPM"
+    ],
+    "energy_saving": [
+      "KPM",
+      "RAPP.ENERGY_SAVING",
+      "RC"
+    ],
+    "traffic_steering": [
+      "KPM",
+      "RAPP.TRAFFIC_STEERING",
+      "RC"
+    ],
+    "qoe_steering": [
+      "KPM",
+      "RAPP.QOE_PREDICTION",
+      "RAPP.TRAFFIC_STEERING",
+      "RC"
+    ]
+  },
+  "jobs": 72,
+  "kpis": [
+    "prb_used_dl",
+    "dl_throughput_mbps",
+    "dl_delay_ms",
+    "dl_buffer_kbytes",
+    "energy_j_per_s"
+  ],
+  "pairs": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "protocol": "policy decided on the twin at t_act, deployed unchanged on live; deltas vs same-instance noop",
+  "gate": {
+    "thresholds": {
+      "energy_saving": {
+        "accept_if": "energy_saving_pct >= 5 AND remaining_prb_increase_pct <= 30",
+        "energy_saving_min_pct": 5.0,
+        "remaining_prb_increase_max_pct": 30.0
+      },
+      "traffic_steering": {
+        "accept_if": "hot_prb_reduction_pct >= 5 AND throughput_loss_pct <= 5",
+        "hot_prb_reduction_min_pct": 5.0,
+        "throughput_loss_max_pct": 5.0
+      },
+      "qoe_steering": {
+        "accept_if": "hot_prb_reduction_pct >= 5 AND throughput_loss_pct <= 5",
+        "hot_prb_reduction_min_pct": 5.0,
+        "throughput_loss_max_pct": 5.0
+      }
+    },
+    "definitions": {
+      "energy_saving_pct": "-100 * (energy_wf - energy_noop) / energy_noop, all gNBs, J per simulated s in the KPI window",
+      "remaining_prb_increase_pct": "100 * (PRB_wf - PRB_noop) / PRB_noop summed over the gNBs this instance did not switch off (its own OFF commands); noop sum 0 -> 0 if wf sum is 0 else +inf",
+      "hot_prb_reduction_pct": "-100 * (PRB_wf - PRB_noop) / PRB_noop summed over the policy's source cells (shed.from); no source cell or noop sum 0 -> undefined -> reject",
+      "throughput_loss_pct": "-100 * (thp_wf - thp_noop) / thp_noop, all gNBs",
+      "verdict": "accept iff every criterion of the workflow holds; twin verdict from predicted (twin) deltas, live outcome from measured (live) deltas, same thresholds"
+    }
+  },
+  "exclusion_rule": "a pair is excluded from the analysis iff one of its runs still fails after one automatic retry (ns-3 abort, E2 setup timeout, no KPM before t_act); no replacement pairs are added",
+  "parallel": 2,
+  "nice": 10,
+  "host_context": "AppWeaver Batch B / seeded re-run running concurrently on the FlexRIC stack (run_harness.py seeded-conflict intents, label A_seeded_rerun_final_gptoss120b*, started 2026-10-28 19:16 local: agent portal, nearRT-RIC 36421/36422, emu_agent_gnb, twin emulator on 127.0.0.2, LLM calls to spark1 gpt-oss-120b); T6v3 runs under nice -n 10 with --parallel 2",
+  "host_at_start": {
+    "time": "2026-10-28T22:10:20+0200",
+    "loadavg": [
+      1.87646484375,
+      2.201171875,
+      2.25
+    ],
+    "cpu_count": 16,
+    "processes": [
+      {
+        "pid": 855561,
+        "elapsed_s": 42593,
+        "cmd": "/home/dang/flexric-taap/build/examples/xApp/c/appweaver/xapp_kpm_capture -c /home/dang/flexric-taap/install/etc/flexric/flexric.conf -p /home/dang/flexric-taap/install/lib/flexric/"
+      },
+      {
+        "pid": 1284840,
+        "elapsed_s": 10454,
+        "cmd": "/bin/bash -c source /home/dang/.claude/shell-snapshots/snapshot-bash-1793117527950-bsy0kt.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && { \\builtin unalias -- 'unsetenv'; \\builtin unset -f -- 'unsetenv'; } >/dev/null 2>&1 || true && eval 'F=/tmp/appweaver_batches/chain_final_B_aft"
+      },
+      {
+        "pid": 1368590,
+        "elapsed_s": 4221,
+        "cmd": "python run_harness.py --intents intents_v2.json --methods manual_rule single_xapp llm_blind llm_only agentcard_no_repair langgraph_agentcard --repeat 3 --tool-ack-timeout-s 12 --validate-mode dryrun --lease-wait-s 45 --health-cmd /home/dang/flexric/build/examples/xApp/python3/scripts/probe_e42.sh &&",
+        "label": "B_k8_final_gptoss120b_spark1"
+      },
+      {
+        "pid": 1418850,
+        "elapsed_s": 804,
+        "cmd": "/home/dang/flexric/build/examples/ric/nearRT-RIC"
+      },
+      {
+        "pid": 1418883,
+        "elapsed_s": 802,
+        "cmd": "/home/dang/flexric/build/examples/emulator/agent/emu_agent_gnb"
+      },
+      {
+        "pid": 1418895,
+        "elapsed_s": 800,
+        "cmd": "/home/dang/anaconda3/envs/flexric-py310/bin/python /home/dang/flexric/build/examples/xApp/python3/flexric_agent_portal.py"
+      },
+      {
+        "pid": 1418965,
+        "elapsed_s": 799,
+        "cmd": "/home/dang/anaconda3/envs/flexric-py310/bin/python -m uvicorn xapp_rpc_server:app --host 0.0.0.0 --port 8090 --app-dir /home/dang/flexric/build/examples/xApp/python3"
+      },
+      {
+        "pid": 1419011,
+        "elapsed_s": 797,
+        "cmd": "/home/dang/anaconda3/envs/flexric-py310/bin/python -u /home/dang/flexric/build/examples/xApp/python3/xapp_kpm_rc_suite.py --profile kpm --period-ms 1000 --duration-s 0 --kpm-metrics all"
+      },
+      {
+        "pid": 1419052,
+        "elapsed_s": 796,
+        "cmd": "/home/dang/flexric/build/examples/ric/nearRT-RIC -c /tmp/flexric_twin_emu/flexric_twin.conf -p /usr/local/lib/flexric/"
+      },
+      {
+        "pid": 1419079,
+        "elapsed_s": 796,
+        "cmd": "/home/dang/flexric/build/examples/emulator/agent/emu_agent_gnb -c /tmp/flexric_twin_emu/flexric_twin.conf -p /usr/local/lib/flexric/"
+      },
+      {
+        "pid": 1429864,
+        "elapsed_s": 0,
+        "cmd": "python -u run_twin_validation.py --pairs 1-9 --parallel 2 --host-context AppWeaver Batch B / seeded re-run running concurrently on the FlexRIC stack (run_harness.py seeded-conflict intents, label A_seeded_rerun_final_gptoss120b*, started 2026-10-28 19:16 local: agent portal, nearRT-RIC 36421/36422, "
+      }
+    ],
+    "harness_labels": [
+      "B_k8_final_gptoss120b_spark1"
+    ]
+  },
+  "reused_live_noop_from": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261028T173841Z_T6v3_twin_vs_live",
+  "note": "T6v3: same protocol, gate thresholds, pairs 1-9 and exclusion rule as T6v2; simulator with fixes 8-9 (mmwave-LENA-oran-0004: E2 gNB report = 100 ms trace window on the grid; trace timestamps = simid + sim ms)",
+  "excluded_pairs": {
+    "3": "twin_s3_energy_saving: DU logger span 100 ms != 7800 ms"
+  },
+  "host_at_end": {
+    "time": "2026-10-29T00:37:25+0200",
+    "loadavg": [
+      1.2373046875,
+      1.39208984375,
+      1.486328125
+    ],
+    "cpu_count": 16,
+    "processes": [
+      {
+        "pid": 855561,
+        "elapsed_s": 51418,
+        "cmd": "/home/dang/flexric-taap/build/examples/xApp/c/appweaver/xapp_kpm_capture -c /home/dang/flexric-taap/install/etc/flexric/flexric.conf -p /home/dang/flexric-taap/install/lib/flexric/"
+      },
+      {
+        "pid": 1284840,
+        "elapsed_s": 19279,
+        "cmd": "/bin/bash -c source /home/dang/.claude/shell-snapshots/snapshot-bash-1793117527950-bsy0kt.sh 2>/dev/null || true && shopt -u extglob 2>/dev/null || true && { \\builtin unalias -- 'unsetenv'; \\builtin unset -f -- 'unsetenv'; } >/dev/null 2>&1 || true && eval 'F=/tmp/appweaver_batches/chain_final_B_aft"
+      },
+      {
+        "pid": 1368590,
+        "elapsed_s": 13046,
+        "cmd": "python run_harness.py --intents intents_v2.json --methods manual_rule single_xapp llm_blind llm_only agentcard_no_repair langgraph_agentcard --repeat 3 --tool-ack-timeout-s 12 --validate-mode dryrun --lease-wait-s 45 --health-cmd /home/dang/flexric/build/examples/xApp/python3/scripts/probe_e42.sh &&",
+        "label": "B_k8_final_gptoss120b_spark1"
+      },
+      {
+        "pid": 1429864,
+        "elapsed_s": 8825,
+        "cmd": "python -u run_twin_validation.py --pairs 1-9 --parallel 2 --host-context AppWeaver Batch B / seeded re-run running concurrently on the FlexRIC stack (run_harness.py seeded-conflict intents, label A_seeded_rerun_final_gptoss120b*, started 2026-10-28 19:16 local: agent portal, nearRT-RIC 36421/36422, "
+      },
+      {
+        "pid": 1512629,
+        "elapsed_s": 1767,
+        "cmd": "/home/dang/flexric/build/examples/ric/nearRT-RIC"
+      },
+      {
+        "pid": 1512671,
+        "elapsed_s": 1765,
+        "cmd": "/home/dang/flexric/build/examples/emulator/agent/emu_agent_gnb"
+      },
+      {
+        "pid": 1512683,
+        "elapsed_s": 1763,
+        "cmd": "/home/dang/anaconda3/envs/flexric-py310/bin/python /home/dang/flexric/build/examples/xApp/python3/flexric_agent_portal.py"
+      },
+      {
+        "pid": 1512733,
+        "elapsed_s": 1762,
+        "cmd": "/home/dang/anaconda3/envs/flexric-py310/bin/python -m uvicorn xapp_rpc_server:app --host 0.0.0.0 --port 8090 --app-dir /home/dang/flexric/build/examples/xApp/python3"
+      },
+      {
+        "pid": 1512803,
+        "elapsed_s": 1759,
+        "cmd": "/home/dang/anaconda3/envs/flexric-py310/bin/python -u /home/dang/flexric/build/examples/xApp/python3/xapp_kpm_rc_suite.py --profile kpm --period-ms 1000 --duration-s 0 --kpm-metrics all"
+      },
+      {
+        "pid": 1512855,
+        "elapsed_s": 1759,
+        "cmd": "/home/dang/flexric/build/examples/ric/nearRT-RIC -c /tmp/flexric_twin_emu/flexric_twin.conf -p /usr/local/lib/flexric/"
+      },
+      {
+        "pid": 1512871,
+        "elapsed_s": 1758,
+        "cmd": "/home/dang/flexric/build/examples/emulator/agent/emu_agent_gnb -c /tmp/flexric_twin_emu/flexric_twin.conf -p /usr/local/lib/flexric/"
+      },
+      {
+        "pid": 1538556,
+        "elapsed_s": 0,
+        "cmd": "timeout 8 python -c  import os, xapp_sdk as ric ric.init() os._exit(0 if len(ric.conn_e2_nodes()) else 2) "
+      },
+      {
+        "pid": 1538557,
+        "elapsed_s": 0,
+        "cmd": "python -c  import os, xapp_sdk as ric ric.init() os._exit(0 if len(ric.conn_e2_nodes()) else 2) "
+      }
+    ],
+    "harness_labels": [
+      "B_k8_final_gptoss120b_spark1"
+    ]
+  },
+  "finished_at": "2026-10-29T00:37:25+0200"
+}

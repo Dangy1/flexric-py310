@@ -1,0 +1,170 @@
+{
+  "act_sim_time_s": 2.0,
+  "chain": [
+    "KPM",
+    "RAPP.TRAFFIC_STEERING",
+    "RC"
+  ],
+  "clock": "sim-time collectStartTime",
+  "commands": [
+    "HO 10 4",
+    "HO 4 4"
+  ],
+  "commands_dispatched_sim_s": [
+    [
+      2.0,
+      "HO 10 4"
+    ],
+    [
+      2.0,
+      "HO 4 4"
+    ]
+  ],
+  "first_report_sim_s": 0.2,
+  "indications_per_gnb": {
+    "2": 79,
+    "3": 79,
+    "4": 79,
+    "5": 79
+  },
+  "kpi": {
+    "dl_buffer_kbytes": 727.0766481481481,
+    "dl_delay_ms": 98.58287496795984,
+    "dl_throughput_mbps": 32.26904380952381,
+    "energy_j_per_s": 8493.298148148147,
+    "prb_used_dl": 243.94224212962962
+  },
+  "kpi_e2": {
+    "dl_buffer_kbytes": 727.0766481481481,
+    "dl_throughput_mbps": 18.494518518518518,
+    "energy_j_per_s": 8493.298148148147,
+    "prb_used_dl": 239.16666666666669
+  },
+  "kpi_per_cell": {
+    "2": {
+      "dl_buffer_kbytes": 0.765537037037037,
+      "energy_j_per_s": 2286.496296296296,
+      "prb_used_dl": 67.90315477777777
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.4573333333333333,
+      "energy_j_per_s": 1277.1037037037038,
+      "prb_used_dl": 25.117447037037046
+    },
+    "4": {
+      "dl_buffer_kbytes": 711.2768888888888,
+      "energy_j_per_s": 2500.7074074074067,
+      "prb_used_dl": 76.98090283333332
+    },
+    "5": {
+      "dl_buffer_kbytes": 14.576888888888888,
+      "energy_j_per_s": 2428.9907407407404,
+      "prb_used_dl": 73.94073748148146
+    }
+  },
+  "kpi_per_cell_e2": {
+    "2": {
+      "dl_buffer_kbytes": 0.765537037037037,
+      "dl_throughput_mbps": 7.593092592592592,
+      "energy_j_per_s": 2286.496296296296,
+      "prb_used_dl": 65.85185185185185
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.4573333333333333,
+      "dl_throughput_mbps": 1.9358148148148149,
+      "energy_j_per_s": 1277.1037037037038,
+      "prb_used_dl": 24.59259259259259
+    },
+    "4": {
+      "dl_buffer_kbytes": 711.2768888888888,
+      "dl_throughput_mbps": 5.411185185185185,
+      "energy_j_per_s": 2500.7074074074067,
+      "prb_used_dl": 75.70370370370371
+    },
+    "5": {
+      "dl_buffer_kbytes": 14.576888888888888,
+      "dl_throughput_mbps": 3.554425925925926,
+      "energy_j_per_s": 2428.9907407407404,
+      "prb_used_dl": 73.01851851851852
+    }
+  },
+  "kpi_source": {
+    "version": "ns3-trace-v2"
+  },
+  "kpi_trace_window": {
+    "du_logger_writes": 54,
+    "pdcp_epochs_s": [
+      2.5,
+      7.75
+    ],
+    "prb_method": "logger (E2 reports grid-aligned: same window)"
+  },
+  "kpi_window_bins": [
+    54,
+    54
+  ],
+  "kpi_window_sim_s": [
+    2.5,
+    7.9
+  ],
+  "kpm_history_at_act_s": 1.8,
+  "last_report_sim_s": 8.0,
+  "load_avg_end": 2.22314453125,
+  "load_avg_start": 2.61279296875,
+  "n_ues": 10,
+  "novalue_rows": 0,
+  "ns3_returncode": 0,
+  "ok": true,
+  "policy": {
+    "shed": [
+      {
+        "from": 2,
+        "share": 0.2,
+        "to": 4
+      }
+    ],
+    "sleep_cells": [],
+    "trace": {
+      "kpm_snapshot": {
+        "2": {
+          "DRB.UEThpDl": 1.7533666666666667,
+          "RRU.PrbTotDl": 1.0
+        },
+        "3": {
+          "DRB.UEThpDl": 1.9376,
+          "RRU.PrbTotDl": 0.239
+        },
+        "4": {
+          "DRB.UEThpDl": 2.2476,
+          "RRU.PrbTotDl": 0.194
+        },
+        "5": {
+          "DRB.UEThpDl": 1.8269000000000002,
+          "RRU.PrbTotDl": 0.909
+        }
+      },
+      "steps": [
+        {
+          "decision": {
+            "from_cell": "2",
+            "to_cell": "4",
+            "ue_share_pct": 20
+          },
+          "rapp": "traffic_steering"
+        }
+      ]
+    },
+    "workflow": "traffic_steering"
+  },
+  "rc_acks": [
+    "1793230307377895 HO 10 4 sent",
+    "1793230307378618 HO 4 4 sent"
+  ],
+  "role": "twin",
+  "seed": 3,
+  "sim_time_s": 8.0,
+  "t_act_s": 2.0,
+  "ue_position_file": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261028T173841Z_T6v3_twin_vs_live_positions/ue_positions/pair3_live_s103_t2.csv",
+  "wall_s": 295.9,
+  "workflow": "traffic_steering"
+}

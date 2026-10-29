@@ -1,0 +1,180 @@
+{
+  "act_sim_time_s": 2.0,
+  "chain": [
+    "KPM",
+    "RAPP.QOE_PREDICTION",
+    "RAPP.TRAFFIC_STEERING",
+    "RC"
+  ],
+  "clock": "sim-time collectStartTime",
+  "commands": [
+    "HO 6 5"
+  ],
+  "commands_dispatched_sim_s": [
+    [
+      2.0,
+      "HO 6 5"
+    ]
+  ],
+  "first_report_sim_s": 0.2,
+  "indications_per_gnb": {
+    "2": 79,
+    "3": 79,
+    "4": 79,
+    "5": 79
+  },
+  "kpi": {
+    "dl_buffer_kbytes": 17.601407407407407,
+    "dl_delay_ms": 5.540784796117516,
+    "dl_throughput_mbps": 33.689173333333336,
+    "energy_j_per_s": 8241.688888888888,
+    "prb_used_dl": 233.2782209444444
+  },
+  "kpi_e2": {
+    "dl_buffer_kbytes": 17.601407407407407,
+    "dl_throughput_mbps": 19.099,
+    "energy_j_per_s": 8241.688888888888,
+    "prb_used_dl": 228.25925925925927
+  },
+  "kpi_per_cell": {
+    "2": {
+      "dl_buffer_kbytes": 0.21407407407407408,
+      "energy_j_per_s": 2111.725925925926,
+      "prb_used_dl": 60.4953373148148
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.007407407407407408,
+      "energy_j_per_s": 1459.759259259259,
+      "prb_used_dl": 32.85989416666666
+    },
+    "4": {
+      "dl_buffer_kbytes": 0.5822777777777778,
+      "energy_j_per_s": 2113.9277777777775,
+      "prb_used_dl": 60.585889499999986
+    },
+    "5": {
+      "dl_buffer_kbytes": 16.79764814814815,
+      "energy_j_per_s": 2556.275925925926,
+      "prb_used_dl": 79.33709996296294
+    }
+  },
+  "kpi_per_cell_e2": {
+    "2": {
+      "dl_buffer_kbytes": 0.21407407407407408,
+      "dl_throughput_mbps": 8.080407407407408,
+      "energy_j_per_s": 2111.725925925926,
+      "prb_used_dl": 58.574074074074076
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.007407407407407408,
+      "dl_throughput_mbps": 4.04962962962963,
+      "energy_j_per_s": 1459.759259259259,
+      "prb_used_dl": 31.77777777777778
+    },
+    "4": {
+      "dl_buffer_kbytes": 0.5822777777777778,
+      "dl_throughput_mbps": 1.8040925925925926,
+      "energy_j_per_s": 2113.9277777777775,
+      "prb_used_dl": 60.01851851851852
+    },
+    "5": {
+      "dl_buffer_kbytes": 16.79764814814815,
+      "dl_throughput_mbps": 5.1648703703703704,
+      "energy_j_per_s": 2556.275925925926,
+      "prb_used_dl": 77.88888888888889
+    }
+  },
+  "kpi_source": {
+    "version": "ns3-trace-v2"
+  },
+  "kpi_trace_window": {
+    "du_logger_writes": 54,
+    "pdcp_epochs_s": [
+      2.5,
+      7.75
+    ],
+    "prb_method": "logger (E2 reports grid-aligned: same window)"
+  },
+  "kpi_window_bins": [
+    54,
+    54
+  ],
+  "kpi_window_sim_s": [
+    2.5,
+    7.9
+  ],
+  "kpm_history_at_act_s": 1.8,
+  "last_report_sim_s": 8.0,
+  "load_avg_end": 2.3818359375,
+  "load_avg_start": 2.7314453125,
+  "n_ues": 10,
+  "novalue_rows": 0,
+  "ns3_returncode": 0,
+  "ok": true,
+  "policy": {
+    "shed": [
+      {
+        "avoid": [
+          3
+        ],
+        "from": 3,
+        "share": 0.2,
+        "to": 5
+      }
+    ],
+    "sleep_cells": [],
+    "trace": {
+      "kpm_snapshot": {
+        "2": {
+          "DRB.UEThpDl": 2.0425999999999997,
+          "RRU.PrbTotDl": 1.0
+        },
+        "3": {
+          "DRB.UEThpDl": 1.4126500000000002,
+          "RRU.PrbTotDl": 0.983
+        },
+        "5": {
+          "DRB.UEThpDl": 1.9992999999999999,
+          "RRU.PrbTotDl": 0.474
+        }
+      },
+      "steps": [
+        {
+          "decision": {
+            "at_risk_cells": [
+              "2",
+              "3",
+              "5"
+            ],
+            "model": "linear(thp, delay) emulation",
+            "mos_forecast": {
+              "2": 2.03,
+              "3": 1.65,
+              "5": 2.0
+            }
+          },
+          "rapp": "qoe_prediction"
+        },
+        {
+          "decision": {
+            "from_cell": "2",
+            "to_cell": "5",
+            "ue_share_pct": 20
+          },
+          "rapp": "traffic_steering"
+        }
+      ]
+    },
+    "workflow": "qoe_steering"
+  },
+  "policy_from": "twin",
+  "rc_acks": [
+    "1793233495028342 HO 6 5 sent"
+  ],
+  "role": "live",
+  "seed": 106,
+  "sim_time_s": 8.0,
+  "t_act_s": 2.0,
+  "wall_s": 300.7,
+  "workflow": "qoe_steering"
+}

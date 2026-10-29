@@ -1,17 +1,23 @@
-# Twin-vs-live KPI validation and deploy gate (T6v2)
+# Twin-vs-live KPI validation and deploy gate (T6v3)
 
 Answers R1.2, R2.2 and R3.1: *how well does the digital twin predict what a composed workflow does to
 the network, and does validating on the twin keep harmful policies from being deployed?* (owner item
 P1-2, `docs/FABLE_REVIEW_AND_PLAN.md` §5.2: Validate-2 as a deploy gate, fidelity by sync level).
 
 Code: `evaluation/twin/` (`run_twin_validation.py`, `xapp_appweaver_actuator.c`, `Makefile`,
-`prefix_gate.py`, `test_twin_validation.py`). Results (T6v2, simulator fixed on 2026-10-28):
+`prefix_gate.py`, `test_twin_validation.py`). Results:
 
-| Batch | Twin state sync | Directory (`evaluation/runs/`) |
-|---|---|---|
-| base | none: twin 8 UEs, live 10 UEs | `20261028T085338Z_T6v2_twin_vs_live/` (+ `aa_noop_repeat/`, `prefix_reanalysis/`) |
-| load-calibrated | load: twin 10 UEs = live | `20261028T085338Z_T6v2_twin_vs_live_loadcal/` (+ `aa_noop_repeat/`) |
-| placement-synced | load + live UE positions at t_act | `20261028T085338Z_T6v2_twin_vs_live_positions/` (+ `ue_positions/`) |
+| Version | Batch | Twin state sync | Directory (`evaluation/runs/`) |
+|---|---|---|---|
+| **T6v3** (paper) | base | none: twin 8 UEs, live 10 UEs | `20261028T173841Z_T6v3_twin_vs_live/` (+ `aa_noop_repeat/`) |
+| **T6v3** | load-calibrated | load: twin 10 UEs = live | `20261028T173841Z_T6v3_twin_vs_live_loadcal/` (+ `aa_noop_repeat/`) |
+| **T6v3** | placement-synced | load + live UE positions at t_act | `20261028T173841Z_T6v3_twin_vs_live_positions/` (+ `ue_positions/`) |
+| T6v2 (superseded) | base / load / positions | as above | `20261028T085338Z_T6v2_twin_vs_live{,_loadcal,_positions}/` (+ `prefix_reanalysis/` in the base dir) |
+
+T6v3 and T6v2 use the same protocol, gate thresholds, pairs and exclusion rule. T6v3 runs on the simulator
+with the E2 report-window fix (`APPWEAVER_SETUP.md` §11 fixes 8–9, patch `mmwave-LENA-oran-0004`): T6v2's
+rApps decided from E2 KPM whose PRB/throughput window depended on the report phase (see KPI sources), so
+its policies were made on noisy inputs. T6v2 is kept to document that effect.
 
 Each directory has `manifest.json` (written before the first run: protocol, gate thresholds, exclusion
 rule, binaries' SHA-256, host context; completed at the end with the excluded pairs and the host
@@ -31,7 +37,9 @@ fixes; they are kept as the **pre-fix** rows (Appendix), not as paper numbers.
   20 MHz, 600 m inter-site distance, UEs dropped uniformly in a 500 m disc (or at given positions, below)
   with random-walk mobility (2–4 m/s), each with a 3.2 Mb/s downlink CBR flow. Setup, build and the
   2026-10-28 fixes (sim-time KPM stamps, immediate reporting, noValue records, RC cell ids > 9 and
-  switch-on, subscription delete, `uePositionFile`): `simulator/ns-oran-flexric/APPWEAVER_SETUP.md` §11.
+  switch-on, subscription delete, `uePositionFile`; for T6v3 also: each gNB E2 report covers exactly the
+  100 ms window of the ns-3 DU/CU trace row of the same tick, stamped on the tick, and the traces are
+  stamped run id + sim ms): `simulator/ns-oran-flexric/APPWEAVER_SETUP.md` §11.
 - **RIC:** the pinned FlexRIC of that project (`~/flexric-taap`, E2AP v1.01, E2SM-KPM v3.00, E2SM-RC
   v1.03). One nearRT-RIC per simulation on its own ports (E2 36500 + 10·slot, E42 36501 + 10·slot, two
   slots) so two simulations run side by side without touching the simulator session's RIC (36423) or
@@ -71,7 +79,10 @@ in ns-O-RAN and are not part of the twin experiment.
   subscription (first report at 0.16–0.21 s). t_act and the window are therefore absolute simulated
   times, identical for twin, live and no-op: the chain runs at **t_act = 2.0 s** (≥ 1.8 s of KPM history;
   a run with < 0.5 s is marked failed), KPIs are averaged over **(2.5 s, 7.9 s]** (traffic stops at
-  7.9 s). Pre-fix: t_act = 1.5 s after the first report (≈2.6 s), window ≈ [3.1, 7.9] s.
+  7.9 s). Pre-fix: t_act = 1.5 s after the first report (≈2.6 s), window ≈ [3.1, 7.9] s. In T6v3 the gNB
+  reports are stamped on the 100 ms tick and cover the window ending there (first gNB stamp 0.2–0.3 s),
+  so the E2 KPI window (2.5, 7.9] is the bins 26…79; in T6v2 a stamp opened a φ-ms window (bins 25…78).
+  The runner detects which by whether the stamps lie on the grid.
 - At t_act AppWeaver runs the chain **on the twin** and obtains a cell-level policy (which cells sleep,
   which cells shed load and where to). The same policy is deployed **unchanged on live** at t_act of its
   own run; UE-level handovers are resolved on the instance that executes them, from its own KPM.
@@ -81,7 +92,7 @@ in ns-O-RAN and are not part of the twin experiment.
   runs still fails after one automatic retry; no replacement pairs. The live no-op runs of the
   load-calibrated and placement-synced batches are copied from the base batch (identical inputs).
 
-### KPI sources (changed in T6v2)
+### KPI sources (changed in T6v2; E2 and traces agree in T6v3)
 
 The base batch showed that the E2 KPM values are not usable as KPIs: in same-seed runs with **no** RC
 command the E2 PRB of a cell differed by up to 13× (twin pair 9: cell 2 at 3.6 vs 46.9 PRBs), while the
@@ -104,8 +115,30 @@ batch's E2 results (the anomaly was found there); thresholds, windows, pairs and
 and every batch, including the pre-fix ones, is reported with both sources. The gate's confusion counts
 are the same under both PRB estimators of the trace source (logger alone vs rebuilt).
 
-**A/A noise (same-seed no-op repeats, `aa_noop_repeat/noise.md`):** pairs 1–4 twin (8 UEs) and live,
-pairs 1–4 twin (10 UEs). Throughput, delay, buffer and energy repeat exactly (0.00 %). PRB repeats to
+**T6v3: the two sources agree.** With the simulator fix the E2 report reads, without resetting, the
+counters of the trace window, so the trace PRB is the logger value alone (`prb_method` in `result.json`).
+Over the 209 analysed runs of T6v3 (`source_agreement` in each `summary.json` / "E2 KPM vs ns-3 trace KPIs" in
+`summary.md`):
+
+| Quantity | E2 vs trace |
+|---|---|
+| PRB per run (total) | E2 = trace −2.5 … −2.9 % on average (range −6.3 … −1.6 %): the E2 value is the trace value truncated to an integer per UE |
+| PRB per cell | −2.5 … −2.8 % (range −7.9 … −0.5 %) |
+| buffer | identical (0.0 %) |
+| energy | same source |
+| sign of PRB and energy deltas (predicted and actual) | identical in 100 % of the rows |
+| throughput | **different quantity**: E2 `DRB.UEThpDl` (gNB RLC rate) is 34–50 % below the UE-received PDCP goodput in every run; delta signs agree in 81–96 % of the rows |
+| gate verdicts | identical in 89 / 92 / 96 % (twin) and 85 / 83 / 81 % (live) of the cases (none / load / positions); the differences come from the throughput-loss criterion |
+
+So PRB, buffer and energy no longer depend on the source; throughput does, because the two measure
+different things (the PDCP value counts every UE's received bytes, the RLC rate does not see UEs that lose
+service). The trace source stays primary; `summary_e2kpm.*` gives the E2 view.
+
+**A/A noise, T6v3 (same-seed no-op repeats, `aa_noop_repeat/noise.md`):** pairs 1–4 twin (8 UEs) and live,
+pairs 2/1/4 twin (10 UEs; pair 3 aborts, below). **Every KPI repeats exactly (0.00 %) on both sources**,
+E2 PRB per cell included: with the report window fixed, same seed means same values.
+
+**A/A noise, T6v2** (pairs 1–4 twin (8 UEs) and live, pairs 1–4 twin (10 UEs)). Throughput, delay, buffer and energy repeat exactly (0.00 %). PRB repeats to
 ≤ 2.6 % (total) / ≤ 5.2 % (per cell) in the worst case (twin pair 2, report phases 0.25 vs 98.4 ms), ≤ 0.3 %
 otherwise. The E2 values of the same repeats differ by up to 74 % (PRB), 8 % (throughput), 172 % (buffer).
 Deltas below ≈ 3 % PRB are therefore noise; the throughput and energy deltas are exact.
@@ -127,6 +160,18 @@ everything without a twin), all with Wilson 95 % CIs. Per-pair verdicts and quan
 
 ## Runs and host
 
+**T6v3** (2026-10-28 19:39 → 2026-10-29 03:42 local): base 19:39–22:10, load-calibrated 22:10–00:37,
+placement-synced 00:37–03:14, A/A 03:14–03:42; 2 runs in parallel under `nice -n 10`, ≈ 200–330 s wall per
+run. Running on the host meanwhile (recorded in the manifests): AppWeaver's seeded re-run
+(`run_harness.py --label A_seeded_rerun_final_gptoss120b_spark1`) at the start, then Batch B
+(`B_k8_final_gptoss120b_spark1`) on the FlexRIC stack (portal, nearRT-RIC 36421/36422, emulator, twin
+emulator on 127.0.0.2, LLM calls to spark1); 1-min load 0.6–1.9. Excluded pairs (same rule): load-calibrated
+pair **3** only (twin `RngRun=3`, 10 UEs: `malloc(): invalid size` at ≈0.3 s sim, every time). Pair 7 ran
+this time: the twin decided a different steering (`HO 3 4, HO 4 4`), and the handover that crashed ns-3 in
+T6v2 (`HO 6 2`) was not issued.
+
+**T6v2:**
+
 Each batch: 9 pairs × (no-op + 3 workflows) × (twin, live) = 72 jobs, 2 in parallel under `nice -n 10`,
 ≈ 250–300 s wall per 8-s simulation (incl. E2 setup). Base 10:53–13:24, load-calibrated 13:24–15:53,
 placement-synced 15:53–18:30, A/A 18:30–18:58 (2026-10-28, local time). AppWeaver's final Batch A
@@ -139,7 +184,92 @@ Excluded pairs (rule above): load-calibrated pairs **3** (twin `RngRun=3`, 10 UE
 aborts with the same error 0.1 s after the handover `HO 6 2`, both attempts). No exclusions in the base and
 placement-synced batches (pair 3 runs with the position input).
 
-## Results
+## Results (T6v3)
+
+Fidelity per sync level, trace KPIs; T6v2 next to it. Cells: sign agreement / mean absolute error of the
+relative change (pp) (pairs; sign agreement over pairs where both twin and live issued RC commands).
+
+| Workflow / KPI | v2 none | v2 load | v2 positions | **v3 none** | **v3 load** | **v3 positions** |
+|---|---|---|---|---|---|---|
+| traffic_steering / energy | 56% / 15.8 (9; 56%) | 71% / 7.4 (7; 80%) | 78% / 6.5 (9; 75%) | 78% / 15.9 (9; 78%) | 100% / 14.0 (8; 100%) | 67% / **8.0** (9; 62%) |
+| traffic_steering / PRB | 56% / 32.0 (9; 56%) | 71% / 16.3 (7; 80%) | 67% / 12.5 (9; 75%) | 78% / 34.5 (9; 78%) | 100% / 37.7 (8; 100%) | 67% / **14.4** (9; 62%) |
+| traffic_steering / throughput | 67% / 8.5 (9; 67%) | 57% / 7.4 (7; 60%) | 89% / 5.0 (9; 88%) | 89% / 6.1 (9; 89%) | 62% / 10.3 (8; 57%) | **100% / 3.8** (9; 100%) |
+| traffic_steering / delay | 67% (9) | 86% (7) | 100% (9) | 78% (9) | 100% (8) | 67% (9) |
+| qoe_steering / energy | 56% / 12.5 (9; 62%) | 86% / 16.4 (7; 86%) | 44% / 15.3 (9; 50%) | 67% / 16.7 (9; 75%) | 62% / 23.6 (8; 62%) | 56% / **10.2** (9; 62%) |
+| qoe_steering / PRB | 56% / 26.1 (9; 62%) | 86% / 33.5 (7; 86%) | 44% / 24.6 (9; 50%) | 67% / 35.0 (9; 75%) | 62% / 54.6 (8; 62%) | 56% / **16.7** (9; 62%) |
+| qoe_steering / throughput | 67% / 7.7 (9; 75%) | 43% / 15.8 (7; 43%) | 78% / 8.8 (9; 88%) | 56% / 8.0 (9; 62%) | 62% / 12.4 (8; 62%) | 56% / **6.7** (9; 62%) |
+| qoe_steering / delay | 67% (9) | 86% (7) | 67% (9) | 67% (9) | 62% (8) | 44% (9) |
+
+Energy saving does not appear: in T6v3 the energy-saving rApp put no cell to sleep in any pair (0/9, 0/8,
+0/9). With full-window PRB every reporting cell is above 0.15 of the cluster maximum at t_act (lowest cell
+0.18–0.93 across the 26 twin decisions), and a cell without UEs sends no DU report, so it cannot be chosen. All energy-saving deltas are
+exactly 0 and every energy-saving gate case is reject/reject.
+
+Mean predicted vs measured relative change (T6v3):
+
+| Workflow / KPI | none | load | load + positions |
+|---|---|---|---|
+| traffic_steering / PRB | +35.9 % vs +1.4 % | +40.5 % vs +7.1 % | +8.7 % vs +15.1 % |
+| traffic_steering / throughput | −7.4 % vs −7.5 % | +1.8 % vs −4.7 % | −5.7 % vs −5.6 % |
+| traffic_steering / energy | +17.2 % vs +1.3 % | +16.5 % vs +3.8 % | +5.3 % vs +8.4 % |
+| qoe_steering / PRB | +23.9 % vs −2.3 % | +44.8 % vs −9.7 % | +0.2 % vs +7.5 % |
+| qoe_steering / throughput | −6.3 % vs −4.4 % | +1.7 % vs −9.4 % | −7.4 % vs −4.6 % |
+| qoe_steering / energy | +11.6 % vs −1.3 % | +18.2 % vs −5.5 % | −0.7 % vs +4.5 % |
+
+### Gate (T6v3)
+
+Steering workflows (the only ones that acted; n = 18, 16, 18), both KPI sources:
+
+| Sync | Source | TP/FP/FN/TN | Accuracy | Precision (accept) | Recall (accept) | Specificity | Live accept rate |
+|---|---|---|---|---|---|---|---|
+| none | trace | 3/5/5/5 | 44% [25–66] | 38% (3/8) [14–69] | 38% (3/8) [14–69] | 50% (5/10) [24–76] | 44% [25–66] |
+| none | E2 | 7/2/5/4 | 61% [39–80] | 78% (7/9) [45–94] | 58% (7/12) [32–81] | 67% (4/6) [30–90] | 67% [44–84] |
+| load | trace | 6/6/1/3 | 56% [33–77] | 50% (6/12) [25–75] | 86% (6/7) [49–97] | 33% (3/9) [12–65] | 44% [23–67] |
+| load | E2 | 6/4/1/5 | 69% [44–86] | 60% (6/10) [31–83] | 86% (6/7) [49–97] | 56% (5/9) [27–81] | 44% [23–67] |
+| **load + positions** | **trace** | 3/1/6/8 | 61% [39–80] | **75% (3/4) [30–95]** | 33% (3/9) [12–65] | **89% (8/9) [57–98]** | 50% [29–71] |
+| load + positions | E2 | 4/1/4/9 | 72% [49–88] | 80% (4/5) [38–96] | 50% (4/8) [22–78] | 90% (9/10) [60–98] | 44% [25–66] |
+
+Per workflow and pooled with the (trivial) energy-saving cases: `summary.md` / `summary_e2kpm.md` of each
+batch. Pooled trace-source values: none 63 % accuracy, 38 % precision, 38 % recall, 74 % specificity; load
+71 % / 50 % / 86 % / 65 %; load + positions 74 % / 75 % / 33 % / 94 %. T6v2, same steering-only view (trace):
+none 3/5/6/4 (precision 38 %, specificity 44 %), load 4/4/4/2 (50 %, 33 %), positions 3/3/5/7 (50 %, 70 %).
+
+### What T6v3 shows
+
+1. **Same seed, same numbers.** With the report-window fix the whole pipeline is deterministic: A/A
+   repeats are identical on every KPI and both sources, and E2 and trace PRB differ only by integer
+   truncation (−2.5 to −2.9 %). Differences between twin and live are now entirely twin–live differences.
+2. **Placement sync gives the best predictions.** For both steering workflows the error of the predicted
+   relative change is lowest with positions synced for PRB, throughput and energy (traffic steering: throughput 6.1 → 10.3 →
+   **3.8 pp**, PRB 34.5 → 37.7 → **14.4 pp**, energy 15.9 → 14.0 → **8.0 pp**; QoE steering: throughput 8.0
+   → 12.4 → **6.7 pp**, PRB 35.0 → 54.6 → **16.7 pp**, energy 16.7 → 23.6 → **10.2 pp**). Traffic-steering
+   throughput has the right sign in 9/9 pairs (−5.7 % predicted vs −5.6 % measured).
+3. **Load sync alone mostly makes the twin worse.** Matching the UE count with random positions gives the
+   largest error in 5 of these 6 rows (QoE PRB 54.6 pp): with 10 randomly placed UEs the twin's hot and cold cells are not live's, and
+   the cell-level policy depends on exactly that. The same effect was visible in T6v2.
+4. **The gate becomes a useful conservative filter only with placement sync.** On the steering cases its
+   specificity rises 50 % → 33 % → **89 % [57–98]** and its precision 38 % → 50 % → **75 % [30–95]**, against a
+   50 % live accept rate; recall drops to 33 % (it rejects 6 of 9 policies that would have worked live). At
+   n = 18 the CIs still overlap with the deploy-everything baseline.
+5. **Throughput source matters for the verdict.** Under the E2 throughput (gNB RLC rate) the gate looks
+   better at every sync level (e.g. none: precision 78 % vs 38 %), because the RLC rate misses UEs that lose
+   service after a handover; the UE-side PDCP goodput is the one to report.
+6. **Energy saving cannot be evaluated on T6v3**: the rApp's sleep rule never fires on full-window PRB
+   (above). Its evidence remains T6v2/pre-fix, where the executed policy also stranded UEs (T6v2
+   finding 4).
+
+**For the paper.** On a deterministic ns-3 twin, Validate-2 is a conservative filter whose value depends
+on state sync: with live UE placement and load synced it rejected 8 of 9 steering policies that missed
+their objective live (specificity 89 % [57–98]) and 3 of the 4 policies it accepted met their objective
+(precision 75 % [30–95]); without placement sync it is no better than deploying everything. Twin
+prediction error for steering is lowest with placement sync for PRB, throughput and energy (throughput
+3.8–6.7 pp), and load sync alone does not help. Report KPIs from UE-side measurements (PDCP goodput); n = 16–18 cases per
+batch, so all CIs are wide, and the energy-saving workflow did not trigger on the fixed simulator.
+
+## T6v2 results (superseded)
+
+T6v2 ran the same protocol on the simulator before the report-window fix: the rApps decided from E2 KPM
+whose PRB/throughput window depended on the report phase. KPIs below are the trace KPIs (rebuilt PRB).
 
 Fidelity per sync level, trace KPIs. Cells: sign agreement / mean absolute error of the relative change
 (pp); in brackets the number of pairs and the sign agreement over pairs where both twin and live issued RC
@@ -171,7 +301,7 @@ Mean predicted vs measured relative change, selected rows (all rows: `summary.md
 | qoe_steering / PRB | +7.6 % vs −13.1 % | +21.5 % vs +3.1 % | +11.2 % vs −6.6 % | +23.6 % vs −8.0 % | +7.8 % vs +1.9 % |
 | qoe_steering / throughput | −0.6 % vs −5.4 % | −4.3 % vs −6.8 % | −6.6 % vs −3.2 % | +3.4 % vs −7.7 % | −8.2 % vs −6.5 % |
 
-### Gate
+### Gate (T6v2 and pre-fix)
 
 | Batch | Workflow | n | TP/FP/FN/TN | Accuracy | Precision (accept) | Recall (accept) | Specificity | Live accept rate |
 |---|---|---|---|---|---|---|---|---|
@@ -202,7 +332,7 @@ precision 40 %, recall 44 %; pre-fix load 71 % / 64 % / 70 %; fixed none 56 % / 
 the E2 source; with the UE-side throughput it is the second worst, because the E2 KPIs (gNB-side) do not
 see UEs that lose service (next section).
 
-### What the experiment shows
+### What T6v2 showed
 
 1. **The gate does not yet separate good from bad policies reliably.** Pooled over 21–27 (pair,
    workflow) cases per batch, precision of "accept" is 40–50 % against a 30–43 % live accept rate
@@ -239,12 +369,9 @@ see UEs that lose service (next section).
    the remaining cells, accepted 3 of 4 (base) and 2 of 5 (load-calibrated) energy-saving policies that
    failed live (specificity 25 % and 60 %).
 
-**For the paper.** Validate-2 on an ns-3 twin is a *conservative filter*, not a predictor: with load and
-placement synced it rejected 84 % [62–94] of the policies that did not meet their objective live, but it
-also rejected 5 of 8 policies that would have met it, and its precision (50 % [19–81]) is not
-distinguishable from deploying everything (30 % [16–48]) at n = 27. Twin fidelity for UE-movement KPIs
-improves monotonically only when UE placement is synced; load alone does not suffice. Report the KPIs
-from UE-side measurements; gNB-side E2 KPM hides UEs that lose service.
+T6v2 in one line: with placement sync the gate rejected 84 % [62–94] of the policies that failed live
+(pooled incl. energy saving) but its precision (50 % [19–81]) was not distinguishable from deploying
+everything (30 %); the E2-phase noise in the rApps' inputs is removed in T6v3.
 
 ## Limitations (stated in the paper)
 
@@ -271,7 +398,7 @@ source ~/anaconda3/etc/profile.d/conda.sh && conda activate flexric-py310
 cd ~/flexric/examples/xApp/python3/evaluation/twin
 make OUT=$HOME/flexric/build/examples/xApp/python3/evaluation/twin/build    # actuator
 python -m pytest -q test_twin_validation.py
-R=$HOME/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/<ts>_T6v2
+R=$HOME/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/<ts>_T6v3
 nice -n 10 python run_twin_validation.py --pairs 1-9 --parallel 2 --twin-ues 8  --out ${R}_twin_vs_live --host-context "..."
 nice -n 10 python run_twin_validation.py --pairs 1-9 --parallel 2 --twin-ues 10 --out ${R}_twin_vs_live_loadcal --reuse-live-noop ${R}_twin_vs_live
 nice -n 10 python run_twin_validation.py --pairs 1-9 --parallel 2 --twin-ues 10 --sync positions --out ${R}_twin_vs_live_positions --reuse-live-noop ${R}_twin_vs_live
