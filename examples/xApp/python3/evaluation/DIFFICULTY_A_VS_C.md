@@ -1,6 +1,6 @@
 # Difficulty: Batch A vs Batch C
 
-A run `20261028T190000Z_A_final_gptoss120b_spark1_seededfix`, C run `20261029T075856_628139Z_C_final_gptoss120b_spark1` (1197 records).
+A run `20261028T190000Z_A_final_gptoss120b_spark1_seededfix`, C run `20261029T075856_628139Z_C_final_gptoss120b_spark1` (1440 records).
 
 | Batch / split | Intents | Words | Label chain len | Required apps | No control app needed | Control apps named in sentence | Template-solvable |
 |---|---|---|---|---|---|---|---|
@@ -18,19 +18,19 @@ Rule accuracy (%) per chain shape (required apps), same shape in A and C:
 | Shape | Batch | Intents | manual_rule | single_xapp | llm_blind | llm_only | agentcard_no_repair | langgraph_agentcard | appweaver_tpl | appweaver_mem |
 |---|---|---|---|---|---|---|---|---|---|---|
 | KPM+SLICE | A | 11 | 18.2 | 0.0 | 0.0 | 14.5 | 87.3 | 85.5 | -- | -- |
-| KPM+SLICE | C | 15 | 0.0 | 0.0 | 0.0 | 55.0 | 100.0 | 100.0 | 100.0 | 100.0 |
+| KPM+SLICE | C | 15 | 0.0 | 0.0 | 0.0 | 48.9 | 100.0 | 100.0 | 100.0 | 100.0 |
 | KPM+SLICE+TC | A | 12 | 83.3 | 0.0 | 0.0 | 91.7 | 50.0 | 50.0 | -- | -- |
 | KPM+SLICE+TC | C | 10 | 80.0 | 0.0 | 0.0 | 100.0 | 76.7 | 76.7 | 90.0 | 90.0 |
 | TC | A | 8 | 75.0 | 75.0 | 0.0 | 60.0 | 92.5 | 100.0 | -- | -- |
-| TC | C | 13 | 25.0 | 25.0 | 0.0 | 80.6 | 100.0 | 100.0 | 100.0 | 100.0 |
+| TC | C | 13 | 23.1 | 23.1 | 0.0 | 74.4 | 100.0 | 100.0 | 100.0 | 100.0 |
 | KPM | A | 9 | 0.0 | 66.7 | 0.0 | 0.0 | 46.7 | 51.1 | -- | -- |
-| KPM | C | 11 | 0.0 | 90.9 | 0.0 | 0.0 | 90.9 | 86.4 | 86.4 | 90.9 |
+| KPM | C | 11 | 0.0 | 90.9 | 0.0 | 0.0 | 87.9 | 87.9 | 87.9 | 87.9 |
 | KPM+TC | A | 10 | 0.0 | 0.0 | 0.0 | 0.0 | 80.0 | 72.0 | -- | -- |
 | KPM+TC | C | 6 | 0.0 | 0.0 | 0.0 | 0.0 | 100.0 | 100.0 | 100.0 | 100.0 |
 | SLICE | C | 4 | 0.0 | 0.0 | 0.0 | 100.0 | 100.0 | 100.0 | 100.0 | 100.0 |
-| SLICE+TC | C | 1 | 100.0 | 0.0 | 50.0 | 100.0 | 100.0 | 100.0 | 100.0 | 100.0 |
+| SLICE+TC | C | 1 | 100.0 | 0.0 | 33.3 | 100.0 | 100.0 | 100.0 | 100.0 | 100.0 |
 
-## Reading (2026-10-29, C part 1 partial: 1196 of 1440 records)
+## Reading (2026-10-29, C part 1 complete: 1440 records)
 
 **C is easier than A, for four measurable reasons, so C must not be presented as a held-out headline without this caveat.**
 
