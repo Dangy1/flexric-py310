@@ -12,6 +12,7 @@ No number from the May-2026 batches appears here.
 ## Batches
 
 - **Batch A (paper registry)**: `20261028T190000Z_A_final_gptoss120b_spark1_seededfix` - 50 intents x 6 methods x 5 repeats = 1500 records; planner `gpt-oss-120b`, settings {"provider": "vllm", "reasoning_effort": "medium", "seed": 7, "temperature": 0.2, "think": "model-default", "timeout_s": 180}, registry 9 cards, retrieval_k=0
+- **Batch B (directory, k=all)**: `20261031T005700Z_B_k0_final_merged_gptoss120b_spark1` - 109 intents x 6 methods x 3 repeats = 1962 records; planner `gpt-oss-120b`, settings {"provider": "vllm", "reasoning_effort": "medium", "seed": 7, "temperature": 0.2, "think": "model-default", "timeout_s": 180}, registry 81 cards, retrieval_k=0
 - **Batch B (directory, k=8)**: `20261030T134800Z_B_k8_final_repaired_with_variants_gptoss120b_spark1` - 109 intents x 10 methods x 3 repeats = 3270 records; planner `gpt-oss-120b`, settings {"provider": "vllm", "reasoning_effort": "medium", "seed": 7, "temperature": 0.2, "think": "model-default", "timeout_s": 180}, registry 81 cards, retrieval_k=8
 
 ## Batch A (paper registry) - `20261028T190000Z_A_final_gptoss120b_spark1_seededfix`
@@ -24,6 +25,19 @@ No number from the May-2026 batches appears here.
 | LLM (catalog) | 34.8% [22, 49] | 69.1% [45, 91] | 25.1% [13, 39] | -- | 29.2% [17, 42] | 29.2% [17, 42] | 29.6% [18, 42] | 99.0% [98, 100] (n=855) | 40.0% [25, 58] (n=30) | 36.7% [22, 54] | 3.3% [1, 17] | 13.3% [5, 30] | 0.0% [0, 2] | 0 in 0 records | -- | 7.56 / 19.48 / 55.64 |
 | AppWeaver (no repair) | 70.4% [59, 82] | 67.3% [40, 91] | 71.3% [58, 84] | -- | 12.0% [5, 20] | 12.0% [5, 20] | 12.0% [5, 20] | 96.8% [95, 99] (n=577) | 50.0% [33, 67] (n=30) | 40.0% [25, 58] | 3.3% [1, 17] | 50.0% [33, 67] | 0.0% [0, 2] | 0 in 0 records | 100.0% [100, 100] | 27.29 / 52.88 / 94.32 |
 | AppWeaver | 70.4% [59, 82] | 65.5% [36, 91] | 71.8% [58, 84] | -- | 13.6% [6, 22] | 13.6% [6, 22] | 14.0% [6, 23] | 97.2% [95, 99] (n=572) | 36.7% [22, 54] (n=30) | 36.7% [22, 54] | 0.0% [0, 11] | 36.7% [22, 54] | 0.0% [0, 2] | 0 in 0 records | 100.0% [100, 100] | 27.61 / 54.83 / 73.70 |
+
+Planner-cached records: 0 (must be 0 for headline latency).
+
+## Batch B (directory, k=all) - `20261031T005700Z_B_k0_final_merged_gptoss120b_spark1`
+
+| Method | Accuracy (rule) | Known | Open-world | Unseen cap. | Exact | Accepted | Set | Ack. calls | Seeded: met conflict | Seeded: done after wait | Seeded: unresolved | Seeded: correct | Conflict FP | Halluc. refs | Retrieval hit | Latency med / p95 / max (s) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Rule router | 16.5% [10, 24] | 81.8% [55, 100] | 23.1% [10, 38] | 0.0% [0, 0] | 13.8% [7, 20] | 13.8% [7, 20] | 13.8% [7, 20] | 100.0% [100, 100] (n=1149) | 100.0% [82, 100] (n=18) | 94.4% [74, 99] | 5.6% [1, 26] | 16.7% [6, 39] | 0.0% [0, 1] | 0 in 0 records | -- | <0.01 / 32.56 / 45.15 |
+| Single app | 11.0% [6, 17] | 27.3% [0, 55] | 23.1% [10, 36] | 0.0% [0, 0] | 2.8% [0, 6] | 2.8% [0, 6] | 2.8% [0, 6] | 100.0% [100, 100] (n=339) | 66.7% [44, 84] (n=18) | 66.7% [44, 84] | 0.0% [0, 18] | 16.7% [6, 39] | 0.0% [0, 1] | 0 in 0 records | -- | <0.01 / <0.01 / 33.56 |
+| LLM (no catalog) | 0.0% [0, 0] | 0.0% [0, 0] | 0.0% [0, 0] | 0.0% [0, 0] | 0.0% [0, 0] | 0.0% [0, 0] | 0.0% [0, 0] | 100.0% [100, 100] (n=35) | 16.7% [6, 39] (n=18) | 11.1% [3, 33] | 5.6% [1, 26] | 0.0% [0, 18] | 0.0% [0, 1] | 898 in 234 records | -- | 14.91 / 27.05 / 60.23 |
+| LLM (catalog) | 16.5% [10, 24] | 75.8% [52, 94] | 24.8% [12, 38] | 0.0% [0, 0] | 14.1% [8, 21] | 14.1% [8, 21] | 14.1% [8, 21] | 100.0% [100, 100] (n=1162) | 44.4% [25, 66] (n=18) | 38.9% [20, 61] | 5.6% [1, 26] | 11.1% [3, 33] | 0.0% [0, 1] | 0 in 0 records | -- | 7.24 / 14.14 / 53.97 |
+| AppWeaver (no repair) | 65.1% [57, 73] | 42.4% [18, 67] | 43.6% [31, 56] | 83.6% [75, 91] | 19.3% [13, 26] | 19.6% [14, 26] | 35.5% [27, 44] | 100.0% [100, 100] (n=861) | 38.9% [20, 61] (n=18) | 5.6% [1, 26] | 0.0% [0, 18] | 33.3% [16, 56] | 1.0% [0, 3] | 2 in 1 records | 98.2% [95, 100] | 35.42 / 62.30 / 88.86 |
+| AppWeaver | 68.8% [61, 76] | 45.5% [21, 70] | 47.9% [35, 62] | 87.0% [79, 94] | 37.6% [29, 46] | 38.5% [30, 47] | 38.5% [30, 47] | 100.0% [100, 100] (n=867) | 33.3% [16, 56] (n=18) | 27.8% [12, 51] | 5.6% [1, 26] | 33.3% [16, 56] | 0.0% [0, 1] | 0 in 0 records | 98.2% [95, 100] | 36.21 / 58.72 / 104.11 |
 
 Planner-cached records: 0 (must be 0 for headline latency).
 
