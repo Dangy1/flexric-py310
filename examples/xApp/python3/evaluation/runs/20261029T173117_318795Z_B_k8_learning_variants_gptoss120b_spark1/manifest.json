@@ -1,0 +1,616 @@
+{
+  "LLM_SERVER_HARDWARE": "spark1.dice.aalto.fi: NVIDIA DGX Spark, GB10 Grace Blackwell, 128 GB unified CPU-GPU memory (121 GiB visible), vLLM, gpt-oss-120b",
+  "appweaver_learning": {
+    "guidance_section_sha256": "d08c58d15c33844f",
+    "memory_by_method": {
+      "appweaver_mem": {
+        "entry_count": 50,
+        "path": "/home/dang/flexric/build/examples/xApp/python3/evaluation/memory/experience_A.jsonl",
+        "sha256": "b74c7cb1d39c80c819cacba933dec1de5bb481aad4eddb20f92d9e4eb2356ee4",
+        "sources": [
+          "20261028T190000Z_A_final_gptoss120b_spark1_seededfix"
+        ]
+      },
+      "appweaver_v2": {
+        "entry_count": 50,
+        "path": "/home/dang/flexric/build/examples/xApp/python3/evaluation/memory/experience_A.jsonl",
+        "sha256": "b74c7cb1d39c80c819cacba933dec1de5bb481aad4eddb20f92d9e4eb2356ee4",
+        "sources": [
+          "20261028T190000Z_A_final_gptoss120b_spark1_seededfix"
+        ]
+      }
+    },
+    "memory_entry_count": 50,
+    "memory_k": 3,
+    "memory_min_score": 4.0,
+    "memory_path": "/home/dang/flexric/build/examples/xApp/python3/evaluation/memory/experience_A.jsonl",
+    "memory_sha256": "b74c7cb1d39c80c819cacba933dec1de5bb481aad4eddb20f92d9e4eb2356ee4",
+    "memory_sources": [
+      "20261028T190000Z_A_final_gptoss120b_spark1_seededfix"
+    ],
+    "methods": {
+      "appweaver_guided": {
+        "feedback": true,
+        "guidance": true,
+        "memory_path": null,
+        "needs": true,
+        "workflow_templates": false
+      },
+      "appweaver_mem": {
+        "feedback": false,
+        "guidance": false,
+        "memory_path": "/home/dang/flexric/build/examples/xApp/python3/evaluation/memory/experience_A.jsonl",
+        "needs": false,
+        "workflow_templates": true
+      },
+      "appweaver_tpl": {
+        "feedback": false,
+        "guidance": false,
+        "memory_path": null,
+        "needs": false,
+        "workflow_templates": true
+      },
+      "appweaver_v2": {
+        "feedback": true,
+        "guidance": true,
+        "memory_path": "/home/dang/flexric/build/examples/xApp/python3/evaluation/memory/experience_A.jsonl",
+        "needs": true,
+        "workflow_templates": true
+      }
+    },
+    "template_k": 3,
+    "workflow_template_cards": [
+      {
+        "description": "Collect KPIs, correlate MAC/slice pressure, enforce policy, then validate with RC.",
+        "generated_workflow": [
+          "KPM",
+          "SLICE",
+          "TC",
+          "RC"
+        ],
+        "name": "Observe, Diagnose, Optimize",
+        "steps": [
+          {
+            "action_id": "observe-rru",
+            "agent_id": "kpm"
+          },
+          {
+            "action_id": "monitor",
+            "agent_id": "slice"
+          },
+          {
+            "action_id": "apply-codel",
+            "agent_id": "tc"
+          },
+          {
+            "action_id": "rc-control",
+            "agent_id": "rc"
+          }
+        ],
+        "workflow_id": "observe-diagnose-optimize"
+      },
+      {
+        "description": "Apply or monitor slice policy, measure impact, then review control readiness.",
+        "generated_workflow": [
+          "SLICE",
+          "KPM",
+          "RC"
+        ],
+        "name": "Slice Assurance Loop",
+        "steps": [
+          {
+            "action_id": "monitor",
+            "agent_id": "slice"
+          },
+          {
+            "action_id": "observe-rru",
+            "agent_id": "kpm"
+          },
+          {
+            "action_id": "rc-control",
+            "agent_id": "rc"
+          }
+        ],
+        "workflow_id": "slice-assurance"
+      },
+      {
+        "description": "Use TC actions and downstream bearer/tunnel observers for transport-aware feedback.",
+        "generated_workflow": [
+          "TC"
+        ],
+        "name": "Transport QoS Chain",
+        "steps": [
+          {
+            "action_id": "apply-codel",
+            "agent_id": "tc"
+          }
+        ],
+        "workflow_id": "transport-qos"
+      }
+    ]
+  },
+  "code_provenance": {
+    "code_sha256": {
+      "backend/agents/__init__.py": "ece47d0290cb89b534494f3111d5322345aa9132d6352f3723e4062996ee275d",
+      "backend/agents/factory.py": "b4530b65d487a8b70e34dc2c1b4680a80864c03593b7282a6660a0cff4d756b2",
+      "backend/agents/gtp.py": "0918907a4238d0c04108da2ba78d149c00d27e4a72240c1e449513812dfb6677",
+      "backend/agents/kpm.py": "92010818d2dccdfa6d6266f916927f6b275322f9559cccde10f32f7dc1776604",
+      "backend/agents/mac.py": "95d185022674cf98fe182f4223ce2aeb0464cdaf44b65737e0315cd668cffedc",
+      "backend/agents/orchestrator.py": "f08590219ec5aa505686946d82cec2ef9719744ad4761e8472181de869c5fabd",
+      "backend/agents/pdcp.py": "3071302affd9d4916671bde0910a0ee5319072d859800bc8e7d6466d796d20d9",
+      "backend/agents/rapps.py": "fdfef87d6d4ee2c15156e9e95bb0a3e9c73acb036f6b470a8e0d0be675719e3a",
+      "backend/agents/rc.py": "459dcebcd1365c3406460b301f67eaab9cb50ff3c2b3e236f7a36d528d8fc269",
+      "backend/agents/registry.py": "85fb0426d7e68b246a21e88a6aa63cfea24388f1e89b7e77c56338dc2fa3da20",
+      "backend/agents/rlc.py": "5e1ad487066ecb923131349b533ab4443b968da08f1d56b3bc2a9b89d3ee9f6e",
+      "backend/agents/slice.py": "4be1c1571d4d429f175c9a996c7efbf3571c5bf136eafa5a81f284e3acd5126d",
+      "backend/agents/tc.py": "44e797868b60d5585d43332ef1f94013c3936c6d7093675d000a11a105d056d7",
+      "backend/appweaver/__init__.py": "b149511677860b60980220acae0cff8979d4e04aa5a9a8b91e7f8ed48679154b",
+      "backend/appweaver/graph.py": "7da6181960eac8a1b8fb3a8c60f926698dce7df63c768e832687df02d7b2dd34",
+      "backend/appweaver/learning.py": "bf5745965c3e336496f62a437a8f18eb34d12a5ec7affeca0cd3f298cdb6e21a",
+      "backend/appweaver/learning_prompts.py": "aac4217d9697fb2110924442ea594266c92e1cd5d6348e785d01ebec45498d40",
+      "backend/appweaver/needs.py": "685fe564e87089af676101ffa278f77da7b4b4735caed48b9a6a97dd87cd8c58",
+      "backend/appweaver/nodes/__init__.py": "b8dc1d70a072b940513f893318327a8b3b7e895cd0c1f7b86635403cefbbf7ef",
+      "backend/appweaver/nodes/compose.py": "af518d5e6d695bcf9d4bfb09e172768728eaae5f0cb31ca26fdf2f4c6f6e3f63",
+      "backend/appweaver/nodes/deploy.py": "8d71162563df9feb96f05415e4f0628cf587f4a8e3f6b6a84f28c646b8b7bdff",
+      "backend/appweaver/nodes/discover.py": "1cff5301c076f12de65982e0e97bf13875f00f47a5b3de158e78ff3528d4ba0a",
+      "backend/appweaver/nodes/finish.py": "b09c0d0a6b5eacc8c034786bfa53fcc33d11ef00a45b48384e2d987ef138e4df",
+      "backend/appweaver/nodes/recover.py": "d09d678d60d1f31239bfe114a723304a0835d7b3dc890d5b5f0f71491ab579bd",
+      "backend/appweaver/nodes/validate.py": "8332553275f31bbca5cb1d82345bba2c476782fc3c1454cc392d3a1f3a0fad35",
+      "backend/appweaver/prompts.py": "1fa95ef855ea4bbef3d04bb8b168d20a040d8d63b4f009b6415682d034ba6656",
+      "backend/appweaver/state.py": "67c2f48babebbf14adb56ea65d1226e3615d0ee50277ac2446245b6aa5fcb20b",
+      "backend/appweaver/util.py": "fe43b13405397dab7ae1d33e080186c96bc3e8173d725f382d71f58e6dfed343",
+      "backend/orchestration/compat.py": "36464f46df3aa5e052b2377a139fe66cb4d74187274a574fdbd7f2c776fa6692",
+      "backend/orchestration/discovery.py": "a699282869a3cc339a0a5918cca31bdbd3a649dca89a1c5d3b9290d6c964ccfc",
+      "backend/orchestration/validate.py": "2d09fa5abc431d73375ce461bee1a538e02fde199e1f50cd7ce2d14e96914f0b",
+      "evaluation/label_rules.py": "f83505a60d78b1d912d2b32adf1eea2ecf4a56ec1cd4e3c16c1aa9bd704dab66",
+      "evaluation/run_harness.py": "c301ad8b55b11aef5637e71759f660258b498b54fb55ae1b7623f314955fb118",
+      "flexric_agent_portal.py": "ba32cc2147b866d04608a3e4ce73be3b2c6389a586d338d8e213d8f6e294b8fa"
+    },
+    "git_branch": "appweaver-revision",
+    "git_commit": "76bce6e06b525a719a5b72d5e186a3384f607abd",
+    "git_source_dirty": false,
+    "harness_root": "/home/dang/flexric/build/examples/xApp/python3"
+  },
+  "created_at": "2026-10-29T17:31:17.344672Z",
+  "duration_s": 45,
+  "evaluation_runtime_config": {
+    "dryrun_duration_s": 5,
+    "lease_poll_interval_s": 0.5,
+    "lease_wait_s": 45.0,
+    "max_prompt_chars": 160000,
+    "memory_path": "/home/dang/flexric/build/examples/xApp/python3/evaluation/memory/experience_A.jsonl",
+    "metrics_min_interval_s": 15.0,
+    "metrics_mode": "live",
+    "observation_cache_ttl_s": 0.0,
+    "planner_cache_ttl_s": 0.0,
+    "rapp_directory_enabled": true,
+    "retrieval_include_deprecated": true,
+    "retrieval_k": 8,
+    "retrieval_pin_xapps": true,
+    "tool_ack_timeout_s": 12.0,
+    "validate_mode": "dryrun",
+    "validate_mode_degraded_reason": "",
+    "validate_mode_effective": "dryrun",
+    "workflow_poll_interval_s": 0.05,
+    "workflow_poll_timeout_s": 2.0
+  },
+  "external_recovery": "removed (no runtime reset during a record)",
+  "git_commit": "76bce6e06b525a719a5b72d5e186a3384f607abd",
+  "graph_backend": "langgraph",
+  "hardware": {
+    "llm_server": "spark1.dice.aalto.fi: NVIDIA DGX Spark, GB10 Grace Blackwell, 128 GB unified CPU-GPU memory (121 GiB visible), vLLM, gpt-oss-120b",
+    "orchestration_cpu": "x86_64",
+    "orchestration_host": "comlab-srs",
+    "orchestration_platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+    "orchestration_python": "3.10.20"
+  },
+  "intent_count": 109,
+  "intents_file": "/home/dang/flexric/build/examples/xApp/python3/evaluation/intents_v2.json",
+  "intents_sha256": "dc7042c82f72241d20673f0ddfa9c0cf38f52935fa8719770ca89110b2c32711",
+  "lease_wait_s": 45.0,
+  "maintenance": {
+    "cmd": "/home/dang/flexric/build/examples/xApp/python3/scripts/restart_agent_portal_stack.sh; /home/dang/flexric/build/examples/xApp/python3/scripts/stop_twin_emu_stack.sh; /home/dang/flexric/build/examples/xApp/python3/scripts/start_twin_emu_stack.sh",
+    "every": 0,
+    "health_cmd": "/home/dang/flexric/build/examples/xApp/python3/scripts/probe_e42.sh && FLEXRIC_XAPP_CONF=/tmp/flexric_twin_emu/flexric_twin.conf /home/dang/flexric/build/examples/xApp/python3/scripts/probe_e42.sh",
+    "health_failures": [
+      {
+        "after_record": 0,
+        "attempt": 1,
+        "intent_id": "xr_latency_guard",
+        "method": "appweaver_tpl",
+        "repeat_index": 1,
+        "restart_returncode": 0
+      },
+      {
+        "after_record": 61,
+        "attempt": 1,
+        "intent_id": "pdcp_reorder_investigation",
+        "method": "appweaver_mem",
+        "repeat_index": 1,
+        "restart_returncode": 0
+      },
+      {
+        "after_record": 135,
+        "attempt": 1,
+        "intent_id": "premium_qos_isolation",
+        "method": "appweaver_v2",
+        "repeat_index": 1,
+        "restart_returncode": 0
+      },
+      {
+        "after_record": 183,
+        "attempt": 1,
+        "intent_id": "handover_route_risk_screening",
+        "method": "appweaver_v2",
+        "repeat_index": 1,
+        "restart_returncode": 0
+      },
+      {
+        "after_record": 469,
+        "attempt": 1,
+        "intent_id": "tc_conflict_recovery",
+        "method": "appweaver_mem",
+        "repeat_index": 2,
+        "restart_returncode": 0
+      },
+      {
+        "after_record": 496,
+        "attempt": 1,
+        "intent_id": "pdcp_reorder_investigation",
+        "method": "appweaver_tpl",
+        "repeat_index": 2,
+        "restart_returncode": 0
+      },
+      {
+        "after_record": 526,
+        "attempt": 1,
+        "intent_id": "edge_gaming_jitter_protection",
+        "method": "appweaver_guided",
+        "repeat_index": 2,
+        "restart_returncode": 0
+      },
+      {
+        "after_record": 1304,
+        "attempt": 1,
+        "intent_id": "n3_tunnel_inventory",
+        "method": "appweaver_tpl",
+        "repeat_index": 3,
+        "restart_returncode": 0
+      },
+      {
+        "after_record": 1304,
+        "attempt": 2,
+        "intent_id": "n3_tunnel_inventory",
+        "method": "appweaver_tpl",
+        "repeat_index": 3,
+        "restart_returncode": 0
+      }
+    ],
+    "health_retries": 2,
+    "runs": []
+  },
+  "max_prompt_chars": 160000,
+  "method_labels": {
+    "appweaver_guided": "AppWeaver + guidance + feedback",
+    "appweaver_mem": "AppWeaver + templates + memory",
+    "appweaver_tpl": "AppWeaver + templates",
+    "appweaver_v2": "AppWeaver v2 (guidance + feedback + templates + memory)"
+  },
+  "methods": [
+    "appweaver_tpl",
+    "appweaver_mem",
+    "appweaver_guided",
+    "appweaver_v2"
+  ],
+  "notes": [
+    "This manifest captures the platform state observed by the harness at batch start.",
+    "The current environment may not expose live RPC, MCP, or KPM services. Those limits are recorded in the result files rather than hidden.",
+    "Metrics snapshots and KPM observation actions can be cached by the harness to reduce platform load and avoid punishing planners for telemetry polling frequency.",
+    "Agent-card discovery methods can generate custom workflow chains when an intent does not align with the predefined workflow catalog."
+  ],
+  "only_intents": null,
+  "planner_inference_settings": {
+    "provider": "vllm",
+    "reasoning_effort": "medium",
+    "seed": 7,
+    "temperature": 0.2,
+    "think": "model-default",
+    "timeout_s": 180
+  },
+  "planner_prompt_sha256": {
+    "__main__._intent_text": "954c9c7ec8bf0363",
+    "__main__.agentcard_prompt": "0b60c1c295d6f6cd",
+    "__main__.agentcard_recovery_prompt": "000ebe12481bb2d8",
+    "__main__.appweaver_mem_prompt": "a8c29a85d3c79a1b",
+    "__main__.appweaver_tpl_prompt": "1d86d12ab3852c47",
+    "__main__.default_action_for_agent": "af59223b458aa3ed",
+    "__main__.llm_blind_prompt": "93705fc63e03c6ea",
+    "__main__.llm_prompt": "bdada6ce3b2877b3",
+    "__main__.llm_recovery_prompt": "c847439ce520920d",
+    "__main__.route_intent": "01e16dee8a5b1658",
+    "appweaver.compose_module": "af518d5e6d695bcf",
+    "appweaver.learning_module": "bf5745965c3e3364",
+    "appweaver.learning_prompts_module": "aac4217d9697fb21",
+    "appweaver.needs_module": "685fe564e87089af",
+    "appweaver.prompts_module": "1fa95ef855ea4bbe",
+    "compose.feedback_findings": "823b8e5586cea055",
+    "learning.ExperienceMemory": "677d18a3f894f11e",
+    "learning.retrieve_workflow_cards": "5972bac40c792d9a",
+    "learning.workflow_cards": "3190d9ad3af599a4",
+    "learning_prompts.compose_prompt_with_context": "55534b5c4b3d29d2",
+    "learning_prompts.feedback_prompt": "2312670151ab05c1",
+    "learning_prompts.guidance_section": "d656292e3b068ed7",
+    "learning_prompts.memory_section": "51e72c057696d9d0",
+    "learning_prompts.serialize_memory": "2e057fa645eb03bf",
+    "learning_prompts.serialize_workflow_cards": "d821169384f4a814",
+    "learning_prompts.template_section": "ae78019b8b03bcf8",
+    "needs.coverage_findings": "d2351cae681e6ab0",
+    "needs.needs_prompt": "0360e3a387646099",
+    "needs.needs_section": "62bf4def946e9452",
+    "needs.parse_needs": "a1fbf2ef398c677b",
+    "needs.write_targets": "93664efa354ecdcb",
+    "prompts.compose_prompt": "9b781c4f44b6731f",
+    "prompts.recovery_prompt": "9680297280ea2b9e",
+    "prompts.serialize_cards": "1a7602bc064a8e2a"
+  },
+  "prompt_builders_sha256": {
+    "__main__._intent_text": "954c9c7ec8bf0363",
+    "__main__.agentcard_prompt": "0b60c1c295d6f6cd",
+    "__main__.agentcard_recovery_prompt": "000ebe12481bb2d8",
+    "__main__.appweaver_mem_prompt": "a8c29a85d3c79a1b",
+    "__main__.appweaver_tpl_prompt": "1d86d12ab3852c47",
+    "__main__.default_action_for_agent": "af59223b458aa3ed",
+    "__main__.llm_blind_prompt": "93705fc63e03c6ea",
+    "__main__.llm_prompt": "bdada6ce3b2877b3",
+    "__main__.llm_recovery_prompt": "c847439ce520920d",
+    "__main__.route_intent": "01e16dee8a5b1658",
+    "appweaver.compose_module": "af518d5e6d695bcf",
+    "appweaver.learning_module": "bf5745965c3e3364",
+    "appweaver.learning_prompts_module": "aac4217d9697fb21",
+    "appweaver.needs_module": "685fe564e87089af",
+    "appweaver.prompts_module": "1fa95ef855ea4bbe",
+    "compose.feedback_findings": "823b8e5586cea055",
+    "learning.ExperienceMemory": "677d18a3f894f11e",
+    "learning.retrieve_workflow_cards": "5972bac40c792d9a",
+    "learning.workflow_cards": "3190d9ad3af599a4",
+    "learning_prompts.compose_prompt_with_context": "55534b5c4b3d29d2",
+    "learning_prompts.feedback_prompt": "2312670151ab05c1",
+    "learning_prompts.guidance_section": "d656292e3b068ed7",
+    "learning_prompts.memory_section": "51e72c057696d9d0",
+    "learning_prompts.serialize_memory": "2e057fa645eb03bf",
+    "learning_prompts.serialize_workflow_cards": "d821169384f4a814",
+    "learning_prompts.template_section": "ae78019b8b03bcf8",
+    "needs.coverage_findings": "d2351cae681e6ab0",
+    "needs.needs_prompt": "0360e3a387646099",
+    "needs.needs_section": "62bf4def946e9452",
+    "needs.parse_needs": "a1fbf2ef398c677b",
+    "needs.write_targets": "93664efa354ecdcb",
+    "prompts.compose_prompt": "9b781c4f44b6731f",
+    "prompts.recovery_prompt": "9680297280ea2b9e",
+    "prompts.serialize_cards": "1a7602bc064a8e2a"
+  },
+  "providers": [
+    {
+      "enabled": false,
+      "endpoint": "claude -p (headless)",
+      "id": "claude",
+      "label": "Claude CLI",
+      "model": "cli-default",
+      "notes": "Headless Claude Code CLI; uses the operator's configured default model unless CLAUDE_CLI_MODEL is set.",
+      "supports_tasks": false
+    },
+    {
+      "api_key_present": true,
+      "enabled": true,
+      "endpoint": "https://spark1.dice.aalto.fi/v1",
+      "id": "vllm",
+      "label": "vLLM (OpenAI-compatible)",
+      "model": "gpt-oss-120b",
+      "notes": "Self-hosted vLLM server (spark1). Set VLLM_BASE_URL=http://host:port/v1, VLLM_MODEL and VLLM_API_KEY; select it with LLM_PROVIDER=vllm.",
+      "supports_tasks": true
+    },
+    {
+      "enabled": true,
+      "endpoint": "http://130.233.158.22:11434",
+      "id": "ollama",
+      "label": "Ollama",
+      "model": "gpt-oss:latest",
+      "notes": "Best for private on-box automation loops and local model routing.",
+      "supports_tasks": true
+    },
+    {
+      "enabled": false,
+      "endpoint": "https://api.openai.com/v1",
+      "id": "openai",
+      "label": "OpenAI-compatible API",
+      "model": "not-configured",
+      "notes": "Any /v1/chat/completions endpoint with a bearer key (OpenAI, or Ollama behind an authenticating proxy such as spark2: OPENAI_BASE_URL=https://spark2.dice.aalto.fi/v1, OPENAI_MODEL=gpt-oss:120b); select it with LLM_PROVIDER=openai.",
+      "supports_tasks": false
+    }
+  ],
+  "registry": {
+    "action_count": 181,
+    "agent_count": 81,
+    "agent_ids": [
+      "gtp",
+      "kpm",
+      "mac",
+      "orchestrator",
+      "pdcp",
+      "rapp.anomaly_detection",
+      "rapp.anomaly_detection.kestrel",
+      "rapp.anomaly_detection.northwind",
+      "rapp.anomaly_detection.v0",
+      "rapp.anr",
+      "rapp.anr.northwind",
+      "rapp.anr.v0",
+      "rapp.beamforming",
+      "rapp.capacity_mgmt",
+      "rapp.capacity_mgmt.northwind",
+      "rapp.capacity_mgmt.v0",
+      "rapp.config_audit",
+      "rapp.crossed_feeder",
+      "rapp.endc_steering",
+      "rapp.energy_saving",
+      "rapp.energy_saving.kestrel",
+      "rapp.energy_saving.northwind",
+      "rapp.energy_saving.v0",
+      "rapp.fault_prediction",
+      "rapp.interference",
+      "rapp.interference.northwind",
+      "rapp.interference.v0",
+      "rapp.mimo_sleep",
+      "rapp.mimo_sleep.northwind",
+      "rapp.mimo_sleep.v0",
+      "rapp.mobility_load_balancing",
+      "rapp.mobility_load_balancing.northwind",
+      "rapp.mobility_load_balancing.v0",
+      "rapp.mobility_optimization",
+      "rapp.mobility_optimization.northwind",
+      "rapp.mobility_optimization.v0",
+      "rapp.pci_optimization",
+      "rapp.pci_optimization.northwind",
+      "rapp.pci_optimization.v0",
+      "rapp.pm_kpi",
+      "rapp.pm_kpi.northwind",
+      "rapp.pm_kpi.v0",
+      "rapp.qoe_prediction",
+      "rapp.qoe_prediction.kestrel",
+      "rapp.qoe_prediction.northwind",
+      "rapp.qoe_prediction.v0",
+      "rapp.rach_optimization",
+      "rapp.ran_lifecycle",
+      "rapp.ret_tilt",
+      "rapp.ret_tilt.northwind",
+      "rapp.ret_tilt.v0",
+      "rapp.root_cause",
+      "rapp.root_cause.northwind",
+      "rapp.root_cause.v0",
+      "rapp.self_healing",
+      "rapp.signalling_storm",
+      "rapp.sleeping_cell",
+      "rapp.slice_admission",
+      "rapp.slice_sla",
+      "rapp.slice_sla.northwind",
+      "rapp.slice_sla.v0",
+      "rapp.special_events",
+      "rapp.spectrum_sharing",
+      "rapp.traffic_forecast",
+      "rapp.traffic_forecast.northwind",
+      "rapp.traffic_forecast.v0",
+      "rapp.traffic_steering",
+      "rapp.traffic_steering.kestrel",
+      "rapp.traffic_steering.northwind",
+      "rapp.traffic_steering.v0",
+      "rapp.transport_qos",
+      "rapp.transport_qos.northwind",
+      "rapp.transport_qos.v0",
+      "rapp.ue_qos_control",
+      "rapp.ue_qos_control.northwind",
+      "rapp.ue_qos_control.v0",
+      "rapp.ul_interference",
+      "rc",
+      "rlc",
+      "slice",
+      "tc"
+    ],
+    "executable_agent_count": 80
+  },
+  "repeat_count": 3,
+  "repeat_start": 1,
+  "service_health": [
+    {
+      "detail": "Local portal process is serving this request.",
+      "id": "portal",
+      "label": "Agent Portal",
+      "latency_ms": 0,
+      "ok": true,
+      "public_url": "http://127.0.0.1:8088/",
+      "status": "ready",
+      "url": "http://127.0.0.1:8088/api/overview"
+    },
+    {
+      "detail": "RPC process is alive. Use /ready or a functional endpoint to force xApp initialization.",
+      "id": "rpc",
+      "label": "xApp RPC",
+      "latency_ms": 2,
+      "ok": true,
+      "public_url": "http://127.0.0.1:8090/health",
+      "status": "ready",
+      "url": "http://127.0.0.1:8090/health"
+    },
+    {
+      "detail": "Live FlexRIC collector is disabled by default for stability. Set FLEXRIC_MCP_ENABLE_COLLECTOR=1 to opt in.",
+      "id": "mcp",
+      "label": "MCP Metrics",
+      "latency_ms": 1,
+      "ok": true,
+      "public_url": "http://127.0.0.1:8000/healthz",
+      "status": "ready",
+      "url": "http://127.0.0.1:8000/healthz"
+    },
+    {
+      "detail": "Collector is starting but no KPM indications have been seen yet.",
+      "id": "kpm_bus",
+      "label": "KPM Bus",
+      "latency_ms": 1,
+      "ok": false,
+      "public_url": "http://127.0.0.1:8091/healthz",
+      "status": "warning",
+      "url": "http://127.0.0.1:8091/healthz"
+    }
+  ],
+  "validate_mode": "dryrun",
+  "validate_mode_effective": "dryrun",
+  "workflow_actions": {
+    "observe-diagnose-optimize": {
+      "kpm": "observe-rru",
+      "rc": "rc-control",
+      "slice": "monitor",
+      "tc": "apply-codel"
+    },
+    "slice-assurance": {
+      "kpm": "observe-rru",
+      "rc": "rc-control",
+      "slice": "monitor"
+    },
+    "transport-qos": {
+      "tc": "apply-codel"
+    }
+  },
+  "workflow_templates": {
+    "observe-diagnose-optimize": {
+      "description": "Collect KPIs, correlate MAC/slice pressure, enforce policy, then validate with RC.",
+      "label": "Observe, Diagnose, Optimize",
+      "steps": [
+        "orchestrator",
+        "kpm",
+        "mac",
+        "slice",
+        "tc",
+        "rc"
+      ]
+    },
+    "slice-assurance": {
+      "description": "Apply or monitor slice policy, measure impact, then review control readiness.",
+      "label": "Slice Assurance Loop",
+      "steps": [
+        "orchestrator",
+        "slice",
+        "kpm",
+        "rc"
+      ]
+    },
+    "transport-qos": {
+      "description": "Use TC actions and downstream bearer/tunnel observers for transport-aware feedback.",
+      "label": "Transport QoS Chain",
+      "steps": [
+        "orchestrator",
+        "tc",
+        "rlc",
+        "pdcp",
+        "gtp"
+      ]
+    }
+  }
+}
