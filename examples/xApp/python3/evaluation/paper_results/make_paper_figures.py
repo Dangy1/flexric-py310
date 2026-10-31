@@ -8,6 +8,7 @@ Inputs
   --batch-a RUN            Batch A: intents_50.json, paper registry (FLEXRIC_RAPP_DIRECTORY unset)
   --batch-b RUN [RUN ...]  Batch B: intents_v2.json with the rApp Directory; one run per
                            retrieval depth (labelled from manifest -> retrieval_k)
+  --batch-c RUN            Batch C: held-out intents_c.json, paper registry (README, CSV and macros only)
 
 Outputs (into --out, default: this directory)
   combined_results.csv           one row per (batch, method): value, ci_lo, ci_hi per metric
@@ -34,6 +35,8 @@ registry (manifest card ids), so batches written before the rule existed score t
 "Exact" = ordered match with the labelled chain (secondary); macros/CSV keys `accuracy`,
 `<split>_accuracy` keep their old meaning (accepted-chain match); rule keys are `rule_accuracy`,
 `<split>_rule_accuracy`. See evaluation/METRICS.md.
+"Open-world (non-template)" = open-world rule accuracy over the intents that no operator workflow template
+solves under the label rule (`difficulty_a_vs_c.template_solvable`), so template lookup cannot explain it.
 
 Run inside the flexric-py310 conda env:
   python make_paper_figures.py --batch-a ../runs/<A> --batch-b ../runs/<B_k8> ../runs/<B_k0>
@@ -126,6 +129,11 @@ class Batch:
         for record in self.records:
             intent = intents.get(str(record.get("intent_id")))
             record["workflow_match_rule_sens"] = bool(intent) and sensitivity_match(record.get("generated_workflow") or [], intent, registry)[0]
+        # Intents some operator workflow template already solves under the label rule.
+        from difficulty_a_vs_c import template_solvable
+        solvable = {i: template_solvable(intent, registry) for i, intent in intents.items()}
+        for record in self.records:
+            record["template_solvable"] = solvable.get(str(record.get("intent_id")), False)
         self.methods = [m for m, _ in METHODS if any(r.get("method") == m for r in self.records)]
 
     @property
@@ -237,6 +245,9 @@ def method_metrics(records: List[Dict[str, Any]]) -> Dict[str, Any]:
         out[f"{split}_accuracy"] = ratio_bootstrap(subset, flag("workflow_match_any_accepted"), ONE)
         out[f"{split}_rule_accuracy"] = ratio_bootstrap(subset, flag("workflow_match_rule"), ONE)
         out[f"{split}_exact_accuracy"] = ratio_bootstrap(subset, flag("workflow_match"), ONE)
+    nontpl = [r for r in records if split_of(r) == "open_world" and not r.get("template_solvable")]
+    out["open_world_nontpl_intents"] = len({r.get("intent_id") for r in nontpl})
+    out["open_world_nontpl_rule_accuracy"] = ratio_bootstrap(nontpl, flag("workflow_match_rule"), ONE)
 
     # Lease-refused attempts (status "conflict") never launched anything, so they are not control calls.
     calls = lambda r: [c for c in (r.get("tool_calls") or []) if c.get("acknowledged") is not None and c.get("status") != "conflict"]  # noqa: E731
@@ -525,16 +536,19 @@ def twin_macros(twin_dir: Path, role: str = "T") -> List[str]:
 def batch_label(batch: Batch) -> str:
     if batch.role == "A":
         return "Batch A (paper registry)"
+    if batch.role == "C":
+        return "Batch C (held-out intents, paper registry)"
     return f"Batch B (directory, k={batch.retrieval_k or 'all'})"
 
 
 # ---------------------------------------------------------------- tables / CSV
-CSV_METRICS = ["rule_accuracy", "rule_accuracy_sens", "known_rule_accuracy", "open_world_rule_accuracy", "unseen_capability_rule_accuracy",
+CSV_METRICS = ["rule_accuracy", "rule_accuracy_sens", "known_rule_accuracy", "open_world_rule_accuracy", "open_world_nontpl_rule_accuracy",
+               "unseen_capability_rule_accuracy",
                "accuracy", "exact_accuracy", "set_accuracy", "known_accuracy", "open_world_accuracy",
                "unseen_capability_accuracy", "known_exact_accuracy", "open_world_exact_accuracy",
                "unseen_capability_exact_accuracy", "ack_rate", "launch_rate", "conflict_recall", "conflict_fp_rate",
                "seeded_recovered", "seeded_met_conflict", "seeded_completed_after_wait", "seeded_unresolved", "seeded_rule_accuracy", "hallucinated_per_record", "retrieval_hit_rate", "compat_ok_rate"]
-CSV_SCALARS = ["records", "intents", "repeats", "known_records", "open_world_records", "unseen_capability_records",
+CSV_SCALARS = ["records", "intents", "repeats", "known_records", "open_world_records", "open_world_nontpl_intents", "unseen_capability_records",
                "tool_calls", "seeded_records", "hallucinated_refs", "records_with_hallucination", "latency_n",
                "latency_mean_ms", "latency_sd_ms", "latency_median_ms", "latency_p95_ms", "latency_max_ms",
                "planner_cached_records"]
@@ -642,7 +656,7 @@ def write_table_b(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[st
 
 
 def macro_role(batch: Batch) -> str:
-    return "A" if batch.role == "A" else f"B{batch.retrieval_k or 'all'}"
+    return batch.role if batch.role in ("A", "C") else f"B{batch.retrieval_k or 'all'}"
 
 
 def write_macros(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[str, Any]]], out: Path,
@@ -691,7 +705,7 @@ def write_macros(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[str
             if m.get("open_world_rapp_rate") is not None:
                 put(role, method, "open_world_rapp_rate", f"{100 * m['open_world_rapp_rate']:.1f}")
             for key in ("records", "tool_calls", "seeded_records", "hallucinated_refs", "records_with_hallucination",
-                        "known_intents", "open_world_intents", "unseen_capability_intents", "planner_cached_records"):
+                        "known_intents", "open_world_intents", "open_world_nontpl_intents", "unseen_capability_intents", "planner_cached_records"):
                 put(role, method, key, str(m.get(key, "")))
     # T = first T6 batch (twin load unknown), TL = second (load-calibrated twin).
     for twin_dir, role in zip(twin_dirs, ("T", "TL")):
@@ -715,13 +729,15 @@ def write_readme(batches: List[Batch], all_metrics: Dict[str, Dict[str, Dict[str
         if b.preliminary:
             lines += [f"> **Preliminary.** Planner `{b.model}` stands in for gpt-oss (broken on spark2 under Ollama 0.40).",
                       "> These numbers validate the pipeline; they are not the paper's results.", ""]
-        lines += ["| Method | Accuracy (rule) | Known | Open-world | Unseen cap. | Exact | Accepted | Set | Ack. calls | Seeded: met conflict | Seeded: done after wait | Seeded: unresolved | Seeded: correct | Conflict FP | Halluc. refs | Retrieval hit | Latency med / p95 / max (s) |",
-                  "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+        nontpl_n = max((m["open_world_nontpl_intents"] for m in metrics.values()), default=0)
+        lines += [f"| Method | Accuracy (rule) | Sensitivity | Known | Open-world | Open-world, non-template ({nontpl_n} intents) | Unseen cap. | Exact | Accepted | Set | Ack. calls | Seeded: met conflict | Seeded: done after wait | Seeded: unresolved | Seeded: correct | Conflict FP | Halluc. refs | Retrieval hit | Latency med / p95 / max (s) |",
+                  "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
         for method in b.methods:
             m = metrics[method]
             lines.append("| " + " | ".join([
-                LABEL[method].replace("\n", " "), pct_md(m["rule_accuracy"]), pct_md(m["known_rule_accuracy"]),
-                pct_md(m["open_world_rule_accuracy"]), pct_md(m["unseen_capability_rule_accuracy"]), pct_md(m["exact_accuracy"]),
+                LABEL[method].replace("\n", " "), pct_md(m["rule_accuracy"]), pct_md(m["rule_accuracy_sens"]), pct_md(m["known_rule_accuracy"]),
+                pct_md(m["open_world_rule_accuracy"]), pct_md(m["open_world_nontpl_rule_accuracy"]),
+                pct_md(m["unseen_capability_rule_accuracy"]), pct_md(m["exact_accuracy"]),
                 pct_md(m["accuracy"]), pct_md(m["set_accuracy"]),
                 f"{pct_md(m['ack_rate'])} (n={m['tool_calls']})",
                 f"{pct_md(m['seeded_met_conflict'])} (n={m['seeded_records']})", pct_md(m["seeded_completed_after_wait"]),
@@ -747,6 +763,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--batch-a", required=True)
     parser.add_argument("--batch-b", nargs="*", default=[])
+    parser.add_argument("--batch-c", default="")
     parser.add_argument("--twin", nargs="*", default=[], help="T6 run directories (run_twin_validation.py output): base, then load-calibrated")
     parser.add_argument("--out", default=str(Path(__file__).resolve().parent))
     args = parser.parse_args()
@@ -756,7 +773,8 @@ def main() -> int:
     figures.mkdir(parents=True, exist_ok=True)
     batch_a = Batch(Path(args.batch_a).resolve(), "A")
     batches_b = sorted((Batch(Path(p).resolve(), "B") for p in args.batch_b), key=lambda b: -(b.retrieval_k or 10**6))
-    batches = [batch_a] + batches_b
+    batch_c = [Batch(Path(args.batch_c).resolve(), "C")] if args.batch_c else []
+    batches = [batch_a] + batches_b + batch_c
     all_metrics = {b.id: batch_metrics(b) for b in batches}
 
     write_csv(batches, all_metrics, out)

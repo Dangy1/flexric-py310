@@ -1,0 +1,4 @@
+{
+ "degraded_pairs": [],
+ "criterion": ">=2 'Resending Setup Request' in any xApp log of the record"
+}
