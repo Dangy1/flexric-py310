@@ -1,0 +1,1317 @@
+{
+  "intents": {
+    "c_agv_cycle_deadline": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "AGV control messages on the factory floor miss their 10 ms cycle deadline whenever the camera-inspection uploads start. Work out where the contention is and fix it at both the radio-resource and the queueing level.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.9333333333333333
+    },
+    "c_aqm_right_away": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Enable active queue management on the user-plane path right away; we have already confirmed the queue is the problem.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.6
+    },
+    "c_ar_showroom_delay": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Keep end-to-end packet delay for the AR-glasses demo in the showroom cells under 10 ms; the delay comes partly from tenants contending for PRBs and partly from queue build-up on the bearers.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.6666666666666666
+    },
+    "c_boardroom_vip_slow": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.06666666666666667,
+      "intent": "A VIP says the network feels slow in the boardroom. Figure out what is going on with their connection and, if their bearer setup is at fault, fix the flow mapping for that one UE only.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.7333333333333333,
+      "run_count": 15,
+      "workflow_match_rate": 0.7333333333333333
+    },
+    "c_campus_throughput_drop": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.06666666666666667,
+      "intent": "Downlink user throughput on the university cells has fallen 30 % since Monday. Find out why, but don't change anything yet.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.4,
+      "run_count": 15,
+      "workflow_match_rate": 0.4
+    },
+    "c_cctv_uplink_frames": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "The city CCTV cameras drop frames around 18:00 because commuter traffic crowds the cells and the uplink queues grow. Restore smooth 4K uplink for the cameras.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.8666666666666667,
+      "run_count": 15,
+      "workflow_match_rate": 0.6
+    },
+    "c_codel_cell7": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Switch the bearer queues on cell 7 to CoDel with a 5 ms target delay.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.6666666666666666
+    },
+    "c_concert_plan_signed_off": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "The change board signed off the concert plan: give the broadcast slice its fixed radio share and enable CoDel on its bearers, then confirm both changes were accepted. No new measurements are needed.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.6666666666666666
+    },
+    "c_delay_spike_containment": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "A sudden rise in downlink delay has been flagged on two cells. Confirm it is real, and if it is queue build-up, contain it with traffic shaping before it spreads. Do not touch PRB allocations.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.8,
+      "run_count": 15,
+      "workflow_match_rate": 0.4
+    },
+    "c_drone_inspection_slice": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Drone inspection flights start at 14:00 over the wind farm. Check the current load on the cells covering the route and reserve enough radio resources for the drones' command-and-control slice.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.7333333333333333,
+      "run_count": 15,
+      "workflow_match_rate": 0.0
+    },
+    "c_dscp_ef_first": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Classify traffic by DSCP into the per-class transport queues so that EF-marked packets are always served first.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.3333333333333333
+    },
+    "c_ecn_cutover_verify": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Switch the default bearer from CoDel drops to ECN marking and verify that the change went through.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.9333333333333333,
+      "run_count": 15,
+      "workflow_match_rate": 0.06666666666666667
+    },
+    "c_ecn_default_bearer": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Turn on ECN marking for the default bearer queue.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.2
+    },
+    "c_edge_gaming_strict_priority": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "At the edge site, give the low-latency gaming class strict priority in the transport queues; best-effort can wait.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.26666666666666666
+    },
+    "c_enterprise_partition_ack": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Enable the enterprise per-class queue partitioning now and make sure the control was acknowledged; we already have the measurements we need.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.9333333333333333,
+      "run_count": 15,
+      "workflow_match_rate": 0.8
+    },
+    "c_esports_arena_jitter": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Esports final at the arena tonight. Hold round-trip time for the gaming tenant under 20 ms and jitter under 5 ms even when the venue is full and the other tenants compete for the same cells.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 1.0
+    },
+    "c_full_queue_profile_cr": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Apply the full queue-management profile from change request 4411 on the bearer path: classification, partitioning, shaping and CoDel.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.2
+    },
+    "c_fwa_evening_calls": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "FWA customers on sector 12: video calls lag every evening while bulk downloads saturate the sector. Sort it out end to end.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.8666666666666667
+    },
+    "c_hospital_ue_outlier": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "One UE in the hospital cell keeps showing RLC delays ten times the cell median. Work out whether its own radio link or the cell is at fault before anyone touches the configuration.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.6666666666666666,
+      "run_count": 15,
+      "workflow_match_rate": 0.06666666666666667
+    },
+    "c_hsr_rrc_churn": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.06666666666666667,
+      "intent": "On the high-speed-rail cells, check whether UEs keep bouncing between RRC states and whether that lines up with their throughput dips.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.8,
+      "run_count": 15,
+      "workflow_match_rate": 0.8
+    },
+    "c_idle_embb_reservation": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "The eMBB slice idles at 15 % of its reservation while the URLLC slice is saturated. Based on the measured load, move PRBs from one to the other and verify.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.8,
+      "run_count": 15,
+      "workflow_match_rate": 0.0
+    },
+    "c_iot_telemetry_partition": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Give the IoT telemetry flows a small dedicated queue partition so they no longer wait behind video segments.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.2
+    },
+    "c_lab_static_profile_push": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Push the pre-approved static slice profile to the lab cell and confirm the E2 node acknowledged it. Skip the measurement pass.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.2
+    },
+    "c_lecture_hall_streaming": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Four hundred students in the lecture hall stream the same lecture while the research slice pushes large dataset transfers. Keep the lecture stream stutter-free and stop the transfers from inflating everyone's queues, without starving the research slice.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.6666666666666666
+    },
+    "c_mall_rush_payment": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Saturday rush at the shopping centre starts in an hour. Make sure card-payment terminals and interactive apps don't stall: protect both their share of cell capacity and their queueing delay, starting from what the cells look like now.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.8666666666666667
+    },
+    "c_marathon_media_slice": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Activate the temporary broadcast-media slice for the marathon with its fixed PRB share, then confirm from live measurements that it is carrying the camera feeds.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.2
+    },
+    "c_media_van_uploads": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Large uplink uploads from the outside-broadcast van are inflating latency for everyone else on the cell. Measure how bad it is and shape the upload class accordingly.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.8,
+      "run_count": 15,
+      "workflow_match_rate": 0.4
+    },
+    "c_mission_critical_throughput": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.06666666666666667,
+      "intent": "Throughput of the mission-critical slice has dropped below its 50 Mbit/s guarantee in the last hour. Confirm it from measurements and enlarge its radio reservation, without touching transport queues.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.7333333333333333,
+      "run_count": 15,
+      "workflow_match_rate": 0.0
+    },
+    "c_morning_sluggish": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Something changed overnight and the morning shift says everything feels sluggish. Look into it, but don't act yet.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.0
+    },
+    "c_night_low_load_report": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Report which cells stay below 10 % downlink PRB utilisation between 01:00 and 05:00, so we can plan the carrier switch-off trial.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.8,
+      "run_count": 15,
+      "workflow_match_rate": 0.8
+    },
+    "c_partner_jitter_report": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Our edge-cloud gaming partner reports 40 ms jitter spikes on cell 5. Confirm it from live measurements and, if the queues are to blame, fix it at the queue level only.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.8,
+      "run_count": 15,
+      "workflow_match_rate": 0.0
+    },
+    "c_platoon_v2x_delay": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Truck platooning trial on the motorway segment: 99.99 % of V2X messages must arrive within 20 ms. Find where delay is accumulating and correct it in the slice allocation as well as in transport queueing.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.8
+    },
+    "c_popup_slice_teardown": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "The festival is over. Confirm the pop-up slice's PRB reservation has been removed and that the freed capacity shows up in the cell load.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.2
+    },
+    "c_post_upgrade_slice_survival": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "The gNB software was upgraded overnight. Check that the slice configuration survived the upgrade and that slice traffic levels look normal afterwards.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.2
+    },
+    "c_prb_alarm_sanity": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Is the 90 % PRB-utilisation alarm on cell 9 genuine or a counter glitch? Investigate only.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.2,
+      "run_count": 15,
+      "workflow_match_rate": 0.06666666666666667
+    },
+    "c_priority_ue_flow_remap": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "If the priority UE's downlink delay is above 50 ms, remap its video QoS flow onto its dedicated radio bearer.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.8,
+      "run_count": 15,
+      "workflow_match_rate": 0.8
+    },
+    "c_ran_sharing_entitlement": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "RAN-sharing audit: operator B's slice is entitled to 30 % of the carrier. Is that partition enforced, and what does operator B's traffic actually receive?",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.2
+    },
+    "c_remote_ultrasound_stream": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "A remote-ultrasound session runs from the clinic cell for the next two hours. Its video must stay at 15 Mbit/s or more with under 50 ms one-way delay, even though other tenants share both the cell and the transport link.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 1.0
+    },
+    "c_replication_shaper_ack": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Apply the 20 Mbit/s shaper for the backup-replication class on the bearer path and confirm the network accepted it.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.8,
+      "run_count": 15,
+      "workflow_match_rate": 0.13333333333333333
+    },
+    "c_residential_peak_throughput": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Between 19:00 and 23:00 the residential cluster's median downlink user throughput falls under 5 Mbit/s and pages load slowly: the slices fight over PRBs and the shared bearer queues are bloated. Get the median back above 20 Mbit/s with snappy page loads.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.7333333333333333
+    },
+    "c_rlc_delay_dashboard": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Read out the current downlink RLC delay per bearer on cell 4 for the latency dashboard.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.8,
+      "run_count": 15,
+      "workflow_match_rate": 0.8
+    },
+    "c_rlc_delay_gated_aqm": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "If downlink RLC SDU delay on the hotspot cell is above 30 ms, put an active queue discipline on its bearers and confirm the change was accepted. Leave slice settings alone.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.8,
+      "run_count": 15,
+      "workflow_match_rate": 0.6666666666666666
+    },
+    "c_robotics_line_share": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "The private-network slice for the robotics line needs a guaranteed PRB share. Size it from the line's measured peak demand and put it in place.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.8,
+      "run_count": 15,
+      "workflow_match_rate": 0.0
+    },
+    "c_sharing_rebalance": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Operator A uses far less than its contracted share of the shared carrier while operator B is congested. Measure both and re-partition capacity within the sharing agreement.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.7333333333333333,
+      "run_count": 15,
+      "workflow_match_rate": 0.2
+    },
+    "c_sim_migration_slice_mapping": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "After the SIM-profile migration, make sure every sensor UE ended up in the mMTC slice rather than the default one, and that the slice's PRB usage stays inside its reservation.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.9333333333333333,
+      "run_count": 15,
+      "workflow_match_rate": 0.13333333333333333
+    },
+    "c_sla_dispute_evidence": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Enterprise customer D disputes last week's service credit. Collect current per-UE throughput and delay on the two cells that serve their campus and review whether any control is warranted; make no changes.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.8,
+      "run_count": 15,
+      "workflow_match_rate": 0.06666666666666667
+    },
+    "c_slice_inventory": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "List the slices currently configured on the cell, their PRB reservations and which UEs are attached to each.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.06666666666666667
+    },
+    "c_slice_quota_review": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Review slice PRB quotas on cell 3 against measured usage.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.2
+    },
+    "c_slice_rollback_confirm": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Roll the slice configuration back to the static baseline after the failed trial and confirm the rollback was accepted.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.0
+    },
+    "c_software_update_cap": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Cap the software-update download class at 10 Mbit/s on the shared bearer path so it stops crowding interactive flows.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.26666666666666666
+    },
+    "c_stadium_ue_throughput_snapshot": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Give me a 30-second snapshot of per-UE downlink throughput on the stadium cell.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.8,
+      "run_count": 15,
+      "workflow_match_rate": 0.8
+    },
+    "c_static_profile_trial": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Put the static slice profile from change ticket CHG-2231 into effect on the test cell and measure what it does to per-slice load before we sign it off.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.2
+    },
+    "c_telemetry_ecn_switch": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Retransmissions on the industrial telemetry flows are rising. Look at current delay and throughput first, then move the telemetry bearer from drop-based queueing to ECN marking.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.8,
+      "run_count": 15,
+      "workflow_match_rate": 0.13333333333333333
+    },
+    "c_tenant_capacity_complaint": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Tenant C claims they get less capacity than they pay for. Check what share their slice is configured with and compare it with what they are actually using.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.2
+    },
+    "c_tenant_onboarding_check": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "We just onboarded an enterprise tenant with a 20 % PRB reservation. Confirm the reservation is actually in force and that their users get the capacity it should give them.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.2
+    },
+    "c_transit_hub_voice": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Voice calls in the transit hub sound choppy at rush hour. Check whether queueing delay is the cause and, if so, prioritise conversational voice on the transport path. The slice plan is frozen this week.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 0.8,
+      "run_count": 15,
+      "workflow_match_rate": 0.0
+    },
+    "c_ue1_slice_lookup": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Which slice is UE 1 associated with right now?",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.3333333333333333
+    },
+    "c_urllc_sla_spotcheck": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Spot-check the URLLC slice against its SLA: what policy is it running under right now, and is its measured load consistent with that policy?",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.2
+    },
+    "c_voice_queue_priority": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "Put voice packets into their own queue, served ahead of best-effort data on the bearer path.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.3333333333333333
+    },
+    "c_vpn_standing_queue": {
+      "conflict_rate": 0.0,
+      "failure_rate": 0.0,
+      "intent": "The enterprise VPN tunnel carries a standing queue of about 300 ms on its bearer. Drain it with an active queue discipline.",
+      "methods": [
+        "appweaver_mem",
+        "appweaver_mem2",
+        "appweaver_tpl",
+        "langgraph_agentcard",
+        "llm_only"
+      ],
+      "rule_match_rate": 1.0,
+      "run_count": 15,
+      "workflow_match_rate": 0.4
+    }
+  },
+  "methods": {
+    "appweaver_mem": {
+      "availability_rate": 1.0,
+      "available_run_count": 180,
+      "average_orchestration_latency_ms": 32029.94465,
+      "by_split": {
+        "known": {
+          "accepted_accuracy": 0.4222222222222222,
+          "ci95": 0.10204360132141906,
+          "records": 90,
+          "rule_accuracy": 1.0,
+          "rule_ci95": 0.0,
+          "workflow_accuracy": 0.4222222222222222
+        },
+        "open_world": {
+          "accepted_accuracy": 0.4666666666666667,
+          "ci95": 0.10307125666555775,
+          "records": 90,
+          "rule_accuracy": 0.9222222222222223,
+          "rule_ci95": 0.055332510281944615,
+          "workflow_accuracy": 0.4666666666666667
+        }
+      },
+      "cached_observation_rate": 0.0,
+      "compat_ok_rate": 1.0,
+      "conflict_detection_accuracy": 1.0,
+      "conflict_false_positive": 0,
+      "conflict_false_positive_rate": 0.0,
+      "conflict_precision": null,
+      "conflict_recall": null,
+      "conflict_true_positive": 0,
+      "custom_workflow_rate": 0.7888888888888889,
+      "external_recovery_rate": null,
+      "hallucinated_reference_count": 0,
+      "hallucination_rate": 0.0,
+      "human_intervention_rate": 0.0,
+      "intent_count": 60,
+      "internal_recovery_attempt_rate": 0.0,
+      "internal_recovery_success_rate": null,
+      "known_rule_accuracy": 1.0,
+      "known_rule_accuracy_ci95": 0.0,
+      "known_workflow_accuracy": 0.4222222222222222,
+      "known_workflow_accuracy_ci95": 0.10204360132141906,
+      "latency": {
+        "max_ms": 89261.27,
+        "mean_ms": 32029.94465,
+        "median_ms": 31423.939,
+        "n": 180,
+        "p95_ms": 66097.519,
+        "sd_ms": 18878.549078664408
+      },
+      "latency_delta_ms": -0.11187687150837998,
+      "metric_definitions": "see evaluation/METRICS.md",
+      "metrics_availability_rate": 0.9944444444444445,
+      "non_observation_tool_success_rate": 1.0,
+      "observation_tool_success_rate": 1.0,
+      "open_world_rule_accuracy": 0.9222222222222223,
+      "open_world_rule_accuracy_ci95": 0.055332510281944615,
+      "open_world_workflow_accuracy": 0.4666666666666667,
+      "open_world_workflow_accuracy_ci95": 0.10307125666555775,
+      "planner_cached_record_count": 0,
+      "policy_validity_rate": 1.0,
+      "prb_delta": 38.78212290502793,
+      "recovery_rate": null,
+      "repeat_count": 3,
+      "retrieval_hit_rate": 1.0,
+      "rule_accuracy": 0.9611111111111111,
+      "rule_accuracy_ci95": 0.028243556629498272,
+      "rule_scored_records": 180,
+      "run_count": 180,
+      "seeded_conflict_internal_recovery_rate": null,
+      "seeded_conflict_records": 0,
+      "sla_violation_delta": null,
+      "throughput_delta_mbps": -1.1254396648044693,
+      "tool_call_acknowledged_rate": 1.0,
+      "tool_call_launch_success_rate": 1.0,
+      "tool_call_success_rate": 1.0,
+      "tool_call_total": 416,
+      "workflow_accepted_accuracy": 0.4444444444444444,
+      "workflow_accuracy": 0.4444444444444444,
+      "workflow_accuracy_ci95": 0.07259259259259258,
+      "workflow_set_accuracy": 0.45
+    },
+    "appweaver_mem2": {
+      "availability_rate": 1.0,
+      "available_run_count": 180,
+      "average_orchestration_latency_ms": 34333.88145,
+      "by_split": {
+        "known": {
+          "accepted_accuracy": 0.4666666666666667,
+          "ci95": 0.10307125666555775,
+          "records": 90,
+          "rule_accuracy": 0.9888888888888889,
+          "rule_ci95": 0.02165645216647814,
+          "workflow_accuracy": 0.4666666666666667
+        },
+        "open_world": {
+          "accepted_accuracy": 0.4666666666666667,
+          "ci95": 0.10307125666555775,
+          "records": 90,
+          "rule_accuracy": 0.9333333333333333,
+          "rule_ci95": 0.051535628332778874,
+          "workflow_accuracy": 0.4666666666666667
+        }
+      },
+      "cached_observation_rate": 0.0,
+      "compat_ok_rate": 1.0,
+      "conflict_detection_accuracy": 1.0,
+      "conflict_false_positive": 0,
+      "conflict_false_positive_rate": 0.0,
+      "conflict_precision": null,
+      "conflict_recall": null,
+      "conflict_true_positive": 0,
+      "custom_workflow_rate": 0.7444444444444445,
+      "external_recovery_rate": 0.0,
+      "hallucinated_reference_count": 0,
+      "hallucination_rate": 0.0,
+      "human_intervention_rate": 0.0,
+      "intent_count": 60,
+      "internal_recovery_attempt_rate": 0.0,
+      "internal_recovery_success_rate": null,
+      "known_rule_accuracy": 0.9888888888888889,
+      "known_rule_accuracy_ci95": 0.02165645216647814,
+      "known_workflow_accuracy": 0.4666666666666667,
+      "known_workflow_accuracy_ci95": 0.10307125666555775,
+      "latency": {
+        "max_ms": 90133.844,
+        "mean_ms": 34333.88145,
+        "median_ms": 31682.1435,
+        "n": 180,
+        "p95_ms": 72176.78,
+        "sd_ms": 20955.95608051038
+      },
+      "latency_delta_ms": 0.329853,
+      "metric_definitions": "see evaluation/METRICS.md",
+      "metrics_availability_rate": 1.0,
+      "non_observation_tool_success_rate": 1.0,
+      "observation_tool_success_rate": 1.0,
+      "open_world_rule_accuracy": 0.9333333333333333,
+      "open_world_rule_accuracy_ci95": 0.051535628332778874,
+      "open_world_workflow_accuracy": 0.4666666666666667,
+      "open_world_workflow_accuracy_ci95": 0.10307125666555775,
+      "planner_cached_record_count": 0,
+      "policy_validity_rate": 0.9944444444444445,
+      "prb_delta": -30.261111111111113,
+      "recovery_rate": 0.0,
+      "repeat_count": 3,
+      "retrieval_hit_rate": 1.0,
+      "rule_accuracy": 0.9611111111111111,
+      "rule_accuracy_ci95": 0.028243556629498272,
+      "rule_scored_records": 180,
+      "run_count": 180,
+      "seeded_conflict_internal_recovery_rate": null,
+      "seeded_conflict_records": 0,
+      "sla_violation_delta": null,
+      "throughput_delta_mbps": -0.27242455555555556,
+      "tool_call_acknowledged_rate": 1.0,
+      "tool_call_launch_success_rate": 1.0,
+      "tool_call_success_rate": 1.0,
+      "tool_call_total": 411,
+      "workflow_accepted_accuracy": 0.4666666666666667,
+      "workflow_accuracy": 0.4666666666666667,
+      "workflow_accuracy_ci95": 0.07288238453363502,
+      "workflow_set_accuracy": 0.4722222222222222
+    },
+    "appweaver_tpl": {
+      "availability_rate": 1.0,
+      "available_run_count": 180,
+      "average_orchestration_latency_ms": 26476.4329,
+      "by_split": {
+        "known": {
+          "accepted_accuracy": 0.25555555555555554,
+          "ci95": 0.09011428196153522,
+          "records": 90,
+          "rule_accuracy": 0.9888888888888889,
+          "rule_ci95": 0.02165645216647814,
+          "workflow_accuracy": 0.25555555555555554
+        },
+        "open_world": {
+          "accepted_accuracy": 0.34444444444444444,
+          "ci95": 0.09817460440075906,
+          "records": 90,
+          "rule_accuracy": 0.9,
+          "rule_ci95": 0.06198064213930023,
+          "workflow_accuracy": 0.34444444444444444
+        }
+      },
+      "cached_observation_rate": 0.0,
+      "compat_ok_rate": 1.0,
+      "conflict_detection_accuracy": 1.0,
+      "conflict_false_positive": 0,
+      "conflict_false_positive_rate": 0.0,
+      "conflict_precision": null,
+      "conflict_recall": null,
+      "conflict_true_positive": 0,
+      "custom_workflow_rate": 0.8722222222222222,
+      "external_recovery_rate": null,
+      "hallucinated_reference_count": 0,
+      "hallucination_rate": 0.0,
+      "human_intervention_rate": 0.0,
+      "intent_count": 60,
+      "internal_recovery_attempt_rate": 0.0,
+      "internal_recovery_success_rate": null,
+      "known_rule_accuracy": 0.9888888888888889,
+      "known_rule_accuracy_ci95": 0.02165645216647814,
+      "known_workflow_accuracy": 0.25555555555555554,
+      "known_workflow_accuracy_ci95": 0.09011428196153522,
+      "latency": {
+        "max_ms": 91402.747,
+        "mean_ms": 26476.4329,
+        "median_ms": 19743.72,
+        "n": 180,
+        "p95_ms": 66053.993,
+        "sd_ms": 19140.81647477538
+      },
+      "latency_delta_ms": -0.07770266666666663,
+      "metric_definitions": "see evaluation/METRICS.md",
+      "metrics_availability_rate": 1.0,
+      "non_observation_tool_success_rate": 1.0,
+      "observation_tool_success_rate": 1.0,
+      "open_world_rule_accuracy": 0.9,
+      "open_world_rule_accuracy_ci95": 0.06198064213930023,
+      "open_world_workflow_accuracy": 0.34444444444444444,
+      "open_world_workflow_accuracy_ci95": 0.09817460440075906,
+      "planner_cached_record_count": 0,
+      "policy_validity_rate": 1.0,
+      "prb_delta": -32.28333333333333,
+      "recovery_rate": null,
+      "repeat_count": 3,
+      "retrieval_hit_rate": 1.0,
+      "rule_accuracy": 0.9444444444444444,
+      "rule_accuracy_ci95": 0.033463531733877894,
+      "rule_scored_records": 180,
+      "run_count": 180,
+      "seeded_conflict_internal_recovery_rate": null,
+      "seeded_conflict_records": 0,
+      "sla_violation_delta": null,
+      "throughput_delta_mbps": -0.42193972222222226,
+      "tool_call_acknowledged_rate": 1.0,
+      "tool_call_launch_success_rate": 1.0,
+      "tool_call_success_rate": 1.0,
+      "tool_call_total": 403,
+      "workflow_accepted_accuracy": 0.3,
+      "workflow_accuracy": 0.3,
+      "workflow_accuracy_ci95": 0.06694674500426936,
+      "workflow_set_accuracy": 0.3055555555555556
+    },
+    "langgraph_agentcard": {
+      "availability_rate": 1.0,
+      "available_run_count": 180,
+      "average_orchestration_latency_ms": 29909.120755555552,
+      "by_split": {
+        "known": {
+          "accepted_accuracy": 0.12222222222222222,
+          "ci95": 0.06767093785299548,
+          "records": 90,
+          "rule_accuracy": 1.0,
+          "rule_ci95": 0.0,
+          "workflow_accuracy": 0.12222222222222222
+        },
+        "open_world": {
+          "accepted_accuracy": 0.28888888888888886,
+          "ci95": 0.09364163073579353,
+          "records": 90,
+          "rule_accuracy": 0.8777777777777778,
+          "rule_ci95": 0.0676709378529955,
+          "workflow_accuracy": 0.28888888888888886
+        }
+      },
+      "cached_observation_rate": 0.0,
+      "compat_ok_rate": 1.0,
+      "conflict_detection_accuracy": 1.0,
+      "conflict_false_positive": 0,
+      "conflict_false_positive_rate": 0.0,
+      "conflict_precision": null,
+      "conflict_recall": null,
+      "conflict_true_positive": 0,
+      "custom_workflow_rate": 0.9222222222222223,
+      "external_recovery_rate": 0.0,
+      "hallucinated_reference_count": 0,
+      "hallucination_rate": 0.0,
+      "human_intervention_rate": 0.0,
+      "intent_count": 60,
+      "internal_recovery_attempt_rate": 0.0,
+      "internal_recovery_success_rate": null,
+      "known_rule_accuracy": 1.0,
+      "known_rule_accuracy_ci95": 0.0,
+      "known_workflow_accuracy": 0.12222222222222222,
+      "known_workflow_accuracy_ci95": 0.06767093785299548,
+      "latency": {
+        "max_ms": 115142.338,
+        "mean_ms": 29909.120755555552,
+        "median_ms": 23295.3095,
+        "n": 180,
+        "p95_ms": 76162.238,
+        "sd_ms": 20605.153345921994
+      },
+      "latency_delta_ms": -0.16836683333333324,
+      "metric_definitions": "see evaluation/METRICS.md",
+      "metrics_availability_rate": 1.0,
+      "non_observation_tool_success_rate": 1.0,
+      "observation_tool_success_rate": 1.0,
+      "open_world_rule_accuracy": 0.8777777777777778,
+      "open_world_rule_accuracy_ci95": 0.0676709378529955,
+      "open_world_workflow_accuracy": 0.28888888888888886,
+      "open_world_workflow_accuracy_ci95": 0.09364163073579353,
+      "planner_cached_record_count": 0,
+      "policy_validity_rate": 0.9888888888888889,
+      "prb_delta": 5.761111111111111,
+      "recovery_rate": 0.0,
+      "repeat_count": 3,
+      "retrieval_hit_rate": 1.0,
+      "rule_accuracy": 0.9388888888888889,
+      "rule_accuracy_ci95": 0.034993469898369906,
+      "rule_scored_records": 180,
+      "run_count": 180,
+      "seeded_conflict_internal_recovery_rate": null,
+      "seeded_conflict_records": 0,
+      "sla_violation_delta": null,
+      "throughput_delta_mbps": -4.637280388888889,
+      "tool_call_acknowledged_rate": 1.0,
+      "tool_call_launch_success_rate": 1.0,
+      "tool_call_success_rate": 1.0,
+      "tool_call_total": 388,
+      "workflow_accepted_accuracy": 0.20555555555555555,
+      "workflow_accuracy": 0.20555555555555555,
+      "workflow_accuracy_ci95": 0.05903590082088933,
+      "workflow_set_accuracy": 0.20555555555555555
+    },
+    "llm_only": {
+      "availability_rate": 1.0,
+      "available_run_count": 180,
+      "average_orchestration_latency_ms": 4777.524983333333,
+      "by_split": {
+        "known": {
+          "accepted_accuracy": 0.9888888888888889,
+          "ci95": 0.02165645216647814,
+          "records": 90,
+          "rule_accuracy": 0.9888888888888889,
+          "rule_ci95": 0.02165645216647814,
+          "workflow_accuracy": 0.9888888888888889
+        },
+        "open_world": {
+          "accepted_accuracy": 0.0,
+          "ci95": 0.0,
+          "records": 90,
+          "rule_accuracy": 0.2111111111111111,
+          "rule_ci95": 0.08431372598559952,
+          "workflow_accuracy": 0.0
+        }
+      },
+      "cached_observation_rate": 0.0,
+      "compat_ok_rate": null,
+      "conflict_detection_accuracy": 1.0,
+      "conflict_false_positive": 0,
+      "conflict_false_positive_rate": 0.0,
+      "conflict_precision": null,
+      "conflict_recall": null,
+      "conflict_true_positive": 0,
+      "custom_workflow_rate": 0.0,
+      "external_recovery_rate": 0.0,
+      "hallucinated_reference_count": 0,
+      "hallucination_rate": 0.0,
+      "human_intervention_rate": 0.0,
+      "intent_count": 60,
+      "internal_recovery_attempt_rate": 0.0,
+      "internal_recovery_success_rate": null,
+      "known_rule_accuracy": 0.9888888888888889,
+      "known_rule_accuracy_ci95": 0.02165645216647814,
+      "known_workflow_accuracy": 0.9888888888888889,
+      "known_workflow_accuracy_ci95": 0.02165645216647814,
+      "latency": {
+        "max_ms": 15556.488,
+        "mean_ms": 4777.524983333333,
+        "median_ms": 4502.85,
+        "n": 180,
+        "p95_ms": 8857.761,
+        "sd_ms": 2278.1410513719525
+      },
+      "latency_delta_ms": 0.2826172067039106,
+      "metric_definitions": "see evaluation/METRICS.md",
+      "metrics_availability_rate": 0.9944444444444445,
+      "non_observation_tool_success_rate": 1.0,
+      "observation_tool_success_rate": 1.0,
+      "open_world_rule_accuracy": 0.2111111111111111,
+      "open_world_rule_accuracy_ci95": 0.08431372598559952,
+      "open_world_workflow_accuracy": 0.0,
+      "open_world_workflow_accuracy_ci95": 0.0,
+      "planner_cached_record_count": 0,
+      "policy_validity_rate": 0.9944444444444445,
+      "prb_delta": -6.145251396648045,
+      "recovery_rate": 0.0,
+      "repeat_count": 3,
+      "retrieval_hit_rate": null,
+      "rule_accuracy": 0.6,
+      "rule_accuracy_ci95": 0.0715690808473417,
+      "rule_scored_records": 180,
+      "run_count": 180,
+      "seeded_conflict_internal_recovery_rate": null,
+      "seeded_conflict_records": 0,
+      "sla_violation_delta": null,
+      "throughput_delta_mbps": 6.017773184357543,
+      "tool_call_acknowledged_rate": 1.0,
+      "tool_call_launch_success_rate": 1.0,
+      "tool_call_success_rate": 1.0,
+      "tool_call_total": 552,
+      "workflow_accepted_accuracy": 0.49444444444444446,
+      "workflow_accuracy": 0.49444444444444446,
+      "workflow_accuracy_ci95": 0.07304037818216126,
+      "workflow_set_accuracy": 0.5111111111111111
+    }
+  },
+  "record_count": 900
+}
