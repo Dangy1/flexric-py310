@@ -1,216 +1,318 @@
-# Response to reviewers — WCM-26-00422 (major revision)
+# Response to the reviewers — WCM-26-00422 (major revision)
 
 **AppWeaver: Agentic Discovery and Composition of O-RAN Apps for AI-Native 6G**
 
-Every number below comes from a run under `evaluation/runs/<id>/` (manifest + records/results) and is
-recomputed by the scripts named next to it; no number from the first submission is reused. Revised
-manuscript: `paper/main.tex`. Results package for the authors: `evaluation/demos/RESULTS_PACKAGE.md`.
+Dear Guest Editor, dear Reviewers,
 
-We thank the reviewers. Their comments made us rebuild the evaluation rather than polish it. While
-answering them we found a flaw in our own harness (a repair step could read the labelled chain), so the
-first submission's numbers are withdrawn and every result is new: three intent sets (219 intents), a
-registry scaled from 9 to 81 Agent Cards, six methods including two new baselines and an ablation, a second
-planner model, and, new in this revision, measured network effects of the composed workflows on a 5G RAN
-model and on a real transport link. The magazine limits (6 floats, 15 references) are kept: Fig. 2 is now
-a recorded trace, Fig. 4 shows KPIs while workflows act, and Fig. 5 summarizes all accuracy and network
-results. Full per-method tables with confidence intervals are in the public repository.
+We thank you for the careful and constructive reviews. They led us to rebuild the evaluation rather than
+polish it. While answering them we also found a flaw in our own evaluation harness (a repair step could
+read the labelled workflow of templated intents), so the numbers of the first submission are withdrawn and
+every result in the revision is new. The revision keeps the magazine limits (6 figures and tables, 15
+references, about 3,500 words). Section IV is rewritten; Fig. 2 is now a trace recorded from a run, Fig. 4
+shows system KPIs while composed workflows act, and Fig. 5 reports composition accuracy and the measured
+and twin-predicted KPI impact. The code, the three intent benchmarks, the Agent Cards and every run record
+are public at https://github.com/Dangy1/flexric-py310 (branch `appweaver-revision`); full per-method tables
+with confidence intervals are in `evaluation/paper_results/README.md` there.
 
-Comment labels follow the decision letter (R*n*.*m* = Reviewer *n*, comment *m*).
+Below, each comment is quoted in short and answered; section, figure and table numbers refer to the
+revised manuscript.
 
 ---
 
-## Summary of changes
+## Guest Editor
 
-| Area | What changed | Where |
-|---|---|---|
-| Harness | Label leak removed (no method or repair step reads the labelled chain); caches off; every batch has a manifest with model, settings, hardware, prompt hashes and git commit | §IV-A/B, `evaluation/run_harness.py` |
-| Correctness metric | Rule accuracy, pre-registered before the runs: all required applications present in a valid partial order, extra steps read-only; exact-match and a label-sensitivity reading reported alongside | §IV-B, `evaluation/METRICS.md` |
-| Methods | Rule router, single app, **LLM without catalog** (new), LLM with the full catalog (single pass), **AppWeaver without repair** (new ablation), AppWeaver; plus template/memory variants | §IV-B |
-| Benchmarks | A: 50 intents / 9 cards / 5 repeats; B: 109 intents / 81 cards / 3 repeats incl. 59 unseen-capability intents, top-8 retrieval vs all cards; C: 60 held-out intents written after the design was frozen; 8,712 records | §IV-B, Fig. 5 |
-| Agent Cards | Schema with O-RAN fields (app type, RIC, interfaces, data models, control scope, timescale, requires, conflicts_with, lifecycle); five compose-time checks logged per record | §III-B, Fig. 2 |
-| Digital twin | Stated precisely: an E2 twin (second RIC + emulated node) dry-runs every E2 step; a network twin (second ns-3 instance) predicts KPI effects, with measured fidelity | §III-A, §IV-D |
-| Network effect (new) | Composed workflows deployed on a 5G-LENA ns-3 RAN (steering, energy saving) and AppWeaver's TC action on a real Linux bottleneck through a new E2 agent; KPIs over time and over seeds | §IV-D, Figs. 4, 5(c) |
-| Second model | GLM-5.3-Flash on Batch C | §IV-C |
-| Release | Code, intents, cards, run records, figure scripts | footnote §IV-A |
+> Insufficient differentiation from existing agentic O-RAN frameworks, limited network-level evaluation and
+> digital-twin validation, inadequate details about the benchmark, baselines, and reliability metrics;
+> clarification of the actual xApp/rApp implementations, stronger statistical evidence, and evaluation of
+> scalability.
+
+| Concern | Where it is addressed |
+|---|---|
+| Differentiation from agentic O-RAN frameworks | R1.1, R3.7: §II, §III-B, Table I |
+| Network-level evaluation, digital-twin validation | R1.2, R2.2, R3.1: §IV-D, Figs. 4 and 5(c) (new) |
+| Benchmark, baselines, reliability metrics | R1.4–R1.6, R2.1, R2.3, R3.2–R3.5: §IV-B, §IV-E |
+| Actual xApp/rApp implementations | R1.3, R4.6: §IV-A |
+| Statistical evidence | R2.1, R3.3, R3.6, R4.3: 8,712 records, 3–5 repeats, 95% CIs (Fig. 5) |
+| Scalability | R4.1: registry of 81 Agent Cards, retrieval ablation (§IV-B/C) |
 
 ---
 
 ## Reviewer 1
 
-**R1.1 — Distinction from AgentRAN and related work; what Agent Cards add; how dependency, interface and control-scope compatibility are checked.**
+**R1.1** — *Distinction from AgentRAN, which also uses A2A and MCP; what AppWeaver adds; O-RAN-specific
+information in the Agent Cards; how dependency, interface and control-scope compatibility are checked.*
 
-AppWeaver's Agent Cards add O-RAN-specific content to the generic A2A card: application type and RIC,
-service models and A1/O1 interfaces, data models consumed and produced, control scope (cell, UE, slice,
-node, transport; read or write), timescale, `requires`, `conflicts_with` and lifecycle state. Every
-composed chain is checked against them before anything runs: dependency (each step's inputs are produced
-upstream), interface, control scope (no two writers on one resource without serialization), timescale
-and lifecycle (deprecated releases rejected). Errors send the plan back for repair; the verdict of each
-check is stored per record. Fig. 2 now shows these checks on a recorded run (0 errors, 2 warnings).
-Table I's comparison uses these criteria (discovery from machine-readable cards, explicit compatibility
-checks, conflict handling, pre-deployment validation).
+AppWeaver shares A2A and MCP as transport with AgentRAN, but its agents do not control the RAN: they select
+and chain existing xApps and rApps. What AppWeaver adds is (i) Agent Cards with O-RAN-specific content:
+application type and RIC, E2 service models and A1/O1 interfaces, data models consumed and produced,
+control scope (cell, UE, slice, node, transport; read or write), timescale, `requires`, `conflicts_with` and
+lifecycle state; (ii) five explicit checks of every composed chain against these declarations before
+deployment: dependency (each step's inputs are produced upstream), interface, control scope (no two writers
+on one control resource without serialization), timescale (no near-RT control right after a non-RT step
+without fresh observation) and lifecycle (deprecated releases rejected); errors return the plan to the
+Planner for repair, and every verdict is stored per record; (iii) a dry-run on a twin before deployment.
+Fig. 2 shows the checks on a recorded run (0 errors, 2 warnings).
 
-*Where.* §II, §III-B, Fig. 2, Table I; code `backend/orchestration/compat.py`.
+*Changes:* §II (new sentence on AgentRAN), §III-B (checks), Fig. 2, Table I.
 
-**R1.2 — How faithful is the digital twin; predicted vs actual KPIs.**
+**R1.2** — *Twin fidelity is not evaluated; are the MOS values 2.8 and 3.6 in Fig. 2 measured or predicted;
+provide network-level results such as QoE, latency, or throughput for representative deployed workflows.*
 
-We now separate two twins and measure the one that predicts KPIs. The E2 twin (a second FlexRIC RIC and
-emulated node) dry-runs every E2 step and catches interface, lease and acknowledgement errors; it does not
-predict KPIs and we no longer claim so. The network twin is a second 5G-LENA ns-3 instance that shares the
-UE layout with the "live" instance but not its mobility or fading seed; the policy is decided on the twin
-and deployed unchanged on live, and both are compared with the same seed without the action.
+The MOS values of the old Fig. 2 were illustrative, not measured, and are removed: Fig. 2 is now a trace in
+which every line is taken from a recorded run. New §IV-D, Fig. 4 and Fig. 5(c) report network-level results
+for deployed workflows, live measurements against the same seed without the action:
 
-Result (§IV-D, Figs. 4 and 5(c), 5 seeds): for energy saving the twin predicts gNB energy −39.7% vs −41.3%
-measured, throughput −22.4% vs −22.7% and users served −22.5% vs −22.5% (correct sign 5/5); for steering it
-predicts the load shift (source-cell PRB) in 5/5 seeds but not the throughput gain from users restored to
-service (−2.5% predicted vs +6.2% measured). A larger study without a shared layout
-(`evaluation/TWIN_VALIDATION.md`, 9 seed pairs per setting) shows the dependence on state sync: with
-random UE placement the twin's throughput error is 6–12 points, with synced placement 3.8–6.7 points.
-We narrow the claim accordingly: the twin predicts cell-level effects well when it knows where users are,
-and per-user QoS less well.
+- QoE-steering workflow on a 5G-LENA ns-3 RAN (5 seeds): source-cell load −29%, users served (at least half
+  their offered rate) +10%, received throughput +6.2%. The gain comes from users that the simulator leaves
+  unserved in the hotspot without any action; steering restores service to two of them in two of the five
+  seeds, and in the other seeds load moves without a throughput change. We state this in §IV-D.
+- Energy-saving workflow: gNB energy −41.3%, but two users lose service (users served and throughput
+  −22–23%).
+- AppWeaver's TC action on a real 10 Mbit/s bufferbloated link: median RTT from about 420 ms to 35 ms,
+  pings above 100 ms from 100% to 0%, goodput unchanged (9.6 Mbit/s), 5 of 5 repeats.
 
-*Where.* §III-A, §IV-D, Figs. 4–5; runs `20261101T103300Z_D2_{hotspot,night}`, `20261028T173841Z_T6v3_*`.
+Twin fidelity: the network twin is a second ns-3 instance that shares the user layout with the live one but
+not its mobility or fading seed. It predicts the energy-saving effects within 3 points (energy −39.7% vs
+−41.3%, throughput −22.4% vs −22.7%, users served −22.5% vs −22.5%, correct sign 5/5) and the steering load
+shift in 5/5 seeds, but not the throughput gain from restored users (−2.5% predicted vs +6.2% measured).
+A larger study (`evaluation/TWIN_VALIDATION.md`, 9 seed pairs per setting) shows that fidelity depends on
+how much live state the twin knows: with random user placement the throughput error is 6–12 points, with
+synced placement 3.8–6.7 points.
 
-**R1.3 — Which applications are real xApps and which are emulated.**
+*Changes:* Fig. 2 (recorded trace), §IV-D, Figs. 4 and 5(c).
 
-Real: four FlexRIC xApps used over E2 (KPM monitoring, SLICE, TC, RC) and the MAC/RLC/PDCP/GTP
-monitors. Emulated: the rApps (QoE prediction, traffic steering, energy saving and 29 other families),
-served as decision services behind standard tool interfaces. The QoE-prediction and mobility xApps of the
-first submission are no longer claimed. The composition benchmark runs on FlexRIC's E2 emulator, whose KPM
-values are synthetic; network effects are therefore measured separately on ns-3 and on a real link
-(§IV-D). For TC we found that neither the emulator nor OAI's TC RAN function applies TC control, so we
-wrote an E2 agent whose TC service model applies the received queue control to a real Linux link.
+**R1.3** — *Inconsistent application set across running example, prototype and benchmark; which components
+are actual xApps, which are emulated rApps, and which are used in the quantitative evaluation.*
 
-*Where.* §IV-A, Fig. 4(c); code `examples/emulator/agent/sm_tc_dp.c`.
+Corrected throughout. Actual xApps: four FlexRIC xApps used over E2 (KPM monitoring, SLICE, TC, RC) and the
+MAC/RLC/PDCP/GTP monitors (the 9-card registry of Batches A and C). Emulated rApps: QoE prediction, traffic
+steering, energy saving and 29 other families, decision services behind standard tool interfaces (with them
+the registry of Batch B has 81 cards). The QoE-prediction and mobility xApps of the first submission are not
+claimed any more; the running example (Fig. 2, §III-B) now uses the QoE-prediction and traffic-steering
+rApps, consistent with §IV. Quantitative evaluation: composition uses all of the above on FlexRIC's E2
+emulator (synthetic KPM); network effects use the RC-actuated chains on ns-3 and the TC action on a real link.
 
-**R1.4 — What "open-world" means; registry size and composition.**
+*Changes:* §III-B, §IV-A.
 
-*Known*: the intent matches one of the three operator workflow templates; *open-world*: no template
-matches; we also report the open-world intents that no template solves even partially (27 in A, 22 in
-C), since only there must a method compose. *Unseen capability* (Batch B, 59 intents): the intent needs an
-rApp absent from every template. The registry grows from 9 cards to 81 (80 executable): 32 rApp families
-with vendor variants, deprecated releases and distractors.
+**R1.4** — *Does open-world mean only unseen intents/workflow combinations, or also unseen applications and
+capabilities? Size and composition of the Agent Registry.*
 
-*Where.* §IV-B, Fig. 5(a,b).
+Both, as separate splits. *Open-world*: no operator template matches the intent (39 intents in A, 30 in C;
+we also report the subset that no template solves even partially, 27 and 22). *Unseen capability* (Batch B,
+59 intents): the intent needs an rApp that appears in no template. Registry: 9 cards in A and C; 81 cards
+(80 executable) in B, with 32 rApp families including vendor variants, deprecated releases and distractors.
 
-**R1.5 — Catalog-aware LLM baseline and ablation.**
+*Changes:* §IV-A/B, Fig. 5(a,b).
 
-The baseline the first submission called "LLM only" was catalog-grounded and rule-repaired; it is now
-*LLM (catalog)*: the same planner model with the full catalog in its prompt, one pass, no Agent Card
-checks, output executed as returned. We add *LLM (no catalog)*, which shows the cost of no grounding
-(705 references to non-existent applications in Batch A), and *AppWeaver (no repair)*. Result: the
-catalog-aware LLM reaches 34.8% / 16.8% / 53.3% (A/B/C) against AppWeaver's 70.4% / 68.8% / 93.9%, and
-0% on the intents no template solves, where AppWeaver reaches 55–94%.
+**R1.5** — *LLM-only baseline not controlled; add a catalog-aware LLM baseline or ablation; specify the LLM
+and inference settings.*
 
-*Where.* §IV-B/C, Fig. 5.
+Added. *LLM (catalog)*: the same planner model with the full catalog in its prompt, one pass, output
+executed as returned, no Agent Card checks. *LLM (no catalog)*: the same model without the registry.
+Ablation: AppWeaver without repair. All methods use gpt-oss-120b on vLLM (NVIDIA DGX Spark, GB10, 128 GB),
+reasoning effort medium, temperature 0.2, fixed seed. Results: the catalog-aware LLM reaches 34.8%, 16.8%
+and 53.3% (A, B, C) against AppWeaver's 70.4%, 68.8% and 93.9%, and 0% on the intents no template solves,
+where AppWeaver reaches 55–94%.
 
-**R1.6 — Reliability denominators, seeded conflicts, hallucination counts.**
+*Changes:* §IV-A/B/C, Fig. 5.
 
-Tool success now means the target application acknowledged the call (E2 control ack, KPM indication or
-rApp reply): 97–100% for AppWeaver over 380–867 calls per batch. Hallucinated references: 0 for AppWeaver
-in every batch. Seeded conflicts: 6 intents × 5 repeats (A) and × 3 (B), documented in
-`evaluation/CONFLICTS.md`. A shared lease protects busy applications for every method; AppWeaver never
-preempts, waits for the lease and completes 37% (A) to 44% (B) of these cases with no unresolved refusal;
-the rule router completes with a wrong workflow in 83% of its cases.
+**R1.6** — *Report the total number of tool calls, failure criteria, hallucination rate, and the number and
+types of seeded conflicts.*
 
-*Where.* §IV-E; per-method numbers with CIs in `evaluation/paper_results/README.md`.
+Total calls: 572, 836 and 380 AppWeaver calls in A, B and C (all methods in the repository table). Failure
+criterion: a call succeeds only if the target application acknowledges it (E2 control acknowledgement, KPM
+indication or rApp reply); launching a process is not enough. Acknowledged: 97–100%. Hallucinations: 0
+references to non-existent applications for AppWeaver in every batch, 705 (A) for the LLM without catalog.
+Seeded conflicts: 6 intents (×5 repeats in A, ×3 in B); in five another workflow holds the TC xApp, in one the
+SLICE xApp, each for 30 s; correct handling = no control to the busy xApp, then wait or re-plan, never
+preempt.
 
-**R1.7 — Presentation.** Fig. 2 is now a trace recorded from a run: the intent names no application, and
-every line (retrieved cards, composed chain, checks, dry-run, acknowledgements, baselines' output) is
-taken from the record. Fig. 3 was simplified (MCP panel removed). Other minor comments: see the table at
-the end.
+*Changes:* §IV-B, §IV-E.
+
+**R1.7** — *Check the references for volume, issue, month, page or article number.*
+
+All 15 references were checked against Crossref: volume, issue, pages and month added where they exist,
+preprints replaced by their published versions, a duplicate removed. Three are IEEE early-access articles
+(AgentRAN, Chatzimiltis et al., Navidan et al.); Crossref still lists no volume or issue for them (checked
+on 1 November 2026), so they are given with DOI and "early access".
 
 ---
 
 ## Reviewer 2
 
-**R2.1 — Benchmark transparency, number of trials, variance; code release.**
+**R2.1** — *Benchmark, labels and baselines were created by the authors; describe the benchmark more
+transparently or publish it; report multiple runs with variance.*
 
-219 intents with labels and labelling rules, the Agent Cards, the harness and every run record are
-public; 5 repeats (A) or 3 (B, C) per intent and method; 95% intent-clustered bootstrap CIs on every
-rate (Fig. 5).
+The benchmark is published with its labels and labelling rule. It grew to three sets: A (50 intents), B (109
+intents, 81-card registry) and C (60 held-out intents written after the design was frozen). Correctness is
+decided by a rule fixed before the final runs (§IV-B). Each intent runs 5 times (A) or 3 times (B, C), with
+planner caches off; 8,712 records in total. Every rate carries a 95% intent-clustered bootstrap confidence
+interval (Fig. 5).
 
-*Where.* §IV-A footnote, §IV-B, `README.md`.
+*Changes:* §IV-A footnote (repository), §IV-B, Fig. 5.
 
-**R2.2 — Network-level effect of the composed workflows.**
+**R2.2** — *The twin's KPI prediction is never validated against the deployed outcome; compare
+twin-predicted and actual post-deployment KPIs; describe how the seeded conflicts were constructed.*
 
-New §IV-D, Fig. 4 (system KPIs over time around each action: users per cell, cell load or power, received
-throughput, users served; RTT and goodput on the real link) and Fig. 5(c) (change over seeds, measured and
-predicted). On ns-3, the composed QoE-steering chain moves load out of a hotspot (source-cell PRB −29%);
-users served rise by 10% and throughput by 6.2% on average, because in this layout the simulator leaves some
-hotspot users unserved and steering restores two of them in two of five seeds; in the other seeds load
-moves without a throughput change. The baselines' chain for this intent has no steering step. The
-energy-saving chain cuts gNB energy by 41.3% but two users lose service (users served and throughput
-−22–23%). On a real 10 Mbit/s bufferbloated link, the TC action AppWeaver deploys (CoDel) reaches the queue
-over E2 in 2.1 s and cuts the median RTT from about 420 ms to 35 ms (pings above 100 ms: 100% → 0%) with
-unchanged goodput, in 5/5 repeats.
+Fig. 5(c) now puts the twin's predicted KPI change next to the measured one for each deployed workflow;
+the results are summarized under R1.2 (energy saving predicted within 3 points; steering load shift right,
+throughput gain missed). We also report what this means for a deploy gate: the twin predicts the energy
+policy's harm, but an acceptance rule on energy and load alone accepts it in all five seeds, so the rule
+must test users served or throughput (§IV-D). Seeded conflicts: see R1.6.
 
-**R2.3 — Model and inference settings.**
+*Changes:* §IV-D, Fig. 5(c), §IV-B.
 
-gpt-oss-120b served by vLLM on an NVIDIA DGX Spark (GB10, 128 GB unified memory), reasoning effort
-medium, temperature 0.2, seed 7; every manifest records these plus prompt hashes and hardware. A second
-planner (GLM-5.3-Flash) gives the same accuracy on Batch C (§IV-C).
+**R2.3** — *Describe the "Manual rules" and "LLM only" baselines more precisely.*
+
+§IV-B now defines every baseline. Rule router: maps intent keywords (latency, slice, transport, monitoring)
+to one of the three operator templates. Single-app router: runs the one application whose keywords match
+best. LLM without catalog: names applications from its own knowledge; references to non-existent
+applications are counted. LLM with catalog: full catalog in the prompt, one pass, output executed as
+returned. All LLM methods use the same model and settings (R1.5).
+
+*Changes:* §IV-B.
 
 ---
 
 ## Reviewer 3
 
-**R3.1 — Twin fidelity.** See R1.2.
+**R3.1** — *The twin's fidelity to the live RAN is not discussed; scope and reliability of the validation.*
 
-**R3.2 — How intents were labelled; can more than one chain be valid?**
+We now separate two twins. The E2 twin (a second RIC and emulated E2 node) dry-runs every E2 step and
+catches interface, lease and acknowledgement errors; it does not predict KPIs. The network twin (a second
+ns-3 instance) predicts KPI effects, and its fidelity is measured (R1.2): close for cell-level energy and
+load when it knows the user layout, weaker for per-user throughput.
+
+*Changes:* §III-A, §IV-D.
+
+**R3.2** — *How the intent benchmark and reference workflows were constructed; can an intent have more than
+one valid workflow?*
 
 Yes. Each intent is labelled with the applications it requires and their partial order; any chain that
-contains them in a valid order, with only read-only extra steps, is correct. This rule was fixed before
-the final runs. We also report exact match with the labelled chain and a sensitivity reading for four
-questioned labels; conclusions do not change.
+contains them in a valid order, with only read-only extra steps, is correct, so an intent can have several
+valid workflows. The rule was fixed before the final runs. We also report exact match with the labelled
+chain and a sensitivity reading for four questioned labels in the repository; conclusions do not change.
 
-**R3.3 — Variance and number of runs.** See R2.1.
+*Changes:* §IV-B.
 
-**R3.4 — Ablation of the components.** LLM without catalog, LLM with catalog, AppWeaver without repair;
-retrieval depth (top-8 vs all 81 cards: 68.8% both, one third of the prompt tokens); template and memory
-variants (up to 74.6% on B, 96.1% on C); a second planner model.
+**R3.3** — *39 open-world intents but exactly 50% accuracy: averaged over runs or a different scoring?*
 
-**R3.5 — Conflict detection is reported as accuracy.** Replaced by what happens on seeded conflicts: met
-the busy application, waited and completed, unresolved, preempted (never), and correctness of the
-completed workflow; plus false positives on unseeded intents. See R1.6.
+The first submission's 50% was 39 of 78 records: 39 intents × 2 runs. That result is withdrawn with the rest
+of the first evaluation. All revised accuracies are means over 3–5 runs per intent with 95% confidence
+intervals.
 
-**R3.6 — Latency distribution and the Non-RT timescale.** Median 26–36 s from intent to deployable
-workflow (planner-dominated; the E2 dry-run adds about 8 s); p95 and max in the repository tables; within
-the Non-RT timescale (>1 s). Planner caching is off in every batch.
+**R3.4** — *Baselines do not isolate the contribution of the components; the LLM-only baseline has no access
+to the Agent Card registry.*
 
-**R3.7 — What is checked at composition time.** See R1.1.
+Added: LLM with the full catalog (grounding without AppWeaver's architecture), LLM without catalog, and
+AppWeaver without repair; plus retrieval depth (top-8 vs all 81 cards: 68.8% both, one third of the prompt
+tokens) and template and memory variants (74.6% on B, 96.1% on C). Grounding alone (LLM with catalog)
+reaches 0% on the intents no template solves; AppWeaver reaches 55–94%.
+
+*Changes:* §IV-B/C, Fig. 5.
+
+**R3.5** — *Number and types of seeded conflicts, denominator of tool-call success, criteria for a
+successfully detected conflict.*
+
+See R1.6 for numbers, types and the success criterion. Denominator: every control call a method issues
+(572, 836, 380 for AppWeaver). A conflict counts as handled correctly when no control reaches the busy xApp
+and the method waits or re-plans without preempting it; we report the share that then completes (37% in A,
+44% in B for AppWeaver, no unresolved refusal, no preemption anywhere) and whether the completed workflow is
+correct. False positives on unseeded intents: 0% for AppWeaver in A and in B with top-8 retrieval (5.6% with all 81 cards in the prompt).
+
+*Changes:* §IV-B, §IV-E.
+
+**R3.6** — *Latency as a single value; number of measurements and distribution; the specific Non-RT timing
+requirement.*
+
+Latency is measured on every record (250, 327 and 180 per method in A, B and C) with planner caches off:
+median 26–36 s, 95th percentile 55–64 s, dominated by the planner (the E2 dry-run adds about 8 s). The
+requirement is the Non-RT RIC control loop of more than 1 s (O-RAN WG1 architecture, cited in §IV-E).
+
+*Changes:* §IV-E.
+
+**R3.7** — *Criteria behind the ✓/∼/✗ labels in Table I.*
+
+The note under Table I now defines each column and the marks: ✓ implemented and evaluated in the cited work;
+∼ described or implemented in part, without evaluation; ✗ not addressed.
+
+*Changes:* Table I.
 
 ---
 
 ## Reviewer 4
 
-**R4 — Scalability ("RAG is overkill for 9 cards"), an extra capability, hardware, reliability detail.**
+**R4.1** — *Scalability of Agent Cards: only 4 capabilities, RAG is overkill; add a new capability, e.g.
+energy saving.*
 
-The registry is now 81 cards, so discovery is a real retrieval problem: BM25 over the cards, top 8 in the
-prompt. Top-8 retrieval matches putting all cards in the prompt (68.8% both) at one third of the tokens
-and a lower latency (32.5 s vs 36.2 s median); the needed cards are retrieved 94.5% of the time. New
-capabilities (energy saving, QoE prediction, traffic steering, and others) are picked up from their cards
-without code changes: on the 59 unseen-capability intents AppWeaver reaches 82.5% and every baseline 0%.
-The term RAG was replaced by BM25 retrieval over Agent Cards. Hardware: R2.3. Reliability: R1.6.
+The registry now has 81 cards (Batch B), so discovery is a real retrieval problem: BM25 over the cards, top 8
+in the prompt (the term RAG is replaced). New capabilities, energy saving among them, are picked up from
+their cards without code changes: on the 59 unseen-capability intents AppWeaver reaches 82.5% and every
+baseline 0%. Top-8 retrieval matches showing all 81 cards (68.8% both) at one third of the prompt tokens.
+The energy-saving workflow is also deployed on ns-3 (§IV-D).
 
----
+*Changes:* §IV-B/C/D.
 
-## Minor comments
+**R4.2** — *Too many hints to Discover, e.g. "skill = analyze_qoe" in Fig. 2; it should infer on its own.*
+
+It does: no intent names an application or skill. Fig. 2 is now a recorded trace whose intent ("Steer
+at-risk video users away from the congested cell before their QoE drops.") names neither; Discover finds the
+QoE-prediction and traffic-steering rApps among 80 cards.
+
+*Changes:* Fig. 2, §III-B.
+
+**R4.3** — *Statistical rigor: more experiments and number of trials.*
+
+8,712 composition records (5 runs per intent in A, 3 in B and C), 50 ns-3 simulations and 5 real-link
+repeats; 95% confidence intervals on every rate (R2.1).
+
+**R4.4** — *More detail on the hallucination numbers in Fig. 5(c).*
+
+Hallucinated references (applications not in the registry) per method: AppWeaver 0 in every batch; LLM
+without catalog 705, 1,002 and 534 references in A, B and C (in 181, 260 and 142 records). §IV-E gives the
+Batch A numbers; the repository table gives all methods.
+
+*Changes:* §IV-E.
+
+**R4.5** — *Hardware details, especially the GPU for RAG.*
+
+The planner runs gpt-oss-120b on vLLM on an NVIDIA DGX Spark (GB10 Grace Blackwell, 128 GB unified memory).
+Retrieval is BM25 on the orchestration host's CPU and needs no GPU. Every run manifest records the hardware.
+
+*Changes:* §IV-A.
+
+**R4.6** — *Difference between the live OAI gNB (RFSim) and the RAN emulator.*
+
+The first submission described this unclearly, and the revised evaluation does not use an OAI gNB. For
+composition, the E2 node is FlexRIC's emulator (synthetic KPM, real E2 messages and acknowledgements), and a
+second RIC with its own emulated node serves as the E2 twin for dry-runs. For network effects, two 5G-LENA
+ns-3 instances act as live network and network twin, and a real Linux link carries the TC experiment.
+§IV-A describes each.
+
+*Changes:* §IV-A, §III-A.
+
+**Minor comments**
 
 | Comment | Change |
 |---|---|
 | p3 l54 "leaving this step manually" | "leaving this step manual" |
 | p5 l64 "an feedback loop" | "a feedback loop" |
-| Capitalization ("Planner agent", "Agent Card") | unified |
-| Fig. 3 density | MCP panel removed, remaining panels enlarged |
-| Fig. 5 labels | Fig. 5 regenerated from the final runs, every bar labelled, 95% CIs |
-| References | all 15 checked against Crossref; duplicates removed; preprints replaced by published versions; Non-RT timescale, A2A and MCP specifications cited as footnotes |
+| "Planner agent" vs "planner agent", "Discover" vs "discover agent" | unified ("Planner agent", "Discover agent") |
+| "Agent Card" vs "Agent-Card" | "Agent Card" throughout |
+| Fig. 5a labels only the open-world bars | Fig. 5 redrawn: every bar labelled, with 95% CIs |
+| Fig. 3 too dense | MCP panel removed, remaining panels enlarged |
+| Code, benchmark and Agent Card availability | public repository, footnote in §IV-A |
+
+We hope the revision answers your concerns, and thank you again for the reviews.
+
+The authors
 
 ---
 
 ## Notes for the authors (remove before sending)
 
-- The network-effect experiments are a 5G RAN model (ns-3) and a Linux link, not a physical RAN; the
-  paper says so. Fig. 4(a) shows seed 104, one of two seeds with a throughput gain (per-seed:
-  +18.8/+0.7/−0.9/+12.8/−0.4%); the caption names the seed and §IV-D gives the mean.
+- The network-effect experiments are a 5G RAN model (ns-3) and a Linux link, not a physical RAN; the paper
+  says so. Fig. 4(a) shows seed 104, one of the two seeds with a throughput gain (per-seed live change
+  +18.8/+0.7/−0.9/+12.8/−0.4%); the caption names the seed, §IV-D gives the mean and explains the gain.
 - The pre-declared energy-saving acceptance rule (energy and load only) accepts the harmful policy; §IV-D
   states this rather than changing the rule after the fact.
