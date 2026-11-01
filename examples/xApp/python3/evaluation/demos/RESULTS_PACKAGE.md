@@ -69,6 +69,14 @@ pairs, 50 simulations, 0 failures. Measured = live.
 | Hotspot: 9 UEs on one gNB's edge | KPM -> traffic_steering rApp -> RC | throughput **+7.8%**, hot-cell PRB cut in 4/5 seeds, delay +32 ms, energy +20% | throughput -0.9% (sign 3/5), PRB / energy sign 5/5 | correct 5/5 |
 | Hotspot | KPM -> qoe_prediction -> traffic_steering -> RC (the D1 chain) | throughput **+6.2%**, hot-cell PRB **-29%** (sd 27), delay +95 ms, energy +30% | throughput -2.5% (sign 3/5) | correct 3/5 |
 
+**Users served (added after the per-user check).** In the hotspot layout the simulator leaves 6 of the 9
+hotspot users unserved even without any action (0 Mbit/s; the same happens to 0-3 of 10 users in the
+random T6v3 layouts). The QoE chain's throughput gain comes from restoring two of them in seeds 101 and 104
+(they then see 1-2 s delay from their backlog); in the other seeds load moves without a throughput change.
+Users served (>= half the 3.2 Mbit/s offered rate), live vs twin: QoE steering +10% vs -2%; energy saving
+-22.5% vs -22.5% (2 users lose service). Fig. 5(c) and Fig. 4 now show users served instead of mean delay,
+which is misleading here (unserved users carry no delay).
+
 What it shows: (1) composed rApp chains change real KPIs on a 5G RAN model: steering rebalances a hotspot
 and raises throughput 6-8%, at a delay and energy cost; (2) energy saving as decided by the emulated rApp
 saves 41% energy but strands two users (-23% throughput); the twin predicts both effects within 3 pp when
