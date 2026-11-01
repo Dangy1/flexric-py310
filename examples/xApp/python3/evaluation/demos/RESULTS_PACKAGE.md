@@ -101,6 +101,23 @@ Caveats: a Linux link, not a RAN bearer; the TC indication statistics remain the
 discipline (CoDel). It shows that the TC actions AppWeaver composes are real controls with a measurable
 effect, which the emulator batches could not.
 
+### KPM dynamics when the action chain is applied
+
+`demos/fig_kpm_dynamics.{pdf,png}` (`demos/make_kpm_dynamics.py`; reads the per-run traces in the build
+tree: E2 KPM `kpm.csv`, ns-3 `energyfilecell<c>.csv` and `DlPdcpStats.txt`). Live runs, solid = action,
+dashed = the same seed without it; vertical lines = RC dispatch (handover dotted, cell off solid).
+
+| Column | What happens at the action | Visible change |
+|---|---|---|
+| (a) Hotspot, QoE chain, live seed 104 | t = 2.0 s: HO 10/6/7 -> cell 5 (cell 3's single UE also leaves) | users cell 2: 9 -> 7, cell 5: 2 -> 5; cell 5 PRB 18 -> ~115 of 139; DL received 29 -> ~33 Mbit/s vs no-op |
+| (b) Night, energy chain, live seed 101 | t = 2.0 s: HO 7, 8 -> cell 2; t = 2.3 s: OFF 4, OFF 5 | cells 4/5 power ~920 W -> 0; cell 2 users 6 -> 8; DL received 29.5 -> 22.1 Mbit/s (2 UEs stranded) |
+| (c) Real link, AppWeaver apply-codel, repeat 1 | xApp launched at 15.0 s, E2 control applied at 17.1 s (FIFO -> CoDel) | RTT climbs to ~420 ms under FIFO, falls to ~35 ms; goodput ~9.6 Mbit/s before and after (one dip at the swap: deleting the FIFO drops its backlog) |
+
+Seed choice for (a): seed 104 is one of the two seeds with a throughput gain; per seed the live QoE-chain
+throughput change is +18.8 / +0.7 / -0.9 / +12.8 / -0.4 % (seeds 101-105). The typical, flat case is
+`demos/fig_kpm_dynamics_hotspot_s105.{pdf,png}` (HO 3, 1 -> cell 3; load moves, throughput -0.4%).
+Say which seed is shown in the caption.
+
 ## 5. Suggested text-only statements (no float needed)
 
 - "Across 8,700 records on three intent sets, AppWeaver composes the correct workflow for 69-94% of intents;
