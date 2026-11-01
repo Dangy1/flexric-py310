@@ -89,7 +89,8 @@ MAC/RLC/PDCP/GTP monitors (the 9-card registry of Batches A and C). Emulated rAp
 steering, energy saving and 29 other families, decision services behind standard tool interfaces (with them
 the registry of Batch B has 81 cards). The QoE-prediction and mobility xApps of the first submission are not
 claimed any more; the running example (Fig. 2, §III-B) now uses the QoE-prediction and traffic-steering
-rApps, consistent with §IV. Quantitative evaluation: composition uses all of the above on FlexRIC's E2
+rApps, consistent with §IV, and the invocation sequence of Fig. 3(b) shows the measured path (the domain
+agent launches the application's tool, the same function its MCP server exposes). Quantitative evaluation: composition uses all of the above on FlexRIC's E2
 emulator (synthetic KPM); network effects use the RC-actuated chains on ns-3 and the TC action on a real link.
 
 *Changes:* §III-B, §IV-A.
@@ -257,9 +258,11 @@ The energy-saving workflow is also deployed on ns-3 (§IV-D).
 
 It does: no intent names an application or skill. Fig. 2 is now a recorded trace whose intent ("Steer
 at-risk video users away from the congested cell before their QoE drops.") names neither; Discover finds the
-QoE-prediction and traffic-steering rApps among 80 cards.
+QoE-prediction and traffic-steering rApps among 80 cards. The sequence of Fig. 3(b), which showed
+"discover(skill=analyze_qoe)", is redrawn from the same recorded run: a BM25 search with the intent text
+alone, returning 19 Agent Cards, then the card checks, the E2-twin dry-run and the four acknowledged steps.
 
-*Changes:* Fig. 2, §III-B.
+*Changes:* Fig. 2, Fig. 3(b), §III-B.
 
 **R4.3** — *Statistical rigor: more experiments and number of trials.*
 
@@ -300,7 +303,7 @@ ns-3 instances act as live network and network twin, and a real Linux link carri
 | "Planner agent" vs "planner agent", "Discover" vs "discover agent" | unified ("Planner agent", "Discover agent") |
 | "Agent Card" vs "Agent-Card" | "Agent Card" throughout |
 | Fig. 5a labels only the open-world bars | Fig. 5 redrawn: every bar labelled, with 95% CIs |
-| Fig. 3 too dense | MCP panel removed, remaining panels enlarged |
+| Fig. 3 too dense | MCP panel removed; Agent Card (a) drawn from the registry entry and the sequence (b) redrawn from the recorded run, both larger |
 | Code, benchmark and Agent Card availability | public repository, footnote in §IV-A |
 
 We hope the revision answers your concerns, and thank you again for the reviews.
