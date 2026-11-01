@@ -1,0 +1,18 @@
+% D1 -- drop-in replacement for Fig. 2 (fig:trace) of main.tex: the same awstep layout, but every line is
+% taken from one committed record instead of an illustration (R1.7: the old figure named the skill to
+% compose and showed invented KPIs). Source: evaluation/runs/20261030T134800Z_B_k8_final_repaired_with_variants_gptoss120b_spark1,
+% record 8b291b506dc5 (method langgraph_agentcard, intent qoe_driven_steering, repeat 1; repeats 2-3 compose
+% the same chain in 38.0 s and 40.3 s). Times are wall-clock from intent submission. The emulator's KPM
+% values in that record are synthetic, so no KPI is shown here; the KPI effect of this chain is Demo D2 (ns-3).
+\begin{figure}[htbp]
+\centering
+\begin{awstep}{intent}{roleneutral}``Steer at-risk video users away from the congested cell before their QoE drops.'' (no skill or app named)\end{awstep}
+\begin{awstep}{discover}{roleplan}BM25 over 80 Agent Cards, $k{=}8$ $\rightarrow$ 19 candidates in 5\,ms, incl.\ qoe\_prediction.rApp, traffic\_steering.rApp, ue\_qos\_control.rApp and the deprecated v0 variants.\end{awstep}
+\begin{awstep}{compose}{rolethink}Planner (gpt-oss-120b, 31.0\,s): KPM $\rightarrow$ qoe\_prediction $\rightarrow$ traffic\_steering $\rightarrow$ RC; v0 variants rejected.\end{awstep}
+\begin{awstep}{check}{roleobs}Card checks: dependency, interface, control scope, timescale, lifecycle $\rightarrow$ 0 errors, 2 warnings (second RC writer serialised; near-RT step after non-RT step).\end{awstep}
+\begin{awstep}{validate}{roleplan}Twin dry-run of the RC step over E2 on the twin RIC: acknowledged in 7.2\,s; no busy lease $\rightarrow$ deployable at 38.2\,s.\end{awstep}
+\begin{awstep}{deploy}{roleact}Four calls in chain order (KPM observe, QoE predict, steering policy, RC control): 4/4 acknowledged, lease wait 0\,s.\end{awstep}
+\begin{awstep}{baselines}{roleneutral}Rule router and catalog LLM: KPM $\rightarrow$ SLICE $\rightarrow$ TC $\rightarrow$ RC (wrong, 3/3 repeats); AppWeaver correct 3/3.\end{awstep}
+\caption{AppWeaver trace for a QoE-steering intent, from a recorded run (Batch B, 81-card registry).}
+\label{fig:trace}
+\end{figure}

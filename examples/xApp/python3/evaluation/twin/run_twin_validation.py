@@ -1177,6 +1177,9 @@ def main() -> int:
     parser.add_argument("--host-context", default="", help="what else runs on the host (recorded in the manifest)")
     parser.add_argument("--note", default="")
     parser.add_argument("--report-only", action="store_true", help="re-analyse the runs already in --out")
+    parser.add_argument("--layout", default="", help="fixed UE layout (CSV ue_index,x,y,z, uePositionFile frame) used as the initial "
+                                                     "positions of every twin and live run; the UE count is the number of rows. "
+                                                     "Twin and live then differ only in seed (mobility, fading)")
     args = parser.parse_args()
     out = Path(args.out).resolve()
     out.mkdir(parents=True, exist_ok=True)
@@ -1192,7 +1195,13 @@ def main() -> int:
         write_summaries(out, results, excluded)
         return 0
 
-    sync = args.sync or ("load" if args.twin_ues == LIVE_UES else "none")
+    layout = Path(args.layout).resolve() if args.layout else None
+    live_ues = LIVE_UES
+    if layout is not None:
+        if args.sync == "positions":
+            parser.error("--layout replaces --sync positions")
+        live_ues = args.twin_ues = sum(1 for line in layout.read_text().splitlines()[1:] if line.strip())
+    sync = "layout" if layout is not None else (args.sync or ("load" if args.twin_ues == LIVE_UES else "none"))
     if sync == "positions":
         if args.twin_ues != LIVE_UES:
             parser.error("--sync positions needs --twin-ues equal to the live UE count")
@@ -1207,12 +1216,12 @@ def main() -> int:
     Job = Tuple[str, int, int, str]
     phases: List[List[List[Job]]] = []
     if args.aa_of:
-        units = [[(role, p if role == "twin" else p + 100, args.twin_ues if role == "twin" else LIVE_UES, "noop")]
+        units = [[(role, p if role == "twin" else p + 100, args.twin_ues if role == "twin" else live_ues, "noop")]
                  for p in pairs for role in args.aa_roles]
         phases.append(units)
     elif args.only:
         role, seed, wf = args.only.split(":")
-        phases.append([[(role, int(seed), args.twin_ues if role == "twin" else LIVE_UES, wf)]])
+        phases.append([[(role, int(seed), args.twin_ues if role == "twin" else live_ues, wf)]])
     else:
         if args.reuse_live_noop:
             src = Path(args.reuse_live_noop).resolve()
@@ -1222,12 +1231,12 @@ def main() -> int:
                 if res.exists() and json.loads(res.read_text()).get("ok") and not (out / "runs" / name).exists():
                     shutil.copytree(src / "runs" / name, out / "runs" / name)
         if sync == "positions":  # the live no-op supplies the UE positions at t_act: run it first
-            phases.append([[("live", p + 100, LIVE_UES, "noop")] for p in pairs if "noop" in args.workflows])
+            phases.append([[("live", p + 100, live_ues, "noop")] for p in pairs if "noop" in args.workflows])
             phases.append([[("twin", p, args.twin_ues, "noop")] for p in pairs if "noop" in args.workflows]
-                          + [[("twin", p, args.twin_ues, wf), ("live", p + 100, LIVE_UES, wf)]
+                          + [[("twin", p, args.twin_ues, wf), ("live", p + 100, live_ues, wf)]
                              for p in pairs for wf in args.workflows if wf != "noop"])
         else:
-            phases.append([[("twin", p, args.twin_ues, wf), ("live", p + 100, LIVE_UES, wf)]
+            phases.append([[("twin", p, args.twin_ues, wf), ("live", p + 100, live_ues, wf)]
                            for p in pairs for wf in args.workflows])
     n_jobs = sum(len(u) for ph in phases for u in ph)
 
@@ -1238,7 +1247,8 @@ def main() -> int:
         "ns3_bin_sha256": _sha256(NS3_BIN), "actuator": str(ACTUATOR), "actuator_sha256": _sha256(ACTUATOR),
         "rapps_runtime_sha256": _sha256(REPO / "rapps" / "runtime.py"), "rapps_catalog_sha256": _sha256(REPO / "rapps" / "catalog.json"),
         "flexric": str(FLEXRIC_TAAP), "ric_ports": f"E2 {PORT_BASE}+10*slot, E42 {PORT_BASE + 1}+10*slot (one RIC per run)",
-        "n_gnb": N_GNB, "twin_ues": args.twin_ues, "live_ues": LIVE_UES, "sync": sync,
+        "n_gnb": N_GNB, "twin_ues": args.twin_ues, "live_ues": live_ues, "sync": sync,
+        "layout": str(layout) if layout else None,
         "sim_time_s": SIM_TIME, "t_act_s": T_ACT, "t_act_definition": "absolute simulated time (KPM collectStartTime is sim time)",
         "min_kpm_history_s": MIN_HISTORY, "settle_s": SETTLE, "kpi_window_sim_s": list(WINDOW), "indication_period_s": IND_PERIOD,
         "workflows": {w: WORKFLOWS[w] for w in args.workflows}, "jobs": n_jobs, "kpis": KPIS, "pairs": pairs,
@@ -1262,6 +1272,8 @@ def main() -> int:
     pos_dir = out / "ue_positions"
 
     def position_file(pair: int) -> Optional[Path]:
+        if layout is not None:
+            return layout
         if sync != "positions":
             return None
         path = pos_dir / f"pair{pair}_live_s{pair + 100}_t{T_ACT:g}.csv"
@@ -1281,7 +1293,7 @@ def main() -> int:
             if role == "live" and twin_failed and wf != "noop":
                 res = {"role": role, "seed": seed, "n_ues": n_ues, "workflow": wf, "ok": False, "error": "twin run failed: no policy to deploy"}
             else:
-                pos = None
+                pos = layout
                 if role == "twin":
                     try:
                         pos = position_file(seed)

@@ -1,0 +1,158 @@
+{
+  "setup": {
+    "bottleneck": "tbf 10mbit, child pfifo limit 2000 packets, 4 bulk TCP flows",
+    "ric": "127.0.0.3",
+    "xapp": "xapp_tc_suite.py --profile codel --duration-s 10",
+    "agent": "/home/dang/flexric/build/examples/emulator/agent/tc_dp_agent_gnb",
+    "repeats": 5,
+    "duration_s": 45.0,
+    "act_s": 15.0
+  },
+  "repeats": [
+    {
+      "t0": 1793529645.2500284,
+      "t_act_launch": 1793529660.253925,
+      "xapp_rc": 0,
+      "duration_s": 45.0,
+      "act_s": 15.0,
+      "ns_pid": 3059948,
+      "hook": [
+        "codel 20 400 rc=0"
+      ],
+      "control_applied_after_launch_s": 2.126,
+      "control_at_s": 17.13,
+      "rtt_before": {
+        "n": 95,
+        "median_ms": 425.0,
+        "p95_ms": 440.0,
+        "mean_ms": 405.32
+      },
+      "rtt_after": {
+        "n": 254,
+        "median_ms": 36.85,
+        "p95_ms": 99.3,
+        "mean_ms": 44.93
+      },
+      "goodput_before_mbps": 9.48,
+      "goodput_after_mbps": 9.59
+    },
+    {
+      "t0": 1793529696.7203205,
+      "t_act_launch": 1793529711.735662,
+      "xapp_rc": 0,
+      "duration_s": 45.0,
+      "act_s": 15.0,
+      "ns_pid": 3060594,
+      "hook": [
+        "codel 20 400 rc=0"
+      ],
+      "control_applied_after_launch_s": 2.163,
+      "control_at_s": 17.18,
+      "rtt_before": {
+        "n": 96,
+        "median_ms": 426.0,
+        "p95_ms": 442.0,
+        "mean_ms": 412.39
+      },
+      "rtt_after": {
+        "n": 252,
+        "median_ms": 34.85,
+        "p95_ms": 120.0,
+        "mean_ms": 44.53
+      },
+      "goodput_before_mbps": 9.57,
+      "goodput_after_mbps": 9.59
+    },
+    {
+      "t0": 1793529747.8849103,
+      "t_act_launch": 1793529762.9007366,
+      "xapp_rc": 0,
+      "duration_s": 45.0,
+      "act_s": 15.0,
+      "ns_pid": 3061238,
+      "hook": [
+        "codel 20 400 rc=0"
+      ],
+      "control_applied_after_launch_s": 2.113,
+      "control_at_s": 17.13,
+      "rtt_before": {
+        "n": 96,
+        "median_ms": 416.5,
+        "p95_ms": 436.0,
+        "mean_ms": 405.41
+      },
+      "rtt_after": {
+        "n": 252,
+        "median_ms": 35.4,
+        "p95_ms": 80.7,
+        "mean_ms": 41.49
+      },
+      "goodput_before_mbps": 9.47,
+      "goodput_after_mbps": 9.62
+    },
+    {
+      "t0": 1793529799.0472784,
+      "t_act_launch": 1793529814.0492759,
+      "xapp_rc": 0,
+      "duration_s": 45.0,
+      "act_s": 15.0,
+      "ns_pid": 3061811,
+      "hook": [
+        "codel 20 400 rc=0"
+      ],
+      "control_applied_after_launch_s": 2.12,
+      "control_at_s": 17.12,
+      "rtt_before": {
+        "n": 99,
+        "median_ms": 64.3,
+        "p95_ms": 89.8,
+        "mean_ms": 65.4
+      },
+      "rtt_after": {
+        "n": 252,
+        "median_ms": 33.1,
+        "p95_ms": 47.7,
+        "mean_ms": 34.15
+      },
+      "goodput_before_mbps": 9.57,
+      "goodput_after_mbps": 9.58
+    },
+    {
+      "t0": 1793529850.1056402,
+      "t_act_launch": 1793529865.1082726,
+      "xapp_rc": 0,
+      "duration_s": 45.0,
+      "act_s": 15.0,
+      "ns_pid": 3062369,
+      "hook": [
+        "codel 20 400 rc=0"
+      ],
+      "control_applied_after_launch_s": 2.121,
+      "control_at_s": 17.12,
+      "rtt_before": {
+        "n": 96,
+        "median_ms": 426.0,
+        "p95_ms": 442.0,
+        "mean_ms": 413.81
+      },
+      "rtt_after": {
+        "n": 254,
+        "median_ms": 35.15,
+        "p95_ms": 88.7,
+        "mean_ms": 42.1
+      },
+      "goodput_before_mbps": 9.48,
+      "goodput_after_mbps": 9.61
+    }
+  ],
+  "rtt_before": {
+    "median_ms_mean": 351.56,
+    "p95_ms_mean": 369.96
+  },
+  "rtt_after": {
+    "median_ms_mean": 35.07,
+    "p95_ms_mean": 87.28
+  },
+  "goodput_before_mbps": 9.51,
+  "goodput_after_mbps": 9.6
+}

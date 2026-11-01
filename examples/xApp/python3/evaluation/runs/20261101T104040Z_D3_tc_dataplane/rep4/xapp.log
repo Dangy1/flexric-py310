@@ -1,0 +1,39 @@
+Connected E2 nodes = 1
+Node 0 RAN functions: 2, 3, 142, 143, 144, 145, 146, 148
+Applied TC profile 'codel'. Running for 10s (Ctrl+C to stop early)
+TC suite profile 'codel' finished
+[UTIL]: Setting the config -c file to /home/dang/flexric/examples/xApp/python3/evaluation/runs/20261101T104040Z_D3_tc_dataplane/rep4/flexric.conf
+[UTIL]: Setting path -p for the shared libraries to /usr/local/lib/flexric/
+[xAapp]: Initializing ... 
+[xApp]: nearRT-RIC IP Address = 127.0.0.3, PORT = 36422
+[E2 AGENT]: Opening plugin from path = /usr/local/lib/flexric/librlc_sm.so 
+[E2 AGENT]: Opening plugin from path = /usr/local/lib/flexric/librc_sm.so 
+[E2 AGENT]: Opening plugin from path = /usr/local/lib/flexric/libslice_sm.so 
+[E2 AGENT]: Opening plugin from path = /usr/local/lib/flexric/libmac_sm.so 
+[E2 AGENT]: Opening plugin from path = /usr/local/lib/flexric/libtc_sm.so 
+[E2 AGENT]: Opening plugin from path = /usr/local/lib/flexric/libpdcp_sm.so 
+[E2 AGENT]: Opening plugin from path = /usr/local/lib/flexric/libkpm_sm.so 
+[E2 AGENT]: Opening plugin from path = /usr/local/lib/flexric/libgtp_sm.so 
+[NEAR-RIC]: Loading SM ID = 143 with def = RLC_STATS_V0 
+[NEAR-RIC]: Loading SM ID = 3 with def = ORAN-E2SM-RC 
+[NEAR-RIC]: Loading SM ID = 145 with def = SLICE_STATS_V0 
+[NEAR-RIC]: Loading SM ID = 142 with def = MAC_STATS_V0 
+[NEAR-RIC]: Loading SM ID = 146 with def = TC_STATS_V0 
+[NEAR-RIC]: Loading SM ID = 144 with def = PDCP_STATS_V0 
+[NEAR-RIC]: Loading SM ID = 2 with def = ORAN-E2SM-KPM 
+[NEAR-RIC]: Loading SM ID = 148 with def = GTP_STATS_V0 
+[xApp]: DB filename = /home/dang/flexric/examples/xApp/python3/evaluation/runs/20261101T104040Z_D3_tc_dataplane/rep4/db/xapp_db_1793529814106623 
+ [xApp]: E42 SETUP-REQUEST tx
+[xApp]: E42 SETUP-RESPONSE rx 
+[xApp]: xApp ID = 7 
+[xApp]: Registered E2 Nodes = 1 
+[xApp]: CONTROL-REQUEST tx 
+[xApp]: CONTROL ACK rx
+[xApp]: Successfully received CONTROL-ACK 
+[xApp]: CONTROL-REQUEST tx 
+[xApp]: CONTROL ACK rx
+[xApp]: Successfully received CONTROL-ACK 
+[xApp]: CONTROL-REQUEST tx 
+[xApp]: CONTROL ACK rx
+[xApp]: Successfully received CONTROL-ACK 
+[xApp]: Sucessfully stopped 

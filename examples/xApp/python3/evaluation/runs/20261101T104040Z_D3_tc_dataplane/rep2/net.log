@@ -1,0 +1,10 @@
+--preserve-credentials ip link set lo up -> 0 
+--preserve-credentials ip link add v0 type veth peer name v1 -> 0 
+--preserve-credentials ip link set v1 netns 3060600 -> 0 
+--preserve-credentials ip addr add 10.9.0.1/24 dev v0 -> 0 
+--preserve-credentials ip link set v0 up -> 0 
+--preserve-credentials ip link set lo up -> 0 
+--preserve-credentials ip addr add 10.9.0.2/24 dev v1 -> 0 
+--preserve-credentials ip link set v1 up -> 0 
+--preserve-credentials tc qdisc add dev v0 root handle 1: tbf rate 10mbit burst 32kbit limit 4000000 -> 0 
+--preserve-credentials tc qdisc add dev v0 parent 1:1 handle 10: pfifo limit 2000 -> 0 

@@ -1,0 +1,3 @@
+[TC-DP] control type 5 acknowledged, not applied to the data plane
+[TC-DP] /home/dang/flexric/examples/xApp/python3/evaluation/demos/tc_dataplane/tc_hook.sh codel 20 400 -> rc=0
+[TC-DP] control type 0 acknowledged, not applied to the data plane

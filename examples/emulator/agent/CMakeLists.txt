@@ -144,3 +144,37 @@ target_compile_definitions(emu_agent_enb PRIVATE TEST_AGENT_ENB
                                                  ) #
 
 target_compile_definitions(emu_agent_enb PRIVATE ${E2AP_VERSION} ${KPM_VERSION} NGRAN_ENB)
+
+#############################
+# E2 Agent gNB whose TC service model drives a real Linux queue (AppWeaver demo D3, sm_tc_dp.c)
+#############################
+
+add_executable(tc_dp_agent_gnb
+  test_agent.c
+  read_setup_ran.c
+  sm_kpm.c
+  sm_rc.c
+  sm_gtp.c
+  sm_mac.c
+  sm_pdcp.c
+  sm_rlc.c
+  sm_slice.c
+  sm_tc_dp.c
+  ../../../test/rnd/fill_rnd_data_gtp.c
+  ../../../test/rnd/fill_rnd_data_tc.c
+  ../../../test/rnd/fill_rnd_data_mac.c
+  ../../../test/rnd/fill_rnd_data_rlc.c
+  ../../../test/rnd/fill_rnd_data_pdcp.c
+  ../../../test/rnd/fill_rnd_data_kpm.c
+  ../../../test/rnd/fill_rnd_data_rc.c
+  ../../../test/rnd/fill_rnd_data_slice.c
+  ../../../test/rnd/fill_rnd_data_e2_setup_req.c
+  ../../../src/util/time_now_us.c
+  ../../../src/util/alg_ds/ds/assoc_container/assoc_ht_open_address.c
+  ../../../src/util/alg_ds/ds/seq_container/seq_arr.c
+  ../../../src/util/alg_ds/alg/murmur_hash_32.c
+  )
+target_link_libraries(tc_dp_agent_gnb PUBLIC e2_agent kpm_sm_static ${FlatCC})
+target_compile_definitions(tc_dp_agent_gnb PRIVATE TEST_AGENT_GNB TEST_AGENT_RAN_TYPE=ngran_gNB TEST_AGENT_MCC=505
+                           TEST_AGENT_MNC=1 TEST_AGENT_MNC_DIG_LEN=2 TEST_AGENT_NB_ID=7 TEST_AGENT_CU_DU_ID=0
+                           ${E2AP_VERSION} ${KPM_VERSION} NGRAN_GNB)
