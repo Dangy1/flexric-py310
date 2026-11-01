@@ -209,8 +209,6 @@ The term RAG was replaced by BM25 retrieval over Agent Cards. Hardware: R2.3. Re
 
 ## Notes for the authors (remove before sending)
 
-- Check that `github.com/Dangy1/flexric-py310` (branch `appweaver-revision`) is public before submission,
-  or replace the footnote URL with the release location.
 - The network-effect experiments are a 5G RAN model (ns-3) and a Linux link, not a physical RAN; the
   paper says so. Fig. 4(a) shows seed 104, one of two seeds with a throughput gain (per-seed:
   +18.8/+0.7/−0.9/+12.8/−0.4%); the caption names the seed and §IV-D gives the mean.
