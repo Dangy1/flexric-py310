@@ -1,0 +1,189 @@
+{
+  "created_at": "2026-11-02T11:30:24+0200",
+  "scenario": "scenario-zero-with_parallel_loging",
+  "ns3_bin": "/home/dang/ns-oran-flexric/mmwave-LENA-oran/build/scratch/ns3.42-scenario-zero-with_parallel_loging-optimized",
+  "ns3_bin_mtime": "2026-10-29T03:51:40+0200",
+  "ns3_bin_sha256": "75df6efbd2831c4d6198130f030e4074e7e443777dd6d3cc5553d96010c29905",
+  "actuator": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/xapp_appweaver_actuator",
+  "actuator_sha256": "5d5d3384db38e05f6d1a4517c9c036453831ab4cff37309d84bb036acf2d631b",
+  "rapps_runtime_sha256": "31878f8f13e59b6d62b462a7189379fe33d4e398ee948e0a7f4cb46fb66f69fd",
+  "rapps_catalog_sha256": "e02e2aa56719a223cfd85d9dd2e70f59ec9f47060eef6b2b14d4422d0f576017",
+  "flexric": "/home/dang/flexric-taap",
+  "ric_ports": "E2 36500+10*slot, E42 36501+10*slot (one RIC per run)",
+  "n_gnb": 4,
+  "twin_ues": 14,
+  "live_ues": 14,
+  "sync": "state",
+  "layout": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/hotspot.csv",
+  "state_age_s": 1.0,
+  "sim_time_s": 8.0,
+  "t_act_s": 2.0,
+  "t_act_definition": "absolute simulated time (KPM collectStartTime is sim time)",
+  "min_kpm_history_s": 0.5,
+  "settle_s": 0.5,
+  "kpi_window_sim_s": [
+    2.5,
+    7.9
+  ],
+  "indication_period_s": 0.1,
+  "workflows": {
+    "noop": [
+      "KPM"
+    ],
+    "qoe_steering": [
+      "KPM",
+      "RAPP.QOE_PREDICTION",
+      "RAPP.TRAFFIC_STEERING",
+      "RC"
+    ],
+    "traffic_steering": [
+      "KPM",
+      "RAPP.TRAFFIC_STEERING",
+      "RC"
+    ]
+  },
+  "jobs": 30,
+  "kpis": [
+    "prb_used_dl",
+    "dl_throughput_mbps",
+    "dl_delay_ms",
+    "dl_buffer_kbytes",
+    "energy_j_per_s"
+  ],
+  "pairs": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "protocol": "policy decided on the live KPM at t_act (live no-op, identical to the live run up to t_act) and resolved to UE-level RC commands there; twin and live execute the identical commands; deltas vs same-instance noop",
+  "gate": {
+    "thresholds": {
+      "energy_saving": {
+        "accept_if": "energy_saving_pct >= 5 AND remaining_prb_increase_pct <= 30",
+        "energy_saving_min_pct": 5.0,
+        "remaining_prb_increase_max_pct": 30.0
+      },
+      "traffic_steering": {
+        "accept_if": "hot_prb_reduction_pct >= 5 AND throughput_loss_pct <= 5",
+        "hot_prb_reduction_min_pct": 5.0,
+        "throughput_loss_max_pct": 5.0
+      },
+      "qoe_steering": {
+        "accept_if": "hot_prb_reduction_pct >= 5 AND throughput_loss_pct <= 5",
+        "hot_prb_reduction_min_pct": 5.0,
+        "throughput_loss_max_pct": 5.0
+      }
+    },
+    "definitions": {
+      "energy_saving_pct": "-100 * (energy_wf - energy_noop) / energy_noop, all gNBs, J per simulated s in the KPI window",
+      "remaining_prb_increase_pct": "100 * (PRB_wf - PRB_noop) / PRB_noop summed over the gNBs this instance did not switch off (its own OFF commands); noop sum 0 -> 0 if wf sum is 0 else +inf",
+      "hot_prb_reduction_pct": "-100 * (PRB_wf - PRB_noop) / PRB_noop summed over the policy's source cells (shed.from); no source cell or noop sum 0 -> undefined -> reject",
+      "throughput_loss_pct": "-100 * (thp_wf - thp_noop) / thp_noop, all gNBs",
+      "verdict": "accept iff every criterion of the workflow holds; twin verdict from predicted (twin) deltas, live outcome from measured (live) deltas, same thresholds"
+    }
+  },
+  "exclusion_rule": "a pair is excluded from the analysis iff one of its runs still fails after one automatic retry (ns-3 abort, E2 setup timeout, no KPM before t_act); no replacement pairs are added",
+  "parallel": 4,
+  "nice": 0,
+  "host_context": "",
+  "host_at_start": {
+    "time": "2026-11-02T11:30:24+0200",
+    "loadavg": [
+      1.8916015625,
+      2.482421875,
+      3.0625
+    ],
+    "cpu_count": 16,
+    "processes": [
+      {
+        "pid": 855561,
+        "elapsed_s": 436197,
+        "cmd": "/home/dang/flexric-taap/build/examples/xApp/c/appweaver/xapp_kpm_capture -c /home/dang/flexric-taap/install/etc/flexric/flexric.conf -p /home/dang/flexric-taap/install/lib/flexric/"
+      },
+      {
+        "pid": 2030955,
+        "elapsed_s": 175299,
+        "cmd": "/home/dang/flexric/build/examples/emulator/agent/emu_agent_gnb"
+      },
+      {
+        "pid": 2031007,
+        "elapsed_s": 175296,
+        "cmd": "/home/dang/anaconda3/envs/flexric-py310/bin/python /home/dang/flexric/build/examples/xApp/python3/flexric_agent_portal.py"
+      },
+      {
+        "pid": 2031017,
+        "elapsed_s": 175295,
+        "cmd": "/home/dang/anaconda3/envs/flexric-py310/bin/python -m uvicorn xapp_rpc_server:app --host 0.0.0.0 --port 8090 --app-dir /home/dang/flexric/build/examples/xApp/python3"
+      },
+      {
+        "pid": 2031068,
+        "elapsed_s": 175293,
+        "cmd": "/home/dang/anaconda3/envs/flexric-py310/bin/python -u /home/dang/flexric/build/examples/xApp/python3/xapp_kpm_rc_suite.py --profile kpm --period-ms 1000 --duration-s 0 --kpm-metrics all"
+      },
+      {
+        "pid": 2031120,
+        "elapsed_s": 175292,
+        "cmd": "/home/dang/flexric/build/examples/ric/nearRT-RIC -c /tmp/flexric_twin_emu/flexric_twin.conf -p /usr/local/lib/flexric/"
+      },
+      {
+        "pid": 2031136,
+        "elapsed_s": 175292,
+        "cmd": "/home/dang/flexric/build/examples/emulator/agent/emu_agent_gnb -c /tmp/flexric_twin_emu/flexric_twin.conf -p /usr/local/lib/flexric/"
+      }
+    ],
+    "harness_labels": []
+  },
+  "reused_live_noop_from": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261101T103300Z_D2_hotspot",
+  "note": "sync-age sweep: decision on the live snapshot 1.0 s before t_act; no-ops copied from 20261101T103300Z_D2_hotspot (identical inputs)",
+  "excluded_pairs": {},
+  "host_at_end": {
+    "time": "2026-11-02T12:01:55+0200",
+    "loadavg": [
+      1.9599609375,
+      2.47998046875,
+      3.17041015625
+    ],
+    "cpu_count": 16,
+    "processes": [
+      {
+        "pid": 855561,
+        "elapsed_s": 438088,
+        "cmd": "/home/dang/flexric-taap/build/examples/xApp/c/appweaver/xapp_kpm_capture -c /home/dang/flexric-taap/install/etc/flexric/flexric.conf -p /home/dang/flexric-taap/install/lib/flexric/"
+      },
+      {
+        "pid": 2030955,
+        "elapsed_s": 177190,
+        "cmd": "/home/dang/flexric/build/examples/emulator/agent/emu_agent_gnb"
+      },
+      {
+        "pid": 2031007,
+        "elapsed_s": 177187,
+        "cmd": "/home/dang/anaconda3/envs/flexric-py310/bin/python /home/dang/flexric/build/examples/xApp/python3/flexric_agent_portal.py"
+      },
+      {
+        "pid": 2031017,
+        "elapsed_s": 177186,
+        "cmd": "/home/dang/anaconda3/envs/flexric-py310/bin/python -m uvicorn xapp_rpc_server:app --host 0.0.0.0 --port 8090 --app-dir /home/dang/flexric/build/examples/xApp/python3"
+      },
+      {
+        "pid": 2031068,
+        "elapsed_s": 177184,
+        "cmd": "/home/dang/anaconda3/envs/flexric-py310/bin/python -u /home/dang/flexric/build/examples/xApp/python3/xapp_kpm_rc_suite.py --profile kpm --period-ms 1000 --duration-s 0 --kpm-metrics all"
+      },
+      {
+        "pid": 2031120,
+        "elapsed_s": 177183,
+        "cmd": "/home/dang/flexric/build/examples/ric/nearRT-RIC -c /tmp/flexric_twin_emu/flexric_twin.conf -p /usr/local/lib/flexric/"
+      },
+      {
+        "pid": 2031136,
+        "elapsed_s": 177183,
+        "cmd": "/home/dang/flexric/build/examples/emulator/agent/emu_agent_gnb -c /tmp/flexric_twin_emu/flexric_twin.conf -p /usr/local/lib/flexric/"
+      }
+    ],
+    "harness_labels": []
+  },
+  "finished_at": "2026-11-02T12:01:55+0200"
+}

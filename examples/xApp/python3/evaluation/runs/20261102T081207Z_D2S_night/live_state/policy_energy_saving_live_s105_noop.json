@@ -1,0 +1,57 @@
+{
+  "workflow": "energy_saving",
+  "sleep_cells": [
+    4,
+    5
+  ],
+  "shed": [],
+  "trace": {
+    "kpm_snapshot": {
+      "4": {
+        "RRU.PrbTotDl": 0.133,
+        "DRB.UEThpDl": 2.839
+      },
+      "2": {
+        "RRU.PrbTotDl": 1.0,
+        "DRB.UEThpDl": 2.1774999999999998
+      },
+      "5": {
+        "RRU.PrbTotDl": 0.133,
+        "DRB.UEThpDl": 2.839
+      }
+    },
+    "steps": [
+      {
+        "rapp": "energy_saving",
+        "decision": {
+          "cells_to_sleep": [
+            "4",
+            "5"
+          ],
+          "threshold_prb": 0.15,
+          "estimated_energy_saving_pct": 24.0
+        }
+      }
+    ]
+  },
+  "commands": [
+    [
+      0.0,
+      "HO 7 2"
+    ],
+    [
+      0.3,
+      "OFF 4"
+    ],
+    [
+      0.0,
+      "HO 8 2"
+    ],
+    [
+      0.3,
+      "OFF 5"
+    ]
+  ],
+  "decided_on": "live state 0 s before t_act (live_s105_noop, sim 2.000 s)",
+  "state_age_s": 0.0
+}

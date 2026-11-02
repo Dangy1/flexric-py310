@@ -11,8 +11,9 @@
   python make_compact_figure.py --d2-hotspot RUNS/<D2_hotspot> --d2-night RUNS/<D2_night> --d3 RUNS/<D3> \
       [--traces BUILD_RUNS] [--out fig_results_compact]
 
---traces: directory holding the same D2 batches with their ns-3 traces (the build tree); needed for
-users served, which result.json does not carry.
+--d2-hotspot / --d2-night take one batch or several, comma-separated (pooled, e.g. the live-state-synced
+batches of every snapshot age). --traces: directory holding the same D2 batches with their ns-3 traces (the
+build tree); needed for users served, which result.json does not carry.
 """
 from __future__ import annotations
 
@@ -96,6 +97,16 @@ def d2_changes(batch: Path, traces: Path, workflow: str):
     return out
 
 
+def d2_pooled(batches: str, traces: Path, workflow: str):
+    out = {"twin": defaultdict(list), "live": defaultdict(list)}
+    for b in batches.split(","):
+        ch = d2_changes(Path(b), traces, workflow)
+        for role in out:
+            for k, v in ch[role].items():
+                out[role][k] += v
+    return out
+
+
 def ms(v):
     v = [x for x in v if x is not None]
     return (statistics.fmean(v), statistics.stdev(v) if len(v) > 1 else 0.0, len(v)) if v else (None, None, 0)
@@ -113,11 +124,11 @@ def main() -> int:
     traces = Path(args.traces)
     items = []  # (group, label, twin (m, sd, n) or None, live (m, sd, n))
     if args.d2_hotspot:
-        ch = d2_changes(Path(args.d2_hotspot), traces, "qoe_steering")
+        ch = d2_pooled(args.d2_hotspot, traces, "qoe_steering")
         for k, lab in (("throughput", "DL throughput"), ("served", "users served"), ("hot_prb", "source-cell PRB")):
             items.append(("QoE steering", lab, ms(ch["twin"][k]), ms(ch["live"][k])))
     if args.d2_night:
-        ch = d2_changes(Path(args.d2_night), traces, "energy_saving")
+        ch = d2_pooled(args.d2_night, traces, "energy_saving")
         for k, lab in (("energy", "gNB energy"), ("throughput", "DL throughput"), ("served", "users served")):
             items.append(("Energy saving", lab, ms(ch["twin"][k]), ms(ch["live"][k])))
     if args.d3:

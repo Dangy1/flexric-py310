@@ -1,0 +1,199 @@
+{
+  "act_sim_time_s": 2.0002,
+  "chain": [
+    "KPM",
+    "RAPP.ENERGY_SAVING",
+    "RC"
+  ],
+  "clock": "sim-time collectStartTime",
+  "commands": [
+    "HO 7 2",
+    "OFF 4",
+    "HO 8 2",
+    "OFF 5"
+  ],
+  "commands_dispatched_sim_s": [
+    [
+      2.0002,
+      "HO 7 2"
+    ],
+    [
+      2.0002,
+      "HO 8 2"
+    ],
+    [
+      2.3003,
+      "OFF 4"
+    ],
+    [
+      2.3003,
+      "OFF 5"
+    ]
+  ],
+  "first_report_sim_s": 0.3,
+  "indications_per_gnb": {
+    "2": 78,
+    "3": 0,
+    "4": 18,
+    "5": 18
+  },
+  "kpi": {
+    "dl_buffer_kbytes": 2986.32,
+    "dl_delay_ms": 1.003592960730159,
+    "dl_throughput_mbps": 22.08,
+    "energy_j_per_s": 2782.553703703704,
+    "prb_used_dl": 60.710914685185195
+  },
+  "kpi_e2": {
+    "dl_buffer_kbytes": 2986.32,
+    "dl_throughput_mbps": 15.185314814814816,
+    "energy_j_per_s": 2782.553703703704,
+    "prb_used_dl": 57.0
+  },
+  "kpi_per_cell": {
+    "2": {
+      "dl_buffer_kbytes": 2986.32,
+      "energy_j_per_s": 2116.818518518519,
+      "prb_used_dl": 60.710914685185195
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.0,
+      "energy_j_per_s": 665.7351851851852,
+      "prb_used_dl": 0.0
+    },
+    "4": {
+      "dl_buffer_kbytes": 0.0,
+      "energy_j_per_s": 0.0,
+      "prb_used_dl": 0.0
+    },
+    "5": {
+      "dl_buffer_kbytes": 0.0,
+      "energy_j_per_s": 0.0,
+      "prb_used_dl": 0.0
+    }
+  },
+  "kpi_per_cell_e2": {
+    "2": {
+      "dl_buffer_kbytes": 2986.32,
+      "dl_throughput_mbps": 15.185314814814816,
+      "energy_j_per_s": 2116.818518518519,
+      "prb_used_dl": 57.0
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.0,
+      "dl_throughput_mbps": 0.0,
+      "energy_j_per_s": 665.7351851851852,
+      "prb_used_dl": 0.0
+    },
+    "4": {
+      "dl_buffer_kbytes": 0.0,
+      "dl_throughput_mbps": 0.0,
+      "energy_j_per_s": 0.0,
+      "prb_used_dl": 0.0
+    },
+    "5": {
+      "dl_buffer_kbytes": 0.0,
+      "dl_throughput_mbps": 0.0,
+      "energy_j_per_s": 0.0,
+      "prb_used_dl": 0.0
+    }
+  },
+  "kpi_source": {
+    "version": "ns3-trace-v2"
+  },
+  "kpi_trace_window": {
+    "du_logger_writes": 54,
+    "pdcp_epochs_s": [
+      2.5,
+      7.75
+    ],
+    "prb_method": "logger (E2 reports grid-aligned: same window)"
+  },
+  "kpi_window_bins": [
+    54,
+    54
+  ],
+  "kpi_window_sim_s": [
+    2.5,
+    7.9
+  ],
+  "kpm_history_at_act_s": 1.7002,
+  "last_report_sim_s": 8.0,
+  "load_avg_end": 4.17333984375,
+  "load_avg_start": 1.9912109375,
+  "n_ues": 8,
+  "novalue_rows": 0,
+  "ns3_returncode": 0,
+  "ok": true,
+  "policy": {
+    "commands": [
+      [
+        0.0,
+        "HO 7 2"
+      ],
+      [
+        0.3,
+        "OFF 4"
+      ],
+      [
+        0.0,
+        "HO 8 2"
+      ],
+      [
+        0.3,
+        "OFF 5"
+      ]
+    ],
+    "decided_on": "live state 0 s before t_act (live_s104_noop, sim 2.000 s)",
+    "shed": [],
+    "sleep_cells": [
+      4,
+      5
+    ],
+    "state_age_s": 0.0,
+    "trace": {
+      "kpm_snapshot": {
+        "2": {
+          "DRB.UEThpDl": 2.224266666666667,
+          "RRU.PrbTotDl": 1.0
+        },
+        "4": {
+          "DRB.UEThpDl": 2.839,
+          "RRU.PrbTotDl": 0.144
+        },
+        "5": {
+          "DRB.UEThpDl": 2.839,
+          "RRU.PrbTotDl": 0.144
+        }
+      },
+      "steps": [
+        {
+          "decision": {
+            "cells_to_sleep": [
+              "4",
+              "5"
+            ],
+            "estimated_energy_saving_pct": 24.0,
+            "threshold_prb": 0.15
+          },
+          "rapp": "energy_saving"
+        }
+      ]
+    },
+    "workflow": "energy_saving"
+  },
+  "policy_from": "live state 0 s before t_act (live_s104_noop, sim 2.000 s)",
+  "rc_acks": [
+    "1793609071996643 HO 7 2 sent",
+    "1793609071997626 HO 8 2 sent",
+    "1793609079411486 OFF 4 sent",
+    "1793609079411903 OFF 5 sent"
+  ],
+  "role": "twin",
+  "seed": 4,
+  "sim_time_s": 8.0,
+  "t_act_s": 2.0,
+  "ue_position_file": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/night_energy.csv",
+  "wall_s": 213.7,
+  "workflow": "energy_saving"
+}

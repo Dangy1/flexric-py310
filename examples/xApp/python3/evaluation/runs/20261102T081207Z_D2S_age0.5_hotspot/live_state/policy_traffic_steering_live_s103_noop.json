@@ -1,0 +1,53 @@
+{
+  "workflow": "traffic_steering",
+  "sleep_cells": [],
+  "shed": [
+    {
+      "from": 2,
+      "to": 3,
+      "share": 0.2
+    }
+  ],
+  "trace": {
+    "kpm_snapshot": {
+      "5": {
+        "RRU.PrbTotDl": 0.396,
+        "DRB.UEThpDl": 2.7580999999999998
+      },
+      "3": {
+        "RRU.PrbTotDl": 0.196,
+        "DRB.UEThpDl": 2.839
+      },
+      "4": {
+        "RRU.PrbTotDl": 0.391,
+        "DRB.UEThpDl": 2.7655
+      },
+      "2": {
+        "RRU.PrbTotDl": 1.0,
+        "DRB.UEThpDl": 0.6552666666666666
+      }
+    },
+    "steps": [
+      {
+        "rapp": "traffic_steering",
+        "decision": {
+          "from_cell": "2",
+          "to_cell": "3",
+          "ue_share_pct": 20
+        }
+      }
+    ]
+  },
+  "commands": [
+    [
+      0.0,
+      "HO 3 3"
+    ],
+    [
+      0.0,
+      "HO 9 3"
+    ]
+  ],
+  "decided_on": "live state 0.5 s before t_act (live_s103_noop, sim 1.500 s)",
+  "state_age_s": 0.5
+}

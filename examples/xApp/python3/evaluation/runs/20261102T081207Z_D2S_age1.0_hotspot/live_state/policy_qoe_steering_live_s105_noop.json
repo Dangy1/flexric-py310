@@ -1,0 +1,88 @@
+{
+  "workflow": "qoe_steering",
+  "sleep_cells": [],
+  "shed": [
+    {
+      "from": 2,
+      "to": 3,
+      "share": 0.2,
+      "avoid": [
+        2,
+        4
+      ]
+    },
+    {
+      "from": 4,
+      "to": 3,
+      "share": 0.2,
+      "avoid": [
+        2,
+        4
+      ]
+    }
+  ],
+  "trace": {
+    "kpm_snapshot": {
+      "5": {
+        "RRU.PrbTotDl": 0.462,
+        "DRB.UEThpDl": 2.7594000000000003
+      },
+      "3": {
+        "RRU.PrbTotDl": 0.228,
+        "DRB.UEThpDl": 2.8334
+      },
+      "2": {
+        "RRU.PrbTotDl": 1.0,
+        "DRB.UEThpDl": 0.685288888888889
+      },
+      "4": {
+        "RRU.PrbTotDl": 0.457,
+        "DRB.UEThpDl": 2.754
+      }
+    },
+    "steps": [
+      {
+        "rapp": "qoe_prediction",
+        "decision": {
+          "mos_forecast": {
+            "2": 1.21,
+            "3": 2.5,
+            "4": 2.45,
+            "5": 2.46
+          },
+          "at_risk_cells": [
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "model": "linear(thp, delay) emulation"
+        }
+      },
+      {
+        "rapp": "traffic_steering",
+        "decision": {
+          "from_cell": "2",
+          "to_cell": "3",
+          "ue_share_pct": 20
+        }
+      }
+    ]
+  },
+  "commands": [
+    [
+      0.0,
+      "HO 1 3"
+    ],
+    [
+      0.0,
+      "HO 2 3"
+    ],
+    [
+      0.0,
+      "HO 11 3"
+    ]
+  ],
+  "decided_on": "live state 1 s before t_act (live_s105_noop, sim 1.000 s)",
+  "state_age_s": 1.0
+}

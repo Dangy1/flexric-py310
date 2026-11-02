@@ -1,0 +1,182 @@
+{
+  "act_sim_time_s": 2.0,
+  "chain": [
+    "KPM",
+    "RAPP.TRAFFIC_STEERING",
+    "RC"
+  ],
+  "clock": "sim-time collectStartTime",
+  "commands": [
+    "HO 1 3",
+    "HO 4 3"
+  ],
+  "commands_dispatched_sim_s": [
+    [
+      2.0,
+      "HO 1 3"
+    ],
+    [
+      2.0,
+      "HO 4 3"
+    ]
+  ],
+  "first_report_sim_s": 0.2,
+  "indications_per_gnb": {
+    "2": 79,
+    "3": 79,
+    "4": 79,
+    "5": 79
+  },
+  "kpi": {
+    "dl_buffer_kbytes": 12514.398703703704,
+    "dl_delay_ms": 3.265487069289726,
+    "dl_throughput_mbps": 29.44841142857143,
+    "energy_j_per_s": 5715.494444444444,
+    "prb_used_dl": 126.20317268518515
+  },
+  "kpi_e2": {
+    "dl_buffer_kbytes": 12514.398703703704,
+    "dl_throughput_mbps": 20.14064814814815,
+    "energy_j_per_s": 5715.494444444444,
+    "prb_used_dl": 120.2962962962963
+  },
+  "kpi_per_cell": {
+    "2": {
+      "dl_buffer_kbytes": 11817.403314814816,
+      "energy_j_per_s": 1535.1407407407403,
+      "prb_used_dl": 36.05496361111112
+    },
+    "3": {
+      "dl_buffer_kbytes": 696.9953888888889,
+      "energy_j_per_s": 1864.5296296296294,
+      "prb_used_dl": 50.0165571111111
+    },
+    "4": {
+      "dl_buffer_kbytes": 0.0,
+      "energy_j_per_s": 1161.4037037037037,
+      "prb_used_dl": 20.21383527777776
+    },
+    "5": {
+      "dl_buffer_kbytes": 0.0,
+      "energy_j_per_s": 1154.4203703703702,
+      "prb_used_dl": 19.917816685185173
+    }
+  },
+  "kpi_per_cell_e2": {
+    "2": {
+      "dl_buffer_kbytes": 11817.403314814816,
+      "dl_throughput_mbps": 3.931814814814815,
+      "energy_j_per_s": 1535.1407407407403,
+      "prb_used_dl": 35.03703703703704
+    },
+    "3": {
+      "dl_buffer_kbytes": 696.9953888888889,
+      "dl_throughput_mbps": 5.238611111111111,
+      "energy_j_per_s": 1864.5296296296294,
+      "prb_used_dl": 48.44444444444444
+    },
+    "4": {
+      "dl_buffer_kbytes": 0.0,
+      "dl_throughput_mbps": 5.474259259259259,
+      "energy_j_per_s": 1161.4037037037037,
+      "prb_used_dl": 18.62962962962963
+    },
+    "5": {
+      "dl_buffer_kbytes": 0.0,
+      "dl_throughput_mbps": 5.495962962962962,
+      "energy_j_per_s": 1154.4203703703702,
+      "prb_used_dl": 18.185185185185187
+    }
+  },
+  "kpi_source": {
+    "version": "ns3-trace-v2"
+  },
+  "kpi_trace_window": {
+    "du_logger_writes": 54,
+    "pdcp_epochs_s": [
+      2.5,
+      7.75
+    ],
+    "prb_method": "logger (E2 reports grid-aligned: same window)"
+  },
+  "kpi_window_bins": [
+    54,
+    54
+  ],
+  "kpi_window_sim_s": [
+    2.5,
+    7.9
+  ],
+  "kpm_history_at_act_s": 1.8,
+  "last_report_sim_s": 8.0,
+  "load_avg_end": 4.357421875,
+  "load_avg_start": 4.53662109375,
+  "n_ues": 14,
+  "novalue_rows": 0,
+  "ns3_returncode": 0,
+  "ok": true,
+  "policy": {
+    "commands": [
+      [
+        0.0,
+        "HO 1 3"
+      ],
+      [
+        0.0,
+        "HO 4 3"
+      ]
+    ],
+    "decided_on": "live state at t_act (live_s101_noop, sim 2.000 s)",
+    "shed": [
+      {
+        "from": 2,
+        "share": 0.2,
+        "to": 3
+      }
+    ],
+    "sleep_cells": [],
+    "trace": {
+      "kpm_snapshot": {
+        "2": {
+          "DRB.UEThpDl": 0.6844222222222223,
+          "RRU.PrbTotDl": 1.0
+        },
+        "3": {
+          "DRB.UEThpDl": 2.839,
+          "RRU.PrbTotDl": 0.216
+        },
+        "4": {
+          "DRB.UEThpDl": 2.747,
+          "RRU.PrbTotDl": 0.437
+        },
+        "5": {
+          "DRB.UEThpDl": 2.7521999999999998,
+          "RRU.PrbTotDl": 0.433
+        }
+      },
+      "steps": [
+        {
+          "decision": {
+            "from_cell": "2",
+            "to_cell": "3",
+            "ue_share_pct": 20
+          },
+          "rapp": "traffic_steering"
+        }
+      ]
+    },
+    "workflow": "traffic_steering"
+  },
+  "policy_from": "live state at t_act (live_s101_noop, sim 2.000 s)",
+  "rc_acks": [
+    "1793607520740706 HO 1 3 sent",
+    "1793607520741622 HO 4 3 sent"
+  ],
+  "role": "live",
+  "seed": 101,
+  "sim_time_s": 8.0,
+  "t_act_s": 2.0,
+  "ue_position_file": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/hotspot.csv",
+  "wall_s": 314.1,
+  "workflow": "traffic_steering"
+}

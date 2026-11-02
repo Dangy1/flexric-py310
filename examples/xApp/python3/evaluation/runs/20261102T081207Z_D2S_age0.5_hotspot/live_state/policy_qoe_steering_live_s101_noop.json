@@ -1,0 +1,74 @@
+{
+  "workflow": "qoe_steering",
+  "sleep_cells": [],
+  "shed": [
+    {
+      "from": 2,
+      "to": 3,
+      "share": 0.2,
+      "avoid": [
+        2
+      ]
+    }
+  ],
+  "trace": {
+    "kpm_snapshot": {
+      "3": {
+        "RRU.PrbTotDl": 0.217,
+        "DRB.UEThpDl": 2.839
+      },
+      "4": {
+        "RRU.PrbTotDl": 0.444,
+        "DRB.UEThpDl": 2.7443
+      },
+      "5": {
+        "RRU.PrbTotDl": 0.444,
+        "DRB.UEThpDl": 2.7487
+      },
+      "2": {
+        "RRU.PrbTotDl": 1.0,
+        "DRB.UEThpDl": 0.6832444444444444
+      }
+    },
+    "steps": [
+      {
+        "rapp": "qoe_prediction",
+        "decision": {
+          "mos_forecast": {
+            "2": 1.21,
+            "3": 2.5,
+            "4": 2.45,
+            "5": 2.45
+          },
+          "at_risk_cells": [
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "model": "linear(thp, delay) emulation"
+        }
+      },
+      {
+        "rapp": "traffic_steering",
+        "decision": {
+          "from_cell": "2",
+          "to_cell": "3",
+          "ue_share_pct": 20
+        }
+      }
+    ]
+  },
+  "commands": [
+    [
+      0.0,
+      "HO 7 3"
+    ],
+    [
+      0.0,
+      "HO 9 3"
+    ]
+  ],
+  "decided_on": "live state 0.5 s before t_act (live_s101_noop, sim 1.500 s)",
+  "state_age_s": 0.5
+}

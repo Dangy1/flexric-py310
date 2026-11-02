@@ -15,6 +15,13 @@ State sync levels of the twin (--sync):
   load       twin UE count = live UE count (--twin-ues 10)
   positions  load + the live run's UE positions at t_act as the twin's initial UE positions
              (scenario GlobalValue uePositionFile, CSV ue_index,x,y,z in the ue_position.txt frame)
+  layout     (--layout) twin and live start from the same fixed UE layout, differ in seed
+  state      (--layout --sync state) layout + live state at t_act: AppWeaver decides on the live E2 KPM
+             snapshot at t_act (taken from the live no-op, identical to the live run up to t_act), resolves
+             the policy to UE-level RC commands on that live state, and the twin rehearses exactly those
+             commands before live executes them (the protocol of a twin fed by the live RIC);
+             --state-age A decides on the live snapshot taken A s before t_act (a twin re-synced every 2A s
+             holds a snapshot A s old on average); the commands still run at t_act on both
 
 Workflows (chains from intents_v2.json; decisions by the AppWeaver rApp models in rapps/runtime.py):
   energy_saving    KPM -> RAPP.ENERGY_SAVING -> RC                        (handover + cell switch-off)
@@ -490,6 +497,47 @@ def ns3_has_global(name: str) -> bool:
     return True
 
 
+def live_state_at(kpm_csv: Path, t_s: float, out_csv: Path) -> KpmState:
+    """KpmState of a finished run as a RIC saw it when the first report at or after t_s arrived: the KPM CSV
+    is cut after that report's rows (collect_start_us = simulated time)."""
+    rows, cut_us = [], None
+    with kpm_csv.open() as handle:
+        header = handle.readline()
+        for line in handle:
+            f = line.split(",")
+            try:
+                stamp = int(f[1])
+            except (IndexError, ValueError):
+                continue
+            if cut_us is None and stamp >= t_s * 1e6:
+                cut_us = stamp
+            if cut_us is not None and stamp > cut_us:
+                break
+            rows.append(line)
+    if cut_us is None:
+        raise ValueError(f"{kpm_csv}: no KPM report at or after {t_s} s")
+    out_csv.write_text(header + "".join(rows))
+    state = KpmState(out_csv)
+    state.poll()
+    return state
+
+
+def live_state_policy(workflow: str, live_noop_dir: Path, out_dir: Path, age_s: float = 0.0) -> Dict[str, Any]:
+    """--sync state: the policy AppWeaver decides on the live KPM at t_act, resolved to UE-level commands on
+    that same live state; twin and live then execute the identical command list."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    t_snap = T_ACT - age_s
+    if t_snap < MIN_HISTORY:
+        raise ValueError(f"snapshot at {t_snap:g} s has less than {MIN_HISTORY} s of KPM history")
+    state = live_state_at(live_noop_dir / "kpm.csv", t_snap, out_dir / f"{live_noop_dir.name}_kpm_to_{t_snap:g}s.csv")
+    policy = decide_policy(workflow, state)
+    policy["commands"] = [[d, c] for d, c in resolve_commands(policy, state)]
+    policy["decided_on"] = f"live state {age_s:g} s before t_act ({live_noop_dir.name}, sim {state.sim_time():.3f} s)"
+    policy["state_age_s"] = age_s
+    (out_dir / f"policy_{workflow}_{live_noop_dir.name}.json").write_text(json.dumps(policy, indent=2))
+    return policy
+
+
 # ---------------------------------------------------------------- workflow -> RC commands
 def _rapp(family: str) -> Dict[str, Any]:
     return rapp_runtime.load_catalog()[f"rapp.{family}"]
@@ -672,7 +720,7 @@ def run_instance(role: str, seed: int, n_ues: int, workflow: str, slot: int, out
         dispatched: List[List[Any]] = []
         acted = False
         if policy is not None:
-            result["policy_from"] = "twin"
+            result["policy_from"] = policy.get("decided_on", "twin")
         while ns3.poll() is None:
             state.poll()
             t = state.sim_time()
@@ -683,7 +731,10 @@ def run_instance(role: str, seed: int, n_ues: int, workflow: str, slot: int, out
                     if policy is None:  # twin: AppWeaver decides here (validate before deploy)
                         policy = decide_policy(workflow, state)
                     result["policy"] = policy
-                    commands = resolve_commands(policy, state)
+                    if policy.get("commands") is not None:  # resolved on the live state (--sync state)
+                        commands = [(float(d), str(c)) for d, c in policy["commands"]]
+                    else:
+                        commands = resolve_commands(policy, state)
                     result["commands"] = [c for _, c in commands]
                     pending = [(t + delay, c) for delay, c in commands]
             due = [c for when, c in pending if t >= when]
@@ -1169,8 +1220,10 @@ def main() -> int:
     parser.add_argument("--only", default="", help="role:seed:workflow for a single smoke run")
     parser.add_argument("--twin-ues", type=int, default=TWIN_UES,
                         help="UEs in the twin (default 8; set to the live count for a load-calibrated twin)")
-    parser.add_argument("--sync", choices=["none", "load", "positions"], default=None,
-                        help="twin state sync level (default: none for 8 twin UEs, load for twin UEs = live UEs)")
+    parser.add_argument("--sync", choices=["none", "load", "positions", "state"], default=None,
+                        help="twin state sync level (default: none for 8 twin UEs, load for twin UEs = live UEs; "
+                             "state needs --layout)")
+    parser.add_argument("--state-age", type=float, default=0.0, help="--sync state: age (s) of the live snapshot the decision uses")
     parser.add_argument("--reuse-live-noop", default="", help="batch dir whose live no-op runs (identical inputs) are copied in")
     parser.add_argument("--aa-of", default="", help="A/A mode: re-run the no-ops of this batch dir (--aa-roles) and compare")
     parser.add_argument("--aa-roles", nargs="+", default=["twin", "live"])
@@ -1198,10 +1251,12 @@ def main() -> int:
     layout = Path(args.layout).resolve() if args.layout else None
     live_ues = LIVE_UES
     if layout is not None:
-        if args.sync == "positions":
-            parser.error("--layout replaces --sync positions")
+        if args.sync not in (None, "state"):
+            parser.error("--layout combines only with --sync state")
         live_ues = args.twin_ues = sum(1 for line in layout.read_text().splitlines()[1:] if line.strip())
-    sync = "layout" if layout is not None else (args.sync or ("load" if args.twin_ues == LIVE_UES else "none"))
+    elif args.sync == "state":
+        parser.error("--sync state needs --layout")
+    sync = ("state" if args.sync == "state" else "layout") if layout is not None else (args.sync or ("load" if args.twin_ues == LIVE_UES else "none"))
     if sync == "positions":
         if args.twin_ues != LIVE_UES:
             parser.error("--sync positions needs --twin-ues equal to the live UE count")
@@ -1230,7 +1285,7 @@ def main() -> int:
                 res = src / "runs" / name / "result.json"
                 if res.exists() and json.loads(res.read_text()).get("ok") and not (out / "runs" / name).exists():
                     shutil.copytree(src / "runs" / name, out / "runs" / name)
-        if sync == "positions":  # the live no-op supplies the UE positions at t_act: run it first
+        if sync in ("positions", "state"):  # the live no-op supplies the live state at t_act: run it first
             phases.append([[("live", p + 100, live_ues, "noop")] for p in pairs if "noop" in args.workflows])
             phases.append([[("twin", p, args.twin_ues, "noop")] for p in pairs if "noop" in args.workflows]
                           + [[("twin", p, args.twin_ues, wf), ("live", p + 100, live_ues, wf)]
@@ -1248,12 +1303,15 @@ def main() -> int:
         "rapps_runtime_sha256": _sha256(REPO / "rapps" / "runtime.py"), "rapps_catalog_sha256": _sha256(REPO / "rapps" / "catalog.json"),
         "flexric": str(FLEXRIC_TAAP), "ric_ports": f"E2 {PORT_BASE}+10*slot, E42 {PORT_BASE + 1}+10*slot (one RIC per run)",
         "n_gnb": N_GNB, "twin_ues": args.twin_ues, "live_ues": live_ues, "sync": sync,
-        "layout": str(layout) if layout else None,
+        "layout": str(layout) if layout else None, "state_age_s": args.state_age if sync == "state" else None,
         "sim_time_s": SIM_TIME, "t_act_s": T_ACT, "t_act_definition": "absolute simulated time (KPM collectStartTime is sim time)",
         "min_kpm_history_s": MIN_HISTORY, "settle_s": SETTLE, "kpi_window_sim_s": list(WINDOW), "indication_period_s": IND_PERIOD,
         "workflows": {w: WORKFLOWS[w] for w in args.workflows}, "jobs": n_jobs, "kpis": KPIS, "pairs": pairs,
         "protocol": ("policy decided on the twin at t_act, deployed unchanged on live; deltas vs same-instance noop"
-                     + ("; twin initial UE positions = live no-op UE positions at t_act (uePositionFile)" if sync == "positions" else "")),
+                     + ("; twin initial UE positions = live no-op UE positions at t_act (uePositionFile)" if sync == "positions" else "")
+                     if sync != "state" else
+                     "policy decided on the live KPM at t_act (live no-op, identical to the live run up to t_act) and resolved "
+                     "to UE-level RC commands there; twin and live execute the identical commands; deltas vs same-instance noop"),
         "gate": {"thresholds": GATE, "definitions": GATE_DEFINITIONS},
         "exclusion_rule": EXCLUSION_RULE, "parallel": args.parallel, "nice": os.nice(0),
         "host_context": args.host_context, "host_at_start": manifest.get("host_at_start") or host_snapshot(),
@@ -1294,7 +1352,16 @@ def main() -> int:
                 res = {"role": role, "seed": seed, "n_ues": n_ues, "workflow": wf, "ok": False, "error": "twin run failed: no policy to deploy"}
             else:
                 pos = layout
-                if role == "twin":
+                if role == "twin" and sync == "state" and wf != "noop":
+                    try:
+                        policy = live_state_policy(wf, out / "runs" / run_name("live", seed + 100, "noop"), out / "live_state",
+                                                    args.state_age)
+                    except Exception as exc:
+                        res = {"role": role, "seed": seed, "n_ues": n_ues, "workflow": wf, "ok": False, "error": f"state sync: {exc}"}
+                        twin_failed = True
+                        out_results.append(res)
+                        continue
+                if role == "twin" and sync != "state":
                     try:
                         pos = position_file(seed)
                     except Exception as exc:

@@ -1,0 +1,29 @@
+{
+  "workflow": "qoe_steering",
+  "sleep_cells": [],
+  "shed": [],
+  "trace": {
+    "kpm_snapshot": {},
+    "steps": [
+      {
+        "rapp": "qoe_prediction",
+        "decision": {
+          "mos_forecast": {},
+          "at_risk_cells": [],
+          "model": "linear(thp, delay) emulation"
+        }
+      },
+      {
+        "rapp": "traffic_steering",
+        "decision": {
+          "from_cell": null,
+          "to_cell": null,
+          "ue_share_pct": 0
+        }
+      }
+    ]
+  },
+  "commands": [],
+  "decided_on": "live state 1 s before t_act (live_s101_noop, sim -1.000 s)",
+  "state_age_s": 1.0
+}

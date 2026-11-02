@@ -88,6 +88,36 @@ slicing control); the rApps are emulated decision rules; the layouts were chosen
 rApp threshold was not changed: energy saving fires only when a cell carries < 0.15 of the busiest cell's
 PRB, which in this model means a lone UE close to its gNB, i.e. far from any neighbour).
 
+### D2S: the twin fed with the live state at action time (used in the paper since 2026-11-02)
+
+`runs/20261102T081207Z_D2S_{hotspot,night}/` and `runs/20261102T081207Z_D2S_age{0.5,1.0,1.5}_hotspot/`
+(`twin/run_twin_validation.py --layout ... --sync state [--state-age A]`). Why: in D2 each instance resolved
+the cell-level policy to UEs on its own KPM, so twin and live moved different users (pair 1: twin UEs 1, 3;
+live UEs 4, 9) although the same 6 hotspot UEs are unserved in both no-ops. Protocol: AppWeaver decides on
+the live E2 KPM snapshot taken A s before t_act (from the live no-op, identical to the live run up to
+t_act), resolves it to UE-level RC commands there, the twin rehearses exactly these commands, and live
+executes them at t_act. No-ops copied from D2 (identical inputs). 90 new simulations, 0 failures.
+
+| Twin sync | QoE steering err (pp) thp / served / PRB | Traffic steering err thp / served / PRB | Gate agreement |
+|---|---|---|---|
+| D2 layout only | 10.0 / 12.0 / 29.4 | 9.3 / 9.5 / 30.1 | 8/10 |
+| live state, age 0 | 5.0 / 7.0 / 2.6 | 3.9 / 5.0 / 3.5 | 7/10 |
+| age 0.5 s | 4.6 / 5.0 / 4.5 | 2.4 / 2.5 / 5.9 | 10/10 |
+| age 1.0 s | 0.6 / 0.0 / 3.5 | 2.2 / 2.5 / 5.2 | 9/10 |
+| age 1.5 s | 6.8 / 9.5 / 2.8 | 4.9 / 7.0 / 2.1 | 8/10 |
+| pooled ages (n = 20 each) | 4.2 / 5.4 / 3.4 | 3.3 / 4.2 / 4.2 | 34/40 = 85% [71, 93] |
+
+Live effect pooled over the 20 decisions: QoE steering throughput +3.1 +- 7.2% (range -14.6 to +10.9),
+users served +5.6%, source PRB -32.7%; traffic steering throughput -0.9 to +10.5%. Night (age 0): the live
+snapshot of seed 101 does not meet the energy rule (no action on either side); the other four: energy -41%,
+throughput and users served -25%, twin error < 1 pp, gate 5/5. Gate misses: 5 of 6 are conservative
+(twin rejects, live would accept); one false accept (age 0, pair 3: twin -1.9% vs live -14.6% throughput).
+Energy decisions are identical at every snapshot age except seed 101, so the age sweep is hotspot only.
+The steering effect is therefore not robust: the D2 figure of +6.2% throughput / +10% served came from two
+lucky seeds and is replaced in the paper by the pooled numbers. Fig. 5(c): `make_compact_figure.py
+--d2-hotspot <the four D2S hotspot batches, comma-separated> --d2-night runs/..._D2S_night --d3 ...`.
+Fig. 4 (dynamics) still shows the D2 live run of seed 104.
+
 ### D3: the AppWeaver TC action on a real bottleneck
 
 `runs/20261101T104040Z_D3_tc_dataplane/` (`demos/tc_dataplane/run_tc_demo.py`). Neither the FlexRIC
