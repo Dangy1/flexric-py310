@@ -86,6 +86,14 @@ We also measured how fidelity depends on synchronization:
 | Live snapshot 1.0 s old | 1–2 / 3–5 | 9/10 |
 | Live snapshot 1.5 s old | 5–7 / 2–3 | 8/10 |
 
+![Twin synchronization vs prediction accuracy](../evaluation/demos/fig_twin_sync.png)
+
+*Figure R1 (for the reviewers; not in the manuscript). Hotspot, QoE and traffic steering, 5 seed pairs.
+(a) Twin-predicted vs live-measured KPI change per decision: twin with the layout only (open grey, mean
+error 17 points) vs twin fed the live KPM snapshot (filled blue, 4 points). (b) Mean |twin − live| per KPI
+against the age of the live snapshot (± standard error, 10 decisions per point). (c) Agreement of the
+twin's accept/reject verdict with the live outcome under the pre-declared rule (Wilson 95% CI).*
+
 Without the live snapshot the twin moves other users than live, which explains most of the error. A snapshot
 up to 1 s old (re-synchronization every 2 s) is as accurate as a fresh one. Pooled over the snapshot ages,
 the twin's accept/reject verdict under the pre-declared rule matches the live outcome in 34 of 40 steering
@@ -172,7 +180,7 @@ twin-predicted and actual post-deployment KPIs; describe how the seeded conflict
 
 Fig. 5(c) now puts the twin's predicted KPI change next to the measured one for each deployed workflow,
 with the twin fed the live KPM snapshot at action time; the results and a comparison of synchronization
-levels are under R1.2 (mean error 3–5 points for steering, within 1 point for energy saving; accept/reject
+levels are under R1.2 and in Figure R1 (mean error 3–5 points for steering, within 1 point for energy saving; accept/reject
 verdict right in 34 of 40 steering cases). For a deploy gate, the twin predicts the energy policy's harm,
 but an acceptance rule on energy and load alone accepts it whenever it acts, so the rule must test users
 served or throughput (§IV-D). Seeded conflicts: see R1.6.
