@@ -1,52 +1,78 @@
 #!/usr/bin/env python3
-"""Twin synchronization vs prediction accuracy (hotspot, QoE and traffic steering, 5 seed pairs each).
+"""Figure R1 of the response letter: what the network twin needs to predict a steering workflow's effect.
 
-  (a) twin-predicted vs live-measured KPI change per decision: twin with the layout only (it resolves the
-      policy to users on its own state) vs twin fed the live KPM snapshot (all snapshot ages pooled)
-  (b) mean |twin - live| per KPI against the age of the live snapshot (re-sync every 2x the age)
+Hotspot layout, QoE and traffic steering, twin seed p vs live seed p+100. Every statistic is over distinct
+decisions (seed pair + UE-level commands); the snapshot-age batches repeat many decisions exactly and a
+repeat is counted once; seeds where no control was issued carry no effect and are left out.
+
+  own decision      D2: the twin knows the layout and resolves the policy to users on its own KPM
+  live decision     D2S: AppWeaver decides on the live KPM snapshot, the twin rehearses exactly the UE-level
+                    RC commands that live then executes (snapshot ages 0-1.5 s pooled)
+  re-run            the twin's repeatability: the same seed and commands simulated again (same inputs)
+
+  (a) twin-predicted vs live-measured change per decision (circle throughput, square users served,
+      triangle source-cell PRB)
+  (b) mean |twin - live| per KPI for the two protocols, and the re-run spread (+- standard error)
   (c) agreement of the twin's accept/reject verdict with the live outcome (pre-declared rule), Wilson 95% CI
+  (d) live throughput change of the QoE-steering decision per seed against the age of the live snapshot
+      it was decided on: the age changes which users are moved, not the twin's accuracy
 
   python make_twin_sync_figure.py [--runs ../runs] [--traces BUILD_RUNS] [--out fig_twin_sync]
 """
 from __future__ import annotations
 
 import argparse
+import itertools
 import json
 import math
 import statistics
+from collections import defaultdict
 from pathlib import Path
 
 import aw_style as S
 import matplotlib.pyplot as plt
-from make_compact_figure import d2_changes
+from make_compact_figure import d2_decisions
 
 HERE = Path(__file__).resolve().parent
 LAYOUT = "20261101T103300Z_D2_hotspot"
 STATE = [("0", "20261102T081207Z_D2S_hotspot"), ("0.5", "20261102T081207Z_D2S_age0.5_hotspot"),
          ("1.0", "20261102T081207Z_D2S_age1.0_hotspot"), ("1.5", "20261102T081207Z_D2S_age1.5_hotspot")]
 WORKFLOWS = ("qoe_steering", "traffic_steering")
-KPIS = [("throughput", "DL throughput", "#0072B2", "o"), ("served", "users served", "#E69F00", "s"),
-        ("hot_prb", "source-cell PRB", "#CC79A7", "^")]
-SYNC_COLOR = {"layout": S.NOACTION, "state": S.MEAS}
+KPIS = [("throughput", "DL throughput", "o"), ("served", "users served", "s"), ("hot_prb", "source-cell PRB", "^")]
+OWN, LIVE, RERUN = S.NOACTION, S.MEAS, "#c9c9c9"
+SEED_COLOR = {1: "#0072B2", 2: "#E69F00", 3: "#009E73", 4: "#CC79A7", 5: "#D55E00"}
 
 
-def pairs(batch: Path, traces: Path, kpi: str):
-    out = []
-    for wf in WORKFLOWS:
-        ch = d2_changes(batch, traces, wf)
-        out += [(t, l) for t, l in zip(ch["twin"][kpi], ch["live"][kpi]) if t is not None and l is not None]
+def gate_rows(batch: Path):
+    """{(pair, workflow): (twin verdict, live verdict)} from the batch's per-pair gate table."""
+    out = {}
+    for line in (batch / "summary.md").read_text().splitlines():
+        f = [x.strip() for x in line.split("|")]
+        if len(f) > 7 and f[1].isdigit() and f[2] in WORKFLOWS and f[5] in ("accept", "reject"):
+            out[(int(f[1]), f[2])] = (f[5], f[7])
     return out
 
 
-def gate(batch: Path):
-    """(agree, n) over the steering workflows from the batch's summary.md gate table."""
-    k = n = 0
-    for line in (batch / "summary.md").read_text().splitlines():
-        f = [x.strip() for x in line.split("|")]
-        if len(f) > 7 and f[1] in WORKFLOWS and f[2].isdigit():
-            agree = int(f[7].split("(")[1].split("/")[0])
-            k, n = k + agree, n + int(f[2])
-    return k, n
+def decisions(batches, traces):
+    """Distinct decisions over the batches: key (pair, twin commands, live commands) -> record + verdicts.
+    Also returns every twin run per (pair, commands) for the re-run spread."""
+    seen, recs, twin_runs = set(), [], defaultdict(list)
+    for b in batches:
+        gates = gate_rows(b)
+        for wf in WORKFLOWS:
+            for rec in d2_decisions(b, traces, wf):
+                twin_runs[(rec["pair"], rec["twin"]["commands"])].append(rec["twin"])
+                key = (rec["pair"], rec["twin"]["commands"], rec["live"]["commands"])
+                if key in seen:
+                    continue
+                seen.add(key)
+                recs.append({**rec, "workflow": wf, "verdict": gates.get((rec["pair"], wf))})
+    return recs, twin_runs
+
+
+def mean_se(v):
+    v = [x for x in v if x is not None]
+    return statistics.fmean(v), (statistics.stdev(v) / math.sqrt(len(v)) if len(v) > 1 else 0.0), len(v)
 
 
 def wilson(k, n, z=1.96):
@@ -64,80 +90,90 @@ def main() -> int:
     ap.add_argument("--out", default=str(HERE / "fig_twin_sync"))
     args = ap.parse_args()
     runs, traces = Path(args.runs), Path(args.traces)
-    levels = [("layout\nonly", runs / LAYOUT, "layout")] + [(f"{a} s", runs / b, "state") for a, b in STATE]
-    data = {lab: {k: pairs(b, traces, k) for k, *_ in KPIS} for lab, b, _ in levels}
-    gates = {lab: gate(b) for lab, b, _ in levels}
+    own, _ = decisions([runs / LAYOUT], traces)
+    live, twin_runs = decisions([runs / b for _, b in STATE], traces)
 
-    fig = plt.figure(figsize=(S.DOUBLE_COL, 2.35))
-    gs = fig.add_gridspec(1, 3, width_ratios=[1.05, 1.15, 0.95], wspace=0.38)
-    ax_a, ax_b, ax_c = (fig.add_subplot(gs[i]) for i in range(3))
+    def err(recs, k):
+        return [abs(r["twin"][k] - r["live"][k]) for r in recs if r["twin"][k] is not None and r["live"][k] is not None]
 
-    # (a) predicted vs measured
-    err = {"layout": [], "state": []}
-    for lab, _, kind in levels:
-        for k, _, _, marker in KPIS:
-            pts = data[lab][k]
-            err[kind] += [abs(t - l) for t, l in pts]
-            ax_a.scatter([t for t, _ in pts], [l for _, l in pts], s=11 if kind == "state" else 13, marker=marker,
-                         facecolor=SYNC_COLOR[kind] if kind == "state" else "none", edgecolor=SYNC_COLOR[kind],
-                         lw=0.7, alpha=0.85, zorder=3 if kind == "state" else 2)
+    rerun = {k: [abs(a[k] - b[k]) for runs_ in twin_runs.values() for a, b in itertools.combinations(runs_, 2)
+                 if a[k] is not None and b[k] is not None] for k, *_ in KPIS}
+
+    fig = plt.figure(figsize=(S.DOUBLE_COL, 2.3))
+    gs = fig.add_gridspec(1, 4, width_ratios=[1.0, 1.0, 0.62, 0.95], wspace=0.5)
+    ax_a, ax_b, ax_c, ax_d = (fig.add_subplot(gs[i]) for i in range(4))
+
+    # (a) prediction vs outcome
+    for recs, color, filled, z in ((own, OWN, False, 2), (live, LIVE, True, 3)):
+        for k, _, marker in KPIS:
+            pts = [(r["twin"][k], r["live"][k]) for r in recs if r["twin"][k] is not None and r["live"][k] is not None]
+            ax_a.scatter([t for t, _ in pts], [l for _, l in pts], s=11, marker=marker, facecolor=color if filled else "none",
+                         edgecolor=color, lw=0.7, alpha=0.9, zorder=z)
     lim = (-75, 30)
     ax_a.plot(lim, lim, color="#444", lw=0.6, ls="--", zorder=1)
     ax_a.set_xlim(lim); ax_a.set_ylim(lim)
     ax_a.set_xlabel("twin-predicted change (%)"); ax_a.set_ylabel("live-measured change (%)")
     S.clean(ax_a, grid="both")
     S.panel_label(ax_a, "(a) Prediction vs outcome")
-    h = [plt.Line2D([], [], ls="", marker="o", mfc="none", mec=S.NOACTION, ms=4),
-         plt.Line2D([], [], ls="", marker="o", mfc=S.MEAS, mec=S.MEAS, ms=4)]
-    h += [plt.Line2D([], [], ls="", marker=m, mfc="#777", mec="#777", ms=3.6) for *_, m in KPIS]
-    ax_a.legend(h, [f"layout only, |err| {statistics.fmean(err['layout']):.0f} pp",
-                    f"live snapshot, |err| {statistics.fmean(err['state']):.0f} pp"] + [lab for _, lab, *_ in KPIS],
-                loc="lower right", fontsize=5.6, handletextpad=0.3, borderaxespad=0.2, labelspacing=0.25)
-    ax_a.text(lim[1] - 2, lim[1] - 6, "y = x", ha="right", va="top", fontsize=5.6, color="#444")
+    e_own = statistics.fmean([e for k, *_ in KPIS for e in err(own, k)])
+    e_live = statistics.fmean([e for k, *_ in KPIS for e in err(live, k)])
+    h = [plt.Line2D([], [], ls="", marker="o", mfc="none", mec=OWN, ms=4), plt.Line2D([], [], ls="", marker="o", mfc=LIVE, mec=LIVE, ms=4)]
+    ax_a.legend(h, [f"own decision, n={len(own)}\nmean |err| {e_own:.0f} pp", f"live decision, n={len(live)}\nmean |err| {e_live:.0f} pp"],
+                loc="lower right", fontsize=5.4, handletextpad=0.3, borderaxespad=0.2, labelspacing=0.5)
 
-    # (b) error vs snapshot age
-    xs = list(range(len(levels)))
-    for k, lab, color, marker in KPIS:
-        m, se = [], []
-        for lev, *_ in levels:
-            e = [abs(t - l) for t, l in data[lev][k]]
-            m.append(statistics.fmean(e))
-            se.append(statistics.stdev(e) / math.sqrt(len(e)) if len(e) > 1 else 0.0)
-        ax_b.errorbar(xs[:1], m[:1], yerr=se[:1], color=color, marker=marker, ms=3.4, ls="", capsize=1.5, elinewidth=0.5,
-                      mfc="none")  # layout only: its own category, not on the age axis
-        ax_b.errorbar(xs[1:], m[1:], yerr=se[1:], color=color, marker=marker, ms=3.4, lw=1.0, capsize=1.5, elinewidth=0.5, label=lab)
-    ax_b.axvline(0.5, color="#bbb", lw=0.5)
-    ax_b.set_xticks(xs, [lev for lev, *_ in levels])
-    ax_b.set_xlim(-0.5, len(levels) - 0.5)
-    ax_b.set_xlabel("age of the live snapshot (re-sync every 2× age)")
+    # (b) error by protocol, with the twin's re-run spread
+    w = 0.26
+    for i, (k, lab, _) in enumerate(KPIS):
+        for j, (vals, color) in enumerate(((err(own, k), OWN), (err(live, k), LIVE), (rerun[k], RERUN))):
+            m, se, n = mean_se(vals)
+            ax_b.bar(i + (j - 1) * w, m, width=w * 0.92, color=color, yerr=se, error_kw={"lw": 0.5, "capsize": 1.2, "ecolor": "#333"})
+            ax_b.text(i + (j - 1) * w, m + se + 0.6, f"{m:.0f}", ha="center", va="bottom", fontsize=5.0)
+    ax_b.set_xticks(range(len(KPIS)), ["DL\nthroughput", "users\nserved", "source-\ncell PRB"])
     ax_b.set_ylabel("|twin − live| (percentage points)")
-    ax_b.set_ylim(0, None)
     S.clean(ax_b)
-    S.panel_label(ax_b, "(b) Twin error vs synchronization")
-    ax_b.legend(loc="upper right", fontsize=5.8, handlelength=1.4)
+    ax_b.set_ylim(0, 60)
+    S.panel_label(ax_b, "(b) Twin error")
+    ax_b.legend([plt.Rectangle((0, 0), 1, 1, color=c) for c in (OWN, LIVE, RERUN)],
+                ["twin's own decision", "live decision rehearsed", "twin re-run, same inputs"], loc="upper left", fontsize=5.4, handlelength=0.9)
 
     # (c) verdict agreement
-    bars = [(lev, *gates[lev], kind) for lev, _, kind in levels]
-    k_all = sum(g[1] for g in bars if g[3] == "state")
-    n_all = sum(g[2] for g in bars if g[3] == "state")
-    bars.append(("all\nsnapshots", k_all, n_all, "state"))
-    for i, (lev, k, n, kind) in enumerate(bars):
-        p, lo, hi = wilson(k, n)
-        last = i == len(bars) - 1
-        ax_c.bar(i + (0.25 if last else 0), p, width=0.62, color=SYNC_COLOR[kind], alpha=1.0 if last or kind == "layout" else 0.55,
-                 yerr=[[p - lo], [hi - p]], error_kw={"lw": 0.5, "capsize": 1.5, "ecolor": "#333"})
-    ax_c.set_xticks([i + (0.25 if i == len(bars) - 1 else 0) for i in range(len(bars))], [f"{b[0]}\n{b[1]}/{b[2]}" for b in bars],
-                    fontsize=5.6)
-    ax_c.set_ylim(0, 105)
+    for i, (recs, color, lab) in enumerate(((own, OWN, "own\ndecision"), (live, LIVE, "live\ndecision"))):
+        v = [r["verdict"] for r in recs if r["verdict"]]
+        k = sum(a == b for a, b in v)
+        p, lo, hi = wilson(k, len(v))
+        ax_c.bar(i, p, width=0.6, color=color, yerr=[[p - lo], [hi - p]], error_kw={"lw": 0.5, "capsize": 1.5, "ecolor": "#333"})
+        ax_c.text(i, 3, f"{k}/{len(v)}", ha="center", va="bottom", fontsize=5.4, color="white")
+    ax_c.set_xticks([0, 1], ["own\ndecision", "live\ndecision"])
+    ax_c.set_xlim(-0.6, 1.6); ax_c.set_ylim(0, 105)
     ax_c.set_ylabel("verdict matches live (%)")
     S.clean(ax_c)
-    S.panel_label(ax_c, "(c) Accept/reject agreement")
+    S.panel_label(ax_c, "(c) Accept/reject")
+
+    # (d) snapshot age vs the live outcome of the QoE-steering decision
+    ages = [float(a) for a, _ in STATE]
+    per_seed = defaultdict(dict)
+    for a, b in STATE:
+        for rec in d2_decisions(runs / b, traces, "qoe_steering"):
+            per_seed[rec["pair"]][float(a)] = rec["live"]["throughput"]
+    for p, vals in sorted(per_seed.items()):
+        xs = [a for a in ages if a in vals]
+        ax_d.plot(xs, [vals[a] for a in xs], color=SEED_COLOR[p], marker="o", ms=2.8, lw=0.9, label=f"seed {p}")
+    ax_d.axhline(0, color="#444", lw=0.5)
+    ax_d.set_xticks(ages, [f"{a:g}" for a in ages])
+    ax_d.set_xlabel("age of the live snapshot (s)")
+    ax_d.set_ylabel("live throughput change (%)")
+    S.clean(ax_d)
+    S.panel_label(ax_d, "(d) QoE steering vs snapshot age")
+    ax_d.legend(loc="lower right", fontsize=5.0, ncol=2, handlelength=1.0, columnspacing=0.6)
 
     for ext in ("pdf", "png"):
         fig.savefig(f"{args.out}.{ext}")
-    summary = {"err_pp_mean": {k: statistics.fmean(v) for k, v in err.items()},
-               "per_level": {lev.replace("\n", " "): {k: statistics.fmean(abs(t - l) for t, l in data[lev][k]) for k, *_ in KPIS} | {"gate": gates[lev]}
-                             for lev, *_ in levels}, "gate_pooled_state": [k_all, n_all]}
+    summary = {"distinct_decisions": {"own": len(own), "live": len(live)},
+               "err_pp": {name: {k: mean_se(err(recs, k)) for k, *_ in KPIS} for name, recs in (("own", own), ("live", live))},
+               "rerun_pp": {k: mean_se(v) for k, v in rerun.items()},
+               "verdict": {name: [sum(a == b for a, b in (r["verdict"] for r in recs if r["verdict"])), sum(1 for r in recs if r["verdict"])]
+                           for name, recs in (("own", own), ("live", live))},
+               "qoe_live_throughput_by_age": {str(p): v for p, v in per_seed.items()}}
     Path(args.out).with_suffix(".json").write_text(json.dumps(summary, indent=1))
     print(json.dumps(summary, indent=1))
     return 0

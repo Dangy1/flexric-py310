@@ -62,45 +62,52 @@ The MOS values of the old Fig. 2 were illustrative, not measured, and are remove
 which every line is taken from a recorded run. New §IV-D, Fig. 4 and Fig. 5(c) report network-level results
 for deployed workflows, live measurements against the same seed without the action:
 
-- QoE-steering workflow on a 5G-LENA ns-3 RAN (20 decisions: 5 seeds, live KPM snapshots 0–1.5 s old):
-  source-cell load −33%, received throughput +3.1% on average (−15% to +11% per decision), users served (at
-  least half their offered rate) +5.6%. The gain depends on which users are moved: the simulator leaves some
-  hotspot users unserved without any action, and steering restores some of them. We state this in §IV-D.
+- QoE-steering workflow on a 5G-LENA ns-3 RAN (15 distinct decisions over 5 seeds, decided on live KPM
+  snapshots 0–1.5 s old): source-cell load −33%, received throughput +2.1% on average (−15% to +11% per
+  decision), users served (at least half their offered rate) +5.0%. The gain depends on which users are
+  moved: the simulator leaves some hotspot users unserved without any action, and steering restores some
+  of them. We state this in §IV-D.
 - Energy-saving workflow (5 seeds; the live snapshot meets the rule in 4): gNB energy −41%, but two users
   lose service (users served and throughput −25%).
-- AppWeaver's TC action on a real 10 Mbit/s bufferbloated link: median RTT from about 420 ms to 35 ms,
-  pings above 100 ms from 100% to 0%, goodput unchanged (9.6 Mbit/s), 5 of 5 repeats.
+- AppWeaver's TC action on a real 10 Mbit/s link with four bulk TCP flows: in the four repeats where the
+  flows build a standing queue, median RTT from 416–426 ms to 35–37 ms and pings above 100 ms from 100% to
+  4–7%; in the fifth repeat no queue built up (64 ms) and the action lowered it to 33 ms. Goodput unchanged
+  (9.5 → 9.6 Mbit/s) in all five.
 
 Twin fidelity: the network twin is a second ns-3 instance with the live user layout and configuration but
-its own mobility and fading seed. At action time AppWeaver decides on the live E2 KPM snapshot, the twin
-rehearses the resulting UE-level RC commands, and live executes the same commands. The twin then predicts
-the steering effects with a mean error of 3–5 percentage points (source-cell PRB 3.4/4.2, throughput 4.2/3.3,
-users served 5.4/4.2 for QoE/traffic steering; PRB sign 39/39) and the energy-saving effects within 1 point.
-We also measured how fidelity depends on synchronization:
+its own mobility and fading seed. AppWeaver decides on the live E2 KPM snapshot, the twin rehearses the
+resulting UE-level RC commands, and live executes the same commands. All statistics below count each
+distinct decision (seed pair and commands) once; seeds where no control was issued are left out.
 
-| Twin synchronization | Steering error (pp): throughput / PRB | Verdict agreement |
-|---|---|---|
-| Layout only, twin resolves the policy on its own state | 9–10 / 29–30 | 8/10 |
-| Live snapshot at action time | 4–5 / 3–4 | 7/10 |
-| Live snapshot 0.5 s old | 2–5 / 4–6 | 10/10 |
-| Live snapshot 1.0 s old | 1–2 / 3–5 | 9/10 |
-| Live snapshot 1.5 s old | 5–7 / 2–3 | 8/10 |
+| Twin protocol (hotspot steering) | Distinct decisions | Error (pp): throughput / users served / source-cell PRB | Verdict agreement |
+|---|---|---|---|
+| Twin decides on its own state | 10 | 9.7 / 10.8 / 29.8 | 8/10 (80%, CI 49–94%) |
+| Twin rehearses the live decision | 19 | 5.4 / 7.0 / 3.3 | 14/19 (74%, CI 51–88%) |
+| Twin re-run with identical inputs | 48 pairs of runs | 0.3 / 0.3 / 1.1 | – |
 
-![Twin synchronization vs prediction accuracy](../evaluation/demos/fig_twin_sync.png)
+![Twin protocol vs prediction accuracy](../evaluation/demos/fig_twin_sync.png)
 
-*Figure R1 (for the reviewers; not in the manuscript). Hotspot, QoE and traffic steering, 5 seed pairs.
-(a) Twin-predicted vs live-measured KPI change per decision: twin with the layout only (open grey, mean
-error 17 points) vs twin fed the live KPM snapshot (filled blue, 4 points). (b) Mean |twin − live| per KPI
-against the age of the live snapshot (± standard error, 10 decisions per point). (c) Agreement of the
-twin's accept/reject verdict with the live outcome under the pre-declared rule (Wilson 95% CI).*
+*Figure R1 (for the reviewers; not in the manuscript). Hotspot, QoE and traffic steering, 5 seed pairs,
+distinct decisions only. (a) Twin-predicted vs live-measured KPI change per decision (circle throughput,
+square users served, triangle source-cell PRB): twin deciding on its own state (open grey) vs twin
+rehearsing the live decision (filled blue). (b) Mean |twin − live| per KPI (± standard error), with the
+spread of identical twin re-runs. (c) Agreement of the twin's accept/reject verdict with the live outcome
+under the pre-declared rule (Wilson 95% CI). (d) Live throughput change of the QoE-steering decision per
+seed against the age of the live snapshot it was decided on.*
 
-Without the live snapshot the twin moves other users than live, which explains most of the error. A snapshot
-up to 1 s old (re-synchronization every 2 s) is as accurate as a fresh one. Pooled over the snapshot ages,
-the twin's accept/reject verdict under the pre-declared rule matches the live outcome in 34 of 40 steering
-cases (85%, 95% CI 71–93%); five of the six misses are conservative rejections. With random rather than
-fixed user placement (`evaluation/TWIN_VALIDATION.md`, 9 seed pairs per setting) the throughput error is
-6–12 points without position sync and 3.8–6.7 points with it. One ns-3 twin prediction takes about 5 min,
-suitable for Non-RT but not Near-RT policies.
+What this shows. (1) The twin is accurate only if it rehearses the live decision: deciding on its own state
+it moves other users than live, which explains most of its 10–30-point error. (2) Rehearsing the live
+decision, its error (3–7 points) is far above its own run-to-run spread (under 1 point), so the remaining
+error is the mobility and fading the twin cannot know. (3) The accept/reject verdict does not measurably
+improve (74% vs 80%, overlapping CIs), because the remaining error is as large as the rule's 5% throughput
+margin; four of the five misses are conservative rejections, one is a false accept. (4) The age of the live
+snapshot does not affect the twin's accuracy, since the twin rehearses whatever was decided; it changes
+which users are moved in 9 of the 10 seed and workflow pairs, and the live outcome varies per seed with no
+trend over 0–1.5 s (Figure R1(d)), i.e. the steering decision is sensitive to sub-second KPM fluctuations.
+Energy saving is predicted within 1 point (4 decisions). With random rather than fixed user placement
+(`evaluation/TWIN_VALIDATION.md`, 9 seed pairs per setting) the throughput error is 6–12 points without
+position sync and 3.8–6.7 points with it. One ns-3 twin prediction takes about 5 min, suitable for Non-RT
+but not Near-RT policies.
 
 *Changes:* Fig. 2 (recorded trace), §IV-D, Figs. 4 and 5(c).
 
@@ -179,11 +186,12 @@ interval (Fig. 5).
 twin-predicted and actual post-deployment KPIs; describe how the seeded conflicts were constructed.*
 
 Fig. 5(c) now puts the twin's predicted KPI change next to the measured one for each deployed workflow,
-with the twin fed the live KPM snapshot at action time; the results and a comparison of synchronization
-levels are under R1.2 and in Figure R1 (mean error 3–5 points for steering, within 1 point for energy saving; accept/reject
-verdict right in 34 of 40 steering cases). For a deploy gate, the twin predicts the energy policy's harm,
-but an acceptance rule on energy and load alone accepts it whenever it acts, so the rule must test users
-served or throughput (§IV-D). Seeded conflicts: see R1.6.
+with the twin rehearsing the decision made on the live KPM; the full comparison is under R1.2 and in
+Figure R1 (error 3–7 points for steering and within 1 point for energy saving; accept/reject verdict right
+in 14 of 19 distinct steering decisions, no better than when the twin decides on its own state, because
+the remaining error is as large as the rule's margin). For a deploy gate, the twin predicts the energy
+policy's harm, but an acceptance rule on energy and load alone accepts it whenever it acts, so the rule
+must test users served or throughput (§IV-D). Seeded conflicts: see R1.6.
 
 *Changes:* §IV-D, Fig. 5(c), §IV-B.
 
@@ -205,11 +213,11 @@ returned. All LLM methods use the same model and settings (R1.5).
 
 We now separate two twins. The E2 twin (a second RIC and emulated E2 node) dry-runs every E2 step and
 catches interface, lease and acknowledgement errors; it does not predict KPIs. The network twin (a second
-ns-3 instance) predicts KPI effects, and its fidelity is measured (R1.2): with the live KPM snapshot at
-action time, a mean error of 3–5 points for steering and within 1 point for energy saving, and an
-accept/reject verdict that matches the live outcome in 85% of steering cases. Without the live snapshot the
-error is 9–30 points. A snapshot up to 1 s old is as accurate as a fresh one. The ns-3 twin takes about 5 min
-per prediction, so it validates Non-RT policies.
+ns-3 instance) predicts KPI effects, and its fidelity is measured (R1.2, Figure R1): rehearsing the
+decision made on the live KPM, it is within 3–7 points for steering and within 1 point for energy saving;
+deciding on its own state it errs by 10–30 points. Its accept/reject verdict matches the live outcome in
+74% of distinct steering decisions, limited by a rule margin as small as the twin's remaining error. The
+ns-3 twin takes about 5 min per prediction, so it validates Non-RT policies.
 
 *Changes:* §III-A, §IV-D.
 

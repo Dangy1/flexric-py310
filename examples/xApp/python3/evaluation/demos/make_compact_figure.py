@@ -23,6 +23,7 @@ import json
 import statistics
 from collections import defaultdict
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 import aw_style as S
 import matplotlib.pyplot as plt
@@ -71,40 +72,55 @@ def served_users(run_dir: Path, t0: float, t1: float):
     return sum(1 for b in rx.values() if 8 * b / (t1 - t0) / 1e6 >= OFFERED_MBPS / 2)
 
 
-def d2_changes(batch: Path, traces: Path, workflow: str):
-    """{role: {kpi: [pct change per pair]}} for role twin (seed p) and live (seed p+100)."""
-    out = {"twin": defaultdict(list), "live": defaultdict(list)}
+def _run_kpis(batch: Path, traces: Path, run: str, noop: str) -> Dict[str, Optional[float]]:
     pct = lambda a, b: 100.0 * (a - b) / b if b else None  # noqa: E731
-    for wf_dir in sorted((batch / "runs").glob(f"*_s*_{workflow}")):
-        role, seed = wf_dir.name.split("_")[0], wf_dir.name.split("_")[1]
-        noop_dir = batch / "runs" / f"{role}_{seed}_noop"
-        if not noop_dir.exists():
-            continue
-        wf, nb = json.loads((wf_dir / "result.json").read_text()), json.loads((noop_dir / "result.json").read_text())
-        if not (wf.get("ok") and nb.get("ok")):
-            continue
-        d = out[role]
-        d["throughput"].append(pct(wf["kpi"]["dl_throughput_mbps"], nb["kpi"]["dl_throughput_mbps"]))
-        d["energy"].append(pct(wf["kpi"]["energy_j_per_s"], nb["kpi"]["energy_j_per_s"]))
-        hot = sorted({str(s["from"]) for s in (wf.get("policy") or {}).get("shed", [])})
-        if hot:
-            d["hot_prb"].append(pct(sum(wf["kpi_per_cell"][c]["prb_used_dl"] for c in hot),
-                                    sum(nb["kpi_per_cell"][c]["prb_used_dl"] for c in hot)))
-        t0, t1 = wf["kpi_window_sim_s"]
-        tw, tn = traces / batch.name / "runs" / wf_dir.name, traces / batch.name / "runs" / noop_dir.name
-        if (tw / "ns3_out").exists() and (tn / "ns3_out").exists():
-            d["served"].append(pct(served_users(tw, t0, t1), served_users(tn, t0, t1)))
+    wf, nb = json.loads((batch / "runs" / run / "result.json").read_text()), json.loads((batch / "runs" / noop / "result.json").read_text())
+    if not (wf.get("ok") and nb.get("ok")):
+        return {}
+    d: Dict[str, Optional[float]] = {"throughput": pct(wf["kpi"]["dl_throughput_mbps"], nb["kpi"]["dl_throughput_mbps"]),
+                                     "energy": pct(wf["kpi"]["energy_j_per_s"], nb["kpi"]["energy_j_per_s"])}
+    hot = sorted({str(s["from"]) for s in (wf.get("policy") or {}).get("shed", [])})
+    d["hot_prb"] = pct(sum(wf["kpi_per_cell"][c]["prb_used_dl"] for c in hot), sum(nb["kpi_per_cell"][c]["prb_used_dl"] for c in hot)) if hot else None
+    t0, t1 = wf["kpi_window_sim_s"]
+    tw, tn = traces / batch.name / "runs" / run, traces / batch.name / "runs" / noop
+    d["served"] = pct(served_users(tw, t0, t1), served_users(tn, t0, t1)) if (tw / "ns3_out").exists() and (tn / "ns3_out").exists() else None
+    d["commands"] = tuple(sorted(wf.get("commands") or []))
+    return d
+
+
+def d2_decisions(batch: Path, traces: Path, workflow: str) -> List[Dict[str, Any]]:
+    """One record per seed pair (twin seed p, live seed p+100) whose workflow issued a control: the pair, the
+    commands of each side and each side's KPI change vs its own no-op. Pairs where neither side acted (the
+    snapshot did not meet the rule) carry no effect and are left out."""
+    out = []
+    for twin_dir in sorted((batch / "runs").glob(f"twin_s*_{workflow}")):
+        p = int(twin_dir.name.split("_")[1][1:])
+        twin = _run_kpis(batch, traces, twin_dir.name, f"twin_s{p}_noop")
+        live = _run_kpis(batch, traces, f"live_s{p + 100}_{workflow}", f"live_s{p + 100}_noop") if (batch / "runs" / f"live_s{p + 100}_{workflow}").exists() else {}
+        if twin and live and (twin["commands"] or live["commands"]):
+            out.append({"pair": p, "twin": twin, "live": live})
     return out
 
 
 def d2_pooled(batches: str, traces: Path, workflow: str):
+    """{role: {kpi: [pct change per distinct decision]}} over one or more batches. A decision is distinct by its
+    seed pair and commands: the snapshot-age batches repeat many decisions exactly, and a repeat is not new
+    evidence, so it is counted once."""
     out = {"twin": defaultdict(list), "live": defaultdict(list)}
-    for b in batches.split(","):
-        ch = d2_changes(Path(b), traces, workflow)
-        for role in out:
-            for k, v in ch[role].items():
-                out[role][k] += v
+    seen = set()
+    for b in str(batches).split(","):
+        for rec in d2_decisions(Path(b), traces, workflow):
+            key = (rec["pair"], rec["twin"]["commands"], rec["live"]["commands"])
+            if key in seen:
+                continue
+            seen.add(key)
+            for role in out:
+                for k in ("throughput", "energy", "hot_prb", "served"):
+                    out[role][k].append(rec[role][k])
     return out
+
+
+d2_changes = d2_pooled  # one batch is the single-batch case
 
 
 def ms(v):

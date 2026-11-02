@@ -105,17 +105,31 @@ executes them at t_act. No-ops copied from D2 (identical inputs). 90 new simulat
 | age 0.5 s | 4.6 / 5.0 / 4.5 | 2.4 / 2.5 / 5.9 | 10/10 |
 | age 1.0 s | 0.6 / 0.0 / 3.5 | 2.2 / 2.5 / 5.2 | 9/10 |
 | age 1.5 s | 6.8 / 9.5 / 2.8 | 4.9 / 7.0 / 2.1 | 8/10 |
-| pooled ages (n = 20 each) | 4.2 / 5.4 / 3.4 | 3.3 / 4.2 / 4.2 | 34/40 = 85% [71, 93] |
 
-Live effect pooled over the 20 decisions: QoE steering throughput +3.1 +- 7.2% (range -14.6 to +10.9),
-users served +5.6%, source PRB -32.7%; traffic steering throughput -0.9 to +10.5%. Night (age 0): the live
-snapshot of seed 101 does not meet the energy rule (no action on either side); the other four: energy -41%,
-throughput and users served -25%, twin error < 1 pp, gate 5/5. Gate misses: 5 of 6 are conservative
-(twin rejects, live would accept); one false accept (age 0, pair 3: twin -1.9% vs live -14.6% throughput).
-Energy decisions are identical at every snapshot age except seed 101, so the age sweep is hotspot only.
-The steering effect is therefore not robust: the D2 figure of +6.2% throughput / +10% served came from two
-lucky seeds and is replaced in the paper by the pooled numbers. Fig. 5(c): `make_compact_figure.py
---d2-hotspot <the four D2S hotspot batches, comma-separated> --d2-night runs/..._D2S_night --d3 ...`.
+**Audit (2026-11-02): count distinct decisions, not runs.** The age batches repeat many decisions exactly
+(seed pair 2 with HO 1->3, 9->3 occurs 7 times; same seed + same commands give the same result to 0.3 pp),
+one age-1.0 seed issued no command, and age cannot change the twin's accuracy because the twin rehearses
+whatever was decided. Pooling the 40 runs as 40 decisions (the earlier 34/40 = 85% [71, 93]) overstated
+the evidence; the per-age rows above are different decision sets, not different sync qualities. Correct
+statistics (`make_twin_sync_figure.py` -> `fig_twin_sync.json`, Figure R1 of the letter):
+
+| Twin protocol | Distinct decisions | Error pp thp / served / PRB | Verdict agreement |
+|---|---|---|---|
+| decides on its own state (D2) | 10 | 9.7 / 10.8 / 29.8 | 8/10 (80%, [49, 94]) |
+| rehearses the live decision (D2S, ages pooled) | 19 | 5.4 / 7.0 / 3.3 | 14/19 (74%, [51, 88]) |
+| identical re-run of the twin | 48 run pairs | 0.3 / 0.3 / 1.1 | - |
+
+Misses: 4 of 5 conservative (twin rejects, live would accept), 1 false accept (age 0, pair 3: twin -1.9% vs
+live -14.6% throughput). Snapshot age changes the chosen users in 9 of 10 seed x workflow pairs, live
+outcome per seed varies with no trend over 0-1.5 s. Live effect over distinct decisions that acted: QoE
+steering (15) throughput +2.1 +- 7.5% (range -14.6 to +10.9), users served +5.0%, source PRB -33.2%; energy
+saving (4, seed 101 did not act) energy -41.4%, throughput and served -25%. Fig. 5(c) uses these
+(`make_compact_figure.py` now dedupes decisions and drops seeds without control).
+
+**D3 correction.** In repeat 4 the four flows did not build a standing queue (median RTT 64 ms before, 0% of
+pings above 100 ms); "100% -> 0% in all five repeats" was wrong. Correct: repeats 1, 2, 3, 5: median
+416-426 -> 35-37 ms, pings above 100 ms 100% -> 4-7%; repeat 4: 64 -> 33 ms; goodput 9.5 -> 9.6 Mbit/s in all.
+
 Fig. 4 (dynamics) still shows the D2 live run of seed 104.
 
 ### D3: the AppWeaver TC action on a real bottleneck
