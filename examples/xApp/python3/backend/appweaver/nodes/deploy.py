@@ -17,6 +17,7 @@ def build_deploy_node(deps: AppWeaverDeps, cfg: AppWeaverConfig) -> Callable[[Ap
     def deploy_node(state: AppWeaverState) -> Dict[str, Any]:
         steps = list(state.get("steps") or [])
         deployed = dict(state.get("deployed") or {})
+        deployed_actions = dict(state.get("deployed_actions") or {})
         writes_done = int(state.get("write_steps_done") or 0)
         lease_wait = float(state.get("lease_wait_s") or 0.0)
         tool_calls: List[Dict[str, Any]] = []
@@ -32,9 +33,11 @@ def build_deploy_node(deps: AppWeaverDeps, cfg: AppWeaverConfig) -> Callable[[Ap
             if not step.get("executable", True) or not action_id:
                 events.append(event(deps, state, "deploy", "skip_non_executable", agent_id=agent_id))
                 continue
-            if agent_id in deployed:
+            if agent_id in deployed and deployed_actions.get(agent_id, action_id) == action_id:
                 events.append(event(deps, state, "deploy", "reuse_running", agent_id=agent_id, run_id=deployed[agent_id]))
                 continue
+            # A different action of an application this workflow already launched (e.g. after a re-plan) is a
+            # new launch; the harness serializes it after our own earlier run instead of reusing that run.
             result = deps.invoke(agent_id, action_id) or {}
             calls = list(result.get("tool_calls") or [])
             tool_calls += calls
@@ -55,6 +58,7 @@ def build_deploy_node(deps: AppWeaverDeps, cfg: AppWeaverConfig) -> Callable[[Ap
                 cursor = index
                 break
             deployed[agent_id] = str(final.get("run_id") or "")
+            deployed_actions[agent_id] = str(action_id)
             if writes(deps, agent_id, action_id):
                 writes_done += 1
             cursor = index + 1
@@ -62,6 +66,7 @@ def build_deploy_node(deps: AppWeaverDeps, cfg: AppWeaverConfig) -> Callable[[Ap
             "tool_calls": tool_calls,
             "run_payloads": payloads,
             "deployed": deployed,
+            "deployed_actions": deployed_actions,
             "write_steps_done": writes_done,
             "deploy_cursor": cursor,
             "deploy_refusal": refusal,

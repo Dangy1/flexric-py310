@@ -23,7 +23,11 @@ def build_validate_node(deps: AppWeaverDeps, cfg: AppWeaverConfig) -> Callable[[
 
         def lease_query(agent_ids: List[str]) -> Dict[str, Optional[Dict[str, Any]]]:
             wanted = [a for a in agent_ids if a in pending_ids and a in deps.registry]
-            raw = deps.lease_query(wanted) if wanted else {}
+            actions = {s["agent_id"]: s.get("action_id") for s in steps if s["agent_id"] in wanted}
+            try:  # resource holders are judged by what each step's action writes
+                raw = deps.lease_query(wanted, actions) if wanted else {}
+            except TypeError:  # lease_query(agent_ids) without the actions argument
+                raw = deps.lease_query(wanted) if wanted else {}
             return {item["agent_id"]: item for item in busy_entries(raw, own_runs)}
 
         e2 = deps.e2_functions() if deps.e2_functions is not None else None

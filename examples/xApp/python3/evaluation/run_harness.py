@@ -528,14 +528,29 @@ def _step_writes(agent_id: str, action_id: Optional[str]) -> bool:
     return step_writes(AGENTS.get(str(agent_id or "")), action_id)
 
 
-def active_runs_by_agent(agent_ids: List[str]) -> Dict[str, Optional[Dict[str, Any]]]:
-    """Lease query: for each agent, the active run (or scheduler lease) that makes it busy, else None."""
+def write_resources(agent_id: str, action_id: Optional[str] = None) -> set:
+    """Control resources an (agent, action) writes; per-action scopes win over the card's (as validate.writes)."""
+    card = AGENTS.get(str(agent_id))
+    if card is None:
+        return set()
+    action = next((a for a in card.actions if a.id == action_id), None) if action_id else None
+    scopes = list(getattr(action, "control_scopes", None) or []) or list(card.control_scopes)
+    return {sc.resource for sc in scopes if sc.mode == "write" and sc.resource}
+
+
+def active_runs_by_agent(agent_ids: List[str], actions: Optional[Dict[str, Optional[str]]] = None) -> Dict[str, Optional[Dict[str, Any]]]:
+    """Lease query: for each agent, the active run (or scheduler lease) that makes it busy, else None.
+
+    Busy means: the agent itself runs an action, or another agent's running action writes a control
+    resource this agent's action (from `actions`, else the card) also writes - the portal refuses
+    such a launch too (one writer per control resource)."""
     wanted = [str(agent_id) for agent_id in agent_ids]
     out: Dict[str, Optional[Dict[str, Any]]] = {agent_id: None for agent_id in wanted}
     if not wanted:
         return out
     own = set(_RECORD_STATE.get("own_run_ids") or set())
-    for run in api_runs():
+    runs = [run for run in api_runs() if str(run.get("status") or "") in {"starting", "running"}]
+    for run in runs:
         agent_id = str(run.get("agent_id") or "")
         if agent_id in out and out[agent_id] is None and str(run.get("status") or "") in {"starting", "running"}:
             card = AGENTS.get(agent_id)
@@ -547,6 +562,19 @@ def active_runs_by_agent(agent_ids: List[str]) -> Dict[str, Optional[Dict[str, A
                 "source": "agent_run",
                 "own": str(run.get("id") or "") in own,
             }
+    for agent_id in wanted:
+        if out[agent_id] is not None:
+            continue
+        mine = write_resources(agent_id, (actions or {}).get(agent_id))
+        for run in runs:
+            if str(run.get("agent_id") or "") == agent_id:
+                continue
+            shared = mine & write_resources(str(run.get("agent_id") or ""), run.get("action_id"))
+            if shared:
+                out[agent_id] = {"run_id": run.get("id"), "action_id": run.get("action_id"), "started_at": run.get("started_at"),
+                                 "resource": sorted(shared)[0], "holder_agent": run.get("agent_id"), "source": "resource_holder",
+                                 "own": str(run.get("id") or "") in own}
+                break
     try:
         leases = list((api_runtime_leases() or {}).get("leases") or [])
     except Exception:  # pragma: no cover - runtime dependent
@@ -560,18 +588,20 @@ def active_runs_by_agent(agent_ids: List[str]) -> Dict[str, Optional[Dict[str, A
     return out
 
 
-def _foreign_busy(agent_ids: List[str]) -> Dict[str, Dict[str, Any]]:
-    return {agent_id: info for agent_id, info in active_runs_by_agent(agent_ids).items() if info and not info.get("own")}
+def _foreign_busy(agent_ids: List[str], include_own: bool = False, actions: Optional[Dict[str, Optional[str]]] = None) -> Dict[str, Dict[str, Any]]:
+    return {agent_id: info for agent_id, info in active_runs_by_agent(agent_ids, actions).items() if info and (include_own or not info.get("own"))}
 
 
-def wait_until_free(agent_ids: List[str], budget_s: float) -> Dict[str, Any]:
-    """Bounded lease wait: poll until no *other* workflow holds the agents, at most budget_s."""
+def wait_until_free(agent_ids: List[str], budget_s: float, include_own: bool = False,
+                    actions: Optional[Dict[str, Optional[str]]] = None) -> Dict[str, Any]:
+    """Bounded lease wait: poll until no *other* workflow holds the agents (with include_own, also until this
+    workflow's own earlier run on the agent or its control resource ends: serialization), at most budget_s."""
     started = time.perf_counter()
     interval = max(0.05, float(EVAL_RUNTIME_CONFIG.get("lease_poll_interval_s") or 0.5))
-    busy = _foreign_busy(agent_ids)
+    busy = _foreign_busy(agent_ids, include_own, actions)
     while busy and (time.perf_counter() - started) < max(0.0, float(budget_s)):
         time.sleep(interval)
-        busy = _foreign_busy(agent_ids)
+        busy = _foreign_busy(agent_ids, include_own, actions)
     waited = time.perf_counter() - started
     return {"free": not busy, "waited_s": round(waited, 3), "still_busy": sorted(busy)}
 
@@ -591,15 +621,17 @@ def invoke_with_lease_wait(agent_id: str, action_id: str) -> Dict[str, Any]:
     if is_lease_refusal(tool_call):
         tool_call["status"] = "conflict"
         tool_call["lease_refusal"] = True
-        blocking = active_runs_by_agent([agent_id]).get(agent_id) or {}
+        blocking = active_runs_by_agent([agent_id], {agent_id: action_id}).get(agent_id) or {}
         self_conflict = bool(blocking.get("own"))
         tool_call["blocking_run"] = blocking or None
+        tool_call["self_conflict"] = self_conflict
         budget = float(EVAL_RUNTIME_CONFIG.get("lease_wait_s") or 0.0)
-        if self_conflict or budget <= 0.0:
+        if budget <= 0.0:
             refused = True
-            tool_call["self_conflict"] = self_conflict
         else:
-            waited = wait_until_free([agent_id], budget)
+            # A foreign holder: the shared lease wait. Our own earlier step on the agent or its control
+            # resource: wait for it to end (the scheduler serializes two writers of one workflow).
+            waited = wait_until_free([agent_id], budget, include_own=self_conflict, actions={agent_id: action_id})
             waited_s = float(waited.get("waited_s") or 0.0)
             retry_call, retry_payload, error = invoke_action(agent_id, action_id)
             retry_call["retry_after_lease_wait"] = True
@@ -1567,7 +1599,9 @@ def execute_langgraph_agentcard(intent: Dict[str, Any], duration_s: int, repair:
         "waited_for_lease": bool(final.get("waited_for_lease")),
         "graph_lease_wait_s": round(float(final.get("lease_wait_s") or 0.0), 3),
         "internal_recovery_attempted": int(final.get("recoveries") or 0) > 0,
-        "internal_recovery_succeeded": int(final.get("recoveries") or 0) > 0 and status == "completed",
+        # Credit only a re-plan around the busy application that completed; a plain wait is the lease wait
+        # every method gets (`waited_for_lease`), not a recovery.
+        "internal_recovery_succeeded": bool(final.get("replanned_around_resource")) and status == "completed",
         "recovery": recovery,
         "recovery_planner_task": recovery.get("planner_task"),
         "recovery_planner_plan": recovery.get("planner_plan"),
@@ -1775,11 +1809,12 @@ def conflict_outcome(execution: Dict[str, Any], tool_calls: List[Dict[str, Any]]
     precheck = bool(execution.get("conflict_detected_before_control"))
     # AppWeaver's graph accounts its own waits (Recover + Deploy); baselines' waits are in _RECORD_STATE.
     lease_wait = round(float(execution["graph_lease_wait_s"] if "graph_lease_wait_s" in execution else (_RECORD_STATE.get("lease_wait_s") or 0.0)), 3)
+    replanned_done = bool(execution.get("replanned_around_resource")) and str(execution.get("status") or "") == "completed"
     unresolved = str(execution.get("status") or "") in {"queued", "blocked_by_conflict"} or any(
-        (call.get("lease_refusal") and not any(
-            later.get("retry_after_lease_wait") and later.get("agent_id") == call.get("agent_id") and later.get("status") == "success"
-            for later in tool_calls))
-        for call in tool_calls
+        (call.get("lease_refusal") and not replanned_done and not any(
+            later.get("agent_id") == call.get("agent_id") and later.get("status") == "success"
+            for later in tool_calls[i + 1:]))
+        for i, call in enumerate(tool_calls)
     )
     waited = lease_wait > 0.0 or bool(execution.get("waited_for_lease"))
     preempted = int(_RECORD_STATE.get("reset_calls") or 0) > 0

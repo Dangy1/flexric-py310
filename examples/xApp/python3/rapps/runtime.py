@@ -333,7 +333,11 @@ def serve(port: int) -> int:  # pragma: no cover - optional
         for tool in rapp["tools"]:
             def make(rid: str, tid: str):
                 def handler() -> str:
+                    if catalog[rid].get("status") == "deprecated":
+                        return json.dumps({"error": f"{rid} is deprecated; use the current release"})
                     kpm = fetch_recent_kpm()
+                    if not kpm.get("available"):
+                        return json.dumps({"error": f"no KPM data to decide on ({kpm.get('detail')})"})
                     result = decide(catalog[rid], tid, kpm)
                     if is_apply_tool(tid):
                         result["policy_path"] = str(write_policy(catalog[rid], tid, result))

@@ -497,3 +497,105 @@ def test_dryrun_skips_rapp_write_steps():
     assert calls == []
     assert [step["agent_id"] for step in report["dryrun"]] == ["rapp.energy_saving"]
     assert report["dryrun"][0]["ok"] and report["ok"]
+
+
+# --------------------------------------------------------------------------- review fixes (2026-11-03)
+
+def _tc_tuner_card():
+    """An rApp that writes the TC xApp's control resource with one action and only recommends with another."""
+    card = make_card("rapp.tc_tuner", app_type="rapp", scopes=[("transport", "write", "tc_control")],
+                     actions=("apply_queue_policy", "recommend_queue_policy"))
+    card.actions[1].control_scopes = [ControlScope(target="transport", mode="read", resource="tc_control")]
+    return card
+
+
+def test_resource_holder_makes_other_writer_busy(harness, monkeypatch):
+    monkeypatch.setitem(harness.AGENTS, "rapp.tc_tuner", _tc_tuner_card())
+    monkeypatch.setattr(harness, "api_runs", lambda: [{"id": "seed01", "agent_id": "tc", "action_id": "apply-codel", "status": "running"}])
+    monkeypatch.setattr(harness, "api_runtime_leases", lambda: {"leases": []})
+    busy = harness.active_runs_by_agent(["rapp.tc_tuner"], {"rapp.tc_tuner": "apply_queue_policy"})["rapp.tc_tuner"]
+    assert busy and busy["source"] == "resource_holder" and busy["resource"] == "tc_control" and busy["holder_agent"] == "tc"
+    # The read-only recommendation does not write tc_control, so it is not blocked.
+    assert harness.active_runs_by_agent(["rapp.tc_tuner"], {"rapp.tc_tuner": "recommend_queue_policy"})["rapp.tc_tuner"] is None
+
+
+def test_portal_refuses_second_writer_of_a_control_resource(harness, monkeypatch):
+    import flexric_agent_portal as portal
+    tuner = _tc_tuner_card()
+    monkeypatch.setitem(portal.AGENTS, "rapp.tc_tuner", tuner)
+    seed = portal.RunState(id="seed0123456789", agent_id="tc", action_id="apply-codel", label="seed", cmd=["true"], cwd=".",
+                           log_path=str(_TMP / "seed.log"), started_at=time.time(), status="running")
+    monkeypatch.setitem(portal.RUNS, seed.id, seed)
+    with portal.STATE_LOCK:
+        with pytest.raises(portal.AgentBusyError) as err:
+            portal._run_action_locked(tuner, tuner.actions[0])
+    assert "Control resource tc_control already has an active action" in str(err.value)
+    assert harness.is_lease_refusal({"detail": f"409: {err.value}"})
+
+
+def test_own_earlier_writer_is_serialized_not_refused(harness, monkeypatch):
+    portal = FakePortal(hold_s=0.3)
+    monkeypatch.setattr(harness, "invoke_action", portal.invoke_action)
+    monkeypatch.setattr(harness, "api_runs", portal.api_runs)
+    monkeypatch.setattr(harness, "api_runtime_leases", lambda: {"leases": []})
+    monkeypatch.setitem(harness.EVAL_RUNTIME_CONFIG, "lease_wait_s", 3.0)
+    monkeypatch.setitem(harness.EVAL_RUNTIME_CONFIG, "lease_poll_interval_s", 0.05)
+    monkeypatch.setitem(harness._RECORD_STATE, "own_run_ids", set())
+    first = harness.invoke_with_lease_wait("tc", "apply-codel")
+    assert first["tool_calls"][-1]["status"] == "success"
+    second = harness.invoke_with_lease_wait("tc", "apply-all")  # same app, other action, while ours still runs
+    assert second["refused"] is False
+    assert second["tool_calls"][0]["self_conflict"] is True and second["tool_calls"][-1]["status"] == "success"
+    assert second["lease_wait_s"] > 0.1
+
+
+def test_refusal_resolved_by_later_success_or_completed_replan(harness):
+    refused = {"agent_id": "tc", "action_id": "apply-codel", "status": "conflict", "lease_refusal": True, "detail": "409: busy"}
+    later = {"agent_id": "tc", "action_id": "apply-codel", "status": "success"}
+    assert harness.conflict_outcome({"status": "completed"}, [refused, later], False)["lease_refusal_unresolved"] is False
+    assert harness.conflict_outcome({"status": "completed"}, [refused], False)["lease_refusal_unresolved"] is True
+    replanned = {"status": "completed", "replanned_around_resource": True}
+    assert harness.conflict_outcome(replanned, [refused], False)["lease_refusal_unresolved"] is False
+
+
+def test_conflict_flag_needs_lease_evidence():
+    from evaluation.analyze_results import conflict_flagged
+    compat_reject = {"conflict_detected": True, "blocked_reason": "compat:dependency:rapp.x:Requires capability 'y'", "execution_status": "rejected"}
+    assert conflict_flagged(compat_reject) is False
+    assert conflict_flagged({"blocked_reason": "Busy after 45s lease wait: tc"}) is True
+    assert conflict_flagged({"conflict_detected_before_control": True}) is True
+
+
+def test_deploy_relaunches_when_a_replan_asks_another_action():
+    from backend.appweaver.nodes.deploy import build_deploy_node
+    world = FakeWorld(small_registry(), ["KPM", "TC", "RC"])
+    deps = world.deps()
+    node = build_deploy_node(deps, AppWeaverConfig())
+    state = {"steps": [{"agent_id": "tc", "action_id": "apply-all", "executable": True}],
+             "deployed": {"tc": "run-old"}, "deployed_actions": {"tc": "apply-codel"}, "events": []}
+    out = node(state)
+    assert [inv[:2] for inv in world.invocations] == [("tc", "apply-all")]
+    assert out["deployed_actions"]["tc"] == "apply-all"
+    same = node({**state, "deployed_actions": {"tc": "apply-all"}})
+    assert len(world.invocations) == 1 and any(e.get("event") == "reuse_running" or "reuse_running" in json.dumps(e) for e in same["events"])
+
+
+def test_recommend_only_rapp_tools_are_read_steps():
+    from backend.agents.rapps import _is_apply_tool
+    assert _is_apply_tool("apply_steering_policy") and _is_apply_tool("northwind_set_sleep_cells")
+    assert not _is_apply_tool("recommend_sleep_cells") and not _is_apply_tool("predict_qoe")
+
+
+def test_a2a_reset_reports_an_error():
+    from backend.a2a_adapter import A2AAdapter
+    adapter = A2AAdapter.__new__(A2AAdapter)
+    adapter.handlers = None
+    out = adapter.dispatch({"jsonrpc": "2.0", "id": 1, "method": "portal.reset_runtime", "params": {}})
+    assert "error" in out and "result" not in out
+
+
+def test_ric_log_scan_finds_setup_beyond_the_tail(tmp_path):
+    log = tmp_path / "ric.log"
+    log.write_text(RIC_LOG + "\n" + ("[NEAR-RIC]: indication\n" * 2000), encoding="utf-8")
+    out = live_e2_ran_functions(log, max_bytes=4096)
+    assert out["available"] is True and "2" in out["ran_functions"]

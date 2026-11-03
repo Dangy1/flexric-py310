@@ -10,16 +10,17 @@ Checks
 dependency     every `requires` entry and every `consumes` data model of step k
                is satisfied by the capabilities/`produces` of some step < k
                (or by the live RAN for raw E2SM measurements).
-interface      consecutive steps share at least one interface family or one
-               data model (the output of one is readable by the next).
-control_scope  two write steps on the same lease resource need an explicit
-               ordering (they are serialised by the scheduler, which is fine)
-               but a write step followed by a *read-only validation* of a
-               different resource is flagged; two writers on `conflicts_with`
-               resources in one chain is an error.
-timescale      a near-RT step scheduled after a non-RT step must be separated
-               by an observation step, otherwise the near-RT loop acts on a
-               stale non-RT decision.
+interface      (warning) consecutive steps share at least one interface family or
+               one data model (the output of one is readable by the next).
+control_scope  (error) a writer declared in `conflicts_with` an earlier step;
+               (warning) two write steps on the same lease resource: allowed, the
+               portal admits one writer per control resource at a time, so the
+               second waits for the first (serialization).
+timescale      (warning) a near-RT control step directly after a non-RT step
+               without a fresh observation in between may act on a stale non-RT
+               decision; flagged, not blocked.
+Dependency and lifecycle findings are errors. Errors are repaired or reject the
+chain; warnings are logged.
 """
 from __future__ import annotations
 

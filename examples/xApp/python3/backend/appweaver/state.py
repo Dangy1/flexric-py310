@@ -103,6 +103,7 @@ class AppWeaverState(TypedDict, total=False):
     tool_calls: Annotated[List[Dict[str, Any]], operator.add]
     run_payloads: Annotated[List[Dict[str, Any]], operator.add]
     deployed: Dict[str, str]              # agent_id -> run_id launched by this workflow
+    deployed_actions: Dict[str, str]      # agent_id -> action_id of that run (reuse only for the same action)
     write_steps_done: int
     deploy_cursor: int
     deploy_refusal: Optional[Dict[str, Any]]

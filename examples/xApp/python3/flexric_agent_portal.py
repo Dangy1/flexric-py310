@@ -2773,6 +2773,22 @@ def _invoke_provider(provider: Dict[str, Any], agent: AgentCard, prompt: str) ->
     raise RuntimeError(f"Unsupported provider: {provider['id']}")
 
 
+def _invoke_provider_unlocked(provider: Dict[str, Any], agent: AgentCard, prompt: str) -> str:
+    """Call the LLM with STATE_LOCK released (a planner call can take a minute; runs, leases and other
+    requests must not stall behind it). The RLock is released fully and restored with its recursion
+    depth, as threading.Condition does; the task and agent objects are only touched under the lock."""
+    release_save = getattr(STATE_LOCK, "_release_save", None)
+    acquire_restore = getattr(STATE_LOCK, "_acquire_restore", None)
+    is_owned = getattr(STATE_LOCK, "_is_owned", None)
+    if not (release_save and acquire_restore and is_owned and is_owned()):
+        return _invoke_provider(provider, agent, prompt)
+    saved = release_save()
+    try:
+        return _invoke_provider(provider, agent, prompt)
+    finally:
+        acquire_restore(saved)
+
+
 def _run_task_locked(agent: AgentCard, provider_hint: str, prompt: str) -> TaskState:
     provider = _enabled_provider(provider_hint)
     task = TaskState(
@@ -2790,7 +2806,7 @@ def _run_task_locked(agent: AgentCard, provider_hint: str, prompt: str) -> TaskS
 
     try:
         _LLM_USAGE.value = {}
-        task.response = _invoke_provider(provider, agent, prompt)
+        task.response = _invoke_provider_unlocked(provider, agent, prompt)
         task.usage = dict(getattr(_LLM_USAGE, "value", {}) or {})
         task.status = "completed"
         agent.status = "ready"
@@ -2807,6 +2823,14 @@ def _run_task_locked(agent: AgentCard, provider_hint: str, prompt: str) -> TaskS
     return task
 
 
+def _write_resources(agent: Optional[AgentCard], action: Optional[AgentAction]) -> set:
+    """Control resources written by an action; per-action scopes win over the card's (as validate.writes)."""
+    if agent is None:
+        return set()
+    scopes = list(getattr(action, "control_scopes", None) or []) or list(agent.control_scopes)
+    return {scope.resource for scope in scopes if scope.mode == "write" and scope.resource}
+
+
 def _run_action_locked(agent: AgentCard, action: AgentAction) -> RunState:
     _assert_state_lock_held()
     if not action.command:
@@ -2817,6 +2841,21 @@ def _run_action_locked(agent: AgentCard, action: AgentAction) -> RunState:
         raise AgentBusyError(
             f"Agent {agent.id} already has an active action ({active.action_id}, run {active.id[:8]}). Wait for it to finish before launching another one."
         )
+    # One writer per control resource: another application's running action that writes a resource this
+    # action writes (e.g. a TC-writing rApp while the TC xApp applies a queue) is the same conflict.
+    mine = _write_resources(agent, action)
+    if mine:
+        for item in RUNS.values():
+            if item.status not in {"starting", "running"} or item.agent_id == agent.id:
+                continue
+            other = AGENTS.get(item.agent_id)
+            other_action = next((a for a in other.actions if a.id == item.action_id), None) if other else None
+            shared = mine & _write_resources(other, other_action) if other else set()
+            if shared:
+                raise AgentBusyError(
+                    f"Control resource {sorted(shared)[0]} already has an active action ({item.agent_id}/{item.action_id}, run {item.id[:8]}). "
+                    f"Wait for it to finish before launching {agent.id}/{action.id}."
+                )
 
     run_id = uuid.uuid4().hex
     log_path = RUN_LOG_DIR / f"{agent.id}-{action.id}-{run_id}.log"

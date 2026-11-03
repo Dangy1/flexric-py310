@@ -109,7 +109,7 @@ class A2AAdapter:
             elif method == "portal.scheduler_status":
                 result = self.handlers.scheduler_status()
             elif method == "portal.reset_runtime":
-                result = {"status": "unsupported", "detail": "Use the HTTP reset endpoint from the operator UI."}
+                raise NotImplementedError("portal.reset_runtime is not available over A2A; use the HTTP reset endpoint from the operator UI.")
             else:
                 raise KeyError(f"Unknown method: {method}")
             return {"jsonrpc": "2.0", "id": req_id, "result": result}
