@@ -1,0 +1,2071 @@
+{
+  "created_at": "2026-11-03T08:58:37+0200",
+  "batches": [
+    "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot",
+    "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot",
+    "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age1.0_hotspot",
+    "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age1.5_hotspot",
+    "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_night"
+  ],
+  "offsets": [
+    200,
+    300
+  ],
+  "k": 3,
+  "gate_thresholds": {
+    "energy_saving": {
+      "accept_if": "energy_saving_pct >= 5 AND remaining_prb_increase_pct <= 30",
+      "energy_saving_min_pct": 5.0,
+      "remaining_prb_increase_max_pct": 30.0
+    },
+    "traffic_steering": {
+      "accept_if": "hot_prb_reduction_pct >= 5 AND throughput_loss_pct <= 5",
+      "hot_prb_reduction_min_pct": 5.0,
+      "throughput_loss_max_pct": 5.0
+    },
+    "qoe_steering": {
+      "accept_if": "hot_prb_reduction_pct >= 5 AND throughput_loss_pct <= 5",
+      "hot_prb_reduction_min_pct": 5.0,
+      "throughput_loss_max_pct": 5.0
+    }
+  },
+  "rules": {
+    "single": "D2S verdict of twin seed `pair` alone (GATE)",
+    "mean": "GATE on the ensemble mean of each gate quantity",
+    "margin": "primary: GATE with each quantity moved against acceptance by one sample sd (steering: mean(hot_prb_reduction)-sd >= 5 AND mean(throughput_loss)+sd <= 5; energy: mean(energy_saving)-sd >= 5 AND mean(remaining_prb_increase)+sd <= 30)"
+  },
+  "primary_rule": "margin",
+  "decisions": [
+    {
+      "id": "d00",
+      "layout": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/hotspot.csv",
+      "layout_name": "hotspot",
+      "pair": 1,
+      "workflow": "qoe_steering",
+      "batch": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot",
+      "commands": [
+        "HO 1 3",
+        "HO 4 3"
+      ],
+      "policy": {
+        "commands": [
+          [
+            0.0,
+            "HO 1 3"
+          ],
+          [
+            0.0,
+            "HO 4 3"
+          ]
+        ],
+        "decided_on": "live state at t_act (live_s101_noop, sim 2.000 s)",
+        "shed": [
+          {
+            "avoid": [
+              2
+            ],
+            "from": 2,
+            "share": 0.2,
+            "to": 3
+          }
+        ],
+        "sleep_cells": [],
+        "trace": {
+          "kpm_snapshot": {
+            "2": {
+              "DRB.UEThpDl": 0.6844222222222223,
+              "RRU.PrbTotDl": 1.0
+            },
+            "3": {
+              "DRB.UEThpDl": 2.839,
+              "RRU.PrbTotDl": 0.216
+            },
+            "4": {
+              "DRB.UEThpDl": 2.747,
+              "RRU.PrbTotDl": 0.437
+            },
+            "5": {
+              "DRB.UEThpDl": 2.7521999999999998,
+              "RRU.PrbTotDl": 0.433
+            }
+          },
+          "steps": [
+            {
+              "decision": {
+                "at_risk_cells": [
+                  "4",
+                  "2",
+                  "5",
+                  "3"
+                ],
+                "model": "linear(thp, delay) emulation",
+                "mos_forecast": {
+                  "2": 1.21,
+                  "3": 2.5,
+                  "4": 2.45,
+                  "5": 2.45
+                }
+              },
+              "rapp": "qoe_prediction"
+            },
+            {
+              "decision": {
+                "from_cell": "2",
+                "to_cell": "3",
+                "ue_share_pct": 20
+              },
+              "rapp": "traffic_steering"
+            }
+          ]
+        },
+        "workflow": "qoe_steering"
+      },
+      "twin_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/twin_s1_qoe_steering",
+      "twin_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/twin_s1_noop",
+      "live_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/live_s101_qoe_steering",
+      "live_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/live_s101_noop"
+    },
+    {
+      "id": "d01",
+      "layout": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/hotspot.csv",
+      "layout_name": "hotspot",
+      "pair": 2,
+      "workflow": "qoe_steering",
+      "batch": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot",
+      "commands": [
+        "HO 1 3",
+        "HO 9 3"
+      ],
+      "policy": {
+        "commands": [
+          [
+            0.0,
+            "HO 9 3"
+          ],
+          [
+            0.0,
+            "HO 1 3"
+          ]
+        ],
+        "decided_on": "live state at t_act (live_s102_noop, sim 2.000 s)",
+        "shed": [
+          {
+            "avoid": [
+              2
+            ],
+            "from": 2,
+            "share": 0.2,
+            "to": 3
+          }
+        ],
+        "sleep_cells": [],
+        "trace": {
+          "kpm_snapshot": {
+            "2": {
+              "DRB.UEThpDl": 0.6525333333333333,
+              "RRU.PrbTotDl": 1.0
+            },
+            "3": {
+              "DRB.UEThpDl": 2.839,
+              "RRU.PrbTotDl": 0.239
+            },
+            "4": {
+              "DRB.UEThpDl": 2.7588000000000004,
+              "RRU.PrbTotDl": 0.484
+            },
+            "5": {
+              "DRB.UEThpDl": 2.7594000000000003,
+              "RRU.PrbTotDl": 0.495
+            }
+          },
+          "steps": [
+            {
+              "decision": {
+                "at_risk_cells": [
+                  "5",
+                  "2",
+                  "4",
+                  "3"
+                ],
+                "model": "linear(thp, delay) emulation",
+                "mos_forecast": {
+                  "2": 1.19,
+                  "3": 2.5,
+                  "4": 2.46,
+                  "5": 2.46
+                }
+              },
+              "rapp": "qoe_prediction"
+            },
+            {
+              "decision": {
+                "from_cell": "2",
+                "to_cell": "3",
+                "ue_share_pct": 20
+              },
+              "rapp": "traffic_steering"
+            }
+          ]
+        },
+        "workflow": "qoe_steering"
+      },
+      "twin_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/twin_s2_qoe_steering",
+      "twin_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/twin_s2_noop",
+      "live_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/live_s102_qoe_steering",
+      "live_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/live_s102_noop"
+    },
+    {
+      "id": "d02",
+      "layout": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/hotspot.csv",
+      "layout_name": "hotspot",
+      "pair": 3,
+      "workflow": "qoe_steering",
+      "batch": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot",
+      "commands": [
+        "HO 11 3",
+        "HO 2 3",
+        "HO 9 3"
+      ],
+      "policy": {
+        "commands": [
+          [
+            0.0,
+            "HO 2 3"
+          ],
+          [
+            0.0,
+            "HO 9 3"
+          ],
+          [
+            0.0,
+            "HO 11 3"
+          ]
+        ],
+        "decided_on": "live state at t_act (live_s103_noop, sim 2.000 s)",
+        "shed": [
+          {
+            "avoid": [
+              2,
+              4
+            ],
+            "from": 2,
+            "share": 0.2,
+            "to": 3
+          },
+          {
+            "avoid": [
+              2,
+              4
+            ],
+            "from": 4,
+            "share": 0.2,
+            "to": 3
+          }
+        ],
+        "sleep_cells": [],
+        "trace": {
+          "kpm_snapshot": {
+            "2": {
+              "DRB.UEThpDl": 0.6400666666666667,
+              "RRU.PrbTotDl": 1.0
+            },
+            "3": {
+              "DRB.UEThpDl": 2.839,
+              "RRU.PrbTotDl": 0.197
+            },
+            "4": {
+              "DRB.UEThpDl": 2.7104,
+              "RRU.PrbTotDl": 0.419
+            },
+            "5": {
+              "DRB.UEThpDl": 2.7636,
+              "RRU.PrbTotDl": 0.393
+            }
+          },
+          "steps": [
+            {
+              "decision": {
+                "at_risk_cells": [
+                  "5",
+                  "2",
+                  "4",
+                  "3"
+                ],
+                "model": "linear(thp, delay) emulation",
+                "mos_forecast": {
+                  "2": 1.18,
+                  "3": 2.5,
+                  "4": 2.43,
+                  "5": 2.46
+                }
+              },
+              "rapp": "qoe_prediction"
+            },
+            {
+              "decision": {
+                "from_cell": "2",
+                "to_cell": "3",
+                "ue_share_pct": 20
+              },
+              "rapp": "traffic_steering"
+            }
+          ]
+        },
+        "workflow": "qoe_steering"
+      },
+      "twin_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/twin_s3_qoe_steering",
+      "twin_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/twin_s3_noop",
+      "live_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/live_s103_qoe_steering",
+      "live_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/live_s103_noop"
+    },
+    {
+      "id": "d03",
+      "layout": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/hotspot.csv",
+      "layout_name": "hotspot",
+      "pair": 4,
+      "workflow": "qoe_steering",
+      "batch": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot",
+      "commands": [
+        "HO 13 3",
+        "HO 2 3",
+        "HO 9 3"
+      ],
+      "policy": {
+        "commands": [
+          [
+            0.0,
+            "HO 9 3"
+          ],
+          [
+            0.0,
+            "HO 2 3"
+          ],
+          [
+            0.0,
+            "HO 13 3"
+          ]
+        ],
+        "decided_on": "live state at t_act (live_s104_noop, sim 2.000 s)",
+        "shed": [
+          {
+            "avoid": [
+              2,
+              5
+            ],
+            "from": 2,
+            "share": 0.2,
+            "to": 3
+          },
+          {
+            "avoid": [
+              2,
+              5
+            ],
+            "from": 5,
+            "share": 0.2,
+            "to": 3
+          }
+        ],
+        "sleep_cells": [],
+        "trace": {
+          "kpm_snapshot": {
+            "2": {
+              "DRB.UEThpDl": 0.6844222222222223,
+              "RRU.PrbTotDl": 1.0
+            },
+            "3": {
+              "DRB.UEThpDl": 2.839,
+              "RRU.PrbTotDl": 0.228
+            },
+            "4": {
+              "DRB.UEThpDl": 2.7634000000000003,
+              "RRU.PrbTotDl": 0.467
+            },
+            "5": {
+              "DRB.UEThpDl": 2.7239,
+              "RRU.PrbTotDl": 0.462
+            }
+          },
+          "steps": [
+            {
+              "decision": {
+                "at_risk_cells": [
+                  "4",
+                  "2",
+                  "5",
+                  "3"
+                ],
+                "model": "linear(thp, delay) emulation",
+                "mos_forecast": {
+                  "2": 1.21,
+                  "3": 2.5,
+                  "4": 2.46,
+                  "5": 2.43
+                }
+              },
+              "rapp": "qoe_prediction"
+            },
+            {
+              "decision": {
+                "from_cell": "2",
+                "to_cell": "3",
+                "ue_share_pct": 20
+              },
+              "rapp": "traffic_steering"
+            }
+          ]
+        },
+        "workflow": "qoe_steering"
+      },
+      "twin_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/twin_s4_qoe_steering",
+      "twin_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/twin_s4_noop",
+      "live_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/live_s104_qoe_steering",
+      "live_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/live_s104_noop"
+    },
+    {
+      "id": "d04",
+      "layout": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/hotspot.csv",
+      "layout_name": "hotspot",
+      "pair": 5,
+      "workflow": "qoe_steering",
+      "batch": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot",
+      "commands": [
+        "HO 1 3",
+        "HO 12 3",
+        "HO 3 3"
+      ],
+      "policy": {
+        "commands": [
+          [
+            0.0,
+            "HO 1 3"
+          ],
+          [
+            0.0,
+            "HO 3 3"
+          ],
+          [
+            0.0,
+            "HO 12 3"
+          ]
+        ],
+        "decided_on": "live state at t_act (live_s105_noop, sim 2.000 s)",
+        "shed": [
+          {
+            "avoid": [
+              2,
+              4
+            ],
+            "from": 2,
+            "share": 0.2,
+            "to": 3
+          },
+          {
+            "avoid": [
+              2,
+              4
+            ],
+            "from": 4,
+            "share": 0.2,
+            "to": 3
+          }
+        ],
+        "sleep_cells": [],
+        "trace": {
+          "kpm_snapshot": {
+            "2": {
+              "DRB.UEThpDl": 0.6666222222222222,
+              "RRU.PrbTotDl": 1.0
+            },
+            "3": {
+              "DRB.UEThpDl": 2.839,
+              "RRU.PrbTotDl": 0.221
+            },
+            "4": {
+              "DRB.UEThpDl": 2.7582,
+              "RRU.PrbTotDl": 0.441
+            },
+            "5": {
+              "DRB.UEThpDl": 2.7655,
+              "RRU.PrbTotDl": 0.441
+            }
+          },
+          "steps": [
+            {
+              "decision": {
+                "at_risk_cells": [
+                  "5",
+                  "2",
+                  "4",
+                  "3"
+                ],
+                "model": "linear(thp, delay) emulation",
+                "mos_forecast": {
+                  "2": 1.2,
+                  "3": 2.5,
+                  "4": 2.45,
+                  "5": 2.46
+                }
+              },
+              "rapp": "qoe_prediction"
+            },
+            {
+              "decision": {
+                "from_cell": "2",
+                "to_cell": "3",
+                "ue_share_pct": 20
+              },
+              "rapp": "traffic_steering"
+            }
+          ]
+        },
+        "workflow": "qoe_steering"
+      },
+      "twin_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/twin_s5_qoe_steering",
+      "twin_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/twin_s5_noop",
+      "live_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/live_s105_qoe_steering",
+      "live_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/live_s105_noop"
+    },
+    {
+      "id": "d05",
+      "layout": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/hotspot.csv",
+      "layout_name": "hotspot",
+      "pair": 3,
+      "workflow": "traffic_steering",
+      "batch": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot",
+      "commands": [
+        "HO 2 3",
+        "HO 9 3"
+      ],
+      "policy": {
+        "commands": [
+          [
+            0.0,
+            "HO 2 3"
+          ],
+          [
+            0.0,
+            "HO 9 3"
+          ]
+        ],
+        "decided_on": "live state at t_act (live_s103_noop, sim 2.000 s)",
+        "shed": [
+          {
+            "from": 2,
+            "share": 0.2,
+            "to": 3
+          }
+        ],
+        "sleep_cells": [],
+        "trace": {
+          "kpm_snapshot": {
+            "2": {
+              "DRB.UEThpDl": 0.6400666666666667,
+              "RRU.PrbTotDl": 1.0
+            },
+            "3": {
+              "DRB.UEThpDl": 2.839,
+              "RRU.PrbTotDl": 0.197
+            },
+            "4": {
+              "DRB.UEThpDl": 2.7104,
+              "RRU.PrbTotDl": 0.419
+            },
+            "5": {
+              "DRB.UEThpDl": 2.7636,
+              "RRU.PrbTotDl": 0.393
+            }
+          },
+          "steps": [
+            {
+              "decision": {
+                "from_cell": "2",
+                "to_cell": "3",
+                "ue_share_pct": 20
+              },
+              "rapp": "traffic_steering"
+            }
+          ]
+        },
+        "workflow": "traffic_steering"
+      },
+      "twin_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/twin_s3_traffic_steering",
+      "twin_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/twin_s3_noop",
+      "live_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/live_s103_traffic_steering",
+      "live_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/live_s103_noop"
+    },
+    {
+      "id": "d06",
+      "layout": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/hotspot.csv",
+      "layout_name": "hotspot",
+      "pair": 4,
+      "workflow": "traffic_steering",
+      "batch": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot",
+      "commands": [
+        "HO 2 3",
+        "HO 9 3"
+      ],
+      "policy": {
+        "commands": [
+          [
+            0.0,
+            "HO 9 3"
+          ],
+          [
+            0.0,
+            "HO 2 3"
+          ]
+        ],
+        "decided_on": "live state at t_act (live_s104_noop, sim 2.000 s)",
+        "shed": [
+          {
+            "from": 2,
+            "share": 0.2,
+            "to": 3
+          }
+        ],
+        "sleep_cells": [],
+        "trace": {
+          "kpm_snapshot": {
+            "2": {
+              "DRB.UEThpDl": 0.6844222222222223,
+              "RRU.PrbTotDl": 1.0
+            },
+            "3": {
+              "DRB.UEThpDl": 2.839,
+              "RRU.PrbTotDl": 0.228
+            },
+            "4": {
+              "DRB.UEThpDl": 2.7634000000000003,
+              "RRU.PrbTotDl": 0.467
+            },
+            "5": {
+              "DRB.UEThpDl": 2.7239,
+              "RRU.PrbTotDl": 0.462
+            }
+          },
+          "steps": [
+            {
+              "decision": {
+                "from_cell": "2",
+                "to_cell": "3",
+                "ue_share_pct": 20
+              },
+              "rapp": "traffic_steering"
+            }
+          ]
+        },
+        "workflow": "traffic_steering"
+      },
+      "twin_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/twin_s4_traffic_steering",
+      "twin_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/twin_s4_noop",
+      "live_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/live_s104_traffic_steering",
+      "live_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/live_s104_noop"
+    },
+    {
+      "id": "d07",
+      "layout": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/hotspot.csv",
+      "layout_name": "hotspot",
+      "pair": 5,
+      "workflow": "traffic_steering",
+      "batch": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot",
+      "commands": [
+        "HO 1 3",
+        "HO 3 3"
+      ],
+      "policy": {
+        "commands": [
+          [
+            0.0,
+            "HO 1 3"
+          ],
+          [
+            0.0,
+            "HO 3 3"
+          ]
+        ],
+        "decided_on": "live state at t_act (live_s105_noop, sim 2.000 s)",
+        "shed": [
+          {
+            "from": 2,
+            "share": 0.2,
+            "to": 3
+          }
+        ],
+        "sleep_cells": [],
+        "trace": {
+          "kpm_snapshot": {
+            "2": {
+              "DRB.UEThpDl": 0.6666222222222222,
+              "RRU.PrbTotDl": 1.0
+            },
+            "3": {
+              "DRB.UEThpDl": 2.839,
+              "RRU.PrbTotDl": 0.221
+            },
+            "4": {
+              "DRB.UEThpDl": 2.7582,
+              "RRU.PrbTotDl": 0.441
+            },
+            "5": {
+              "DRB.UEThpDl": 2.7655,
+              "RRU.PrbTotDl": 0.441
+            }
+          },
+          "steps": [
+            {
+              "decision": {
+                "from_cell": "2",
+                "to_cell": "3",
+                "ue_share_pct": 20
+              },
+              "rapp": "traffic_steering"
+            }
+          ]
+        },
+        "workflow": "traffic_steering"
+      },
+      "twin_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/twin_s5_traffic_steering",
+      "twin_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/twin_s5_noop",
+      "live_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/live_s105_traffic_steering",
+      "live_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_hotspot/runs/live_s105_noop"
+    },
+    {
+      "id": "d08",
+      "layout": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/hotspot.csv",
+      "layout_name": "hotspot",
+      "pair": 1,
+      "workflow": "qoe_steering",
+      "batch": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot",
+      "commands": [
+        "HO 7 3",
+        "HO 9 3"
+      ],
+      "policy": {
+        "commands": [
+          [
+            0.0,
+            "HO 7 3"
+          ],
+          [
+            0.0,
+            "HO 9 3"
+          ]
+        ],
+        "decided_on": "live state 0.5 s before t_act (live_s101_noop, sim 1.500 s)",
+        "shed": [
+          {
+            "avoid": [
+              2
+            ],
+            "from": 2,
+            "share": 0.2,
+            "to": 3
+          }
+        ],
+        "sleep_cells": [],
+        "state_age_s": 0.5,
+        "trace": {
+          "kpm_snapshot": {
+            "2": {
+              "DRB.UEThpDl": 0.6832444444444444,
+              "RRU.PrbTotDl": 1.0
+            },
+            "3": {
+              "DRB.UEThpDl": 2.839,
+              "RRU.PrbTotDl": 0.217
+            },
+            "4": {
+              "DRB.UEThpDl": 2.7443,
+              "RRU.PrbTotDl": 0.444
+            },
+            "5": {
+              "DRB.UEThpDl": 2.7487,
+              "RRU.PrbTotDl": 0.444
+            }
+          },
+          "steps": [
+            {
+              "decision": {
+                "at_risk_cells": [
+                  "2",
+                  "3",
+                  "4",
+                  "5"
+                ],
+                "model": "linear(thp, delay) emulation",
+                "mos_forecast": {
+                  "2": 1.21,
+                  "3": 2.5,
+                  "4": 2.45,
+                  "5": 2.45
+                }
+              },
+              "rapp": "qoe_prediction"
+            },
+            {
+              "decision": {
+                "from_cell": "2",
+                "to_cell": "3",
+                "ue_share_pct": 20
+              },
+              "rapp": "traffic_steering"
+            }
+          ]
+        },
+        "workflow": "qoe_steering"
+      },
+      "twin_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/twin_s1_qoe_steering",
+      "twin_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/twin_s1_noop",
+      "live_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/live_s101_qoe_steering",
+      "live_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/live_s101_noop"
+    },
+    {
+      "id": "d09",
+      "layout": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/hotspot.csv",
+      "layout_name": "hotspot",
+      "pair": 3,
+      "workflow": "qoe_steering",
+      "batch": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot",
+      "commands": [
+        "HO 13 3",
+        "HO 3 3",
+        "HO 9 3"
+      ],
+      "policy": {
+        "commands": [
+          [
+            0.0,
+            "HO 3 3"
+          ],
+          [
+            0.0,
+            "HO 9 3"
+          ],
+          [
+            0.0,
+            "HO 13 3"
+          ]
+        ],
+        "decided_on": "live state 0.5 s before t_act (live_s103_noop, sim 1.500 s)",
+        "shed": [
+          {
+            "avoid": [
+              2,
+              5
+            ],
+            "from": 2,
+            "share": 0.2,
+            "to": 3
+          },
+          {
+            "avoid": [
+              2,
+              5
+            ],
+            "from": 5,
+            "share": 0.2,
+            "to": 3
+          }
+        ],
+        "sleep_cells": [],
+        "state_age_s": 0.5,
+        "trace": {
+          "kpm_snapshot": {
+            "2": {
+              "DRB.UEThpDl": 0.6552666666666666,
+              "RRU.PrbTotDl": 1.0
+            },
+            "3": {
+              "DRB.UEThpDl": 2.839,
+              "RRU.PrbTotDl": 0.196
+            },
+            "4": {
+              "DRB.UEThpDl": 2.7655,
+              "RRU.PrbTotDl": 0.391
+            },
+            "5": {
+              "DRB.UEThpDl": 2.7580999999999998,
+              "RRU.PrbTotDl": 0.396
+            }
+          },
+          "steps": [
+            {
+              "decision": {
+                "at_risk_cells": [
+                  "2",
+                  "3",
+                  "4",
+                  "5"
+                ],
+                "model": "linear(thp, delay) emulation",
+                "mos_forecast": {
+                  "2": 1.19,
+                  "3": 2.5,
+                  "4": 2.46,
+                  "5": 2.45
+                }
+              },
+              "rapp": "qoe_prediction"
+            },
+            {
+              "decision": {
+                "from_cell": "2",
+                "to_cell": "3",
+                "ue_share_pct": 20
+              },
+              "rapp": "traffic_steering"
+            }
+          ]
+        },
+        "workflow": "qoe_steering"
+      },
+      "twin_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/twin_s3_qoe_steering",
+      "twin_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/twin_s3_noop",
+      "live_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/live_s103_qoe_steering",
+      "live_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/live_s103_noop"
+    },
+    {
+      "id": "d10",
+      "layout": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/hotspot.csv",
+      "layout_name": "hotspot",
+      "pair": 4,
+      "workflow": "qoe_steering",
+      "batch": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot",
+      "commands": [
+        "HO 1 3",
+        "HO 13 3",
+        "HO 2 3"
+      ],
+      "policy": {
+        "commands": [
+          [
+            0.0,
+            "HO 13 3"
+          ],
+          [
+            0.0,
+            "HO 2 3"
+          ],
+          [
+            0.0,
+            "HO 1 3"
+          ]
+        ],
+        "decided_on": "live state 0.5 s before t_act (live_s104_noop, sim 1.500 s)",
+        "shed": [
+          {
+            "avoid": [
+              5,
+              2
+            ],
+            "from": 5,
+            "share": 0.2,
+            "to": 3
+          },
+          {
+            "avoid": [
+              5,
+              2
+            ],
+            "from": 2,
+            "share": 0.2,
+            "to": 3
+          }
+        ],
+        "sleep_cells": [],
+        "state_age_s": 0.5,
+        "trace": {
+          "kpm_snapshot": {
+            "2": {
+              "DRB.UEThpDl": 0.6807777777777777,
+              "RRU.PrbTotDl": 1.0
+            },
+            "3": {
+              "DRB.UEThpDl": 2.839,
+              "RRU.PrbTotDl": 0.217
+            },
+            "4": {
+              "DRB.UEThpDl": 2.7655,
+              "RRU.PrbTotDl": 0.435
+            },
+            "5": {
+              "DRB.UEThpDl": 2.7411,
+              "RRU.PrbTotDl": 0.454
+            }
+          },
+          "steps": [
+            {
+              "decision": {
+                "at_risk_cells": [
+                  "5",
+                  "3",
+                  "4",
+                  "2"
+                ],
+                "model": "linear(thp, delay) emulation",
+                "mos_forecast": {
+                  "2": 1.21,
+                  "3": 2.5,
+                  "4": 2.46,
+                  "5": 2.44
+                }
+              },
+              "rapp": "qoe_prediction"
+            },
+            {
+              "decision": {
+                "from_cell": "2",
+                "to_cell": "3",
+                "ue_share_pct": 20
+              },
+              "rapp": "traffic_steering"
+            }
+          ]
+        },
+        "workflow": "qoe_steering"
+      },
+      "twin_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/twin_s4_qoe_steering",
+      "twin_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/twin_s4_noop",
+      "live_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/live_s104_qoe_steering",
+      "live_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/live_s104_noop"
+    },
+    {
+      "id": "d11",
+      "layout": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/hotspot.csv",
+      "layout_name": "hotspot",
+      "pair": 5,
+      "workflow": "qoe_steering",
+      "batch": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot",
+      "commands": [
+        "HO 1 3",
+        "HO 2 3"
+      ],
+      "policy": {
+        "commands": [
+          [
+            0.0,
+            "HO 1 3"
+          ],
+          [
+            0.0,
+            "HO 2 3"
+          ]
+        ],
+        "decided_on": "live state 0.5 s before t_act (live_s105_noop, sim 1.500 s)",
+        "shed": [
+          {
+            "avoid": [
+              2
+            ],
+            "from": 2,
+            "share": 0.2,
+            "to": 3
+          }
+        ],
+        "sleep_cells": [],
+        "state_age_s": 0.5,
+        "trace": {
+          "kpm_snapshot": {
+            "2": {
+              "DRB.UEThpDl": 0.6460444444444444,
+              "RRU.PrbTotDl": 1.0
+            },
+            "3": {
+              "DRB.UEThpDl": 2.839,
+              "RRU.PrbTotDl": 0.204
+            },
+            "4": {
+              "DRB.UEThpDl": 2.7628000000000004,
+              "RRU.PrbTotDl": 0.416
+            },
+            "5": {
+              "DRB.UEThpDl": 2.7655,
+              "RRU.PrbTotDl": 0.407
+            }
+          },
+          "steps": [
+            {
+              "decision": {
+                "at_risk_cells": [
+                  "4",
+                  "3",
+                  "2",
+                  "5"
+                ],
+                "model": "linear(thp, delay) emulation",
+                "mos_forecast": {
+                  "2": 1.19,
+                  "3": 2.5,
+                  "4": 2.46,
+                  "5": 2.46
+                }
+              },
+              "rapp": "qoe_prediction"
+            },
+            {
+              "decision": {
+                "from_cell": "2",
+                "to_cell": "3",
+                "ue_share_pct": 20
+              },
+              "rapp": "traffic_steering"
+            }
+          ]
+        },
+        "workflow": "qoe_steering"
+      },
+      "twin_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/twin_s5_qoe_steering",
+      "twin_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/twin_s5_noop",
+      "live_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/live_s105_qoe_steering",
+      "live_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/live_s105_noop"
+    },
+    {
+      "id": "d12",
+      "layout": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/hotspot.csv",
+      "layout_name": "hotspot",
+      "pair": 1,
+      "workflow": "traffic_steering",
+      "batch": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot",
+      "commands": [
+        "HO 1 3",
+        "HO 9 3"
+      ],
+      "policy": {
+        "commands": [
+          [
+            0.0,
+            "HO 9 3"
+          ],
+          [
+            0.0,
+            "HO 1 3"
+          ]
+        ],
+        "decided_on": "live state 0.5 s before t_act (live_s101_noop, sim 0.300 s)",
+        "shed": [
+          {
+            "from": 2,
+            "share": 0.2,
+            "to": 3
+          }
+        ],
+        "sleep_cells": [],
+        "state_age_s": 0.5,
+        "trace": {
+          "kpm_snapshot": {
+            "2": {
+              "DRB.UEThpDl": 0.46911111111111115,
+              "RRU.PrbTotDl": 1.0
+            },
+            "3": {
+              "DRB.UEThpDl": 2.8065,
+              "RRU.PrbTotDl": 0.243
+            },
+            "4": {
+              "DRB.UEThpDl": 2.7275,
+              "RRU.PrbTotDl": 0.486
+            },
+            "5": {
+              "DRB.UEThpDl": 2.7275,
+              "RRU.PrbTotDl": 0.486
+            }
+          },
+          "steps": [
+            {
+              "decision": {
+                "from_cell": "2",
+                "to_cell": "3",
+                "ue_share_pct": 20
+              },
+              "rapp": "traffic_steering"
+            }
+          ]
+        },
+        "workflow": "traffic_steering"
+      },
+      "twin_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/twin_s1_traffic_steering",
+      "twin_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/twin_s1_noop",
+      "live_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/live_s101_traffic_steering",
+      "live_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/live_s101_noop"
+    },
+    {
+      "id": "d13",
+      "layout": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/hotspot.csv",
+      "layout_name": "hotspot",
+      "pair": 3,
+      "workflow": "traffic_steering",
+      "batch": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot",
+      "commands": [
+        "HO 3 3",
+        "HO 9 3"
+      ],
+      "policy": {
+        "commands": [
+          [
+            0.0,
+            "HO 3 3"
+          ],
+          [
+            0.0,
+            "HO 9 3"
+          ]
+        ],
+        "decided_on": "live state 0.5 s before t_act (live_s103_noop, sim 1.500 s)",
+        "shed": [
+          {
+            "from": 2,
+            "share": 0.2,
+            "to": 3
+          }
+        ],
+        "sleep_cells": [],
+        "state_age_s": 0.5,
+        "trace": {
+          "kpm_snapshot": {
+            "2": {
+              "DRB.UEThpDl": 0.6552666666666666,
+              "RRU.PrbTotDl": 1.0
+            },
+            "3": {
+              "DRB.UEThpDl": 2.839,
+              "RRU.PrbTotDl": 0.196
+            },
+            "4": {
+              "DRB.UEThpDl": 2.7655,
+              "RRU.PrbTotDl": 0.391
+            },
+            "5": {
+              "DRB.UEThpDl": 2.7580999999999998,
+              "RRU.PrbTotDl": 0.396
+            }
+          },
+          "steps": [
+            {
+              "decision": {
+                "from_cell": "2",
+                "to_cell": "3",
+                "ue_share_pct": 20
+              },
+              "rapp": "traffic_steering"
+            }
+          ]
+        },
+        "workflow": "traffic_steering"
+      },
+      "twin_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/twin_s3_traffic_steering",
+      "twin_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/twin_s3_noop",
+      "live_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/live_s103_traffic_steering",
+      "live_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/live_s103_noop"
+    },
+    {
+      "id": "d14",
+      "layout": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/hotspot.csv",
+      "layout_name": "hotspot",
+      "pair": 4,
+      "workflow": "traffic_steering",
+      "batch": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot",
+      "commands": [
+        "HO 1 3",
+        "HO 2 3"
+      ],
+      "policy": {
+        "commands": [
+          [
+            0.0,
+            "HO 2 3"
+          ],
+          [
+            0.0,
+            "HO 1 3"
+          ]
+        ],
+        "decided_on": "live state 0.5 s before t_act (live_s104_noop, sim 1.500 s)",
+        "shed": [
+          {
+            "from": 2,
+            "share": 0.2,
+            "to": 3
+          }
+        ],
+        "sleep_cells": [],
+        "state_age_s": 0.5,
+        "trace": {
+          "kpm_snapshot": {
+            "2": {
+              "DRB.UEThpDl": 0.6807777777777777,
+              "RRU.PrbTotDl": 1.0
+            },
+            "3": {
+              "DRB.UEThpDl": 2.839,
+              "RRU.PrbTotDl": 0.217
+            },
+            "4": {
+              "DRB.UEThpDl": 2.7655,
+              "RRU.PrbTotDl": 0.435
+            },
+            "5": {
+              "DRB.UEThpDl": 2.7411,
+              "RRU.PrbTotDl": 0.454
+            }
+          },
+          "steps": [
+            {
+              "decision": {
+                "from_cell": "2",
+                "to_cell": "3",
+                "ue_share_pct": 20
+              },
+              "rapp": "traffic_steering"
+            }
+          ]
+        },
+        "workflow": "traffic_steering"
+      },
+      "twin_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/twin_s4_traffic_steering",
+      "twin_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/twin_s4_noop",
+      "live_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/live_s104_traffic_steering",
+      "live_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age0.5_hotspot/runs/live_s104_noop"
+    },
+    {
+      "id": "d15",
+      "layout": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/hotspot.csv",
+      "layout_name": "hotspot",
+      "pair": 3,
+      "workflow": "qoe_steering",
+      "batch": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age1.0_hotspot",
+      "commands": [
+        "HO 1 3",
+        "HO 9 3"
+      ],
+      "policy": {
+        "commands": [
+          [
+            0.0,
+            "HO 9 3"
+          ],
+          [
+            0.0,
+            "HO 1 3"
+          ]
+        ],
+        "decided_on": "live state 1 s before t_act (live_s103_noop, sim 1.000 s)",
+        "shed": [
+          {
+            "avoid": [
+              2
+            ],
+            "from": 2,
+            "share": 0.2,
+            "to": 3
+          }
+        ],
+        "sleep_cells": [],
+        "state_age_s": 1.0,
+        "trace": {
+          "kpm_snapshot": {
+            "2": {
+              "DRB.UEThpDl": 0.6878444444444445,
+              "RRU.PrbTotDl": 1.0
+            },
+            "3": {
+              "DRB.UEThpDl": 2.8334,
+              "RRU.PrbTotDl": 0.228
+            },
+            "4": {
+              "DRB.UEThpDl": 2.7555,
+              "RRU.PrbTotDl": 0.457
+            },
+            "5": {
+              "DRB.UEThpDl": 2.7580999999999998,
+              "RRU.PrbTotDl": 0.457
+            }
+          },
+          "steps": [
+            {
+              "decision": {
+                "at_risk_cells": [
+                  "2",
+                  "3",
+                  "4",
+                  "5"
+                ],
+                "model": "linear(thp, delay) emulation",
+                "mos_forecast": {
+                  "2": 1.21,
+                  "3": 2.5,
+                  "4": 2.45,
+                  "5": 2.45
+                }
+              },
+              "rapp": "qoe_prediction"
+            },
+            {
+              "decision": {
+                "from_cell": "2",
+                "to_cell": "3",
+                "ue_share_pct": 20
+              },
+              "rapp": "traffic_steering"
+            }
+          ]
+        },
+        "workflow": "qoe_steering"
+      },
+      "twin_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age1.0_hotspot/runs/twin_s3_qoe_steering",
+      "twin_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age1.0_hotspot/runs/twin_s3_noop",
+      "live_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age1.0_hotspot/runs/live_s103_qoe_steering",
+      "live_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age1.0_hotspot/runs/live_s103_noop"
+    },
+    {
+      "id": "d16",
+      "layout": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/hotspot.csv",
+      "layout_name": "hotspot",
+      "pair": 5,
+      "workflow": "qoe_steering",
+      "batch": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age1.0_hotspot",
+      "commands": [
+        "HO 1 3",
+        "HO 11 3",
+        "HO 2 3"
+      ],
+      "policy": {
+        "commands": [
+          [
+            0.0,
+            "HO 1 3"
+          ],
+          [
+            0.0,
+            "HO 2 3"
+          ],
+          [
+            0.0,
+            "HO 11 3"
+          ]
+        ],
+        "decided_on": "live state 1 s before t_act (live_s105_noop, sim 1.000 s)",
+        "shed": [
+          {
+            "avoid": [
+              2,
+              4
+            ],
+            "from": 2,
+            "share": 0.2,
+            "to": 3
+          },
+          {
+            "avoid": [
+              2,
+              4
+            ],
+            "from": 4,
+            "share": 0.2,
+            "to": 3
+          }
+        ],
+        "sleep_cells": [],
+        "state_age_s": 1.0,
+        "trace": {
+          "kpm_snapshot": {
+            "2": {
+              "DRB.UEThpDl": 0.685288888888889,
+              "RRU.PrbTotDl": 1.0
+            },
+            "3": {
+              "DRB.UEThpDl": 2.8334,
+              "RRU.PrbTotDl": 0.228
+            },
+            "4": {
+              "DRB.UEThpDl": 2.754,
+              "RRU.PrbTotDl": 0.457
+            },
+            "5": {
+              "DRB.UEThpDl": 2.7594000000000003,
+              "RRU.PrbTotDl": 0.462
+            }
+          },
+          "steps": [
+            {
+              "decision": {
+                "at_risk_cells": [
+                  "2",
+                  "3",
+                  "4",
+                  "5"
+                ],
+                "model": "linear(thp, delay) emulation",
+                "mos_forecast": {
+                  "2": 1.21,
+                  "3": 2.5,
+                  "4": 2.45,
+                  "5": 2.46
+                }
+              },
+              "rapp": "qoe_prediction"
+            },
+            {
+              "decision": {
+                "from_cell": "2",
+                "to_cell": "3",
+                "ue_share_pct": 20
+              },
+              "rapp": "traffic_steering"
+            }
+          ]
+        },
+        "workflow": "qoe_steering"
+      },
+      "twin_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age1.0_hotspot/runs/twin_s5_qoe_steering",
+      "twin_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age1.0_hotspot/runs/twin_s5_noop",
+      "live_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age1.0_hotspot/runs/live_s105_qoe_steering",
+      "live_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age1.0_hotspot/runs/live_s105_noop"
+    },
+    {
+      "id": "d17",
+      "layout": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/hotspot.csv",
+      "layout_name": "hotspot",
+      "pair": 2,
+      "workflow": "qoe_steering",
+      "batch": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age1.5_hotspot",
+      "commands": [
+        "HO 1 3",
+        "HO 13 3",
+        "HO 9 3"
+      ],
+      "policy": {
+        "commands": [
+          [
+            0.0,
+            "HO 9 3"
+          ],
+          [
+            0.0,
+            "HO 1 3"
+          ],
+          [
+            0.0,
+            "HO 13 3"
+          ]
+        ],
+        "decided_on": "live state 1.5 s before t_act (live_s102_noop, sim 0.500 s)",
+        "shed": [
+          {
+            "avoid": [
+              2,
+              5
+            ],
+            "from": 2,
+            "share": 0.2,
+            "to": 3
+          },
+          {
+            "avoid": [
+              2,
+              5
+            ],
+            "from": 5,
+            "share": 0.2,
+            "to": 3
+          }
+        ],
+        "sleep_cells": [],
+        "state_age_s": 1.5,
+        "trace": {
+          "kpm_snapshot": {
+            "2": {
+              "DRB.UEThpDl": 0.6412777777777777,
+              "RRU.PrbTotDl": 1.0
+            },
+            "3": {
+              "DRB.UEThpDl": 2.817,
+              "RRU.PrbTotDl": 0.217
+            },
+            "4": {
+              "DRB.UEThpDl": 2.746625,
+              "RRU.PrbTotDl": 0.434
+            },
+            "5": {
+              "DRB.UEThpDl": 2.73025,
+              "RRU.PrbTotDl": 0.452
+            }
+          },
+          "steps": [
+            {
+              "decision": {
+                "at_risk_cells": [
+                  "4",
+                  "3",
+                  "2",
+                  "5"
+                ],
+                "model": "linear(thp, delay) emulation",
+                "mos_forecast": {
+                  "2": 1.18,
+                  "3": 2.49,
+                  "4": 2.45,
+                  "5": 2.44
+                }
+              },
+              "rapp": "qoe_prediction"
+            },
+            {
+              "decision": {
+                "from_cell": "2",
+                "to_cell": "3",
+                "ue_share_pct": 20
+              },
+              "rapp": "traffic_steering"
+            }
+          ]
+        },
+        "workflow": "qoe_steering"
+      },
+      "twin_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age1.5_hotspot/runs/twin_s2_qoe_steering",
+      "twin_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age1.5_hotspot/runs/twin_s2_noop",
+      "live_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age1.5_hotspot/runs/live_s102_qoe_steering",
+      "live_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age1.5_hotspot/runs/live_s102_noop"
+    },
+    {
+      "id": "d18",
+      "layout": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/hotspot.csv",
+      "layout_name": "hotspot",
+      "pair": 4,
+      "workflow": "qoe_steering",
+      "batch": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age1.5_hotspot",
+      "commands": [
+        "HO 2 3",
+        "HO 6 3"
+      ],
+      "policy": {
+        "commands": [
+          [
+            0.0,
+            "HO 6 3"
+          ],
+          [
+            0.0,
+            "HO 2 3"
+          ]
+        ],
+        "decided_on": "live state 1.5 s before t_act (live_s104_noop, sim 0.500 s)",
+        "shed": [
+          {
+            "avoid": [
+              2
+            ],
+            "from": 2,
+            "share": 0.2,
+            "to": 3
+          }
+        ],
+        "sleep_cells": [],
+        "state_age_s": 1.5,
+        "trace": {
+          "kpm_snapshot": {
+            "2": {
+              "DRB.UEThpDl": 0.6733333333333333,
+              "RRU.PrbTotDl": 1.0
+            },
+            "3": {
+              "DRB.UEThpDl": 2.817,
+              "RRU.PrbTotDl": 0.217
+            },
+            "4": {
+              "DRB.UEThpDl": 2.746625,
+              "RRU.PrbTotDl": 0.434
+            },
+            "5": {
+              "DRB.UEThpDl": 2.746625,
+              "RRU.PrbTotDl": 0.434
+            }
+          },
+          "steps": [
+            {
+              "decision": {
+                "at_risk_cells": [
+                  "5",
+                  "3",
+                  "2",
+                  "4"
+                ],
+                "model": "linear(thp, delay) emulation",
+                "mos_forecast": {
+                  "2": 1.2,
+                  "3": 2.49,
+                  "4": 2.45,
+                  "5": 2.45
+                }
+              },
+              "rapp": "qoe_prediction"
+            },
+            {
+              "decision": {
+                "from_cell": "2",
+                "to_cell": "3",
+                "ue_share_pct": 20
+              },
+              "rapp": "traffic_steering"
+            }
+          ]
+        },
+        "workflow": "qoe_steering"
+      },
+      "twin_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age1.5_hotspot/runs/twin_s4_qoe_steering",
+      "twin_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age1.5_hotspot/runs/twin_s4_noop",
+      "live_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age1.5_hotspot/runs/live_s104_qoe_steering",
+      "live_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_age1.5_hotspot/runs/live_s104_noop"
+    },
+    {
+      "id": "d19",
+      "layout": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/night_energy.csv",
+      "layout_name": "night_energy",
+      "pair": 2,
+      "workflow": "energy_saving",
+      "batch": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_night",
+      "commands": [
+        "HO 7 2",
+        "HO 8 2",
+        "OFF 4",
+        "OFF 5"
+      ],
+      "policy": {
+        "commands": [
+          [
+            0.0,
+            "HO 7 2"
+          ],
+          [
+            0.3,
+            "OFF 4"
+          ],
+          [
+            0.0,
+            "HO 8 2"
+          ],
+          [
+            0.3,
+            "OFF 5"
+          ]
+        ],
+        "decided_on": "live state 0 s before t_act (live_s102_noop, sim 2.000 s)",
+        "shed": [],
+        "sleep_cells": [
+          4,
+          5
+        ],
+        "state_age_s": 0.0,
+        "trace": {
+          "kpm_snapshot": {
+            "2": {
+              "DRB.UEThpDl": 2.2828,
+              "RRU.PrbTotDl": 1.0
+            },
+            "4": {
+              "DRB.UEThpDl": 2.839,
+              "RRU.PrbTotDl": 0.145
+            },
+            "5": {
+              "DRB.UEThpDl": 2.839,
+              "RRU.PrbTotDl": 0.145
+            }
+          },
+          "steps": [
+            {
+              "decision": {
+                "cells_to_sleep": [
+                  "4",
+                  "5"
+                ],
+                "estimated_energy_saving_pct": 24.0,
+                "threshold_prb": 0.15
+              },
+              "rapp": "energy_saving"
+            }
+          ]
+        },
+        "workflow": "energy_saving"
+      },
+      "twin_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_night/runs/twin_s2_energy_saving",
+      "twin_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_night/runs/twin_s2_noop",
+      "live_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_night/runs/live_s102_energy_saving",
+      "live_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_night/runs/live_s102_noop"
+    },
+    {
+      "id": "d20",
+      "layout": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/night_energy.csv",
+      "layout_name": "night_energy",
+      "pair": 3,
+      "workflow": "energy_saving",
+      "batch": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_night",
+      "commands": [
+        "HO 7 2",
+        "HO 8 2",
+        "OFF 4",
+        "OFF 5"
+      ],
+      "policy": {
+        "commands": [
+          [
+            0.0,
+            "HO 7 2"
+          ],
+          [
+            0.3,
+            "OFF 4"
+          ],
+          [
+            0.0,
+            "HO 8 2"
+          ],
+          [
+            0.3,
+            "OFF 5"
+          ]
+        ],
+        "decided_on": "live state 0 s before t_act (live_s103_noop, sim 2.000 s)",
+        "shed": [],
+        "sleep_cells": [
+          4,
+          5
+        ],
+        "state_age_s": 0.0,
+        "trace": {
+          "kpm_snapshot": {
+            "2": {
+              "DRB.UEThpDl": 2.2477,
+              "RRU.PrbTotDl": 1.0
+            },
+            "4": {
+              "DRB.UEThpDl": 2.839,
+              "RRU.PrbTotDl": 0.148
+            },
+            "5": {
+              "DRB.UEThpDl": 2.839,
+              "RRU.PrbTotDl": 0.148
+            }
+          },
+          "steps": [
+            {
+              "decision": {
+                "cells_to_sleep": [
+                  "4",
+                  "5"
+                ],
+                "estimated_energy_saving_pct": 24.0,
+                "threshold_prb": 0.15
+              },
+              "rapp": "energy_saving"
+            }
+          ]
+        },
+        "workflow": "energy_saving"
+      },
+      "twin_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_night/runs/twin_s3_energy_saving",
+      "twin_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_night/runs/twin_s3_noop",
+      "live_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_night/runs/live_s103_energy_saving",
+      "live_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_night/runs/live_s103_noop"
+    },
+    {
+      "id": "d21",
+      "layout": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/night_energy.csv",
+      "layout_name": "night_energy",
+      "pair": 4,
+      "workflow": "energy_saving",
+      "batch": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_night",
+      "commands": [
+        "HO 7 2",
+        "HO 8 2",
+        "OFF 4",
+        "OFF 5"
+      ],
+      "policy": {
+        "commands": [
+          [
+            0.0,
+            "HO 7 2"
+          ],
+          [
+            0.3,
+            "OFF 4"
+          ],
+          [
+            0.0,
+            "HO 8 2"
+          ],
+          [
+            0.3,
+            "OFF 5"
+          ]
+        ],
+        "decided_on": "live state 0 s before t_act (live_s104_noop, sim 2.000 s)",
+        "shed": [],
+        "sleep_cells": [
+          4,
+          5
+        ],
+        "state_age_s": 0.0,
+        "trace": {
+          "kpm_snapshot": {
+            "2": {
+              "DRB.UEThpDl": 2.224266666666667,
+              "RRU.PrbTotDl": 1.0
+            },
+            "4": {
+              "DRB.UEThpDl": 2.839,
+              "RRU.PrbTotDl": 0.144
+            },
+            "5": {
+              "DRB.UEThpDl": 2.839,
+              "RRU.PrbTotDl": 0.144
+            }
+          },
+          "steps": [
+            {
+              "decision": {
+                "cells_to_sleep": [
+                  "4",
+                  "5"
+                ],
+                "estimated_energy_saving_pct": 24.0,
+                "threshold_prb": 0.15
+              },
+              "rapp": "energy_saving"
+            }
+          ]
+        },
+        "workflow": "energy_saving"
+      },
+      "twin_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_night/runs/twin_s4_energy_saving",
+      "twin_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_night/runs/twin_s4_noop",
+      "live_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_night/runs/live_s104_energy_saving",
+      "live_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_night/runs/live_s104_noop"
+    },
+    {
+      "id": "d22",
+      "layout": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/night_energy.csv",
+      "layout_name": "night_energy",
+      "pair": 5,
+      "workflow": "energy_saving",
+      "batch": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_night",
+      "commands": [
+        "HO 7 2",
+        "HO 8 2",
+        "OFF 4",
+        "OFF 5"
+      ],
+      "policy": {
+        "commands": [
+          [
+            0.0,
+            "HO 7 2"
+          ],
+          [
+            0.3,
+            "OFF 4"
+          ],
+          [
+            0.0,
+            "HO 8 2"
+          ],
+          [
+            0.3,
+            "OFF 5"
+          ]
+        ],
+        "decided_on": "live state 0 s before t_act (live_s105_noop, sim 2.000 s)",
+        "shed": [],
+        "sleep_cells": [
+          4,
+          5
+        ],
+        "state_age_s": 0.0,
+        "trace": {
+          "kpm_snapshot": {
+            "2": {
+              "DRB.UEThpDl": 2.1774999999999998,
+              "RRU.PrbTotDl": 1.0
+            },
+            "4": {
+              "DRB.UEThpDl": 2.839,
+              "RRU.PrbTotDl": 0.133
+            },
+            "5": {
+              "DRB.UEThpDl": 2.839,
+              "RRU.PrbTotDl": 0.133
+            }
+          },
+          "steps": [
+            {
+              "decision": {
+                "cells_to_sleep": [
+                  "4",
+                  "5"
+                ],
+                "estimated_energy_saving_pct": 24.0,
+                "threshold_prb": 0.15
+              },
+              "rapp": "energy_saving"
+            }
+          ]
+        },
+        "workflow": "energy_saving"
+      },
+      "twin_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_night/runs/twin_s5_energy_saving",
+      "twin_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_night/runs/twin_s5_noop",
+      "live_run": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_night/runs/live_s105_energy_saving",
+      "live_noop": "/home/dang/flexric/build/examples/xApp/python3/evaluation/twin/build/runs/20261102T081207Z_D2S_night/runs/live_s105_noop"
+    }
+  ],
+  "parallel": 4,
+  "ns3_bin_sha256": "75df6efbd2831c4d6198130f030e4074e7e443777dd6d3cc5553d96010c29905",
+  "host_at_start": {
+    "time": "2026-11-03T08:58:37+0200",
+    "loadavg": [
+      0.76123046875,
+      0.7177734375,
+      0.6640625
+    ],
+    "cpu_count": 16,
+    "processes": [
+      {
+        "pid": 855561,
+        "elapsed_s": 513490,
+        "cmd": "/home/dang/flexric-taap/build/examples/xApp/c/appweaver/xapp_kpm_capture -c /home/dang/flexric-taap/install/etc/flexric/flexric.conf -p /home/dang/flexric-taap/install/lib/flexric/"
+      },
+      {
+        "pid": 2030955,
+        "elapsed_s": 252592,
+        "cmd": "/home/dang/flexric/build/examples/emulator/agent/emu_agent_gnb"
+      },
+      {
+        "pid": 2031007,
+        "elapsed_s": 252589,
+        "cmd": "/home/dang/anaconda3/envs/flexric-py310/bin/python /home/dang/flexric/build/examples/xApp/python3/flexric_agent_portal.py"
+      },
+      {
+        "pid": 2031017,
+        "elapsed_s": 252588,
+        "cmd": "/home/dang/anaconda3/envs/flexric-py310/bin/python -m uvicorn xapp_rpc_server:app --host 0.0.0.0 --port 8090 --app-dir /home/dang/flexric/build/examples/xApp/python3"
+      },
+      {
+        "pid": 2031068,
+        "elapsed_s": 252586,
+        "cmd": "/home/dang/anaconda3/envs/flexric-py310/bin/python -u /home/dang/flexric/build/examples/xApp/python3/xapp_kpm_rc_suite.py --profile kpm --period-ms 1000 --duration-s 0 --kpm-metrics all"
+      },
+      {
+        "pid": 2031120,
+        "elapsed_s": 252585,
+        "cmd": "/home/dang/flexric/build/examples/ric/nearRT-RIC -c /tmp/flexric_twin_emu/flexric_twin.conf -p /usr/local/lib/flexric/"
+      },
+      {
+        "pid": 2031136,
+        "elapsed_s": 252585,
+        "cmd": "/home/dang/flexric/build/examples/emulator/agent/emu_agent_gnb -c /tmp/flexric_twin_emu/flexric_twin.conf -p /usr/local/lib/flexric/"
+      }
+    ],
+    "harness_labels": []
+  },
+  "protocol": "each distinct decision's UE-level RC commands re-executed on twin seeds pair+offset with the same layout; no-ops of those seeds run once per layout; live outcomes reused from the D2S batches"
+}

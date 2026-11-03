@@ -1,0 +1,865 @@
+{
+ "summary": {
+  "decisions": 23,
+  "complete_k3": 23,
+  "steering": {
+   "n": 19,
+   "live_accept": 16,
+   "single": {
+    "agree": 14,
+    "agree_ci95": [
+     51.2,
+     88.2
+    ],
+    "tp": 12,
+    "fp": 1,
+    "fn": 4,
+    "tn": 2,
+    "accepted": 13,
+    "precision": 0.923
+   },
+   "mean": {
+    "agree": 15,
+    "agree_ci95": [
+     56.7,
+     91.5
+    ],
+    "tp": 13,
+    "fp": 1,
+    "fn": 3,
+    "tn": 2,
+    "accepted": 14,
+    "precision": 0.929
+   },
+   "margin": {
+    "agree": 12,
+    "agree_ci95": [
+     41.0,
+     80.9
+    ],
+    "tp": 9,
+    "fp": 0,
+    "fn": 7,
+    "tn": 3,
+    "accepted": 9,
+    "precision": 1.0
+   }
+  },
+  "energy": {
+   "n": 4,
+   "live_accept": 4,
+   "single": {
+    "agree": 4,
+    "agree_ci95": [
+     51.0,
+     100.0
+    ],
+    "tp": 4,
+    "fp": 0,
+    "fn": 0,
+    "tn": 0,
+    "accepted": 4,
+    "precision": 1.0
+   },
+   "mean": {
+    "agree": 4,
+    "agree_ci95": [
+     51.0,
+     100.0
+    ],
+    "tp": 4,
+    "fp": 0,
+    "fn": 0,
+    "tn": 0,
+    "accepted": 4,
+    "precision": 1.0
+   },
+   "margin": {
+    "agree": 4,
+    "agree_ci95": [
+     51.0,
+     100.0
+    ],
+    "tp": 4,
+    "fp": 0,
+    "fn": 0,
+    "tn": 0,
+    "accepted": 4,
+    "precision": 1.0
+   }
+  },
+  "all": {
+   "n": 23,
+   "live_accept": 20,
+   "single": {
+    "agree": 18,
+    "agree_ci95": [
+     58.1,
+     90.3
+    ],
+    "tp": 16,
+    "fp": 1,
+    "fn": 4,
+    "tn": 2,
+    "accepted": 17,
+    "precision": 0.941
+   },
+   "mean": {
+    "agree": 19,
+    "agree_ci95": [
+     62.9,
+     93.0
+    ],
+    "tp": 17,
+    "fp": 1,
+    "fn": 3,
+    "tn": 2,
+    "accepted": 18,
+    "precision": 0.944
+   },
+   "margin": {
+    "agree": 16,
+    "agree_ci95": [
+     49.1,
+     84.4
+    ],
+    "tp": 13,
+    "fp": 0,
+    "fn": 7,
+    "tn": 3,
+    "accepted": 13,
+    "precision": 1.0
+   }
+  }
+ },
+ "rows": [
+  {
+   "id": "d00",
+   "layout": "hotspot",
+   "pair": 1,
+   "workflow": "qoe_steering",
+   "commands": [
+    "HO 1 3",
+    "HO 4 3"
+   ],
+   "k": 3,
+   "twin_members": {
+    "hot_prb_reduction_pct": [
+     18.150047527288237,
+     20.888994191423713,
+     24.75346532881817
+    ],
+    "throughput_loss_pct": [
+     -9.221188294981847,
+     1.038320399446545,
+     -0.42431288880364726
+    ]
+   },
+   "live": {
+    "hot_prb_reduction_pct": 18.1578122304437,
+    "throughput_loss_pct": -1.6688446367985064
+   },
+   "live_accept": true,
+   "single": true,
+   "mean": true,
+   "margin": true
+  },
+  {
+   "id": "d01",
+   "layout": "hotspot",
+   "pair": 2,
+   "workflow": "qoe_steering",
+   "commands": [
+    "HO 1 3",
+    "HO 9 3"
+   ],
+   "k": 3,
+   "twin_members": {
+    "hot_prb_reduction_pct": [
+     20.79740561846085,
+     15.122096776499667,
+     24.138626562797743
+    ],
+    "throughput_loss_pct": [
+     -10.085818880153646,
+     5.73072434167334,
+     -9.885057471264362
+    ]
+   },
+   "live": {
+    "hot_prb_reduction_pct": 21.33128517451557,
+    "throughput_loss_pct": -10.363645086233776
+   },
+   "live_accept": true,
+   "single": true,
+   "mean": true,
+   "margin": true
+  },
+  {
+   "id": "d02",
+   "layout": "hotspot",
+   "pair": 3,
+   "workflow": "qoe_steering",
+   "commands": [
+    "HO 11 3",
+    "HO 2 3",
+    "HO 9 3"
+   ],
+   "k": 3,
+   "twin_members": {
+    "hot_prb_reduction_pct": [
+     37.09699017480576,
+     39.90307551961889,
+     32.99155991238621
+    ],
+    "throughput_loss_pct": [
+     1.8504221954161741,
+     -4.147774175410058,
+     10.370174319983628
+    ]
+   },
+   "live": {
+    "hot_prb_reduction_pct": 27.5161765373841,
+    "throughput_loss_pct": 14.613297476408864
+   },
+   "live_accept": false,
+   "single": true,
+   "mean": true,
+   "margin": false
+  },
+  {
+   "id": "d03",
+   "layout": "hotspot",
+   "pair": 4,
+   "workflow": "qoe_steering",
+   "commands": [
+    "HO 13 3",
+    "HO 2 3",
+    "HO 9 3"
+   ],
+   "k": 3,
+   "twin_members": {
+    "hot_prb_reduction_pct": [
+     26.1536773076118,
+     34.626820696258925,
+     33.61946963674979
+    ],
+    "throughput_loss_pct": [
+     6.0920310713299815,
+     3.6755447361162914,
+     -6.484080712109222
+    ]
+   },
+   "live": {
+    "hot_prb_reduction_pct": 26.538919800424733,
+    "throughput_loss_pct": 2.6862700420929
+   },
+   "live_accept": true,
+   "single": false,
+   "mean": true,
+   "margin": false
+  },
+  {
+   "id": "d04",
+   "layout": "hotspot",
+   "pair": 5,
+   "workflow": "qoe_steering",
+   "commands": [
+    "HO 1 3",
+    "HO 12 3",
+    "HO 3 3"
+   ],
+   "k": 3,
+   "twin_members": {
+    "hot_prb_reduction_pct": [
+     59.59622471564574,
+     58.771877875386494,
+     40.68942832927333
+    ],
+    "throughput_loss_pct": [
+     6.137907853352856,
+     14.744613168477287,
+     26.808592007138756
+    ]
+   },
+   "live": {
+    "hot_prb_reduction_pct": 56.8820254590223,
+    "throughput_loss_pct": 5.123574945525895
+   },
+   "live_accept": false,
+   "single": false,
+   "mean": false,
+   "margin": false
+  },
+  {
+   "id": "d05",
+   "layout": "hotspot",
+   "pair": 3,
+   "workflow": "traffic_steering",
+   "commands": [
+    "HO 2 3",
+    "HO 9 3"
+   ],
+   "k": 3,
+   "twin_members": {
+    "hot_prb_reduction_pct": [
+     20.56387086795163,
+     16.72260181070884,
+     17.002820754598616
+    ],
+    "throughput_loss_pct": [
+     -10.357056694813023,
+     -6.170816035986459,
+     -10.310022496781873
+    ]
+   },
+   "live": {
+    "hot_prb_reduction_pct": 19.374677393484316,
+    "throughput_loss_pct": -9.755804739837181
+   },
+   "live_accept": true,
+   "single": true,
+   "mean": true,
+   "margin": true
+  },
+  {
+   "id": "d06",
+   "layout": "hotspot",
+   "pair": 4,
+   "workflow": "traffic_steering",
+   "commands": [
+    "HO 2 3",
+    "HO 9 3"
+   ],
+   "k": 3,
+   "twin_members": {
+    "hot_prb_reduction_pct": [
+     14.61838274314798,
+     23.83927976585369,
+     18.55606047448709
+    ],
+    "throughput_loss_pct": [
+     0.8891605220614281,
+     -10.099653431507743,
+     -9.64634468197412
+    ]
+   },
+   "live": {
+    "hot_prb_reduction_pct": 14.730283207226442,
+    "throughput_loss_pct": -9.97157830357249
+   },
+   "live_accept": true,
+   "single": true,
+   "mean": true,
+   "margin": true
+  },
+  {
+   "id": "d07",
+   "layout": "hotspot",
+   "pair": 5,
+   "workflow": "traffic_steering",
+   "commands": [
+    "HO 1 3",
+    "HO 3 3"
+   ],
+   "k": 3,
+   "twin_members": {
+    "hot_prb_reduction_pct": [
+     54.62644614403818,
+     63.36544589986886,
+     29.31848599748915
+    ],
+    "throughput_loss_pct": [
+     7.181100093635203,
+     0.8018726366964889,
+     8.866084517815038
+    ]
+   },
+   "live": {
+    "hot_prb_reduction_pct": 57.4861539117688,
+    "throughput_loss_pct": 0.8860317574969492
+   },
+   "live_accept": true,
+   "single": false,
+   "mean": false,
+   "margin": false
+  },
+  {
+   "id": "d08",
+   "layout": "hotspot",
+   "pair": 1,
+   "workflow": "qoe_steering",
+   "commands": [
+    "HO 7 3",
+    "HO 9 3"
+   ],
+   "k": 3,
+   "twin_members": {
+    "hot_prb_reduction_pct": [
+     -11.717813153194907,
+     21.220123536621145,
+     -17.580289744430413
+    ],
+    "throughput_loss_pct": [
+     -23.554305224939295,
+     -10.326655838296329,
+     -22.422658787711708
+    ]
+   },
+   "live": {
+    "hot_prb_reduction_pct": -11.583190914149611,
+    "throughput_loss_pct": -10.876263322583364
+   },
+   "live_accept": false,
+   "single": false,
+   "mean": false,
+   "margin": false
+  },
+  {
+   "id": "d09",
+   "layout": "hotspot",
+   "pair": 3,
+   "workflow": "qoe_steering",
+   "commands": [
+    "HO 13 3",
+    "HO 3 3",
+    "HO 9 3"
+   ],
+   "k": 3,
+   "twin_members": {
+    "hot_prb_reduction_pct": [
+     35.04218548974398,
+     29.752351671382044,
+     30.61980727987232
+    ],
+    "throughput_loss_pct": [
+     2.460796139927632,
+     -4.125043367987859,
+     -5.7517173345524215
+    ]
+   },
+   "live": {
+    "hot_prb_reduction_pct": 30.57728254079197,
+    "throughput_loss_pct": -6.435037337623348
+   },
+   "live_accept": true,
+   "single": true,
+   "mean": true,
+   "margin": true
+  },
+  {
+   "id": "d10",
+   "layout": "hotspot",
+   "pair": 4,
+   "workflow": "qoe_steering",
+   "commands": [
+    "HO 1 3",
+    "HO 13 3",
+    "HO 2 3"
+   ],
+   "k": 3,
+   "twin_members": {
+    "hot_prb_reduction_pct": [
+     49.41973449642523,
+     61.76989180783224,
+     59.60638790172916
+    ],
+    "throughput_loss_pct": [
+     3.9686920862741943,
+     5.371212030363719,
+     4.886153698505253
+    ]
+   },
+   "live": {
+    "hot_prb_reduction_pct": 59.430809385667956,
+    "throughput_loss_pct": 4.322016621295894
+   },
+   "live_accept": true,
+   "single": true,
+   "mean": true,
+   "margin": false
+  },
+  {
+   "id": "d11",
+   "layout": "hotspot",
+   "pair": 5,
+   "workflow": "qoe_steering",
+   "commands": [
+    "HO 1 3",
+    "HO 2 3"
+   ],
+   "k": 3,
+   "twin_members": {
+    "hot_prb_reduction_pct": [
+     63.3354266072258,
+     60.21747243354837,
+     42.21975232394388
+    ],
+    "throughput_loss_pct": [
+     0.7646875225084593,
+     3.6096272732729258,
+     17.062910319332023
+    ]
+   },
+   "live": {
+    "hot_prb_reduction_pct": 60.131209741336946,
+    "throughput_loss_pct": 0.213081006898037
+   },
+   "live_accept": true,
+   "single": true,
+   "mean": false,
+   "margin": false
+  },
+  {
+   "id": "d12",
+   "layout": "hotspot",
+   "pair": 1,
+   "workflow": "traffic_steering",
+   "commands": [
+    "HO 1 3",
+    "HO 9 3"
+   ],
+   "k": 3,
+   "twin_members": {
+    "hot_prb_reduction_pct": [
+     21.608627140282742,
+     17.31774980678751,
+     24.210929605600228
+    ],
+    "throughput_loss_pct": [
+     -0.8223328283921253,
+     -10.161823978824534,
+     -9.989332246580922
+    ]
+   },
+   "live": {
+    "hot_prb_reduction_pct": 17.752556892447345,
+    "throughput_loss_pct": -9.61863543177759
+   },
+   "live_accept": true,
+   "single": true,
+   "mean": true,
+   "margin": true
+  },
+  {
+   "id": "d13",
+   "layout": "hotspot",
+   "pair": 3,
+   "workflow": "traffic_steering",
+   "commands": [
+    "HO 3 3",
+    "HO 9 3"
+   ],
+   "k": 3,
+   "twin_members": {
+    "hot_prb_reduction_pct": [
+     17.240149140256364,
+     16.61444787814725,
+     9.508820979999074
+    ],
+    "throughput_loss_pct": [
+     -10.197828709288297,
+     -9.436874155071955,
+     -9.370451018370368
+    ]
+   },
+   "live": {
+    "hot_prb_reduction_pct": 6.502806166693368,
+    "throughput_loss_pct": -9.0342641726895
+   },
+   "live_accept": true,
+   "single": true,
+   "mean": true,
+   "margin": true
+  },
+  {
+   "id": "d14",
+   "layout": "hotspot",
+   "pair": 4,
+   "workflow": "traffic_steering",
+   "commands": [
+    "HO 1 3",
+    "HO 2 3"
+   ],
+   "k": 3,
+   "twin_members": {
+    "hot_prb_reduction_pct": [
+     49.07109360602813,
+     63.21971273406715,
+     57.143909578669266
+    ],
+    "throughput_loss_pct": [
+     -0.5185126769449292,
+     0.46768758469343924,
+     0.9321240912689863
+    ]
+   },
+   "live": {
+    "hot_prb_reduction_pct": 60.07760831491025,
+    "throughput_loss_pct": 0.5744300670368386
+   },
+   "live_accept": true,
+   "single": true,
+   "mean": true,
+   "margin": true
+  },
+  {
+   "id": "d15",
+   "layout": "hotspot",
+   "pair": 3,
+   "workflow": "qoe_steering",
+   "commands": [
+    "HO 1 3",
+    "HO 9 3"
+   ],
+   "k": 3,
+   "twin_members": {
+    "hot_prb_reduction_pct": [
+     20.43956255413527,
+     23.83288541416205,
+     18.19971324756921
+    ],
+    "throughput_loss_pct": [
+     -10.072376357056696,
+     -9.68930575328701,
+     -10.104303261431863
+    ]
+   },
+   "live": {
+    "hot_prb_reduction_pct": 20.623637799719788,
+    "throughput_loss_pct": -10.13398324008932
+   },
+   "live_accept": true,
+   "single": true,
+   "mean": true,
+   "margin": true
+  },
+  {
+   "id": "d16",
+   "layout": "hotspot",
+   "pair": 5,
+   "workflow": "qoe_steering",
+   "commands": [
+    "HO 1 3",
+    "HO 11 3",
+    "HO 2 3"
+   ],
+   "k": 3,
+   "twin_members": {
+    "hot_prb_reduction_pct": [
+     58.551802064851046,
+     61.110698845043,
+     44.919386495628295
+    ],
+    "throughput_loss_pct": [
+     5.287988283594628,
+     5.105335814176824,
+     25.365360625734134
+    ]
+   },
+   "live": {
+    "hot_prb_reduction_pct": 59.67965517009063,
+    "throughput_loss_pct": 4.3001432578520875
+   },
+   "live_accept": true,
+   "single": false,
+   "mean": false,
+   "margin": false
+  },
+  {
+   "id": "d17",
+   "layout": "hotspot",
+   "pair": 2,
+   "workflow": "qoe_steering",
+   "commands": [
+    "HO 1 3",
+    "HO 13 3",
+    "HO 9 3"
+   ],
+   "k": 3,
+   "twin_members": {
+    "hot_prb_reduction_pct": [
+     36.88221314411415,
+     26.29142160615821,
+     38.87987287400494
+    ],
+    "throughput_loss_pct": [
+     0.8605893296525317,
+     16.262127069808148,
+     -7.983390503701022
+    ]
+   },
+   "live": {
+    "hot_prb_reduction_pct": 36.94912994477732,
+    "throughput_loss_pct": -7.323274724747536
+   },
+   "live_accept": true,
+   "single": true,
+   "mean": true,
+   "margin": false
+  },
+  {
+   "id": "d18",
+   "layout": "hotspot",
+   "pair": 4,
+   "workflow": "qoe_steering",
+   "commands": [
+    "HO 2 3",
+    "HO 6 3"
+   ],
+   "k": 3,
+   "twin_members": {
+    "hot_prb_reduction_pct": [
+     18.83052936854596,
+     27.545400186871195,
+     20.153887746623916
+    ],
+    "throughput_loss_pct": [
+     8.761484168605334,
+     -9.654750626581437,
+     -8.67103337412126
+    ]
+   },
+   "live": {
+    "hot_prb_reduction_pct": 20.27654792688954,
+    "throughput_loss_pct": -7.507165385491738
+   },
+   "live_accept": true,
+   "single": false,
+   "mean": true,
+   "margin": false
+  },
+  {
+   "id": "d19",
+   "layout": "night_energy",
+   "pair": 2,
+   "workflow": "energy_saving",
+   "commands": [
+    "HO 7 2",
+    "HO 8 2",
+    "OFF 4",
+    "OFF 5"
+   ],
+   "k": 3,
+   "twin_members": {
+    "energy_saving_pct": [
+     41.10827200618605,
+     41.63566984750225,
+     41.691625454741676
+    ],
+    "remaining_prb_increase_pct": [
+     -6.875422767244895,
+     -9.347286350339168,
+     -9.48520719539417
+    ]
+   },
+   "live": {
+    "energy_saving_pct": 42.124638251091916,
+    "remaining_prb_increase_pct": -11.67943684337366
+   },
+   "live_accept": true,
+   "single": true,
+   "mean": true,
+   "margin": true
+  },
+  {
+   "id": "d20",
+   "layout": "night_energy",
+   "pair": 3,
+   "workflow": "energy_saving",
+   "commands": [
+    "HO 7 2",
+    "HO 8 2",
+    "OFF 4",
+    "OFF 5"
+   ],
+   "k": 3,
+   "twin_members": {
+    "energy_saving_pct": [
+     41.83436487658952,
+     41.2284394065761,
+     42.12162272014709
+    ],
+    "remaining_prb_increase_pct": [
+     -10.265987795488266,
+     -7.385639152387976,
+     -11.552941979906244
+    ]
+   },
+   "live": {
+    "energy_saving_pct": 40.680842902502995,
+    "remaining_prb_increase_pct": -4.749620072729034
+   },
+   "live_accept": true,
+   "single": true,
+   "mean": true,
+   "margin": true
+  },
+  {
+   "id": "d21",
+   "layout": "night_energy",
+   "pair": 4,
+   "workflow": "energy_saving",
+   "commands": [
+    "HO 7 2",
+    "HO 8 2",
+    "OFF 4",
+    "OFF 5"
+   ],
+   "k": 3,
+   "twin_members": {
+    "energy_saving_pct": [
+     41.56483667598597,
+     40.74315566452532,
+     41.179551488960904
+    ],
+    "remaining_prb_increase_pct": [
+     -8.968792998762993,
+     -4.927760256544953,
+     -7.246631347777857
+    ]
+   },
+   "live": {
+    "energy_saving_pct": 41.13872525075377,
+    "remaining_prb_increase_pct": -6.612344239452627
+   },
+   "live_accept": true,
+   "single": true,
+   "mean": true,
+   "margin": true
+  },
+  {
+   "id": "d22",
+   "layout": "night_energy",
+   "pair": 5,
+   "workflow": "energy_saving",
+   "commands": [
+    "HO 7 2",
+    "HO 8 2",
+    "OFF 4",
+    "OFF 5"
+   ],
+   "k": 3,
+   "twin_members": {
+    "energy_saving_pct": [
+     41.35671158445343,
+     41.91821946770503,
+     41.92795888672177
+    ],
+    "remaining_prb_increase_pct": [
+     -8.11897363502904,
+     -10.569613297950655,
+     -10.570866613836124
+    ]
+   },
+   "live": {
+    "energy_saving_pct": 41.84100191276653,
+    "remaining_prb_increase_pct": -10.10817826265303
+   },
+   "live_accept": true,
+   "single": true,
+   "mean": true,
+   "margin": true
+  }
+ ]
+}

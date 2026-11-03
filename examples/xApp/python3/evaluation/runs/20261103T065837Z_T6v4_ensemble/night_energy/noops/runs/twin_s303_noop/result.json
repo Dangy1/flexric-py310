@@ -1,0 +1,111 @@
+{
+  "act_sim_time_s": 2.0003,
+  "chain": [
+    "KPM"
+  ],
+  "clock": "sim-time collectStartTime",
+  "commands_dispatched_sim_s": [],
+  "first_report_sim_s": 0.3,
+  "indications_per_gnb": {
+    "2": 78,
+    "3": 0,
+    "4": 78,
+    "5": 78
+  },
+  "kpi": {
+    "dl_buffer_kbytes": 0.0005740740740740741,
+    "dl_delay_ms": 1.1043924945973957,
+    "dl_throughput_mbps": 29.419321904761905,
+    "energy_j_per_s": 4806.698148148148,
+    "prb_used_dl": 88.47919805555554
+  },
+  "kpi_e2": {
+    "dl_buffer_kbytes": 0.0005740740740740741,
+    "dl_throughput_mbps": 19.111444444444444,
+    "energy_j_per_s": 4806.698148148148,
+    "prb_used_dl": 83.03703703703704
+  },
+  "kpi_per_cell": {
+    "2": {
+      "dl_buffer_kbytes": 0.0005740740740740741,
+      "energy_j_per_s": 2303.324074074074,
+      "prb_used_dl": 68.61654016666667
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.0,
+      "energy_j_per_s": 665.7351851851852,
+      "prb_used_dl": 0.0
+    },
+    "4": {
+      "dl_buffer_kbytes": 0.0,
+      "energy_j_per_s": 918.885185185185,
+      "prb_used_dl": 9.934086888888881
+    },
+    "5": {
+      "dl_buffer_kbytes": 0.0,
+      "energy_j_per_s": 918.7537037037038,
+      "prb_used_dl": 9.928570999999991
+    }
+  },
+  "kpi_per_cell_e2": {
+    "2": {
+      "dl_buffer_kbytes": 0.0005740740740740741,
+      "dl_throughput_mbps": 13.434944444444445,
+      "energy_j_per_s": 2303.324074074074,
+      "prb_used_dl": 65.0
+    },
+    "3": {
+      "dl_buffer_kbytes": 0.0,
+      "dl_throughput_mbps": 0.0,
+      "energy_j_per_s": 665.7351851851852,
+      "prb_used_dl": 0.0
+    },
+    "4": {
+      "dl_buffer_kbytes": 0.0,
+      "dl_throughput_mbps": 2.8375,
+      "energy_j_per_s": 918.885185185185,
+      "prb_used_dl": 9.037037037037036
+    },
+    "5": {
+      "dl_buffer_kbytes": 0.0,
+      "dl_throughput_mbps": 2.839,
+      "energy_j_per_s": 918.7537037037038,
+      "prb_used_dl": 9.0
+    }
+  },
+  "kpi_source": {
+    "version": "ns3-trace-v2"
+  },
+  "kpi_trace_window": {
+    "du_logger_writes": 54,
+    "pdcp_epochs_s": [
+      2.5,
+      7.75
+    ],
+    "prb_method": "logger (E2 reports grid-aligned: same window)"
+  },
+  "kpi_window_bins": [
+    54,
+    54
+  ],
+  "kpi_window_sim_s": [
+    2.5,
+    7.9
+  ],
+  "kpm_history_at_act_s": 1.7003,
+  "last_report_sim_s": 8.0,
+  "load_avg_end": 3.84619140625,
+  "load_avg_start": 3.97021484375,
+  "n_ues": 8,
+  "novalue_rows": 0,
+  "ns3_returncode": 0,
+  "ok": true,
+  "rc_acks": [],
+  "role": "twin",
+  "seed": 303,
+  "sim_time_s": 8.0,
+  "t_act_s": 2.0,
+  "ue_position_file": "/home/dang/flexric/examples/xApp/python3/evaluation/twin/layouts/night_energy.csv",
+  "wall_s": 221.5,
+  "workflow": "noop"
+}

@@ -104,7 +104,26 @@ margin; four of the five misses are conservative rejections, one is a false acce
 snapshot does not affect the twin's accuracy, since the twin rehearses whatever was decided; it changes
 which users are moved in 9 of the 10 seed and workflow pairs, and the live outcome varies per seed with no
 trend over 0–1.5 s (Figure R1(d)), i.e. the steering decision is sensitive to sub-second KPM fluctuations.
-Energy saving is predicted within 1 point (4 decisions). With random rather than fixed user placement
+Energy saving is predicted within 1 point (4 decisions).
+
+Why the verdict does not improve, and what the twin can and cannot gate: we rehearsed each of the 23 distinct
+decisions on two further twin seeds (`evaluation/twin/run_twin_ensemble.py`, run
+`20261103T065837Z_T6v4_ensemble`; the gate rules were written to the manifest before any run). Identical twin
+re-runs agree within 1 point, but across twin seeds the gate quantities of a steering decision spread by
+6 points (sd), as much as the twin's error against live (5 points) and the rule's 5% throughput margin; the
+live outcome lies within the ensemble mean ± 2 sd in 19/19 (throughput) and 18/19 (source-cell PRB)
+decisions, so the spread is a calibrated uncertainty. Verdict agreement with live:
+
+| Twin gate rule | Steering (19) | Energy saving (4) | False accepts | Beneficial decisions rejected |
+|---|---|---|---|---|
+| single twin run | 14/19 | 4/4 | 1 | 4 of 16 |
+| mean of 3 twin seeds | 15/19 | 4/4 | 1 | 3 of 16 |
+| mean, one sd margin (primary, pre-declared) | 12/19 | 4/4 | 0 | 7 of 16 |
+
+A steering effect of a few percent is therefore inside the variability the twin cannot know (the live
+network's mobility and fading); the conservative rule never lets a harmful decision through but rejects about
+half of the beneficial ones. A twin can gate effects larger than its seed spread (energy saving: 41% energy,
+−25% users served) and should report its uncertainty for smaller ones; we state this in §IV-D. With random rather than fixed user placement
 (`evaluation/TWIN_VALIDATION.md`, 9 seed pairs per setting) the throughput error is 6–12 points without
 position sync and 3.8–6.7 points with it. One ns-3 twin prediction takes about 5 min, suitable for Non-RT
 but not Near-RT policies.
@@ -222,7 +241,10 @@ ns-3 instance) predicts KPI effects, and its fidelity is measured (R1.2, Figure 
 decision made on the live KPM, it is within 3–7 points for steering and within 1 point for energy saving;
 deciding on its own state it errs by 10–30 points. Its accept/reject verdict matches the live outcome in
 74% of distinct steering decisions, limited by a rule margin as small as the twin's remaining error. The
-ns-3 twin takes about 5 min per prediction, so it validates Non-RT policies.
+ns-3 twin takes about 5 min per prediction, so it validates Non-RT policies. Rehearsing each decision on three
+twin seeds shows that the twin's remaining error equals its seed-to-seed spread (6 points for steering), a
+calibrated uncertainty; a gate that demands a one-sd margin admits no harmful decision but rejects about half of
+the beneficial steering decisions (R1.2).
 
 *Changes:* §III-A, §IV-D.
 

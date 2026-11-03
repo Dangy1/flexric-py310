@@ -126,6 +126,15 @@ steering (15) throughput +2.1 +- 7.5% (range -14.6 to +10.9), users served +5.0%
 saving (4, seed 101 did not act) energy -41.4%, throughput and served -25%. Fig. 5(c) uses these
 (`make_compact_figure.py` now dedupes decisions and drops seeds without control).
 
+**T6v4 ensemble twin (2026-11-03).** `runs/20261103T065837Z_T6v4_ensemble/` (`twin/run_twin_ensemble.py`):
+each of the 23 distinct D2S decisions (19 steering, 4 energy) re-executed on twin seeds pair+200 and pair+300
+(K = 3, 64 new runs, 0 failures); gate rules declared in the manifest before the runs, primary = mean with a
+one-sd margin. Twin seed spread (sd) of steering gate quantities 6.0-6.9 pp vs |single twin - live| 3.3-5.4 pp;
+live within ensemble mean +- 2 sd in 19/19 (throughput loss) and 18/19 (hot-cell PRB). Verdict agreement
+(steering, 19): single 14 (1 false accept, 4 missed), mean 15 (1, 3), margin 12 (0, 7); energy 4/4 under all
+rules. Reading: the steering effects are inside the twin's irreducible seed variability; a conservative margin
+removes false accepts at the price of rejecting about half of the beneficial decisions.
+
 **D3 correction.** In repeat 4 the four flows did not build a standing queue (median RTT 64 ms before, 0% of
 pings above 100 ms); "100% -> 0% in all five repeats" was wrong. Correct: repeats 1, 2, 3, 5: median
 416-426 -> 35-37 ms, pings above 100 ms 100% -> 4-7%; repeat 4: 64 -> 33 ms; goodput 9.5 -> 9.6 Mbit/s in all.
