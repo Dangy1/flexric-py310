@@ -49,6 +49,19 @@ Rule accuracy (pre-registered label rule), 95% intent-clustered bootstrap CIs in
   conflict, waits for the lease and completes in 36.7% (A) / 44.4% (B k=8) of cases with 0 unresolved
   refusals; the rule router runs straight into the lease (100% met) and completes 88.9-96.7%, but with the
   wrong chain (correct 16.7%). 0 pre-emptions anywhere. C has no busy-app intents.
+- **Re-test after the review fixes (2026-11-03).** The queued/unresolved seeded runs were all
+  `slice_policy_race_recovery`: the SLICE xApp hung in the SDK cleanup (`rm_report`/`try_stop` holding the GIL)
+  and kept its lease. Fixed with a native `faulthandler` exit watchdog (`xapp_stop.py`); own second writers are
+  now serialized and the portal refuses a foreign second writer. Seeded intents, 3 repeats, 6 methods:
+  `runs/20261103T091145_136785Z_A_seeded_retest2_*` and `runs/20261103T075407_552640Z_B_k8_seeded_retest_*`,
+  with their SLICE intent replaced by `runs/20261103T102501_*_A_slice_retest_watchdog_*` /
+  `runs/20261103T103356_*_B_k8_slice_retest_watchdog_*` (216 runs). 0 pre-emptions, 216/216 completed,
+  0 unresolved. AppWeaver meets the busy app in 8/18 (A) and 9/18 (B) runs and waits for it in each; correct
+  8/18 (A), 5/18 (B). Rule router meets it in 18/18, correct 3/18 (wrong chain 83%).
+  `runs/20261103T084903_673618Z_B_k8_serial_retest_*` (12 rApp+xApp intents writing one resource twice): own
+  writers serialized (mean wait 1.8 s), all completed. The first A re-test (`20261103T072111_*`, build tree
+  only) ran without `FLEXRIC_L2_MONITORS=0`, so its prompt exceeded the 8000-char cap; it is invalid and not
+  copied.
 - Time per intent (median): AppWeaver 26 s (C) - 36 s (B all cards), almost all planner; twin dry-run
   ~8 s, acknowledgement 2-3 s; guided / v2 35-42 s; LLM (catalog) 7-9 s. Within the Non-RT (>1 s) loop.
 - Host: the live nearRT-RIC is the largest CPU consumer; every component < 130 MiB RSS

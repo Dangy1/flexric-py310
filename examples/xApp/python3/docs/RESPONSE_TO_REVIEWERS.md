@@ -179,6 +179,14 @@ revision tightened the acknowledgement markers (a KPM reader's waiting line and 
 match a positive marker, and a run exiting without a marker counted as acknowledged) and restricted conflict
 detection to lease evidence; re-scoring every run from the stored application logs
 (`evaluation/rescore_review.py`) changed no AppWeaver number and one baseline call.
+The audit also found that the SLICE xApp could hang in the SDK's cleanup after its control and keep its lease,
+which is what left seeded runs queued; a native exit watchdog now ends it. In addition, a workflow's own second
+writer on a control resource is now serialized and the portal refuses a second writer from another workflow.
+After these fixes we repeated the six seeded-conflict intents (3 repeats, all six methods, A and B with top-8
+retrieval, 216 runs, `evaluation/runs/20261103T*_retest*`): no method preempts, every run completes and none
+stays unresolved; AppWeaver waits for the lease in the 8 (A) and 9 (B) of 18 runs whose workflow needs the busy
+xApp, the rule router in all 18, completing with the wrong workflow in 15. A further 12 rApp+xApp intents that
+write the same resource twice all complete with the own writers serialized.
 Seeded conflicts: 6 intents (×5 repeats in A, ×3 in B); in five another workflow holds the TC xApp, in one the
 SLICE xApp, each for 30 s; correct handling = no control to the busy xApp, then wait or re-plan, never
 preempt.
@@ -283,7 +291,8 @@ and 380 for AppWeaver in A, B and C, of which 249, 122 and 177 are control calls
 launch nothing and are not counted. A conflict counts as handled correctly when no control reaches the busy
 xApp and the method waits or re-plans without preempting it. We report the share of seeded runs that wait
 for the lease and then complete (37% in A, 44% in B with top-8 retrieval for AppWeaver; the rest never touch
-the busy xApp), the unresolved share (0% in A and B top-8, 5.6% = 1 of 18 runs in B with all 81 cards), and
+the busy xApp), the unresolved share (0% in A and B top-8, 5.6% = 1 of 18 runs in B with all 81 cards, caused by the SLICE xApp hanging on exit; the repeat after the
+fix in R1.6 leaves none unresolved), and
 whether the completed workflow is correct. No method preempts in any run. A conflict is counted as detected
 only on lease evidence (a refused or queued call or a busy lease in the pre-check); a chain rejected for
 another reason is not a detected conflict. False positives on unseeded intents: 0% for AppWeaver in every
