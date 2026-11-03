@@ -134,7 +134,8 @@ but not Near-RT policies.
 are actual xApps, which are emulated rApps, and which are used in the quantitative evaluation.*
 
 Corrected throughout. Actual xApps: four FlexRIC xApps used over E2 (KPM monitoring, SLICE, TC, RC) and the
-MAC/RLC/PDCP/GTP monitors (the 9-card registry of Batches A and C). Emulated rApps: QoE prediction, traffic
+MAC/RLC/PDCP/GTP monitors, which complete the 9-card registry of Batches A and C as descriptive cards
+(the planner sees four executable xApps there) and are executable xApps in Batch B. Emulated rApps: QoE prediction, traffic
 steering, energy saving and 29 other families, decision services behind standard tool interfaces (with them
 the registry of Batch B has 81 cards). The QoE-prediction and mobility xApps of the first submission are not
 claimed any more; the running example (Fig. 2, §III-B) now uses the QoE-prediction and traffic-steering
