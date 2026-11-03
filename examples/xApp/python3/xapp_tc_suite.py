@@ -4,6 +4,7 @@ import time
 
 import xapp_sdk as ric
 from xapp_tc_common import init_first_node, send_tc, stop
+from xapp_stop import arm_exit_watchdog, stop_with_watchdog
 
 
 class RLCCallback(ric.rlc_cb):
@@ -104,6 +105,7 @@ def main() -> None:
         pass
 
     if hnd is not None:
+        arm_exit_watchdog(8.0, "TC suite")  # rm_report_*/try_stop can block in the SDK
         ric.rm_report_rlc_sm(hnd)
 
     stop()

@@ -6,6 +6,7 @@ import time
 from typing import Iterable
 
 import xapp_sdk as ric
+from xapp_stop import stop_with_watchdog
 
 TC_SM_ID = 146
 _LOCK_FD = None
@@ -78,5 +79,4 @@ def send_many(node_id, msgs: Iterable) -> None:
 
 
 def stop() -> None:
-    while ric.try_stop() is False:
-        time.sleep(0.1)
+    stop_with_watchdog(ric, 8.0, "TC suite")

@@ -28,6 +28,7 @@ import threading
 import time
 
 import xapp_sdk as ric
+from xapp_stop import stop_with_watchdog
 
 RAN_FUNCTION_IDS = {"mac": 142, "rlc": 143, "pdcp": 144, "gtp": 148}
 INTERVALS = {1: "Interval_ms_1", 2: "Interval_ms_2", 5: "Interval_ms_5", 10: "Interval_ms_10"}
@@ -172,8 +173,7 @@ def main(argv=None) -> int:
         print(f"{label} monitor finished: {printer.count} indications in {elapsed} s", flush=True)
     else:
         print(f"{label} monitor received no indications", flush=True)
-    while ric.try_stop() is False:
-        time.sleep(0.1)
+    stop_with_watchdog(ric, 8.0, "L2 monitor")
     return 0
 
 

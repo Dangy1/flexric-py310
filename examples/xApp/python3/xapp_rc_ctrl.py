@@ -39,6 +39,7 @@ import signal
 import subprocess
 import sys
 import time
+from xapp_stop import arm_exit_watchdog, stop_with_watchdog
 
 ACK_MARKER = "RC CONTROL-ACK received"
 CONTROL_FAILED_MARKER = "RC CONTROL-FAILED"
@@ -190,12 +191,12 @@ def _worker(args: argparse.Namespace) -> int:
     finally:
         if handle is not None:
             try:
+                arm_exit_watchdog(8.0, "RC xApp")  # rm_report_*/try_stop can block in the SDK
                 ric.rm_report_rc_sm(handle)
                 print("RC REPORT subscription removed", flush=True)
             except Exception as exc:  # pragma: no cover
                 print(f"RC worker warning: failed to remove RC subscription: {exc}", flush=True)
-        while ric.try_stop() is False:
-            time.sleep(0.1)
+        stop_with_watchdog(ric, 8.0, "RC xApp")
         _ = cb
 
 

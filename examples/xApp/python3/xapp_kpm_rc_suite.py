@@ -4,6 +4,7 @@ import signal
 import time
 
 import xapp_sdk as ric
+from xapp_stop import arm_exit_watchdog, stop_with_watchdog
 
 
 stop_requested = False
@@ -117,11 +118,11 @@ def main() -> None:
     finally:
         if kpm_handle is not None:
             try:
+                arm_exit_watchdog(8.0, "KPM-RC suite")  # rm_report_*/try_stop can block in the SDK
                 ric.rm_report_kpm_sm(kpm_handle)
             except Exception as e:
                 print(f"Warning: failed to remove KPM subscription cleanly: {e}")
-        while ric.try_stop() is False:
-            time.sleep(0.1)
+        stop_with_watchdog(ric, 8.0, "KPM-RC suite")
         print("KPM/RC suite finished")
 
 

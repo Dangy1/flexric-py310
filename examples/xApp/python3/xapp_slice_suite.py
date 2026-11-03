@@ -5,6 +5,7 @@ import os
 import time
 
 import xapp_sdk as ric
+from xapp_stop import arm_exit_watchdog, stop_with_watchdog
 
 
 LAST_ASSOC_RNTI = None
@@ -284,12 +285,8 @@ def _safe_stop(timeout_s: float = 5.0) -> bool:
     # ric.try_stop() can stay False forever after the SLICE subscription delete; without a bound the
     # process never exits and keeps its portal lease (seen in Batch A: 2412/2421 slice-monitor runs never
     # reached "Slice suite finished"). Bounded wait; main() then exits the process.
-    deadline = time.monotonic() + timeout_s
-    while ric.try_stop() is False:
-        if time.monotonic() > deadline:
-            return False
-        time.sleep(0.1)
-    return True
+    # The bounded loop alone is not enough: try_stop() itself can block, so a watchdog ends the process.
+    return stop_with_watchdog(ric, timeout_s, "Slice suite")
 
 
 def main():
@@ -356,6 +353,7 @@ def main():
     except KeyboardInterrupt:
         pass
     finally:
+        arm_exit_watchdog(8.0, "Slice suite")  # rm_report_*/try_stop can block in the SDK
         try:
             ric.rm_report_slice_sm(hnd)
         except Exception:
