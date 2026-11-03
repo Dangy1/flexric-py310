@@ -21,6 +21,13 @@ def rapps_enabled() -> bool:
     return os.getenv("FLEXRIC_RAPP_DIRECTORY", "").strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _is_apply_tool(tool_id: str) -> bool:
+    """Same rule as rapps/runtime.is_apply_tool (kept here to avoid importing the runtime)."""
+    head = tool_id.split("_", 1)
+    stem = head[1] if len(head) == 2 and head[0] in {"northwind", "kestrel", "orion", "helix", "vtt", "aalto"} else tool_id
+    return stem.split("_")[0] in {"apply", "set", "execute", "tune", "wake", "rollback", "clear", "restore", "revert"}
+
+
 def build_agents(python_bin: str, base_dir: Path) -> Dict[str, AgentCard]:
     path = catalog_path(base_dir)
     if not path.exists():
@@ -36,6 +43,9 @@ def build_agents(python_bin: str, base_dir: Path) -> Dict[str, AgentCard]:
                 description=tool["description"],
                 kind="rapp",
                 command=[python_bin, "-u", str(runtime), "--rapp", entry["id"], "--tool", tool["id"], "--duration-s", "10"],
+                # Recommend/predict tools only read: give them read scopes so they are not counted as control steps.
+                control_scopes=[] if _is_apply_tool(tool["id"]) else
+                [ControlScope(**{**scope, "mode": "read"}) for scope in entry.get("control_scopes", [])],
             )
             for tool in entry.get("tools", [])
         ]

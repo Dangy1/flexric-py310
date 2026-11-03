@@ -131,11 +131,13 @@ METHOD_LABELS = {
 # on a real CONTROL ACKNOWLEDGE, so it is the only control ack for SLICE and TC.
 E2_CONTROL_ACK = "[xApp]: CONTROL ACK rx"
 TOOL_ACK_MARKERS = {
-    "kpm": ["RRU.", "DRB.", "\"meas\"", "indication"],
+    # Measurement records only: the reader's "Still waiting for shared KPM bus indications..." is not one.
+    "kpm": ["RRU.", "DRB.", "\"meas\""],
     "slice": [E2_CONTROL_ACK],
     "tc": [E2_CONTROL_ACK],
     # RC xApp (xapp_rc_ctrl.py): rc-control -> E2 RC CONTROL-ACK, rc-report -> RC REPORT indication.
-    "rc": ["RC CONTROL-ACK received", "RC indication received"],
+    # "RC indication received: #<n>" heads a real indication; "RC REPORT-FAILED: no RC indication received" must not match.
+    "rc": ["RC CONTROL-ACK received", "RC indication received: #"],
     # L2 monitor xApps (xapp_l2_monitor.py): acknowledged by the E2 indication they subscribe to.
     "mac": ["MAC ind tstamp="],
     "rlc": ["RLC ind tstamp="],
@@ -785,8 +787,10 @@ def acknowledge_tool_calls(tool_calls: List[Dict[str, Any]], timeout_s: float) -
                 # A negative line while the xApp is still running is not final: keep polling for a
                 # positive marker until the deadline (the 20-line tail scrolls).
                 verdict = None
-            if verdict is None and str(run.get("status")) in {"completed", "exited"} and run.get("returncode") == 0:
-                verdict = True
+            if verdict is None and str(run.get("status")) in {"completed", "exited"}:
+                # Exited without an acknowledgement marker (exit code 0 included): launched, not acknowledged.
+                verdict = False
+                call["ack_detail"] = "exited without an acknowledgement marker"
             if verdict is None and str(run.get("status")) in {"failed", "cancelled", "timed_out"}:
                 verdict = False
             if verdict is not None:
@@ -834,11 +838,16 @@ def seed_conflict_if_needed(intent: Dict[str, Any], method: str, duration_s: int
     }
 
 
+def _lease_reason(reason: str) -> bool:
+    text = reason.lower()
+    return any(k in text for k in ("busy", "lease", "active action", "already has an active", "queued", "conflict"))
+
+
 def detect_conflict(execution: Dict[str, Any], tool_calls: List[Dict[str, Any]]) -> bool:
     if str(execution.get("status") or "") == "queued":
         return True
-    if execution.get("blocked_reason"):
-        return True
+    if execution.get("blocked_reason") and (execution.get("busy_resources") or _lease_reason(str(execution.get("blocked_reason")))):
+        return True  # a chain rejected for another reason (compat, failed step) is not a detected conflict
     # A lease refusal (409) inside a template workflow is the same event as `blocked_reason` on a custom chain.
     return any(call.get("status") in {"conflict", "queued"} or is_lease_refusal(call) for call in tool_calls)
 
@@ -1920,6 +1929,10 @@ def build_record(
         "policy_notes": policy_notes,
         "hallucinated_api": hallucinated_api,
         "hallucinated_reference_count": hallucinated_reference_count,
+        # AppWeaver's chain above is post-repair (unknown ids dropped); the planner's raw chain is scored too.
+        "hallucinated_reference_count_raw": (None if (execution_artifacts or {}).get("raw_chain") is None else
+                                             sum(1 for x in (execution_artifacts or {}).get("raw_chain") or []
+                                                 if str(x).upper() not in known_agent_ids)),
         "conflict_label": conflict_label,
         "conflict_detected": conflict_detected,
         "conflict_detection_correct": (conflict_detected == conflict_label) if conflict_label is not None else None,

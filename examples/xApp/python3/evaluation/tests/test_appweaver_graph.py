@@ -337,7 +337,12 @@ def test_rc_default_action_and_markers(harness, monkeypatch):
     assert harness.default_action_for_agent("rc", {"intent": "anything"}) == "rc-control"
     assert harness.default_action_for_agent("rc", {"intent": "Audit and monitor the cell state."}) == "rc-report"
     assert harness.default_action_for_agent("rc", {"intent": "Monitor and reduce latency."}) == "rc-control"
-    assert set(harness.TOOL_ACK_MARKERS["rc"]) == {"RC CONTROL-ACK received", "RC indication received"}
+    assert set(harness.TOOL_ACK_MARKERS["rc"]) == {"RC CONTROL-ACK received", "RC indication received: #"}
+    # Review 2026-11-03: failure lines and the KPM reader's waiting line are not acknowledgements.
+    assert harness._log_acknowledges("rc", ["RC REPORT-FAILED: no RC indication received (worker exit code 1)"], "rc-report") is False
+    assert harness._log_acknowledges("rc", ["RC indication received: #1 hdr_fmt=1 msg_fmt=2 ues=1"], "rc-report") is True
+    assert harness._log_acknowledges("kpm", ["Still waiting for shared KPM bus indications..."], "observe-ue") is not True
+    assert harness._log_acknowledges("kpm", ["ue_type=gnb amf_ue_ngap_id=1 meas=RRU.PrbTotDl value=524"], "observe-ue") is True
     assert {"RC CONTROL-FAILED", "RC REPORT-FAILED"} <= set(harness.TOOL_ACK_NEGATIVE_MARKERS)
     assert harness.TOOL_ACK_MARKERS["tc"] == ["[xApp]: CONTROL ACK rx"] == harness.TOOL_ACK_MARKERS["slice"]
 

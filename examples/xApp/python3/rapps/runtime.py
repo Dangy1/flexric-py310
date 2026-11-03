@@ -303,6 +303,9 @@ def run_tool(rapp_id: str, tool_id: str, duration_s: int) -> int:
         print(f"rApp error: {rapp_id} is deprecated; use the current release")
         return 3
     kpm = fetch_recent_kpm()
+    if not kpm.get("available"):
+        print(f"rApp error: {rapp_id} {tool_id} has no KPM data to decide on ({kpm.get('detail')})")
+        return 4
     result = decide(rapp, tool_id, kpm)
     status = "applied" if is_apply_tool(tool_id) else "recommended"
     if is_apply_tool(tool_id):

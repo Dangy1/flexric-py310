@@ -120,6 +120,16 @@ class Batch:
         self.complete = records_file.name == "records.jsonl"
         self.records = [json.loads(line) for line in records_file.read_text(encoding="utf-8").splitlines() if line.strip()]
         self.records = [r for r in self.records if r.get("method_available") is not False]
+        # Ack verdicts re-scored from the portal logs after the 2026-11-03 code review (rescore_review.py):
+        # only removes acknowledgements the loose markers granted.
+        rescore = path / "review_rescore.json"
+        if rescore.exists():
+            fixed = json.loads(rescore.read_text(encoding="utf-8")).get("records") or {}
+            for record in self.records:
+                acks = (fixed.get(str(record.get("record_id"))) or {}).get("acks") or []
+                for call, ack in zip(record.get("tool_calls") or [], acks):
+                    if call.get("acknowledged") is True and ack is False:
+                        call["acknowledged"] = False
         # Pre-registered label rule, scored from the raw chain (records written by the harness may
         # already carry workflow_match_rule; recompute anyway so every batch uses the same rule/cards).
         intents, registry = load_run_intents(path, self.records), run_registry(path)

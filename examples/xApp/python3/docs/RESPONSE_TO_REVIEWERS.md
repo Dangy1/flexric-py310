@@ -152,8 +152,13 @@ types of seeded conflicts.*
 
 Total calls: 572, 836 and 380 AppWeaver calls in A, B and C (all methods in the repository table). Failure
 criterion: a call succeeds only if the target application acknowledges it (E2 control acknowledgement, KPM
-indication or rApp reply); launching a process is not enough. Acknowledged: 97–100%. Hallucinations: 0
-references to non-existent applications for AppWeaver in every batch, 705 (A) for the LLM without catalog.
+indication or rApp reply); launching a process is not enough. Acknowledged: 97–100% of all calls and 96–100%
+of control calls. Hallucinations: 0 references to non-existent applications for AppWeaver in every batch,
+also in the planner's raw chain before repair; 705 (A) for the LLM without catalog. A code audit during the
+revision tightened the acknowledgement markers (a KPM reader's waiting line and an RC failure line could
+match a positive marker, and a run exiting without a marker counted as acknowledged) and restricted conflict
+detection to lease evidence; re-scoring every run from the stored application logs
+(`evaluation/rescore_review.py`) changed no AppWeaver number and one baseline call.
 Seeded conflicts: 6 intents (×5 repeats in A, ×3 in B); in five another workflow holds the TC xApp, in one the
 SLICE xApp, each for 30 s; correct handling = no control to the busy xApp, then wait or re-plan, never
 preempt.
@@ -250,11 +255,16 @@ reaches 0% on the intents no template solves; AppWeaver reaches 55–94%.
 **R3.5** — *Number and types of seeded conflicts, denominator of tool-call success, criteria for a
 successfully detected conflict.*
 
-See R1.6 for numbers, types and the success criterion. Denominator: every control call a method issues
-(572, 836, 380 for AppWeaver). A conflict counts as handled correctly when no control reaches the busy xApp
-and the method waits or re-plans without preempting it; we report the share that then completes (37% in A,
-44% in B for AppWeaver, no unresolved refusal, no preemption anywhere) and whether the completed workflow is
-correct. False positives on unseeded intents: 0% for AppWeaver in A and in B with top-8 retrieval (5.6% with all 81 cards in the prompt).
+See R1.6 for numbers, types and the success criterion. Denominator: every call a method launches (572, 836
+and 380 for AppWeaver in A, B and C, of which 249, 122 and 177 are control calls); lease-refused attempts
+launch nothing and are not counted. A conflict counts as handled correctly when no control reaches the busy
+xApp and the method waits or re-plans without preempting it. We report the share of seeded runs that wait
+for the lease and then complete (37% in A, 44% in B with top-8 retrieval for AppWeaver; the rest never touch
+the busy xApp), the unresolved share (0% in A and B top-8, 5.6% = 1 of 18 runs in B with all 81 cards), and
+whether the completed workflow is correct. No method preempts in any run. A conflict is counted as detected
+only on lease evidence (a refused or queued call or a busy lease in the pre-check); a chain rejected for
+another reason is not a detected conflict. False positives on unseeded intents: 0% for AppWeaver in every
+batch.
 
 *Changes:* §IV-B, §IV-E.
 

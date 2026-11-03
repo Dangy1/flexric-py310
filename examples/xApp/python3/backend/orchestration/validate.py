@@ -22,6 +22,7 @@ Nothing here touches the live RAN or the scheduler state.
 from __future__ import annotations
 
 import os
+import functools
 import re
 import time
 from pathlib import Path
@@ -40,6 +41,25 @@ DryrunFn = Callable[[str, str, int], Any]
 
 def ric_log_path() -> Path:
     return Path(os.getenv("FLEXRIC_RIC_LOG", DEFAULT_RIC_LOG))
+
+
+@functools.lru_cache(maxsize=4)
+def _scan_full_log(path: Path, size: int, mtime: float) -> Dict[str, str]:
+    """RAN functions accepted after the last E2 SETUP in the whole log (cached per log size and mtime)."""
+    functions: Dict[str, str] = {}
+    setup, accept = _SETUP_MARK.encode(), b"Accepting RAN function ID"
+    try:
+        with path.open("rb") as handle:
+            for raw in handle:
+                if setup in raw:
+                    functions = {}
+                elif accept in raw:
+                    match = _ACCEPT_RE.search(raw.decode("utf-8", errors="replace"))
+                    if match:
+                        functions[match.group(1)] = match.group(2)
+    except OSError:
+        return {}
+    return functions
 
 
 def live_e2_ran_functions(log_path: Optional[Path] = None, max_bytes: int = 4_000_000) -> Dict[str, Any]:
@@ -66,6 +86,9 @@ def live_e2_ran_functions(log_path: Optional[Path] = None, max_bytes: int = 4_00
             match = _ACCEPT_RE.search(line)
             if match:
                 functions[match.group(1)] = match.group(2)
+    if not functions and size > max_bytes:
+        # The tail holds no E2 SETUP (a long-running RIC logs it once, at the start): find the last one anywhere.
+        functions = _scan_full_log(path, size, path.stat().st_mtime)
     return {
         "available": bool(functions),
         "source": str(path),

@@ -114,7 +114,9 @@ def _metric_delta_values(records: List[Dict[str, Any]], metric_name: str) -> Lis
 
 def _execution_conflict(execution: Dict[str, Any]) -> bool:
     """Same rule as run_harness.detect_conflict: queued run, blocked launch, or a refused tool call."""
-    if str(execution.get("status") or "") == "queued" or execution.get("blocked_reason"):
+    reason = str(execution.get("blocked_reason") or "").lower()
+    if str(execution.get("status") or "") == "queued" or execution.get("busy_resources") or any(
+            k in reason for k in ("busy", "lease", "active action", "already has an active", "queued", "conflict")):
         return True
     return any(call.get("status") in {"conflict", "queued"} or is_lease_refusal(call) for call in execution.get("tool_calls") or [])
 
@@ -134,11 +136,16 @@ def conflict_flagged(item: Dict[str, Any]) -> bool:
     With internal recovery the final execution is the clean re-run, so a conflict the method hit and
     refused on its first execution is only visible in `execution_artifacts.initial_execution`.
     """
-    if item.get("conflict_detected") is True:
+    # Recomputed from lease evidence only; the stored `conflict_detected` was set by the pre-2026-11-03 rule,
+    # which also counted compat rejections and failed steps.
+    if item.get("conflict_detected_before_control") is True or str(item.get("execution_status") or "") == "queued":
         return True
-    # Recomputed from the raw record so batches written before the rule was unified score the same.
-    if item.get("blocked_reason") or any(is_lease_refusal(call) for call in item.get("tool_calls") or []):
+    if any(call.get("status") in {"conflict", "queued"} for call in item.get("tool_calls") or []):
         return True
+    reason = str(item.get("blocked_reason") or "").lower()
+    lease_reason = any(k in reason for k in ("busy", "lease", "active action", "already has an active", "queued", "conflict"))
+    if lease_reason or any(is_lease_refusal(call) for call in item.get("tool_calls") or []):
+        return True  # lease evidence only: a compat rejection or a failed step is not a detected conflict
     initial = (item.get("execution_artifacts") or {}).get("initial_execution")
     return isinstance(initial, dict) and _execution_conflict(initial)
 

@@ -66,7 +66,7 @@ def writes(deps: AppWeaverDeps, agent_id: str, action_id: Optional[str] = None) 
 def busy_entries(busy: Dict[str, Optional[Dict[str, Any]]], own_run_ids: List[str]) -> List[Dict[str, Any]]:
     """Busy applications held by *another* workflow (our own launches are not a conflict)."""
     out: List[Dict[str, Any]] = []
-    own = set(own_run_ids)
+    own = {str(r) for r in own_run_ids if r}  # a launch without run id must not mask a foreign busy entry
     for agent_id, info in (busy or {}).items():
         if not info:
             continue
