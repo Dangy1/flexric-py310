@@ -77,6 +77,25 @@ Planner-cached records: 0 (must be 0 for headline latency).
 
 Planner-cached records: 0 (must be 0 for headline latency).
 
+## Provenance of the columns
+
+- Planning columns (Accuracy, Sensitivity, Known, Open-world, Unseen cap., Exact, Accepted, Set, Halluc. refs,
+  Retrieval hit, Latency): the batches above. The planning path is unchanged since they ran: every batch
+  manifest and the 2026-11-03 re-test manifests carry the same prompt hashes (compose_prompt 9b781c4f,
+  recovery_prompt 96802972, serialize_cards 1a7602bc, agentcard_prompt 0b60c1c2), and the later commits on
+  Discover/Compose/compat (c8996082, 5ddb3c55, a635034c) only add code behind the variant flags (templates,
+  memory, guidance, needs); 59d26818 and 0e36aaef change execution only (per-action read scopes for
+  recommend-only rApp tools, lease, serialization, Deploy reuse, the compat docstring).
+- Ack. calls and Conflict FP: the batches above, re-scored from the portal logs with the fixed rules
+  (`../rescore_review.py`, `<batch>/review_rescore.json`).
+- Seeded columns (met conflict, done after wait, unresolved, correct): the batches above, i.e. before the
+  resource-level lease and serialization (0e36aaef) and the xApp exit watchdog (80561d7d). Every unresolved
+  seeded run there is `slice_policy_race_recovery`, where the SLICE xApp hung on exit and kept its lease.
+  The execution outcome after the fixes comes from the 2026-11-03 re-tests (A and B k=8, 6 seeded intents x
+  3 repeats x 6 methods, SLICE intent re-run with the watchdog; `../runs/20261103T*_retest*`,
+  `../demos/RESULTS_PACKAGE.md` section 3): 0 pre-emptions, 216/216 completed, 0 unresolved; AppWeaver meets
+  the busy app in 8/18 (A) and 9/18 (B) runs and completes after the wait in each. B k=all was not re-tested.
+
 ## Files
 
 - `combined_results.csv` - per (batch, method): value and CI bounds for every metric

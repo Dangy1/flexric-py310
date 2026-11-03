@@ -54,6 +54,12 @@ Variants: `appweaver_guided` = 1 + 2; `appweaver_v2` = 1 + 2 + 3.
   `appweaver_mem`, `appweaver_guided`, `appweaver_v2`, same harness, seeds and health hooks as A/B.
 * Development numbers: A and B k=8 re-run with `appweaver_guided` and `appweaver_v2`; reported as
   in-sample, never as the headline.
+  **Status (2026-11-03): the Batch A re-run was dropped.** Step 5 of `/tmp/appweaver_batches/chain_after_C1.sh`
+  was disabled (its command line starts with `:`) before the chain ran, so the log shows `dev reruns` start and
+  end at the same second (31.10 07:15:23) and no A run of these variants exists; the reason was not recorded.
+  The in-sample development numbers are therefore the B k=8 run (in the paper batch) and, for A, only the
+  planner-only check below. Neither the paper nor the response letter quotes a Batch A number for
+  `appweaver_guided` / `appweaver_v2`; they quote these variants only for B (in-sample) and C (held-out).
 * Labels are not changed (pre-registered 2026-10-28).
 
 ## Development check (planner only, Batch A intents, 1 run each) - 2026-10-29

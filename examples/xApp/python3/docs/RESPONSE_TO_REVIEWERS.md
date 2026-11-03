@@ -109,7 +109,7 @@ Energy saving is predicted within 1 point (4 decisions).
 Why the verdict does not improve, and what the twin can and cannot gate: we rehearsed each of the 23 distinct
 decisions on two further twin seeds (`evaluation/twin/run_twin_ensemble.py`, run
 `20261103T065837Z_T6v4_ensemble`; the gate rules were written to the manifest before any run). Identical twin
-re-runs agree within 1 point, but across twin seeds the gate quantities of a steering decision spread by
+re-runs agree within about 1 point, but across twin seeds the gate quantities of a steering decision spread by
 6 points (sd), as much as the twin's error against live (5 points) and the rule's 5% throughput margin; the
 live outcome lies within the ensemble mean ± 2 sd in 19/19 (throughput) and 18/19 (source-cell PRB)
 decisions, so the spread is a calibrated uncertainty. Verdict agreement with live:
@@ -296,7 +296,10 @@ fix in R1.6 leaves none unresolved), and
 whether the completed workflow is correct. No method preempts in any run. A conflict is counted as detected
 only on lease evidence (a refused or queued call or a busy lease in the pre-check); a chain rejected for
 another reason is not a detected conflict. False positives on unseeded intents: 0% for AppWeaver in every
-batch.
+batch. Provenance: accuracy, acknowledgement, hallucination and latency numbers and the 37%/44% shares come
+from the original batches (the planning path is unchanged since, with identical prompt hashes in every
+manifest); the execution outcome after the fixes (none unresolved, every run complete) comes from the
+re-test in R1.6. The B all-cards seeded runs were not repeated.
 
 *Changes:* §IV-B, §IV-E.
 
