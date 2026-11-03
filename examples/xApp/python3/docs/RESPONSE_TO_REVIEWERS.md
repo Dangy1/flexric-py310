@@ -163,7 +163,7 @@ executed as returned, no Agent Card checks. *LLM (no catalog)*: the same model w
 Ablation: AppWeaver without repair. All methods use gpt-oss-120b on vLLM (NVIDIA DGX Spark, GB10, 128 GB),
 reasoning effort medium, temperature 0.2, fixed seed. Results: the catalog-aware LLM reaches 34.8%, 16.8%
 and 53.3% (A, B, C) against AppWeaver's 70.4%, 68.8% and 93.9%, and 0% on the intents no template solves,
-where AppWeaver reaches 55–94%.
+where AppWeaver reaches 55–94% (55.6–67.4% on A and B; C is easier, see R2.1).
 
 *Changes:* §IV-A/B/C, Fig. 5.
 
@@ -211,9 +211,13 @@ The benchmark is published with its labels and labelling rule. It grew to three 
 intents, 81-card registry) and C (60 held-out intents written after the design was frozen). Correctness is
 decided by a rule fixed before the final runs (§IV-B). Each intent runs 5 times (A) or 3 times (B, C), with
 planner caches off; 8,712 records in total. Every rate carries a 95% intent-clustered bootstrap confidence
-interval (Fig. 5).
+interval (Fig. 5). C was written and labelled before any run, but it turned out easier than A: its intents
+are 2.3 times longer (25 vs 11 words), name the required control applications in 83% vs 68% of cases (95% of
+C's open-world intents), have shorter chains (2.45 vs 2.84 apps), and 11 of its 30 open-world intents need no
+control application (`evaluation/DIFFICULTY_A_VS_C.md`). The paper therefore takes A and B as the absolute
+accuracy and C as a check that the gap to the baselines and the ranking of the variants hold.
 
-*Changes:* §IV-A footnote (repository), §IV-B, Fig. 5.
+*Changes:* §IV-A footnote (repository), §IV-B, §IV-C, Fig. 5.
 
 **R2.2** — *The twin's KPI prediction is never validated against the deployed outcome; compare
 twin-predicted and actual post-deployment KPIs; describe how the seeded conflicts were constructed.*
@@ -278,8 +282,12 @@ to the Agent Card registry.*
 
 Added: LLM with the full catalog (grounding without AppWeaver's architecture), LLM without catalog, and
 AppWeaver without repair; plus retrieval depth (top-8 vs all 81 cards: 68.8% both, one third of the prompt
-tokens) and template and memory variants (74.6% on B, 96.1% on C). Grounding alone (LLM with catalog)
-reaches 0% on the intents no template solves; AppWeaver reaches 55–94%.
+tokens) and template and memory variants. Operator templates as retrieved examples help on known intents (B:
+45.5% → 66.7%, 95% CI 21–70% → 39–91%; 72.8% overall vs 68.8%). The experience memory gives no measurable gain
+out of sample: it was built from Batch A, whose 50 intents are also the first 50 of B, so its 74.6% on B is
+mostly in-sample; on B's 59 unseen-capability intents it reaches 81.9% (CI 72–90%) vs 82.5% (73–91%) for
+AppWeaver, and on C 96.1% (91–100%) vs 93.9% (88–99%). Grounding alone (LLM with catalog) reaches 0% on the
+intents no template solves; AppWeaver reaches 55.6–67.4% on A and B (93.9% on the easier C).
 
 *Changes:* §IV-B/C, Fig. 5.
 
